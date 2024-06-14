@@ -14,7 +14,7 @@ export default defineNuxtConfig({
 
    ui: {
     global: true,
-    icons: ['mdi', 'simple-icons']
+    icons: ['heroicons']
   },
    modules: [// 'nuxt-icon',
      '@nuxt/image',

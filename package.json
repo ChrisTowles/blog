@@ -16,16 +16,18 @@
   "dependencies": {
     "@nuxt/ui": "^2.17.0",
     "nuxt": "^3.12.1",
-    "vue": "^3.4.27",
+    "vue": "^3.4.29",
     "vue-router": "^4.3.3"
   },
   "devDependencies": {
     "@nuxt/content": "^2.12.1",
     "@nuxt/image": "^1.7.0",
     "@nuxtjs/eslint-module": "^4.1.0",
+    "@tailwindcss/forms": "^0.5.7",
+    "@tailwindcss/typography": "^0.5.13",
     "@vueuse/core": "^10.11.0",
     "@vueuse/nuxt": "^10.11.0",
-    "eslint": "^9.4.0"
+    "eslint": "^9.5.0"
   },
   "packageManager": "pnpm@9.3.0"
 }
