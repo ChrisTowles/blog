@@ -11,21 +11,22 @@ export default defineNuxtConfig({
     pageTransition: { name: 'page', mode: 'out-in' },
     layoutTransition: { name: 'layout', mode: 'out-in' },
   },
-   modules: [
-    // 'nuxt-icon',
-    '@nuxt/image',
-     '@vueuse/nuxt',
-     // ['@nuxtjs/eslint-module', { /* module options */ }],
-  
-    // 'nuxt-og-image',
-     '@nuxt/content',
-    // '@nuxtjs/robots',
-    // '@nuxtjs/fontaine',
-     '@nuxtjs/color-mode',
+
+   ui: {
+    global: true,
+    icons: ['mdi', 'simple-icons']
+  },
+   modules: [// 'nuxt-icon',
+     '@nuxt/image',
+     '@vueuse/nuxt', // ['@nuxtjs/eslint-module', { /* module options */ }],
+
+   // 'nuxt-og-image',
+   '@nuxt/content', // '@nuxtjs/robots',
+   // '@nuxtjs/fontaine',
     // 'nuxt-simple-sitemap',
-      '@nuxtjs/tailwindcss',
-    // '@stefanobartoletti/nuxt-social-share',
-  ],
+   // '@stefanobartoletti/nuxt-social-share',
+    
+    "@nuxt/ui"],
   
    
   typescript: {
