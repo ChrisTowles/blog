@@ -10,15 +10,14 @@
 </script>
 
 <template>
-
   <div class="bg-[#F1F2F4] dark:text-zinc-300   dark:bg-slate-950">
     <NuxtLoadingIndicator />
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
   </div>
-
 </template>
+
 <style>
 .page-enter-active,
 .page-leave-active {
