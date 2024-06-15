@@ -12,23 +12,24 @@ export default defineNuxtConfig({
     layoutTransition: { name: 'layout', mode: 'out-in' },
   },
 
-   ui: {
-    global: true,
-    icons: ['heroicons']
+  ui: {
+    icons: ['heroicons', 'simple-icons'],
   },
-   modules: [// 'nuxt-icon',
-     '@nuxt/image',
-     '@vueuse/nuxt', // ['@nuxtjs/eslint-module', { /* module options */ }],
+  routeRules: {
+    '/': { prerender: true },
+  },
+  modules: [// 'nuxt-icon',
+    '@nuxt/image',
+    '@vueuse/nuxt', // ['@nuxtjs/eslint-module', { /* module options */ }],
 
-   // 'nuxt-og-image',
-   '@nuxt/content', // '@nuxtjs/robots',
-   // '@nuxtjs/fontaine',
+    // 'nuxt-og-image',
+    '@nuxt/content', // '@nuxtjs/robots',
+    // '@nuxtjs/fontaine',
     // 'nuxt-simple-sitemap',
-   // '@stefanobartoletti/nuxt-social-share',
-    
-    "@nuxt/ui"],
-  
-   
+    // '@stefanobartoletti/nuxt-social-share',
+
+    '@nuxt/ui'],
+
   typescript: {
     strict: true,
   },
@@ -42,6 +43,6 @@ export default defineNuxtConfig({
     },
   },
 
-  devtools: { enabled: true }
-  
+  devtools: { enabled: true },
+
 })
