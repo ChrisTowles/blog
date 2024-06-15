@@ -18,7 +18,6 @@
   "dependencies": {
     "@iconify-json/heroicons": "^1.1.21",
     "@iconify-json/simple-icons": "^1.1.105",
-    "@nuxt/ui": "^2.17.0",
     "nuxt": "^3.12.1",
     "vue": "^3.4.27",
     "vue-router": "^4.3.3"
