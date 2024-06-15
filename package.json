@@ -11,9 +11,13 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "typecheck": "nuxt typecheck"
   },
   "dependencies": {
+    "@iconify-json/heroicons": "^1.1.21",
+    "@iconify-json/simple-icons": "^1.1.105",
     "@nuxt/ui": "^2.17.0",
     "nuxt": "^3.12.1",
     "vue": "^3.4.27",
@@ -21,13 +25,15 @@
   },
   "devDependencies": {
     "@nuxt/content": "^2.12.1",
+    "@nuxt/eslint": "^0.3.13",
+    "@nuxt/fonts": "^0.7.0",
     "@nuxt/image": "^1.7.0",
-    "@nuxtjs/eslint-module": "^4.1.0",
-    "@tailwindcss/forms": "^0.5.7",
-    "@tailwindcss/typography": "^0.5.13",
+    "@nuxt/ui": "^2.17.0",
+    "tailwindcss": "^3.4.4",
     "@vueuse/core": "^10.11.0",
     "@vueuse/nuxt": "^10.11.0",
-    "eslint": "^9.4.0"
+    "eslint": "^8.56.0",
+    "nuxt": "^3.12.1"
   },
   "packageManager": "pnpm@9.3.0"
 }
