@@ -1,3 +1,3 @@
 export const navbarData = {
-  homeTitle: 'Chris\'s Blog',
+  homeTitle: 'Chris Towles\'s Blog',
 }

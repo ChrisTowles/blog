@@ -47,3 +47,13 @@ pnpm run preview
 
 ```
 
+## Icons
+
+- https://heroicons.com/
+- https://simpleicons.org/
+
+## Great Examples
+
+- [nuxt-starter](https://github.com/chrisvfritz/nuxt-starter)
+
+

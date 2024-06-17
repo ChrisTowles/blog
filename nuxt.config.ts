@@ -1,5 +1,23 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  extends: ['@nuxt/ui-pro'],
+  modules: [
+    '@nuxt/image',
+    '@vueuse/nuxt',
+    '@nuxt/eslint',
+    '@nuxt/fonts',
+    '@nuxt/content',
+    // '@nuxtjs/eslint-module', { /* module options */ }],
+    // 'nuxt-icon',
+    // 'nuxt-og-image',
+    // '@nuxtjs/robots',
+    // '@nuxtjs/fontaine',
+    // 'nuxt-simple-sitemap',
+    // '@stefanobartoletti/nuxt-social-share',
+    '@nuxt/ui',
+    "@nuxtjs/seo"
+  ],
+  
   app: {
     head: {
       charset: 'utf-16',
@@ -18,19 +36,10 @@ export default defineNuxtConfig({
   routeRules: {
     '/': { prerender: true },
   },
-  modules: [// 'nuxt-icon',
-    '@nuxt/image',
-    '@vueuse/nuxt', // ['@nuxtjs/eslint-module', { /* module options */ }],
-
-    // 'nuxt-og-image',
-    '@nuxt/content', // '@nuxtjs/robots',
-    // '@nuxtjs/fontaine',
-    // 'nuxt-simple-sitemap',
-    // '@stefanobartoletti/nuxt-social-share',
-
-    '@nuxt/ui'],
+  
 
   typescript: {
+    // typeCheck: true,
     strict: true,
   },
 
@@ -41,6 +50,14 @@ export default defineNuxtConfig({
         '/',
       ],
     },
+  },
+  eslint: {
+    config: {
+      stylistic: {
+        commaDangle: 'always',
+        braceStyle: '1tbs',
+      }
+    }
   },
 
   devtools: { enabled: true },
