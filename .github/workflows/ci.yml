@@ -18,8 +18,8 @@ jobs:
       NUXT_UI_PRO_LICENSE: ${{ secrets.NUXT_UI_PRO_LICENSE }}
 
     steps:
-       - uses: pnpm/action-setup@v4
-        name: Install pnpm
+      - name: Install pnpm 
+        uses: pnpm/action-setup@v4
         with:
           version: 8
           run_install: false
