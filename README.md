@@ -54,6 +54,8 @@ pnpm run preview
 
 ## Great Examples
 
-- [nuxt-starter](https://github.com/chrisvfritz/nuxt-starter)
+- <https://github.com/nuxt-ui-pro/saas>
+- <https://github.com/nuxt-ui-pro/landing>
+- 
 
 

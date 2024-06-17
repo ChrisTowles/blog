@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { BlogPost } from '~/types'
+import type { BlogPost } from '~/types/blogPost';
 
 const { data: page } = await useAsyncData('blog', () => queryContent('/blog').findOne())
 if (!page.value) {
@@ -20,8 +20,8 @@ useSeoMeta({
 
 defineOgImage({
   component: 'Saas',
-  title: page.value.title,
-  description: page.value.description
+  // title: page.value.title,
+  //description: page.value.description
 })
 </script>
 

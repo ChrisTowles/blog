@@ -20,6 +20,7 @@ useHead({
   }
 })
 
+// TODO: fix up
 useSeoMeta({
   ogImage: 'https://landing-template.nuxt.dev/social-card.png',
   twitterImage: 'https://landing-template.nuxt.dev/social-card.png',

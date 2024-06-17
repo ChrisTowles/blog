@@ -3,11 +3,15 @@
 import type { FooterLink } from '@nuxt/ui-pro/types'
 const links: { label: string; children: FooterLink[]; }[] = [{
 
-  label: 'Resources',
+  label: 'Social',
   children: [{
     label: 'GitHub',
     to: 'https://github.com/ChrisTowles'
-  },]
+  },
+    {
+      label: 'X / Twitter',
+      to: 'https://x.com/Chris_Towles'
+    }]
 }]
 
 

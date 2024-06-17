@@ -29,13 +29,14 @@ const links = computed(() => [{
     </template>
 
     <template #right>
-      <UButton
+    <UColorModeButton size="lg" />
+      <!-- <UButton
         label="Sign in"
         color="white"
         variant="ghost"
         trailing-icon="i-heroicons-arrow-right-20-solid"
         class="hidden lg:flex"
-      />
+      /> -->
     </template>
 
     <template #panel>
