@@ -1,10 +1,19 @@
 ---
 title: I am a Dark Matter Developer
-date: 2022-06-26T16:00:00.000+00:00
-lang: en
-duration: 20 min
+description: "Reflecting on my career and the type of developer I am."
+date: 2022-06-26
+image:
+  src: https://picsum.photos/id/490/640/360
+authors:
+  - name: Chris Towles
+    to: https://twitter.com/Chris_Towles
+    avatar:
+      src: /images/ctowles-profile-512x512.png
+
+badge:
+  label: Blog
 ---
-# {{ $frontmatter.title }}
+
 
 So a few things have happened lately that have made me reflect on my career and the type of developer I am.
 
@@ -13,6 +22,7 @@ And the collusion I've come to is that I have become a **Dark Matter Developer**
 ## Let me try to explain
 
 Way back in 2012 I remember a post by Scott Hanselman called [Dark Matter Developers: The Unseen 99%](https://www.hanselman.com/blog/dark-matter-developers-the-unseen-99).
+
 
 <!-- more -->
 

@@ -18,6 +18,9 @@ useHead({
   htmlAttrs: {
     lang: 'en',
   },
+  scripts: [
+    //  { async: 'async', src: `https://platform.twitter.com/widgets.js` },
+  ],
 })
 
 // TODO: fix up

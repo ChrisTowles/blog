@@ -8,10 +8,10 @@ hero:
     # to: https://ui.nuxt.com/pro
     # icon: i-heroicons-arrow-top-right-on-square-20-solid
   links:
-    - label: Blogs
+    - label: Blog
       icon: i-heroicons-arrow-right-20-solid
       trailing: true
-      to: 'blogs'
+      to: 'blog'
       size: xl
   
     
