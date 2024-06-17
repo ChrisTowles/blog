@@ -80,7 +80,7 @@ jobs:
         uses: cloudflare/pages-action@v1 # https://github.com/cloudflare/pages-action
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: baf9cdac6eb4d8c477d85ceccae6679d
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: blog
           directory: dist
           # Optional: Enable this if you want to have GitHub Deployments triggered

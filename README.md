@@ -47,6 +47,14 @@ pnpm run preview
 
 ```
 
+# Blog Tech
+
+- Paid for [Nuxt UI Pro](https://ui.nuxt.com/) ($249) 
+  - First, any time I spend doing CSS and even Tailwind is time wasted.
+  - Happy to give back to NuxtLabs, I've used so much from [Anthfu](https://github.com/antfu), [Daniel Roe](https://github.com/danielroe) and Vue and Nuxt core members.
+- Paid for Cloudflare ($5 Monthly)
+
+
 ## Icons
 
 - https://heroicons.com/
