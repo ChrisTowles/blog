@@ -2,7 +2,6 @@ import type { ParsedContent } from '@nuxt/content/dist/runtime/types'
 import type { Badge, Avatar } from '#ui/types'
 import type { NuxtLinkProps } from '#app'
 
-
 export interface BlogPost extends ParsedContent {
   title: string
   description: string

@@ -1,9 +1,6 @@
-
 <script setup lang="ts">
-import { navbarData } from './../../data'
 import type { AsideLink } from '@nuxt/ui-pro/types'
-const nuxtApp = useNuxtApp()
-const { activeHeadings, updateHeadings } = useScrollspy()
+import { navbarData } from './../../data'
 
 const links = computed(() => [{
   label: 'Blog List',
@@ -11,11 +8,10 @@ const links = computed(() => [{
 }, {
   label: 'Mobile Apps',
   icon: 'i-heroicons-device-phone-mobile',
-  to: '/apps'
-}
+  to: '/apps',
+},
 
 ] satisfies AsideLink[])
-
 </script>
 
 <template>
@@ -29,7 +25,7 @@ const links = computed(() => [{
     </template>
 
     <template #right>
-    <UColorModeButton size="lg" />
+      <UColorModeButton size="lg" />
       <!-- <UButton
         label="Sign in"
         color="white"
@@ -40,7 +36,7 @@ const links = computed(() => [{
     </template>
 
     <template #panel>
-      <UAsideLinks :links="links"  />
+      <UAsideLinks :links="links" />
 
       <UDivider class="my-6" />
 

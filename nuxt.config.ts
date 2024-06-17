@@ -15,9 +15,9 @@ export default defineNuxtConfig({
     // 'nuxt-simple-sitemap',
     // '@stefanobartoletti/nuxt-social-share',
     '@nuxt/ui',
-    "@nuxtjs/seo"
+    '@nuxtjs/seo',
   ],
-  
+
   app: {
     head: {
       charset: 'utf-16',
@@ -36,7 +36,6 @@ export default defineNuxtConfig({
   routeRules: {
     '/': { prerender: true },
   },
-  
 
   typescript: {
     // typeCheck: true,
@@ -56,8 +55,8 @@ export default defineNuxtConfig({
       stylistic: {
         commaDangle: 'always',
         braceStyle: '1tbs',
-      }
-    }
+      },
+    },
   },
 
   devtools: { enabled: true },

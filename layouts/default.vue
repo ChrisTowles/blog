@@ -1,22 +1,15 @@
 <script setup>
-
-
-
 // import { UMain } from '@nuxt/ui'
-
 </script>
 
 <template>
   <div>
-  <NavigationHeader />
-  
+    <NavigationHeader />
+
     <UMain>
-         <slot />
-         
+      <slot />
     </UMain>
-    
+
     <NavigationFooter />
-
-</div>
+  </div>
 </template>
-
