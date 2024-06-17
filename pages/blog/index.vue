@@ -18,11 +18,12 @@ useSeoMeta({
   ogDescription: page.value.description,
 })
 
-defineOgImage({
-  component: 'Saas',
-  // title: page.value.title,
-  // description: page.value.description
-})
+// TODO: Add image
+// defineOgImage({
+//   component: 'Saas',
+//   // title: page.value.title,
+//   // description: page.value.description
+// })
 </script>
 
 <template>

@@ -18,7 +18,7 @@ const links = computed(() => [{
   <UHeader :links="links">
     <template #logo>
       {{ navbarData.homeTitle }} <UBadge
-        label="Landing"
+        label="New"
         variant="subtle"
         class="mb-0.5"
       />

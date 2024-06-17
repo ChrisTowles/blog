@@ -29,6 +29,10 @@ export default defineNuxtConfig({
     pageTransition: { name: 'page', mode: 'out-in' },
     layoutTransition: { name: 'layout', mode: 'out-in' },
   },
+  site: {
+    url: 'https://chris.towles.me',
+    
+  },
 
   ui: {
     icons: ['heroicons', 'simple-icons'],
