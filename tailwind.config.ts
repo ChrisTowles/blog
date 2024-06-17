@@ -15,6 +15,7 @@ export default <Partial<Config>>{
     },
   },
   content: [
-    'docs/content/**/*.md',
+    './public/**/*.html',
+    './pages/**/*.{js,jsx,ts,tsx,vue}',
   ],
 }
