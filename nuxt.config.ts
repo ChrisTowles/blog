@@ -31,7 +31,7 @@ export default defineNuxtConfig({
   },
   site: {
     url: 'https://chris.towles.me',
-    
+
   },
 
   ui: {
