@@ -53,6 +53,7 @@ pnpm run preview
   - First, any time I spend doing CSS and even Tailwind is time wasted.
   - Happy to give back to NuxtLabs, I've used so much from [Anthfu](https://github.com/antfu), [Daniel Roe](https://github.com/danielroe) and Vue and Nuxt core members.
 - Paid for Cloudflare ($5 Monthly)
+  - can likely go back to free but ran over the 1mb file.
 
 
 ## Icons
