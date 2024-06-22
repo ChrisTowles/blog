@@ -15,13 +15,13 @@ authors:
 So my main project at work is a [Vue 2](https://vuejs.org/) and [Vuetify 2](https://vuetifyjs.com/) site, but privately I have been playing with [Vue 3](https://vuejs.org/) and loved the [Composition API](https://staging.vuejs.org/guide/introduction.html#api-styles) to avoid `mixins`. Due to some new features, we are planning to build soon. I wanted to write it in `Vue 3`, to prevent needing to migrate it later.
 
 
-I wanted to investigate how to migrate from `Vue 2` to `Vue 3`. I planned to use the amazing [Migration Build](https://v3.vuejs.org/guide/migration/migration-build.html) to allow `Vue 3` to use most `Vue 2` components during a migration period. Which is much less risky for a large project.
+I wanted to investigate how to migrate from `Vue 2` to `Vue 3`. Furthermore, I planned to use the amazing [Migration Build](https://v3.vuejs.org/guide/migration/migration-build.html) to allow `Vue 3` to use most `Vue 2` components during a migration period. Which is much less risky for a large project.
 
-I took a rough hack at doing the migration leaving only a handful of pages to test over a day to see how likely the migration was. I had to upgrade `Vuetify` from `2.X.X` to an early beta version of `3.X.X`. However I was unable to get anything more than a few `v-cards` and `v-btn` was working. A peer on another work team had said as much but I hadn't listened. My bad.
+I took a rough hack at doing the migration leaving only a handful of pages to test over a day to see how likely the migration was. I had to upgrade `Vuetify` from `2.X.X` to an early beta version of `3.X.X`. However I was unable to get anything more than a few `v-cards` and `v-btn` was working. A peer on another work team had said as much, but I hadn't listened. My bad.
 
 ## Vuetify 3 is not ready of 2021-12-18
 
-Unfortunately, `Vuetify` is not ready for `Vue 3` as of 2021-12-18. I tried the beta [@vuetify/nightly](https://www.npmjs.com/package/@vuetify/nightly) but it's far from ready. The documentation said it's to ship in February but looking at the missing functionality I doubted it.
+Unfortunately, `Vuetify` is not ready for `Vue 3` as of 2021-12-18. I tried the beta [@vuetify/nightly](https://www.npmjs.com/package/@vuetify/nightly), but it's far from ready. The documentation said it's to ship in February but looking at the missing functionality I doubted it.
 
 I joined the discord community and got caught up on the most recent updates. Basicity it's going to take a little longer which is ok. It's open source and it's not like I've contributed any pull requests. It's been a great framework and recommend it to everyone.
 
@@ -29,7 +29,7 @@ I'll update this post when it is ready and has support for `Vue 3`.
 
 ## Original Goal - Vue 3
 
-So the dream would be to get to `vue 3` but that's not practical without `Vuetify`.  That leaves two options:
+So the dream would be to get to `vue 3`, but that's not practical without `Vuetify`.  That leaves two options:
 
 - Replace `Vuetify` with a different component framework
 - Don't upgrade to `Vue 3` and keep `Vuetify 2.X.X`
@@ -62,7 +62,7 @@ So the new goal looks like this.
 
 This gives a lot of benefits and a clear upgrade path!
 
-It was pretty easy to clone a simple example repo with `vue 2` and `vuetify 2.X.X` with `@vue/cli-service`. and tested out the upgrade there.
+It was pretty easy to clone a simple example repo with `vue 2` and `vuetify 2.X.X` with `@vue/cli-service`. And tested out the upgrade there.
 
 Once that worked I then did the upgrade on the more complex monorepo at work.
 

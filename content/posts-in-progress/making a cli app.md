@@ -5,11 +5,11 @@ lang: en
 duration: 7 min
 ---
 
-So i have alot of scripts
+So i have a lot of scripts
 
 i've been doing a lot of typescript recent years. And i love it. The instant hot road experience is so good, async and await and there always being a NPM package for everything always makes me feel productive.
 
-So of cource several times over the years i've
+So of source several times over the years i've
 
 So I tell a joke to develop her sometimes when I'm working in Python. I tell them that python is my 10th. Best language. Junior Des will laugh at that and think it's a joke. I'll laugh and wonder if maybe it's my 8th or knife now.
 

@@ -6,7 +6,7 @@ Sling most people off follow others in my career on Twitter. And I have a simple
 Do they refactor a lot? Do they use test? Do they have the same sensibilities about best practices that I tend to. Would I like to work with them....
 
 
-Do you open up a code that they've contributed and just amazed at how elegant it is? How simple it might if you're first glance but just how well it's off the problem where I know that I head offered or try to solve the same problem. My my solution would be 10 times as much code and twice as likely to break.
+Do you open up a code that they've contributed and just amazed at how elegant it is? How simple it might if your first glance but just how well it's off the problem where I know that I head offered or try to solve the same problem. My solution would be 10 times as much code and twice as likely to break.
 
 Those are the people I try to follow. To learn from. To imitate.
 
