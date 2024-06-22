@@ -78,9 +78,12 @@ else {
         </UButton>
       </div>
 
-      <div class="flex justify-center items-center">
+      <div
+        v-if="post.image && post.image.src"
+        class="flex justify-center items-center"
+      >
         <nuxt-img
-          v-if="post.image.src"
+
           :src="post.image.src"
           :alt="post.image.alt"
           class="rounded-lg w-3/5 h-auto"
