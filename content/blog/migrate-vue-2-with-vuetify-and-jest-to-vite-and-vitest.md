@@ -1,7 +1,10 @@
 ---
 title: Migrate Vue 2 with Vuetify and Jest to Vite and Vitest
 date: 2022-01-09
-
+image:
+  src: /images/css-migration.jpg
+  # source: https://www.pexels.com/photo/photography-of-macbook-half-opened-on-white-wooden-surface-633409/
+  alt: "css on screen"
 authors:
   - name: Chris Towles
     to: https://twitter.com/Chris_Towles

@@ -1,6 +1,10 @@
 ---
 title: You do not have time to not have tests
 date: 2021-12-17
+image:
+  src: /images/blog-passing-tests.png
+  # i took of the vitest repo tests
+  alt: "picture of tests passing in vitest"
 authors:
   - name: Chris Towles
     to: https://twitter.com/Chris_Towles

@@ -3,7 +3,9 @@ title: I am a Dark Matter Developer
 description: "Reflecting on my career and the type of developer I am."
 date: 2022-06-26
 image:
-  src: https://picsum.photos/id/490/640/360
+  src: /images/dark-matter-closing-laptop.jpg
+  # source: https://www.pexels.com/photo/photography-of-macbook-half-opened-on-white-wooden-surface-633409/
+  alt: "A laptop with a dark matter theme"
 authors:
   - name: Chris Towles
     to: https://twitter.com/Chris_Towles
