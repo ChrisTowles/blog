@@ -3,7 +3,7 @@ title: Why using Conventional commits is useful
 description: "Helping everyone to understand the commit history and its purpose"
 date: 2024-06-23
 image:
-  src: /images/conventional-commits.png
+  src: /images/blog/conventional-commits.png
   # source: https://www.pexels.com/photo/photography-of-macbook-half-opened-on-white-wooden-surface-633409/
   alt: "A laptop with a dark matter theme"
 authors:
@@ -58,7 +58,7 @@ When writing your commit message, follow these best practices:
 
 **Example commit message:** `fix: Update README.md to include new feature`
 
-![](/images/conventional-commit-example-ui-pro.png)
+![](/images/blog/conventional-commit-example-ui-pro.png)
 
 ## Step 4: Make It a Habit
 
@@ -95,7 +95,7 @@ git cz
 
 ```
 
-![](/images/conventional-commits.png)
+![](/images/blog/conventional-commits.png)
 
 But be sure to review the rules for the repository your contributing too. 
 

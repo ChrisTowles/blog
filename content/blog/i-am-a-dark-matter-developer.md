@@ -3,7 +3,7 @@ title: I am a Dark Matter Developer
 description: "Reflecting on my career and the type of developer I am."
 date: 2022-06-26
 image:
-  src: /images/dark-matter-closing-laptop.jpg
+  src: /images/blog/dark-matter-closing-laptop.jpg
   # source: https://www.pexels.com/photo/photography-of-macbook-half-opened-on-white-wooden-surface-633409/
   alt: "A laptop with a dark matter theme"
 authors:

@@ -64,6 +64,7 @@ else {
           v-for="(author, index) in post.authors"
           :key="index"
           :to="author.to"
+
           color="white"
           target="_blank"
           size="sm"
