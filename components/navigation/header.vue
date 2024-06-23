@@ -17,11 +17,12 @@ const links = computed(() => [{
 <template>
   <UHeader :links="links">
     <template #logo>
-      {{ navbarData.homeTitle }} <UBadge
-        label="Saas"
+      {{ navbarData.homeTitle }}
+      <!-- <UBadge
+        label="New"
         variant="subtle"
         class="mb-0.5"
-      />
+      /> -->
     </template>
 
     <template #right>

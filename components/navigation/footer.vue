@@ -11,7 +11,13 @@ const links: { label: string, children: FooterLink[] }[] = [{
   {
     label: 'X / Twitter',
     to: 'https://x.com/Chris_Towles',
-  }],
+  },
+    // TODO: Add RSS link
+    // {
+    //   label: 'RSS',
+    //   to: 'https://github.com/ChrisTowles/blog/RSS-TODO',
+    // },
+  ],
 }]
 </script>
 
