@@ -2,6 +2,7 @@ title: Chris Towles's - Blog
 description: Usually in AWS, Vue, Typescript and Python tinkering with everything else. 
 hero:
   title: Chris Towles's Blog
+  # title: Hi! 👋 My name is Chris Towles and I am a Software Engineer and Solution Architect.
   description: Usually in AWS, Vue, Typescript and Python tinkering with everything else. 
   headline:
     # label: Made with Nuxt UI Pro

@@ -77,22 +77,21 @@ else {
           {{ author.name }}
         </UButton>
       </div>
-
-      <div
-        v-if="post.image && post.image.src"
-        class="flex justify-center items-center"
-      >
-        <nuxt-img
-
-          :src="post.image.src"
-          :alt="post.image.alt"
-          class="rounded-lg w-3/5 h-auto"
-        />
-      </div>
     </UPageHeader>
 
     <UPage>
       <UPageBody prose>
+        <div
+          v-if="post.image && post.image.src"
+          class="flex justify-center items-center"
+        >
+          <nuxt-img
+
+            :src="post.image.src"
+            :alt="post.image.alt"
+            class="rounded-lg w-4/5 h-auto"
+          />
+        </div>
         <ContentRenderer
           v-if="post && post.body"
           :value="post"

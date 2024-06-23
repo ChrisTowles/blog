@@ -26,8 +26,6 @@ And the collusion I've come to is that I have become a **Dark Matter Developer**
 Way back in 2012 I remember a post by Scott Hanselman called [Dark Matter Developers: The Unseen 99%](https://www.hanselman.com/blog/dark-matter-developers-the-unseen-99).
 
 
-<!-- more -->
-
 > You can't see dark matter, but we're pretty sure it's there. Not only is it there, but it's MOST of what's there. We know it and we can't see it. It never shows up.
 
 The analogy was a good one. But at the time I had a [Blogspot blog](https://christowles.blogspot.com/) with about half a million views. I was active in the developer community and even attended a VMWorld as a speaker on a panel.

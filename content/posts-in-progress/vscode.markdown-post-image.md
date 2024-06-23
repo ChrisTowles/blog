@@ -1,0 +1,1 @@
+[chris-towles.markdown-paste-image](https://marketplace.visualstudio.com/items?itemName=chris-towles.markdown-paste-image)
