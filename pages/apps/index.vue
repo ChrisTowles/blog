@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import type { BlogPost } from '~/types/blogPost'
+import { type AppEntry } from '~/types/appEntry'
 
-const { data: page } = await useAsyncData('blog', () => queryContent('/blog').findOne())
+const { data: page } = await useAsyncData('apps', () => queryContent('/apps').findOne())
 if (!page.value) {
   throw createError({ statusCode: 404, statusMessage: 'Page not found', fatal: true })
 }
 
-const { data: posts } = await useAsyncData('posts', () => queryContent<BlogPost>('/blog')
-  .where({ _extension: 'md' })
-  .sort({ date: -1 })
+const { data: apps } = await useAsyncData('apps-list', () => queryContent<AppEntry>('/apps')
+  .where({
+    _extension: 'md',
+    type: { $exists: true },
+  })
+  // .sort({ date: -1 })
   .find())
 
 useSeoMeta({
@@ -17,13 +20,6 @@ useSeoMeta({
   description: page.value.description,
   ogDescription: page.value.description,
 })
-
-// TODO: Add image
-// defineOgImage({
-//   component: 'Saas',
-//   // title: page.value.title,
-//   // description: page.value.description
-// })
 </script>
 
 <template>
@@ -32,25 +28,30 @@ useSeoMeta({
       v-bind="page"
       class="py-[50px]"
     />
+    {{ apps }}
 
     <UPageBody>
       <UBlogList>
         <UBlogPost
-          v-for="(post, index) in posts"
+          v-for="(post, index) in apps"
           :key="index"
           :to="post._path"
           :title="post.title"
           :description="post.description"
           :image="post.image"
-          :date="new Date(post.date).toLocaleDateString('en', { year: 'numeric', month: 'short', day: 'numeric' })"
-          :authors="post.authors"
-          :badge="post.badge"
+
           :orientation="index === 0 ? 'horizontal' : 'vertical'"
           :class="[index === 0 && 'col-span-full']"
           :ui="{
             description: 'line-clamp-2',
           }"
         />
+        <!--
+           :date="new Date(post.date).toLocaleDateString('en', { year: 'numeric', month: 'short', day: 'numeric' })"
+          :authors="post.authors"
+          :badge="post.badge"
+
+        -->
       </UBlogList>
     </UPageBody>
   </UContainer>
