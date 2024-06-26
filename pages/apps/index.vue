@@ -28,8 +28,6 @@ useSeoMeta({
       v-bind="page"
       class="py-[50px]"
     />
-    {{ apps }}
-
     <UPageBody>
       <UBlogList>
         <UBlogPost
