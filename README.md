@@ -1,8 +1,12 @@
 # Chris Towles Blog
 
+this is just my personal blog at https://Chris.Towles.me
 
 
 Look at the [Nuxt 3 documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+
+
+
 
 ## Setup
 
