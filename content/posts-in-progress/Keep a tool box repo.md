@@ -27,9 +27,9 @@ some thing named like:
 Its job is to keep the thousands of scratch pads, scripts, notes and one off sql commands in.
 
 
-## why?
+## Why?
 
-because during a meeting, take a note down, got a todo. throw it in markdown and get it off your brain. You can expand it into a better document but you have to get something stored in one form or another.
+Because during a meeting, take a note down, got a todo. throw it in markdown and get it off your brain. You can expand it into a better document but you have to get something stored in one form or another.
 
 Don't worry about it being pretty or anything. Just put it there.
 
