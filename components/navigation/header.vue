@@ -6,7 +6,7 @@ const links = computed(() => [{
   label: 'Blog List',
   to: '/blog',
 }, {
-  label: 'Mobile Apps',
+  label: 'Public Apps',
   icon: 'i-heroicons-device-phone-mobile',
   to: '/apps',
 },
