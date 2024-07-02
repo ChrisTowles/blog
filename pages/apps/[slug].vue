@@ -15,7 +15,7 @@ if (!post.value) {
 }
 
 const { data: surround } = await useAsyncData(`${route.path}-surround`, () => queryContent('/blog')
-  .where({ _extension: 'md' })
+  .where({ _extension: 'md', title: { $exists: true } })
   .without(['body', 'excerpt'])
   .sort({ date: -1 })
   .findSurround(withoutTrailingSlash(route.path)), { default: () => [] })

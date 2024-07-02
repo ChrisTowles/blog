@@ -7,7 +7,10 @@ if (!page.value) {
 }
 
 const { data: posts } = await useAsyncData('posts', () => queryContent<BlogPost>('/blog')
-  .where({ _extension: 'md' })
+  .where({
+    _extension: 'md',
+    date: { $exists: true },
+  })
   .sort({ date: -1 })
   .find())
 

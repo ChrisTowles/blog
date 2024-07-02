@@ -10,7 +10,11 @@
             ":\\s*[\"'`]([^\"'`]*).*?[\"'`]"
         ]
     ],
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/.nuxt": true,
+    },
     // markdown paste image - https://marketplace.visualstudio.com/items?itemName=chris-towles.markdown-paste-image
     "markdownPasteImage.encodePath": "urlEncode",
-    "markdownPasteImage.imageFolderPath": "${projectRoot}/public/images/blog/"
+    "markdownPasteImage.imageFolderPath": "${projectRoot}/public/images/blog/",
 }

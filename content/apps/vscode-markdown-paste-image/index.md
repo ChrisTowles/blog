@@ -3,23 +3,29 @@ title: VScode Markdown Pase Image
 description: "Vscode extension to make pasting pictures in markdown easier"
 image:
   src: /images/blog/vscode-paste-image-markdown-logon.png
-  # source: https://www.pexels.com/photo/photography-of-macbook-half-opened-on-white-wooden-surface-633409/
-  alt: "screen shot of Right Angle Triangle Solver App"
+  alt: "Logo of chris-towles.markdown-paste-image"
 
 type: vscode-extension
 
 ---
 
-I write alot markdown. And one of the few things easier to do in Word, Or Google Drive is add pictures. 
-
-You paste your image from clipboard but then you have to rename, the file, move to where its hosted, etc....
-
-
-
-So I wrote a small extension for VSCode. 
+## Links
 
 - Github - <https://github.com/ChrisTowles/vscode-markdown-paste-image>
 - Marketplace - <https://marketplace.visualstudio.com/items?itemName=chris-towles.markdown-paste-image>
+
+
+## Why?
+I write a lot of Markdown! However one of the few things easier to do in Word Or Google Drive is include pictures. 
+
+With markdown you paste your image from clipboard but then you have to rename the file, move to correct folder, and then fix the markdown path to it. This extension makes that process a lot easier. It will prompt you for the image name, and then automatically put the image in the correct place. 
+
+This project started after issues with [mushan.vscode-paste-image](https://marketplace.visualstudio.com/items?itemName=mushan.vscode-paste-image). I looked for an alternative and finding out that it looked like there were half a [dozen copies](https://marketplace.visualstudio.com/search?term=image%20paste%20markdown&target=VSCode&category=Other&sortBy=Relevance) and most were forks, or no longer maintained. None of them had tests!
+
+I decided to use [Anthony Fu](https://github.com/antfu)'s repo for [vscode-smart-clicks](https://github.com/antfu/vscode-smart-clicks) as a starting point. And then build from there to have the features that I wanted.
+
+
+
  
 ## Installation
 
@@ -37,8 +43,6 @@ ext install chris-towles.markdown-paste-image
 - Configurable to how to name the file and where to save.
 
 
-## Why
+## Conclusion
 
-There are other Extensions that had this feature, but they were not maintained, had bugs, or had tons of features I didn't want. So here is a simple extension that does one thing and one thing only and does it with tests! 
-
-
+If you haven't looks at what goes into vscode extensions, you should. It's pretty easy to do, and it's a good way to learn. I use this extension every day and its in all my work repos as well!
