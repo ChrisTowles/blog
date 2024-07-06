@@ -16,6 +16,7 @@ export default defineNuxtConfig({
     // '@stefanobartoletti/nuxt-social-share',
     '@nuxt/ui',
     '@nuxtjs/seo',
+    'nuxt-gtag',
   ],
 
   app: {
@@ -62,6 +63,10 @@ export default defineNuxtConfig({
         braceStyle: '1tbs',
       },
     },
+  },
+
+  gtag: {
+    id: 'G-XXXXXXXXXX',
   },
 
   devtools: { enabled: true },
