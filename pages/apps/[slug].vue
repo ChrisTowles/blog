@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { withoutTrailingSlash, joinURL } from 'ufo'
-import type { BlogPost } from '~/types/blogPost'
 
 const imageClasses = {
   wrapper: 'ring-1 ring-gray-200 dark:ring-gray-800 relative overflow-hidden aspect-[16/9] w-full rounded-lg pointer-events-none',
@@ -8,11 +7,7 @@ const imageClasses = {
 }
 
 const route = useRoute()
-
-const { data: post } = await useAsyncData(route.path, () => queryContent<BlogPost>(route.path).findOne())
-if (!post.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Post not found', fatal: true })
-}
+const post = await getPageAndCheckRouteExistsOrThrow404(route)
 
 const { data: surround } = await useAsyncData(`${route.path}-surround`, () => queryContent('/blog')
   .where({ _extension: 'md', title: { $exists: true } })

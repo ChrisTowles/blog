@@ -1,18 +1,9 @@
 <script setup lang="ts">
 import type { BlogPost } from '~/types/blogPost'
 
-const { data: page } = await useAsyncData('blog', () => queryContent('/blog').findOne())
-if (!page.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Page not found', fatal: true })
-}
-
-const { data: posts } = await useAsyncData('posts', () => queryContent<BlogPost>('/blog')
-  .where({
-    _extension: 'md',
-    date: { $exists: true },
-  })
-  .sort({ date: -1 })
-  .find())
+const route = useRoute()
+const page = await getPageAndCheckRouteExistsOrThrow404<BlogPost>(route)
+const posts = await getAllPosts()
 
 useSeoMeta({
   title: page.value.title,

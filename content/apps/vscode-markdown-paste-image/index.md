@@ -11,14 +11,14 @@ type: vscode-extension
 
 ## Links
 
-- Github - <https://github.com/ChrisTowles/vscode-markdown-paste-image>
+- GitHub - <https://github.com/ChrisTowles/vscode-markdown-paste-image>
 - Marketplace - <https://marketplace.visualstudio.com/items?itemName=chris-towles.markdown-paste-image>
 
 
 ## Why?
-I write a lot of Markdown! However one of the few things easier to do in Word Or Google Drive is include pictures. 
+I write a lot of Markdown! However, one of the few things easier to do in Word Or Google Drive is to include pictures. 
 
-With markdown you paste your image from clipboard but then you have to rename the file, move to correct folder, and then fix the markdown path to it. This extension makes that process a lot easier. It will prompt you for the image name, and then automatically put the image in the correct place. 
+With Markdown, you paste your image from clipboard, but then you have to rename the file, move to correct folder, and then fix the markdown path to it. This extension makes that process a lot easier. It will prompt you for the image name, and then automatically put the image in the correct place. 
 
 This project started after issues with [mushan.vscode-paste-image](https://marketplace.visualstudio.com/items?itemName=mushan.vscode-paste-image). I looked for an alternative and finding out that it looked like there were half a [dozen copies](https://marketplace.visualstudio.com/search?term=image%20paste%20markdown&target=VSCode&category=Other&sortBy=Relevance) and most were forks, or no longer maintained. None of them had tests!
 
@@ -45,4 +45,4 @@ ext install chris-towles.markdown-paste-image
 
 ## Conclusion
 
-If you haven't looks at what goes into vscode extensions, you should. It's pretty easy to do, and it's a good way to learn. I use this extension every day and its in all my work repos as well!
+If you haven't looks at what goes into VS Code extensions, you should. It's pretty easy to do, and it's a good way to learn. I use this extension every day and its in all my work repos as well!

@@ -1,22 +1,9 @@
 <script setup lang="ts">
-import { withoutTrailingSlash, joinURL } from 'ufo'
+import { joinURL } from 'ufo'
 import type { BlogPost } from '~/types/blogPost'
 
 const route = useRoute()
-
-const { data: post } = await useAsyncData(route.path, () => queryContent<BlogPost>(route.path).findOne())
-if (!post.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Post not found', fatal: true })
-}
-
-const { data: surround } = await useAsyncData(`${route.path}-surround`, () => queryContent('/blog')
-  .where({
-    _extension: 'md',
-    date: { $exists: true },
-  })
-  .without(['body', 'excerpt'])
-  .sort({ date: -1 })
-  .findSurround(withoutTrailingSlash(route.path)), { default: () => [] })
+const post = await getPageAndCheckRouteExistsOrThrow404<BlogPost>(route)
 
 const title = post.value.head?.title || post.value.title
 const description = post.value.head?.description || post.value.description
@@ -27,6 +14,8 @@ useSeoMeta({
   description,
   ogDescription: description,
 })
+
+const surround = await getSurroundBlogPosts(route)
 
 if (post.value.image?.src) {
   const site = useSiteConfig()

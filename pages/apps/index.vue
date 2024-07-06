@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { type AppEntry } from '~/types/appEntry'
 
-const { data: page } = await useAsyncData('apps', () => queryContent('/apps').findOne())
-if (!page.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Page not found', fatal: true })
-}
+const route = useRoute()
+const page = await getPageAndCheckRouteExistsOrThrow404(route)
 
 const { data: apps } = await useAsyncData('apps-list', () => queryContent<AppEntry>('/apps')
   .where({
