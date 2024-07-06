@@ -65,9 +65,8 @@ export default defineNuxtConfig({
     },
   },
 
-  gtag: {
-    id: 'G-XXXXXXXXXX',
-  },
+  // set in .env with NUXT_PUBLIC_GTAG_ID
+  gtag: {},
 
   devtools: { enabled: true },
 
