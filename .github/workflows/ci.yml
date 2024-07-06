@@ -16,6 +16,7 @@ jobs:
 
     env:
       NUXT_UI_PRO_LICENSE: ${{ secrets.NUXT_UI_PRO_LICENSE }}
+      NUXT_PUBLIC_GTAG_ID: ${{ env.NUXT_PUBLIC_GTAG_ID }}
 
     steps:
       - name: Checkout
