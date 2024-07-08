@@ -66,7 +66,10 @@ export default defineNuxtConfig({
   },
 
   // set in .env with NUXT_PUBLIC_GTAG_ID
-  gtag: {},
+  gtag: {
+    id: 'G-XXXXXXXXXX', // place holder to be replaced with actual `.env` file value
+    config: { anonymize_ip: false },
+  },
 
   devtools: { enabled: true },
 
