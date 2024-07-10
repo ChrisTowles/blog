@@ -16,7 +16,7 @@ jobs:
 
     env:
       NUXT_UI_PRO_LICENSE: ${{ secrets.NUXT_UI_PRO_LICENSE }}
-      NUXT_PUBLIC_GTAG_ID: ${{ vars.NUXT_PUBLIC_GTAG_ID }}
+      NUXT_PUBLIC_GTAG_ID: ${{ secrets.NUXT_PUBLIC_GTAG_ID }}
 
     steps:
       - name: Checkout
@@ -61,7 +61,7 @@ jobs:
         run: pnpm run typecheck
 
       - name: Build
-        run: pnpm run build --preset=cloudflare_pages
+        run: pnpm run build:cf
 
       #- name: Test
       #  run: pnpm run test run
