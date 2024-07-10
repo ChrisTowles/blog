@@ -67,7 +67,7 @@ export default defineNuxtConfig({
 
   // set in .env with NUXT_PUBLIC_GTAG_ID
   gtag: {
-    id: 'G-XXX-Fake', // place holder to be replaced with actual `.env` file value
+    id: 'G-X0H34W6PGC', // set correct here, but over ridden locally G-XXXXXXXXX
     config: { anonymize_ip: false },
   },
 

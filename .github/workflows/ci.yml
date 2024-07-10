@@ -16,7 +16,9 @@ jobs:
 
     env:
       NUXT_UI_PRO_LICENSE: ${{ secrets.NUXT_UI_PRO_LICENSE }}
-      NUXT_PUBLIC_GTAG_ID: ${{ secrets.NUXT_PUBLIC_GTAG_ID }}
+
+      #FOr what ever reason, this doesn't work, so set correct value in nuxt.config.ts for now.
+      #NUXT_PUBLIC_GTAG_ID: ${{ secrets.NUXT_PUBLIC_GTAG_ID }}
 
     steps:
       - name: Checkout
