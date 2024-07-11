@@ -1,4 +1,6 @@
 <script setup>
+import { joinURL } from 'ufo'
+
 // import { siteMetaData } from './data'
 
 // useHead({
@@ -23,10 +25,12 @@ useHead({
   ],
 })
 
-// TODO: fix up
+const site = useSiteConfig()
+const imageUrl = joinURL(site.url, 'images/ctowles-profile-512x512.png')
+
 useSeoMeta({
-  ogImage: '/images/ctowles-profile-512x512',
-  twitterImage: '/images/ctowles-profile-512x512',
+  ogImage: imageUrl,
+  twitterImage: imageUrl,
   twitterCard: 'summary_large_image',
 })
 </script>
