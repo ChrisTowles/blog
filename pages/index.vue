@@ -1,5 +1,9 @@
 <script setup lang="ts">
-const { data: page } = await useAsyncData('index', () => queryContent('/').findOne())
+const route = useRoute()
+const page = await getPageAndCheckRouteExistsOrThrow404(route)
+
+// TODO: for now just the latest posts will do
+const posts = await getBlogPosts({ limit: 4 })
 
 useSeoMeta({
   title: page.value?.title,
@@ -57,7 +61,28 @@ useSeoMeta({
         />
       </ULandingLogos>
     </ULandingHero>
+    <UContainer>
+      <UHeader title="Recent Posts" />
 
+      <UBlogList>
+        <UBlogPost
+          v-for="(post, index) in posts"
+          :key="index"
+          :to="post._path"
+          :title="post.title"
+          :description="post.description"
+          :image="post.image"
+          :date="new Date(post.date).toLocaleDateString('en', { year: 'numeric', month: 'short', day: 'numeric' })"
+          :authors="post.authors"
+          :badge="post.badge"
+          :orientation="index === 0 ? 'horizontal' : 'vertical'"
+          :class="[index === 0 && 'col-span-full']"
+          :ui="{
+            description: 'line-clamp-2',
+          }"
+        />
+      </UBlogList>
+    </UContainer>
     <ULandingSection
       :title="page?.features.title"
       :description="page?.features.description"

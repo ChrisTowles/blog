@@ -3,7 +3,7 @@ import type { BlogPost } from '~/types/blogPost'
 
 const route = useRoute()
 const page = await getPageAndCheckRouteExistsOrThrow404<BlogPost>(route)
-const posts = await getAllPosts()
+const posts = await getBlogPosts()
 
 useSeoMeta({
   title: page.value.title,

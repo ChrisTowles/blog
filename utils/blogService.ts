@@ -2,13 +2,14 @@ import { withoutTrailingSlash } from 'ufo'
 import type { RouteLocation } from 'vue-router'
 import type { BlogPost } from '~/types/blogPost'
 
-export const getAllPosts = async (): Promise<Ref<BlogPost[] | null >> => {
+export const getBlogPosts = async ({ limit }: { limit?: number } = {}): Promise<Ref<BlogPost[] | null >> => {
   const { data: posts } = await useAsyncData('posts', () => queryContent<BlogPost>('/blog')
     .where({
       _extension: 'md',
       date: { $exists: true },
     })
     .sort({ date: -1 })
+    .limit(limit ? limit : 10_000) // should be more than enough :)
     .find())
 
   return posts
