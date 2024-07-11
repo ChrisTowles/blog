@@ -25,8 +25,8 @@ useHead({
 
 // TODO: fix up
 useSeoMeta({
-  ogImage: 'https://landing-template.nuxt.dev/social-card.png',
-  twitterImage: 'https://landing-template.nuxt.dev/social-card.png',
+  ogImage: '/images/ctowles-profile-512x512',
+  twitterImage: '/images/ctowles-profile-512x512',
   twitterCard: 'summary_large_image',
 })
 </script>
