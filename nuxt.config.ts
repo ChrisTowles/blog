@@ -23,8 +23,8 @@ export default defineNuxtConfig({
     head: {
       charset: 'utf-16',
       viewport: 'width=device-width,initial-scale=1',
-      title: 'Chris\'s Blog',
-      titleTemplate: '%s - Chris Towles\'s Blog',
+      title: 'Chris\'s Towles Blog',
+      titleTemplate: '%s - Software, Development and Technology Architecture',
       meta: [{ name: 'description', content: 'Chris Towles Blog' }],
     },
     pageTransition: { name: 'page', mode: 'out-in' },
