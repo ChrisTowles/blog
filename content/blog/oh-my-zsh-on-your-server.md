@@ -18,14 +18,15 @@ badge:
   label: productivity
 ---
 
-So recently I've been helping other teams that have a lot of EC2 instances and find my self ssh into them and running common and similar commands alot!
+So recently I've been helping other teams that have a lot of EC2 instances and find my self ssh into them and running common and similar commands a lot! 
 
 On my personal machine I have my terminal using [oh-my-zsh](https://github.com/ohmyzsh/ohmyzsh) and [Spaceship-prompt](https://github.com/spaceship-prompt/spaceship-prompt). My `.zshrc` is public here: https://github.com/ChrisTowles/dotfiles. 
 
 And I take for granted all the useful behavior and commands that I use on my personal machine. Autocomplete previous commands, better syntax highlighting, and more.
 
-When I ssh into a server I'm not using oh my zsh I find my self grepping the history and looking for commands that I use all the time. On top of that the default prompt doesn't have the server name. So its SOOOO easy to be on the wrong server. Are you in `production` or `nonprod`. 
+When I ssh into a server I find my self grepping the history and looking for commands that I use all the time. On top of that the default prompt doesn't have the server name. So its SOOOO easy to be on the wrong server. Are you in `production` or `nonprod`.
 
+I'm wasting time it's only a matter of time I make a change to the wrong and impact users by mistake. 
 
 After many weeks of helping out with this I decided to try and make it easier for myself. I've started setting up `oh-my-zsh` on the servers for my profiles I'm in constantly.
 
@@ -36,7 +37,7 @@ https://blog.devops.dev/installing-zsh-oh-my-zsh-on-amazon-ec2-amazon-linux-2-am
 
 
 ```bash
- Installing ZSH
+# Installing ZSH
 sudo yum -y install zsh
 
 # Check ZSH has been installed
