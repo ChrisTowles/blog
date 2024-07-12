@@ -13,7 +13,7 @@ authors:
       src: /images/ctowles-profile-512x512.png
 
 badge:
-  label: InProgress
+  label: productivity
 ---
 
 
