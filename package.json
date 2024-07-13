@@ -16,7 +16,8 @@
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
     "typecheck": "nuxt typecheck",
-    "prepare": "husky"
+    "prepare": "husky",
+    "deploy": "wrangler "
   },
   "dependencies": {
     "@iconify-json/heroicons": "^1.1.22",
@@ -42,7 +43,8 @@
     "nuxt": "^3.12.3",
     "nuxt-gtag": "^2.0.6",
     "tailwindcss": "^3.4.4",
-    "vue-tsc": "^1.8.27"
+    "vue-tsc": "^1.8.27",
+    "wrangler": "^3.64.0"
   },
   "packageManager": "pnpm@9.5.0",
   "lint-staged": {
