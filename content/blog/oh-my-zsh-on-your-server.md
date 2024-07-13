@@ -89,7 +89,7 @@ Here we'll append this to the `~/.zshrc` file.
 
 ```bash
 
-SERVER_FRIENDLY_NAME=REPLACE_WITH_FRINDLY_SERVER_NAME
+SERVER_FRIENDLY_NAME=REPLACE_WITH_FRIENDLY_SERVER_NAME
 # add user and host to ohmyzsh terminal prompt - https://stackoverflow.com/questions/30199068/zsh-prompt-and-hostnameE
 autoload -U colors && colors
 PS1="%{$fg[green]%}%n%{$reset_color%}@%{$fg[cyan]%}$SERVER_FRIENDLY_NAME %{$fg[yellow]%}%~ %{$reset_color%}%% "

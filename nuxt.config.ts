@@ -1,6 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   extends: ['@nuxt/ui-pro'],
+
   modules: [
     '@nuxt/image',
     '@vueuse/nuxt',
@@ -30,6 +31,7 @@ export default defineNuxtConfig({
     pageTransition: { name: 'page', mode: 'out-in' },
     layoutTransition: { name: 'layout', mode: 'out-in' },
   },
+
   site: {
     url: 'https://chris.towles.me',
 
@@ -38,6 +40,7 @@ export default defineNuxtConfig({
   ui: {
     icons: ['heroicons', 'simple-icons'],
   },
+
   routeRules: {
     '/': { prerender: true },
   },
@@ -56,6 +59,7 @@ export default defineNuxtConfig({
       ],
     },
   },
+
   eslint: {
     config: {
       stylistic: {
@@ -72,5 +76,5 @@ export default defineNuxtConfig({
   },
 
   devtools: { enabled: true },
-
+  compatibilityDate: '2024-07-12',
 })

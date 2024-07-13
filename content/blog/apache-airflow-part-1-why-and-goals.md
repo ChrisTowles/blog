@@ -26,7 +26,6 @@ I've done a few proofs of concept work with Airflow in the past. It is solid sol
 - It's open source
 - Hugely popular and used by many companies.
   - Features and interpretations are available with nearly everything
-- 
 
 ## Why not other solutions?
 
