@@ -58,6 +58,28 @@ export default defineNuxtConfig({
         '/',
       ],
     },
+    // experimental: {
+    //   wasm: true,
+    // },
+  },
+  // $production: {
+  //   nitro: {
+  //     // !Important: we only want to enable the wasm feature in production since it will break syntax highlighting when running the dev server
+  //     // https://github.com/nuxt-modules/mdc/issues/159
+  //     experimental: {
+  //       wasm: true,
+  //     },
+  //   },
+  // },
+
+  vite: {
+    build: {
+      rollupOptions: {
+        external: [
+          'shiki/onig.wasm', // !Important: externalize the wasm import https://github.com/nuxt-modules/mdc/issues/159
+        ],
+      },
+    },
   },
 
   eslint: {

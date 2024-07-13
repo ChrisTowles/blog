@@ -18,9 +18,12 @@ This is just my personal blog at https://Chris.Towles.me
 - Cloudflare
   - Paid for Cloudflare ($5 Monthly)
   - can likely go back to free but ran over the 1mb file limit.
+  - https://nuxt.com/deploy/cloudflare
 = Icons
   - https://heroicons.com/
   - https://simpleicons.org/
+
+
 
 ## Great Examples of Nuxt UI Pro
 
