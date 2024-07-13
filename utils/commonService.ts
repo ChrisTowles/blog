@@ -1,4 +1,4 @@
-import type { ParsedContent } from '@nuxt/content/types'
+import type { ParsedContent } from '@nuxt/content'
 import { type RouteLocation } from 'vue-router'
 
 export const getPageAndCheckRouteExistsOrThrow404 = async <T extends ParsedContent >(route: RouteLocation): Promise<Ref<T>> => {

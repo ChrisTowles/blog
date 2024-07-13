@@ -1,4 +1,4 @@
-import type { ParsedContent } from '@nuxt/content/dist/runtime/types'
+import type { ParsedContent } from '@nuxt/content'
 // import type { Badge, Avatar } from '#ui/types'
 // import type { NuxtLinkProps } from '#app'
 
