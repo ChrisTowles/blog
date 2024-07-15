@@ -1,13 +1,12 @@
 ---
 title: Oh My Zsh on your server
-description: "Why i'm installing it on servers I ssh into alot."
+description: "Why i'm installing it on servers I ssh into a lot."
 date: 2024-07-11
 image:
   src: /images/blog/improve-server-terminal.png
-  alt: "desk with 3 montitors and lots of code open"
-
-  # generated with fooocus Styles:	['Fooocus Enhance', 'SAI Fantasy Art', 'SAI Comic Book']
-  # promp: image of computer on desk working on code
+  alt: "desk with 3 monitors and lots of code open"
+  # generated  with fooocus Styles 'Fooocus Enhance', 'SAI Fantasy Art', 'SAI Comic Book'
+  # prompt: image of computer on desk working on code
 authors:
   - name: Chris Towles
     to: https://twitter.com/Chris_Towles
@@ -61,6 +60,7 @@ git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-m
 sudo su - $(whoami)
 
 ```
+
 Now modify the `~/.zshrc` to update the plugins
 
 ```bash
@@ -73,7 +73,7 @@ So I want to quickly know what server I'm on you can modify the prompt in `~/.zs
 
 ```bash
 
-SERVER_FRIENDLY_NAME=REPLACE_WITH_FRINDLY_SERVER_NAME
+SERVER_FRIENDLY_NAME=REPLACE_WITH_FRIENDLY_SERVER_NAME
 # add user and host to ohmyzsh terminal prompt - https://stackoverflow.com/questions/30199068/zsh-prompt-and-hostnameE
 autoload -U colors && colors
 PS1="%{$fg[green]%}%n%{$reset_color%}@%{$fg[cyan]%}%m %{$fg[yellow]%}%~ %{$reset_color%}%% "
@@ -83,7 +83,6 @@ PS1="%{$fg[green]%}%n%{$reset_color%}@%{$fg[cyan]%}%m %{$fg[yellow]%}%~ %{$reset
 But if the default hostname is the ec2 IP? Here is AWS advice on changing prompt without changing the DNS or hostname.
 
 https://docs.aws.amazon.com/linux/al2/ug/set-hostname.html#set-hostname-shell
-
 
 Here we'll append this to the `~/.zshrc` file.
 
@@ -98,20 +97,8 @@ PS1="%{$fg[green]%}%n%{$reset_color%}@%{$fg[cyan]%}$SERVER_FRIENDLY_NAME %{$fg[y
 
 Here is a screenshot of what this looks like.
 
-![](/images/blog/oh-my-zsh-server-friendly-name-in-prompt.png)
-
+![h-my-zsh-server-friendly-name-in-prompt](/images/blog/oh-my-zsh-server-friendly-name-in-prompt.png)
 
 ## Security
 
 So the reasons for not doing this are mainly security. Any additional piece of code on the machine is another attack vector. So this is a judgment call. What is the impact of oh-my-zsh is compromised against the benefits. Based on the popularity of oh-my-zsh and I'm leaning towards this being safe enough to do in some environments.
-
-
-
-
-
-
-
-
-
-
-
