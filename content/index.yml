@@ -37,6 +37,10 @@ features:
       description: Always take notes. You will forget given time. Leave a clue for future you.
       icon: i-heroicons-pencil-square
     - title: Setup CI/CD
-      description: if its worth deploying, its worth doing so a repeatable way. 
+      description: if its worth deploying, its worth doing so in a repeatable way. 
       icon: i-heroicons-rocket-launch  
+    - title: Tests
+      description: tests help you! Want to refactor and improve things? Tests let you do that!
+      icon: i-heroicons-academic-cap-solid
+      
 

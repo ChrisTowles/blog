@@ -18,6 +18,7 @@
     "markdownPasteImage.encodePath": "urlEncode",
     "markdownPasteImage.imageFolderPath": "${projectRoot}/public/images/blog/",
     "cSpell.words": [
+        "heroicons",
         "Sideload"
     ],
 }
