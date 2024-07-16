@@ -17,8 +17,8 @@
     "lint": "eslint .",
     "typecheck": "nuxt typecheck",
     "prepare": "husky",
-    "deploy:main": "dotenvx run --env-file=.env  -- pnpm exec wrangler pages deploy",
-    "deploy": "dotenvx run --env-file=.env -- pnpm exec wrangler pages dev "
+    "deploy:main": "wrangler pages deploy",
+    "deploy": "wrangler pages dev "
   },
   "dependencies": {
     "@iconify-json/heroicons": "^1.1.22",
@@ -29,7 +29,6 @@
     "vue-router": "^4.4.0"
   },
   "devDependencies": {
-    "@dotenvx/dotenvx": "^1.6.2",
     "@nuxt/content": "^2.13.1",
     "@nuxt/eslint": "^0.3.13",
     "@nuxt/fonts": "^0.7.1",

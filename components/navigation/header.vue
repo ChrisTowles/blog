@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { AsideLink } from '@nuxt/ui-pro/types'
-import { navbarData } from './../../data'
+import { navbarData } from '../../utils/data'
 
 const links = computed(() => [{
   label: 'Blog List',
