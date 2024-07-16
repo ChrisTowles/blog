@@ -17,7 +17,7 @@
     "lint": "eslint .",
     "typecheck": "nuxt typecheck",
     "prepare": "husky",
-    "deploy": "wrangler "
+    "deploy": "wrangler"
   },
   "dependencies": {
     "@iconify-json/heroicons": "^1.1.22",

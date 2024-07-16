@@ -17,6 +17,7 @@ jobs:
     env:
       NUXT_UI_PRO_LICENSE: ${{ secrets.NUXT_UI_PRO_LICENSE }}
 
+
       #FOr what ever reason, this doesn't work, so set correct value in nuxt.config.ts for now.
       #NUXT_PUBLIC_GTAG_ID: ${{ secrets.NUXT_PUBLIC_GTAG_ID }}
 
@@ -65,6 +66,12 @@ jobs:
       - name: Build
         run: pnpm run build:cf
 
+      - name: deploy
+        run: pnpm run deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       #- name: Test
       #  run: pnpm run test run
 
@@ -79,19 +86,19 @@ jobs:
       #   run: ./scripts/release.sh
       #   env:
       #     NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
-      - name: Publish to Cloudflare Pages
-        uses: cloudflare/pages-action@v1 # https://github.com/cloudflare/pages-action
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: blog
-          directory: dist
-          # Optional: Enable this if you want to have GitHub Deployments triggered
-          #gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          # Optional: Switch what branch you are publishing to.
-          # By default this will be the branch which triggered this workflow
-          branch: main
-          # Optional: Change the working directory
-          #workingDirectory: my-site
-          # Optional: Change the Wrangler version, allows you to point to a specific version or a tag such as `beta`
-          wranglerVersion: '3'
+      # - name: Publish to Cloudflare Pages
+      #   uses: cloudflare/pages-action@v1 # https://github.com/cloudflare/pages-action
+      #   with:
+      #     apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      #     accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      #     projectName: blog
+      #     directory: dist
+      #     # Optional: Enable this if you want to have GitHub Deployments triggered
+      #     #gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+      #     # Optional: Switch what branch you are publishing to.
+      #     # By default this will be the branch which triggered this workflow
+      #     branch: main
+      #     # Optional: Change the working directory
+      #     #workingDirectory: my-site
+      #     # Optional: Change the Wrangler version, allows you to point to a specific version or a tag such as `beta`
+      #     wranglerVersion: '3'
