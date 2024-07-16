@@ -4,7 +4,7 @@
 
 
 
-This is just my personal blog at https://Chris.Towles.me
+This is just my personal blog at https://Chris.Towles.dev
 
 
 ## Blog Tech Stack

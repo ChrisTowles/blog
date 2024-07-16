@@ -33,7 +33,7 @@ export default defineNuxtConfig({
   },
 
   site: {
-    url: 'https://chris.towles.me',
+    url: 'https://chris.towles.dev',
 
   },
 
