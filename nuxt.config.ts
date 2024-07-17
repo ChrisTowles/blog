@@ -3,11 +3,12 @@ export default defineNuxtConfig({
   extends: ['@nuxt/ui-pro'],
 
   modules: [
+    '@nuxt/content',
     '@nuxt/image',
     '@vueuse/nuxt',
     '@nuxt/eslint',
     '@nuxt/fonts',
-    '@nuxt/content',
+
     // '@nuxtjs/eslint-module', { /* module options */ }],
     // 'nuxt-icon',
     // 'nuxt-og-image',
@@ -42,12 +43,14 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
+    // Temporary workaround for prerender regression. see https://github.com/nuxt/nuxt/issues/27490
     '/': { prerender: true },
+    '/api/search.json': { prerender: true },
   },
 
   typescript: {
     // typeCheck: true,
-    strict: true,
+    strict: false,
   },
 
   nitro: {
@@ -77,4 +80,10 @@ export default defineNuxtConfig({
 
   devtools: { enabled: true },
   compatibilityDate: '2024-07-12',
+
+  future: {
+    compatibilityVersion: 4,
+  },
+
+
 })

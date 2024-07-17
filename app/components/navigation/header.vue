@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import type { AsideLink } from '@nuxt/ui-pro/types'
+// import type { ParsedContent } from '@nuxt/content'
 import { navbarData } from '../../utils/data'
+
+// const { data: files } = useLazyFetch<ParsedContent[]>('/api/search.json', { default: () => [], server: false })
 
 const links = computed(() => [{
   label: 'Blog List',
@@ -27,13 +30,10 @@ const links = computed(() => [{
 
     <template #right>
       <UColorModeButton size="lg" />
-      <!-- <UButton
-        label="Sign in"
-        color="white"
-        variant="ghost"
-        trailing-icon="i-heroicons-arrow-right-20-solid"
-        class="hidden lg:flex"
-      /> -->
+
+      <!-- <ClientOnly>
+        <LazyUContentSearch :files="files" />
+      </ClientOnly> -->
     </template>
 
     <template #panel>

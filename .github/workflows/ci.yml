@@ -18,8 +18,8 @@ jobs:
       NUXT_UI_PRO_LICENSE: ${{ secrets.NUXT_UI_PRO_LICENSE }}
 
 
-      #FOr what ever reason, this doesn't work, so set correct value in nuxt.config.ts for now.
-      #NUXT_PUBLIC_GTAG_ID: ${{ secrets.NUXT_PUBLIC_GTAG_ID }}
+      # For what ever reason, this doesn't work, so set correct value in nuxt.config.ts for now.
+      # NUXT_PUBLIC_GTAG_ID: ${{ secrets.NUXT_PUBLIC_GTAG_ID }}
 
     steps:
       - name: Checkout
@@ -66,7 +66,9 @@ jobs:
       - name: Build
         run: pnpm run build:cf
 
+      
       - name: deploy
+        # deploy with wrangler instead of cloudflare/pages-action@v1 so things can be tested locally
         run: pnpm run deploy:main
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -86,19 +88,3 @@ jobs:
       #   run: ./scripts/release.sh
       #   env:
       #     NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
-      # - name: Publish to Cloudflare Pages
-      #   uses: cloudflare/pages-action@v1 # https://github.com/cloudflare/pages-action
-      #   with:
-      #     apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      #     accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      #     projectName: blog
-      #     directory: dist
-      #     # Optional: Enable this if you want to have GitHub Deployments triggered
-      #     #gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-      #     # Optional: Switch what branch you are publishing to.
-      #     # By default this will be the branch which triggered this workflow
-      #     branch: main
-      #     # Optional: Change the working directory
-      #     #workingDirectory: my-site
-      #     # Optional: Change the Wrangler version, allows you to point to a specific version or a tag such as `beta`
-      #     wranglerVersion: '3'
