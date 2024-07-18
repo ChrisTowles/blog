@@ -1,5 +1,5 @@
 <script setup>
-// import { UMain } from '@nuxt/ui'
+
 </script>
 
 <template>

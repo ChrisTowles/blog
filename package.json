@@ -18,7 +18,7 @@
     "typecheck": "nuxt typecheck",
     "prepare": "husky",
     "deploy:main": "wrangler pages deploy",
-    "deploy": "wrangler pages dev "
+    "deploy:preview": "wrangler pages dev"
   },
   "dependencies": {
     "@iconify-json/heroicons": "^1.1.22",
