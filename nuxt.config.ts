@@ -3,11 +3,11 @@ export default defineNuxtConfig({
   extends: ['@nuxt/ui-pro'],
 
   modules: [
+    '@nuxt/content',
     '@nuxt/image',
     '@vueuse/nuxt',
     '@nuxt/eslint',
     '@nuxt/fonts',
-    '@nuxt/content',
     // '@nuxtjs/eslint-module', { /* module options */ }],
     // 'nuxt-icon',
     // 'nuxt-og-image',
@@ -18,6 +18,7 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@nuxtjs/seo',
     'nuxt-gtag',
+    '@nuxtjs/sitemap',
   ],
 
   app: {
@@ -81,4 +82,7 @@ export default defineNuxtConfig({
 
   devtools: { enabled: true },
   compatibilityDate: '2024-07-12',
+  // future: {
+  //   compatibilityVersion: 4,
+  // },
 })
