@@ -23,9 +23,9 @@
   "dependencies": {
     "@iconify-json/heroicons": "^1.1.22",
     "@iconify-json/simple-icons": "^1.1.109",
-    "@unhead/vue": "^1.9.15",
-    "ufo": "^1.5.3",
-    "vue": "^3.4.31",
+    "@unhead/vue": "^1.9.16",
+    "ufo": "^1.5.4",
+    "vue": "^3.4.32",
     "vue-router": "^4.4.0"
   },
   "devDependencies": {
@@ -40,13 +40,13 @@
     "@vueuse/nuxt": "^10.11.0",
     "dotenv": "^16.4.5",
     "eslint": "^9.7.0",
-    "husky": "^9.0.11",
+    "husky": "^9.1.0",
     "lint-staged": "^15.2.7",
     "nuxt": "^3.12.3",
     "nuxt-gtag": "^2.0.7",
-    "tailwindcss": "^3.4.4",
+    "tailwindcss": "^3.4.6",
     "vue-tsc": "^2.0.26",
-    "wrangler": "^3.64.0"
+    "wrangler": "^3.65.0"
   },
   "packageManager": "pnpm@9.5.0",
   "lint-staged": {
