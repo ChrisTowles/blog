@@ -19,6 +19,7 @@
     "markdownPasteImage.imageFolderPath": "${projectRoot}/public/images/blog/",
     "cSpell.words": [
         "heroicons",
+        "Nuxt",
         "Sideload"
     ],
 }
