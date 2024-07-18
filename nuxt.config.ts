@@ -8,7 +8,6 @@ export default defineNuxtConfig({
     '@vueuse/nuxt',
     '@nuxt/eslint',
     '@nuxt/fonts',
-
     // '@nuxtjs/eslint-module', { /* module options */ }],
     // 'nuxt-icon',
     // 'nuxt-og-image',
@@ -19,6 +18,7 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@nuxtjs/seo',
     'nuxt-gtag',
+    '@nuxtjs/sitemap',
   ],
 
   app: {
