@@ -3,11 +3,12 @@ export default defineNuxtConfig({
   extends: ['@nuxt/ui-pro'],
 
   modules: [
+    '@nuxt/content',
     '@nuxt/image',
     '@vueuse/nuxt',
     '@nuxt/eslint',
     '@nuxt/fonts',
-    '@nuxt/content',
+
     // '@nuxtjs/eslint-module', { /* module options */ }],
     // 'nuxt-icon',
     // 'nuxt-og-image',
