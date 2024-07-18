@@ -16,6 +16,10 @@ useHead({
   ],
   link: [
     { rel: 'icon', href: '/favicon.ico' },
+    { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
+    { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32x32.png' },
+    { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16x16.png' },
+    { rel: 'manifest', href: '/site.webmanifest' },
   ],
   htmlAttrs: {
     lang: 'en',
@@ -27,12 +31,12 @@ useHead({
 
 const site = useSiteConfig()
 const imageUrl = joinURL(site.url, 'images/ctowles-profile-512x512.png')
-const route = useRoute()
+// const route = useRoute()
 
-// set the canonical link to help google index the site
-useHead(() => ({
-  link: [{ rel: 'canonical', href: site.url + route.path }],
-}))
+// // set the canonical link to help google index the site
+// useHead(() => ({
+//   link: [{ rel: 'canonical', href: site.url + route.path }],
+// }))
 
 useSeoMeta({
   ogImage: imageUrl,
