@@ -2,15 +2,15 @@ import { withoutTrailingSlash } from 'ufo'
 import type { RouteLocation } from 'vue-router'
 import type { BlogPost } from '~/types/blogPost'
 
-export const getBlogPosts = async (): Promise<Ref<BlogPost[] | null >> => {
-  const { data: posts } = await useAsyncData('posts', () => queryContent<BlogPost>('/blog')
+export const getBlogPosts = async ({ limit }: { limit?: number } = {}): Promise<Ref<BlogPost[] | null >> => {
+  // Reminder: modify the cache key to match any query the query name!
+  const { data: posts } = await useAsyncData(`blog-posts-${limit}`, () => queryContent<BlogPost>('/blog')
     .where({
       _extension: 'md',
       date: { $exists: true },
     })
     .sort({ date: -1 })
-    // WARNING!!! For some reason when this was set, i cached it on the blog list page too!
-    // .limit(limit ? limit : 10_000) // should be more than enough :)
+    .limit(limit ? limit : 10_000)
     .find())
 
   return posts
