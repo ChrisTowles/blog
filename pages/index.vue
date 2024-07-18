@@ -3,7 +3,7 @@ const route = useRoute()
 const page = await getPageAndCheckRouteExistsOrThrow404(route)
 
 // TODO: for now just the latest posts will do
-const posts = await getBlogPosts({ limit: 4 })
+const posts = await getBlogPosts()
 
 useSeoMeta({
   title: page.value?.title,

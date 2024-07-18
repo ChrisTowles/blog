@@ -31,12 +31,6 @@ useHead({
 
 const site = useSiteConfig()
 const imageUrl = joinURL(site.url, 'images/ctowles-profile-512x512.png')
-// const route = useRoute()
-
-// // set the canonical link to help google index the site
-// useHead(() => ({
-//   link: [{ rel: 'canonical', href: site.url + route.path }],
-// }))
 
 useSeoMeta({
   ogImage: imageUrl,
