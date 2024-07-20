@@ -64,7 +64,7 @@ I am however going to put a few constraints in place around how I want to use Ai
 
 ## Repo
 
-Just started with a repo at: https://github.com/ChrisTowles/airflow_with_ecs_poc
+Just started with a repo at: https://github.com/ChrisTowles/airflow-playground
 
 I don't usually post Proof of Concepts's like this publicly but i'm doing it on my own time so lets see how this goes and see where it takes me.
 
