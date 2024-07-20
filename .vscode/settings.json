@@ -13,6 +13,9 @@
     "search.exclude": {
         "**/node_modules": true,
         "**/.nuxt": true,
+        "**/.wrangler": true,
+        "**/.output": true,
+        "**/.dist": true,
     },
     // markdown paste image - https://marketplace.visualstudio.com/items?itemName=chris-towles.markdown-paste-image
     "markdownPasteImage.encodePath": "urlEncode",
