@@ -26,3 +26,14 @@ This is just my personal blog at <https://Chris.Towles.dev>
 
 - <https://github.com/nuxt-ui-pro/saas>
 - <https://github.com/nuxt-ui-pro/landing>
+
+
+## Compress images
+
+```bash
+# Install Image Optimizers
+sudo apt-get install optipng pngcrush
+
+
+find . -type f -iname "*.png" -exec optipng -nb -nc {} \;
+find . -type f -iname "*.png" -exec pngcrush -nb -nc {} \;
