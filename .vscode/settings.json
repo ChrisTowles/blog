@@ -22,8 +22,10 @@
     "markdownPasteImage.imageFolderPath": "${projectRoot}/public/images/blog/",
     "cSpell.words": [
         "Datalake",
+        "fooocus",
         "heroicons",
         "Nuxt",
+        "ollama",
         "Sideload"
     ],
 }
