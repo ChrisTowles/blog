@@ -32,11 +32,10 @@ This is just my personal blog at <https://Chris.Towles.dev>
 
 ```bash
 # Install Image Optimizers
-sudo apt-get install pngquant
+sudo apt-get install pngquant -y
 
 # Run the following command to optimize all PNG files in your project:
 find . -name '*.png' -exec pngquant --ext .png --force 256 {} \;
-
 
 
 ## Check file sizes
@@ -55,7 +54,5 @@ png-compress() {
     du -h "$file"
   done
 }
-
-
 
 ```
