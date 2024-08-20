@@ -114,4 +114,4 @@ Now edit any file and start typing to see if the autocompletion works with your 
 
 ## Conclusion
 
-Congratulations, you've successfully integrated a custom LLM into VS Code using Continue Extension. This setup is running the LLMs locally and for free!
+Congratulations, you've successfully integrated a custom LLM into VS Code using Continue Extension. This setup is running the LLM locally and for free!
