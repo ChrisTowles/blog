@@ -8,4 +8,14 @@
   - could be extension of claws.
     - https://github.com/Versent/saml2aws
   - bash script for multi accounts - https://alestic.com/2019/12/aws-cli-across-organization-accounts/
-  
+      
+
+
+## Sites
+
+
+
+## Document tools
+
+- Pandoc - convert between markup formats and to and from pdf
+- Modify PDF Files - https://www.sejda.com/
