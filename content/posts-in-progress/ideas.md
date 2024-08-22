@@ -10,6 +10,13 @@
   - bash script for multi accounts - https://alestic.com/2019/12/aws-cli-across-organization-accounts/
       
 
+## Kubernetes
+
+### Learning
+
+- [The guide to kubectl I never had](https://glasskube.dev/guides/kubectl/) by Glasskube
+- 
+
 
 ## Sites
 
@@ -19,3 +26,5 @@
 
 - Pandoc - convert between markup formats and to and from pdf
 - Modify PDF Files - https://www.sejda.com/
+
+
