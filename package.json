@@ -8,8 +8,8 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
+    
     "build:cf": "nuxt build --preset=cloudflare_pages",
-    "preview:cf": "live-server ./dist",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",

@@ -42,9 +42,9 @@ export default defineNuxtConfig({
         icons: ['heroicons', 'simple-icons'],
     },
 
-    routeRules: {
-        '/': { prerender: true },
-    },
+    // routeRules: {
+    //     '/': { prerender: true },
+    // },
 
     typescript: {
     // typeCheck: true,
