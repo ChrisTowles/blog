@@ -29,7 +29,6 @@ useSeoMeta({
             class="py-[50px]"
         />
         <UPageBody>
-            asdf: <pre>{{ data }}</pre>
             <UBlogList>
                 <UBlogPost
                     v-for="(post, index) in apps"
