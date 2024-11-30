@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import type { AppEntry } from '~/types/appEntry'
 
-const { data } = await useFetch('/api/hello')
-
 const route = useRoute()
 const page = await getPageAndCheckRouteExistsOrThrow404(route)
 
