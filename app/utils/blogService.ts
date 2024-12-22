@@ -2,7 +2,7 @@ import { withoutTrailingSlash } from 'ufo'
 import type { RouteLocation } from 'vue-router'
 import type { BlogPost } from '~/types/blogPost'
 
-export const getBlogPosts = async ({ limit }: { limit?: number } = {}): Promise<Ref<BlogPost[] | null >> => {
+export const getBlogPosts = async ({ limit }: { limit?: number } = {}): Promise<Ref<BlogPost[] | undefined>> => {
     // Reminder: modify the cache key to match any query the query name!
     const { data: posts } = await useAsyncData(`blog-posts-${limit}`, () => queryContent<BlogPost>('/blog')
         .where({
