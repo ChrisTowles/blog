@@ -9,7 +9,6 @@ export default defineNuxtConfig({
         '@nuxt/eslint',
         '@nuxt/fonts',
         // '@nuxtjs/eslint-module', { /* module options */ }],
-        // 'nuxt-icon',
         // 'nuxt-og-image',
         // '@nuxtjs/robots',
         // '@nuxtjs/fontaine',
@@ -19,7 +18,10 @@ export default defineNuxtConfig({
         '@nuxtjs/seo',
         'nuxt-gtag',
         '@nuxtjs/sitemap',
+        '@nuxt/icon',
     ],
+
+    devtools: { enabled: true },
 
     app: {
         head: {
@@ -38,16 +40,17 @@ export default defineNuxtConfig({
 
     },
 
-    ui: {
-        icons: ['heroicons', 'simple-icons'],
+    future: {
+        compatibilityVersion: 4,
     },
+    compatibilityDate: '2024-11-19',
 
     // routeRules: {
     //     '/': { prerender: true },
     // },
 
     typescript: {
-    // typeCheck: true,
+        typeCheck: true,
         strict: true,
     },
 
@@ -67,10 +70,12 @@ export default defineNuxtConfig({
         config: { anonymize_ip: false },
     },
 
-    devtools: { enabled: true },
-    compatibilityDate: '2024-11-19',
-
-    future: {
-        compatibilityVersion: 4,
+    // ui: {
+    //     icons: ['heroicons', 'simple-icons'],
+    // },
+    icon: {
+        serverBundle: {
+            collections: ['uil', 'mdi'], // <!--- this
+        },
     },
 })
