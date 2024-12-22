@@ -43,7 +43,7 @@ export default defineNuxtConfig({
     future: {
         compatibilityVersion: 4,
     },
-    compatibilityDate: '2024-11-19',
+    compatibilityDate: '2024-12-21',
 
     // routeRules: {
     //     '/': { prerender: true },
@@ -75,7 +75,7 @@ export default defineNuxtConfig({
     // },
     icon: {
         serverBundle: {
-            collections: ['uil', 'mdi'], // <!--- this
+            collections: ['simple-icons', 'heroicons'], // <!--- this
         },
     },
 })
