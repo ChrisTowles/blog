@@ -1,6 +1,5 @@
-export default defineEventHandler((event) => {
+export default defineEventHandler(() => {
     console.log('Hello from Nitro!')
-    console.log(event)
     return {
         hello: 'world' + new Date(),
     }
