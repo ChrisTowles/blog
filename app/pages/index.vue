@@ -1,107 +1,63 @@
 <script setup lang="ts">
-const route = useRoute()
 
-const { data: navigation } = await useAsyncData('navigation', () => queryCollectionNavigation('docs'))
-const { data: page } = await useAsyncData('index', () => queryCollection('landing').path('/').first())
+// const { data: navigation } = await useAsyncData('navigation', () => queryCollectionNavigation('docs'))
 
-// const page = await getAppsPageAndCheckRouteExistsOrThrow404(route)
-
-// TODO: for now just the latest posts will do
-const posts = await getBlogPosts({ limit: 10 })
+const { data: page } = await useAsyncData('index', () => queryCollection('index').first())
 
 useSeoMeta({
-  title: page.value.seo.title,
-  ogTitle: page.value.seo.title,
-  description: page.value.seo.description,
-  ogDescription: page.value.seo.description
+  titleTemplate: '',
+  title: page.value?.title,
+  ogTitle: page.value?.title,
+  description: page.value?.description,
+  ogDescription: page.value?.description
 })
+
+// const posts = await getBlogPosts({ limit: 10 })
 </script>
 
 <template>
-    <div>
-        <ULandingHero
-            :title="page?.hero.title"
-            :description="page?.hero.description"
-            :links="page?.hero.links"
-        >
-            <template #headline>
-                <UBadge
-                    v-if="page?.hero.headline"
-                    variant="subtle"
-                    size="lg"
-                    class="relative rounded-full font-semibold"
-                >
-                    <NuxtLink
-                        :to="page?.hero.headline.to"
-                        target="_blank"
-                        class="focus:outline-none"
-                        tabindex="-1"
-                    >
-                        <span
-                            class="absolute inset-0"
-                            aria-hidden="true"
-                        />
-                    </NuxtLink>
+    <div  v-if="page">
+        <UPageHero
+      :title="page.hero.title"
+      :description="page.hero.description"
+      :links="page.hero.links"
+    >
+      <template #top>
+        <div class="absolute rounded-full dark:bg-(--ui-primary) blur-[300px] size-60 sm:size-80 transform -translate-x-1/2 left-1/2 -translate-y-80" />
 
-                    {{ page?.hero.headline.label }}
+      
+      </template>
 
-                    <UIcon
-                        v-if="page?.hero.headline.icon"
-                        :name="page?.hero.headline.icon"
-                        class="ml-1 w-4 h-4 pointer-events-none"
-                    />
-                </UBadge>
-            </template>
+      <PromotionalVideo />
+    </UPageHero>
 
-            <ULandingLogos
-                :title="page?.logos.title"
-                align="center"
-            >
-                <UIcon
-                    v-for="icon in page?.logos.icons"
-                    :key="icon"
-                    :name="icon"
-                    class="w-12 h-12 lg:w-16 lg:h-16 flex-shrink-0 text-gray-900 dark:text-white"
-                />
-            </ULandingLogos>
-        </ULandingHero>
-        <UContainer>
-            <UHeader title="Recent Posts" />
+    <UPageSection
+      v-for="(section, index) in page.sections"
+      :key="index"
+      :title="section.title"
+      :description="section.description"
+      :orientation="section.orientation"
+      :reverse="section.reverse"
+      :features="section.features"
+    >
+      <ImagePlaceholder />
+    </UPageSection>
 
-            <UBlogList>
-                <UBlogPost
-                    v-for="(post, index) in posts"
-                    :key="index"
-                    :to="post._path"
-                    :title="post.title"
-                    :description="post.description"
-                    :image="post.image"
-                    :date="new Date(post.date).toLocaleDateString('en', { year: 'numeric', month: 'short', day: 'numeric' })"
-                    :authors="post.authors"
-                    :badge="post.badge"
-                    :orientation="index === 0 ? 'horizontal' : 'vertical'"
-                    :class="[index === 0 && 'col-span-full']"
-                    :ui="{
-                        description: 'line-clamp-2',
-                    }"
-                />
-            </UBlogList>
-        </UContainer>
-        <ULandingSection
-            :title="page?.features.title"
-            :description="page?.features.description"
-            :headline="page?.features.headline"
-        >
-            <UPageGrid
-                id="features"
-                class="scroll-mt-[calc(var(--header-height)+140px+128px+96px)]"
-            >
-                <ULandingCard
-                    v-for="(item, index) in page?.features.items"
-                    :key="index"
-                    v-bind="item"
-                />
-            </UPageGrid>
-        </ULandingSection>
+    <UPageSection
+      :title="page.features.title"
+      :description="page.features.description"
+    >
+      <UPageGrid>
+        <UPageCard
+          v-for="(item, index) in page.features.items"
+          :key="index"
+          v-bind="item"
+          spotlight
+        />
+      </UPageGrid>
+    </UPageSection>
+
+    <USeparator />
+
     </div>
 </template>

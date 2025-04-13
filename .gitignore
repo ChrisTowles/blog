@@ -134,4 +134,4 @@ dist
 
 
 # nuxt content
-data/
+.data/
