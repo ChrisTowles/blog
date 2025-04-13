@@ -16,48 +16,31 @@ useSeoMeta({
 </script>
 
 <template>
-    <div  v-if="page">
-        <UPageHero
-      :title="page.hero.title"
-      :description="page.hero.description"
-      :links="page.hero.links"
-    >
+  <div v-if="page">
+    <UPageHero :title="page.hero.title" :description="page.hero.description" :links="page.hero.links">
       <template #top>
-        <div class="absolute rounded-full dark:bg-(--ui-primary) blur-[300px] size-60 sm:size-80 transform -translate-x-1/2 left-1/2 -translate-y-80" />
-
-      
+        <div
+          class="absolute rounded-full dark:bg-(--ui-primary) blur-[300px] size-60 sm:size-80 transform -translate-x-1/2 left-1/2 -translate-y-80" />
       </template>
 
-      <PromotionalVideo />
     </UPageHero>
 
-    <UPageSection
-      v-for="(section, index) in page.sections"
-      :key="index"
-      :title="section.title"
-      :description="section.description"
-      :orientation="section.orientation"
-      :reverse="section.reverse"
-      :features="section.features"
-    >
-      <ImagePlaceholder />
-    </UPageSection>
 
-    <UPageSection
-      :title="page.features.title"
-      :description="page.features.description"
-    >
+    <UPageSection :title="page.logos.title" />
+    <UPageMarquee :repeat="6" pause-on-hover > 
+      <ULink v-for="x in page.logos.links" as="button" :to="x.to" :key="x.label">
+        <UIcon :to="x.to" :name="x.icon" class="size-10 shrink-0" />
+      </ULink>
+
+    </UPageMarquee>
+
+    <UPageSection :title="page.features.title" :description="page.features.description">
       <UPageGrid>
-        <UPageCard
-          v-for="(item, index) in page.features.items"
-          :key="index"
-          v-bind="item"
-          spotlight
-        />
+        <UPageCard v-for="(item, index) in page.features.items" :key="index" v-bind="item" spotlight />
       </UPageGrid>
     </UPageSection>
 
     <USeparator />
 
-    </div>
+  </div>
 </template>

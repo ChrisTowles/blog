@@ -15,14 +15,30 @@ hero:
     
 logos:
   title: Writing about the following
-  icons:
-    - i-simple-icons-amazonaws
-    - i-simple-icons-nodedotjs
-    - i-simple-icons-vuedotjs
-    - i-simple-icons-cloudflare
-    - i-simple-icons-typescript
-    - i-simple-icons-python
-    - i-simple-icons-nuxtdotjs
+  links:
+    - label: Amazon AWS
+      to: 'https://aws.amazon.com'
+      icon: i-simple-icons-amazonaws
+    - label: Node.js
+      to: 'https://nodejs.org'
+      icon: i-simple-icons-nodedotjs
+    - label: Vue
+      to: 'https://vuejs.org'
+      icon: i-simple-icons-vuedotjs
+
+    - label: Cloudflare
+      to: 'https://www.cloudflare.com'
+      icon: i-simple-icons-cloudflare
+
+    - label: Typescript
+      to: 'https://www.typescriptlang.org'
+      icon:   i-simple-icons-typescript
+    - label: Python
+      to: 'https://www.python.org'
+      icon: i-simple-icons-python
+    - label: Nuxt.js
+      to: 'https://nuxtjs.org'
+      icon: i-simple-icons-nuxtdotjs
     
 
 features:

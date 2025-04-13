@@ -58,35 +58,23 @@ export default defineContentConfig({
           }),
           links: z.array(linkSchema)
         }),
-        sections: z.array(
-          sectionSchema.extend({
-            id: z.string().nonempty(),
-            orientation: orientationEnum.optional(),
-            features: z.array(featureItemSchema),
-            links: z.array(linkSchema),
-            reverse: z.boolean().optional()
-          })
-        ),
-        features: sectionSchema.extend({
-          items: z.array(featureItemSchema)
-        }),
-        testimonials: sectionSchema.extend({
-          items: z.array(
+        logos: z.object({
+          title: z.string().nonempty(),
+        
+          links: z.array(
             z.object({
-              quote: z.string().nonempty(),
-              user: z.object({
-                name: z.string().nonempty(),
-                description: z.string().nonempty(),
-                to: z.string().nonempty(),
-                target: z.string().nonempty(),
-                avatar: imageSchema
-              })
+              label: z.string().nonempty(),
+              icon: z.string().nonempty(),
+              to: z.string().nonempty(),
             })
           )
         }),
-        cta: sectionSchema.extend({
-          links: z.array(linkSchema)
-        })
+  
+        features: sectionSchema.extend({
+          items: z.array(featureItemSchema)
+        }),
+        
+
       })
     }),
     landing: defineCollection({
