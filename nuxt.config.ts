@@ -1,6 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-    extends: ['@nuxt/ui-pro'],
 
     modules: [
         '@nuxt/content',
@@ -14,12 +13,13 @@ export default defineNuxtConfig({
         // '@nuxtjs/fontaine',
         // 'nuxt-simple-sitemap',
         // '@stefanobartoletti/nuxt-social-share',
-        '@nuxt/ui',
-        '@nuxtjs/seo',
+        '@nuxt/ui-pro',
+        // '@nuxtjs/seo',
         'nuxt-gtag',
-        '@nuxtjs/sitemap',
+        // '@nuxtjs/sitemap',
         '@nuxt/icon',
     ],
+    css: ['~/assets/css/main.css'],
 
     devtools: { enabled: true },
 
@@ -35,23 +35,24 @@ export default defineNuxtConfig({
         layoutTransition: { name: 'layout', mode: 'out-in' },
     },
 
-    site: {
-        url: 'https://chris.towles.dev',
+    // site: {
+    //     url: 'https://chris.towles.dev',
 
-    },
+    // },
 
     future: {
         compatibilityVersion: 4,
     },
-    compatibilityDate: '2024-12-21',
+    compatibilityDate: '2025-04-01',
 
-    // routeRules: {
-    //     '/': { prerender: true },
-    // },
+     routeRules: {
+        '/': { prerender: true }
+      },
+    
 
     typescript: {
-        typeCheck: true,
-        strict: true,
+    //    typeCheck: true,
+    //     strict: true,
     },
 
     // nitro: {
@@ -65,10 +66,10 @@ export default defineNuxtConfig({
     // },
 
     // set in .env with NUXT_PUBLIC_GTAG_ID
-    gtag: {
-        id: 'G-X0H34W6PGC', // set correct here, but over ridden locally G-XXXXXXXXX
-        config: { anonymize_ip: false },
-    },
+    // gtag: {
+    //     id: 'G-X0H34W6PGC', // set correct here, but over ridden locally G-XXXXXXXXX
+    //     config: { anonymize_ip: false },
+    // },
 
     // ui: {
     //     icons: ['heroicons', 'simple-icons'],

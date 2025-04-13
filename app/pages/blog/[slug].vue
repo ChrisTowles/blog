@@ -1,39 +1,31 @@
 <script setup lang="ts">
 import { joinURL } from 'ufo'
-import type { BlogPost } from '~/types/blogPost'
 
 const route = useRoute()
-const post = await getPageAndCheckRouteExistsOrThrow404<BlogPost>(route)
 
-const title = post.value.head?.title || post.value.title
-const description = post.value.head?.description || post.value.description
 
-useSeoMeta({
-    title,
-    ogTitle: title,
-    description,
-    ogDescription: description,
+
+
+const { data } = await useAsyncData(route.path, () => Promise.all([
+  queryCollection('blog').path(route.path).first(),
+  queryCollectionItemSurroundings('blog', route.path, {
+    fields: ['title', 'description'],
+  }),
+]), {
+  transform: ([page, surround]) => ({ page, surround }),
 })
 
-const surround = await getSurroundBlogPosts(route)
+const post = computed(() => data.value?.page)
+const surround = computed(() => data.value?.surround)
 
-if (post.value.image?.src) {
-    const site = useSiteConfig()
 
-    useSeoMeta({
-        ogImage: joinURL(site.url, post.value.image.src),
-        twitterImage: joinURL(site.url, post.value.image.src),
-    })
-}
-else {
-    // TODO: fix this
-    // defineOgImage({
-    //   component: 'Saas',
-    //   title,
-    //   description,
-    //   headline: 'Blog',
-    // })
-}
+useSeoMeta({
+  title: post.value.seo.title,
+  ogTitle: post.value.seo.title,
+  description: post.value.seo.description,
+  ogDescription: post.value.seo.description
+})
+
 </script>
 
 <template>

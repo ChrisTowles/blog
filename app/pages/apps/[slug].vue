@@ -7,13 +7,13 @@ const imageClasses = {
 }
 
 const route = useRoute()
-const post = await getPageAndCheckRouteExistsOrThrow404(route)
+const post = await getAppsPageAndCheckRouteExistsOrThrow404(route)
 
-const { data: surround } = await useAsyncData(`${route.path}-surround`, () => queryContent('/blog')
-    .where({ _extension: 'md', title: { $exists: true } })
-    .without(['body', 'excerpt'])
-    .sort({ date: -1 })
-    .findSurround(withoutTrailingSlash(route.path)), { default: () => [] })
+// const { data: surround } = await useAsyncData(`${route.path}-surround`, () => queryContent('/blog')
+//     .where({ _extension: 'md', title: { $exists: true } })
+//     .without(['body', 'excerpt'])
+//     .sort({ date: -1 })
+//     .findSurround(withoutTrailingSlash(route.path)), { default: () => [] })
 
 const title = post.value.head?.title || post.value.title
 const description = post.value.head?.description || post.value.description
@@ -26,11 +26,11 @@ useSeoMeta({
 })
 
 if (post.value.image?.src) {
-    const site = useSiteConfig()
+    //const site = useSiteConfig()
 
     useSeoMeta({
-        ogImage: joinURL(site.url, post.value.image.src),
-        twitterImage: joinURL(site.url, post.value.image.src),
+        ogImage: joinURL("", post.value.image.src),
+        twitterImage: joinURL("", post.value.image.src),
     })
 }
 else {
@@ -64,8 +64,7 @@ else {
                     v-for="(author, index) in post.authors"
                     :key="index"
                     :to="author.to"
-
-                    color="white"
+                    color="primary"
                     target="_blank"
                     size="sm"
                 >

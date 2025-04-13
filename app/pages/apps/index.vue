@@ -1,23 +1,24 @@
 <script setup lang="ts">
 import type { AppEntry } from '~/types/appEntry'
+import { getAppsPageAndCheckRouteExistsOrThrow404 } from '~/utils/appsService';
 
 const route = useRoute()
-const page = await getPageAndCheckRouteExistsOrThrow404(route)
+const page = await getAppsPageAndCheckRouteExistsOrThrow404(route)
 
-const { data: apps } = await useAsyncData('apps-list', () => queryContent<AppEntry>('/apps')
-    .where({
-        _extension: 'md',
-        type: { $exists: true },
-    })
-// .sort({ date: -1 })
-    .find())
+// const { data: apps } = await useAsyncData('apps-list', () => queryContent<AppEntry>('/apps')
+//     .where({
+//         _extension: 'md',
+//         type: { $exists: true },
+//     })
+// // .sort({ date: -1 })
+//     .find())
 
-useSeoMeta({
-    title: page.value.title,
-    ogTitle: page.value.title,
-    description: page.value.description,
-    ogDescription: page.value.description,
-})
+// useSeoMeta({
+//     title: page.value.title,
+//     ogTitle: page.value.title,
+//     description: page.value.description,
+//     ogDescription: page.value.description,
+// })
 </script>
 
 <template>

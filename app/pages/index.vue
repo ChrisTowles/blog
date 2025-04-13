@@ -1,15 +1,19 @@
 <script setup lang="ts">
 const route = useRoute()
-const page = await getPageAndCheckRouteExistsOrThrow404(route)
+
+const { data: navigation } = await useAsyncData('navigation', () => queryCollectionNavigation('docs'))
+const { data: page } = await useAsyncData('index', () => queryCollection('landing').path('/').first())
+
+// const page = await getAppsPageAndCheckRouteExistsOrThrow404(route)
 
 // TODO: for now just the latest posts will do
 const posts = await getBlogPosts({ limit: 10 })
 
 useSeoMeta({
-    title: page.value?.title,
-    ogTitle: page.value?.title,
-    description: page.value?.description,
-    ogDescription: page.value?.description,
+  title: page.value.seo.title,
+  ogTitle: page.value.seo.title,
+  description: page.value.seo.description,
+  ogDescription: page.value.seo.description
 })
 </script>
 
