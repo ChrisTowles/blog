@@ -5,8 +5,9 @@ image:
   src: /images/blog/right-angle-triangle-solver-screen1.png
   # source: https://www.pexels.com/photo/photography-of-macbook-half-opened-on-white-wooden-surface-633409/
   alt: "screen shot of Right Angle Triangle Solver App"
-type: mobile-android
-
+badge:
+  label: mobile-android
+date: 2012-01-21
 ---
 
 This is a Simple app I've rebuilt to test out new technologies. It is a simple app that solves right angle triangles. Nothing f

@@ -4,12 +4,12 @@
 
 <template>
     <div>
-        <NavigationHeader />
+        <AppHeader />
 
         <UMain>
             <slot />
         </UMain>
 
-        <NavigationFooter />
+        <AppFooter />
     </div>
 </template>

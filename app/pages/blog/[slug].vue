@@ -1,106 +1,100 @@
 <script setup lang="ts">
-import { joinURL } from 'ufo'
-import type { BlogPost } from '~/types/blogPost'
-
 const route = useRoute()
-const post = await getPageAndCheckRouteExistsOrThrow404<BlogPost>(route)
 
-const title = post.value.head?.title || post.value.title
-const description = post.value.head?.description || post.value.description
+const { data: post } = await useAsyncData(route.path, () => queryCollection('posts').path(route.path).first())
+if (!post.value) {
+  throw createError({ statusCode: 404, statusMessage: 'Post not found', fatal: true })
+}
 
-useSeoMeta({
-    title,
-    ogTitle: title,
-    description,
-    ogDescription: description,
+const { data: surround } = await useAsyncData(`${route.path}-surround`, () => {
+  return queryCollectionItemSurroundings('posts', route.path, {
+    fields: ['description']
+  })
 })
 
-const surround = await getSurroundBlogPosts(route)
+useSeoMeta({
+  title: post.value.title,
+  ogTitle: post.value.title,
+  description: post.value.description,
+  ogDescription: post.value.description
+})
 
 if (post.value.image?.src) {
-    const site = useSiteConfig()
-
-    useSeoMeta({
-        ogImage: joinURL(site.url, post.value.image.src),
-        twitterImage: joinURL(site.url, post.value.image.src),
-    })
-}
-else {
-    // TODO: fix this
-    // defineOgImage({
-    //   component: 'Saas',
-    //   title,
-    //   description,
-    //   headline: 'Blog',
-    // })
+  defineOgImage({
+    url: post.value.image.src
+  })
+} else {
+  defineOgImageComponent('Saas', {
+    headline: 'Blog'
+  })
 }
 </script>
 
 <template>
-    <UContainer v-if="post">
-        <UPageHeader
-            :title="post.title"
-            :description="post.description"
+  <UContainer v-if="post">
+    <UPageHeader
+      :title="post.title"
+      :description="post.description"
+    >
+      <template #headline>
+        <UBadge
+          v-bind="post.badge"
+          variant="subtle"
+        />
+        <span class="text-(--ui-text-muted)">&middot;</span>
+        <time class="text-(--ui-text-muted)">{{ new Date(post.date).toLocaleDateString('en', { year: 'numeric', month: 'short', day: 'numeric' }) }}</time>
+      </template>
+
+      <div class="flex flex-wrap items-center gap-3 mt-4">
+        <UButton
+          v-for="(author, index) in post.authors"
+          :key="index"
+          :to="author.to"
+          color="neutral"
+          variant="subtle"
+          target="_blank"
+          size="sm"
         >
-            <template #headline>
-                <UBadge
-                    v-bind="post.badge"
-                    variant="subtle"
-                />
-                <span class="text-gray-500 dark:text-gray-400">&middot;</span>
-                <time class="text-gray-500 dark:text-gray-400">{{ new Date(post.date).toLocaleDateString('en', { year: 'numeric', month: 'short', day: 'numeric' }) }}</time>
-            </template>
+          <UAvatar
+            v-bind="author.avatar"
+            :alt="author.name"
+            size="2xs"
+          />
 
-            <div class="flex flex-wrap items-center gap-3 mt-4">
-                <UButton
-                    v-for="(author, index) in post.authors"
-                    :key="index"
-                    :to="author.to"
+          {{ author.name }}
+        </UButton>
+      </div>
+    </UPageHeader>
 
-                    color="white"
-                    target="_blank"
-                    size="sm"
-                >
-                    <UAvatar
-                        v-bind="author.avatar"
-                        :alt="author.name"
-                        size="2xs"
-                    />
+    <UPage>
+      <UPageBody>
+        <div
+          v-if="post.image && post.image.src"
+          class="flex justify-center items-center"
+        >
+          <nuxt-img
 
-                    {{ author.name }}
-                </UButton>
-            </div>
-        </UPageHeader>
+            :src="post.image.src"
+            :alt="post.image.alt"
+            class="rounded-lg w-4/5 h-auto"
+          />
+        </div>
+        <ContentRenderer
+          v-if="post"
+          :value="post"
+        />
 
-        <UPage>
-            <UPageBody prose>
-                <div
-                    v-if="post.image && post.image.src"
-                    class="flex justify-center items-center"
-                >
-                    <nuxt-img
+        <USeparator v-if="surround?.length" />
 
-                        :src="post.image.src"
-                        :alt="post.image.alt"
-                        class="rounded-lg w-4/5 h-auto"
-                    />
-                </div>
-                <ContentRenderer
-                    v-if="post && post.body"
-                    :value="post"
-                />
+        <UContentSurround :surround="surround" />
+      </UPageBody>
 
-                <hr v-if="surround?.length">
-
-                <UContentSurround :surround="surround" />
-            </UPageBody>
-
-            <template #right>
-                <UContentToc
-                    v-if="post.body && post.body.toc"
-                    :links="post.body.toc.links"
-                />
-            </template>
-        </UPage>
-    </UContainer>
+      <template
+        v-if="post?.body?.toc?.links?.length"
+        #right
+      >
+        <UContentToc :links="post.body.toc.links" />
+      </template>
+    </UPage>
+  </UContainer>
 </template>

@@ -1,18 +1,15 @@
 <script setup>
-import { joinURL } from 'ufo'
 
-// import { siteMetaData } from './data'
+const colorMode = useColorMode()
 
-// useHead({
-//   htmlAttrs: {
-//     lang: 'en',
-//   },
-//   meta: () => siteMetaData,
-// })
+const color = computed(() => colorMode.value === 'dark' ? '#020618' : 'white')
+
 
 useHead({
     meta: [
-        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+    { charset: 'utf-8' },
+    { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+    { key: 'theme-color', name: 'theme-color', content: color }
     ],
     link: [
         { rel: 'icon', href: '/favicon.ico' },
@@ -29,20 +26,54 @@ useHead({
     ],
 })
 
-const site = useSiteConfig()
-const imageUrl = joinURL(site.url, 'images/ctowles-profile-512x512.png')
-
 useSeoMeta({
-    ogImage: imageUrl,
-    twitterImage: imageUrl,
+    ogImage: 'images/ctowles-profile-512x512.png',
+    twitterImage: 'images/ctowles-profile-512x512.png',
     twitterCard: 'summary_large_image',
 })
+
+
+ const { data: navigation } = await useAsyncData('navigation', () => queryCollectionNavigation('posts'), {
+   transform: data => data.find(item => item.path === '/blog')?.children || []
+ })
+const { data: files } = useLazyAsyncData('search', () => queryCollectionSearchSections('posts'), {
+  server: false
+})
+
+
+const links = [{
+  label: 'Blog',
+  icon: 'i-lucide-pencil',
+  to: '/blog'
+},
+{
+  label: 'Apps',
+  icon: 'i-lucide-book',
+  to: '/apps'
+}
+]
+
+
+// provide('navigation', navigation)
+
 </script>
 
 <template>
+<UApp>
     <NuxtLoadingIndicator />
+
     <NuxtLayout>
-        <NuxtPage />
+      <NuxtPage />
     </NuxtLayout>
-    <UNotifications />
+
+    <ClientOnly>
+      <LazyUContentSearch
+        :files="files"
+        shortcut="meta_k"
+        :navigation="navigation"
+        :links="links"
+        :fuse="{ resultLimit: 42 }"
+      />
+    </ClientOnly>
+  </UApp>
 </template>

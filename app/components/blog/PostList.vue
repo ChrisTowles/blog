@@ -1,27 +1,18 @@
 <script setup lang="ts">
-
 const route = useRoute()
-const { data: page } = await useAsyncData('app', () => queryCollection('apps').first())
-const { data: appEntries } = await useAsyncData(route.path, () => queryCollection('appEntry').all())
 
-useSeoMeta({
-    title: page.value!.title,
-    ogTitle: page.value!.title,
-    description: page.value!.description,
-    ogDescription: page.value!.description,
-})
+const { data: posts } = await useAsyncData(route.path, () => queryCollection('posts').order('date', 'DESC').all())
+
+
+
+
 </script>
 
 <template>
-    <UContainer>
-        <UPageHeader
-            v-bind="page"
-            class="py-[50px]"
-        />
-        <UPageBody>
+
             <UBlogPosts>
                 <UBlogPost
-                v-for="(post, index) in appEntries"
+                v-for="(post, index) in posts"
                 :key="index"
                 :to="post.path"
                 :title="post.title"
@@ -38,6 +29,6 @@ useSeoMeta({
                 }"
                 />
             </UBlogPosts>
-        </UPageBody>
-    </UContainer>
+
+
 </template>
