@@ -12,7 +12,6 @@ const { data: surround } = await useAsyncData(`${route.path}-surround`, () => {
   })
 })
 
-
 useSeoMeta({
   title: post.value.title,
   ogTitle: post.value.title,
@@ -29,73 +28,73 @@ if (post.value.image?.src) {
     headline: 'Blog'
   })
 }
-
 </script>
 
 <template>
-    <UContainer v-if="post">
-        <UPageHeader
-            :title="post.title"
-            :description="post.description"
+  <UContainer v-if="post">
+    <UPageHeader
+      :title="post.title"
+      :description="post.description"
+    >
+      <template #headline>
+        <UBadge
+          v-bind="post.badge"
+          variant="subtle"
+        />
+        <span class="text-(--ui-text-muted)">&middot;</span>
+        <time class="text-(--ui-text-muted)">{{ new Date(post.date).toLocaleDateString('en', { year: 'numeric', month: 'short', day: 'numeric' }) }}</time>
+      </template>
+
+      <div class="flex flex-wrap items-center gap-3 mt-4">
+        <UButton
+          v-for="(author, index) in post.authors"
+          :key="index"
+          :to="author.to"
+          color="neutral"
+          variant="subtle"
+          target="_blank"
+          size="sm"
         >
-            <template #headline>
-                <UBadge
-                    v-bind="post.badge"
-                    variant="subtle"
-                />
-                <span class="text-gray-500 dark:text-gray-400">&middot;</span>
-                <time class="text-gray-500 dark:text-gray-400">{{ new Date(post.date).toLocaleDateString('en', { year: 'numeric', month: 'short', day: 'numeric' }) }}</time>
-            </template>
+          <UAvatar
+            v-bind="author.avatar"
+            :alt="author.name"
+            size="2xs"
+          />
 
-            <div class="flex flex-wrap items-center gap-3 mt-4">
-                <UButton
-                    v-for="(author, index) in post.authors"
-                    :key="index"
-                    :to="author.to"
-                    color="primary"
-                    target="_blank"
-                    size="sm"
-                >
-                    <UAvatar
-                        v-bind="author.avatar"
-                        :alt="author.name"
-                        size="2xs"
-                    />
+          {{ author.name }}
+        </UButton>
+      </div>
+    </UPageHeader>
 
-                    {{ author.name }}
-                </UButton>
-            </div>
-        </UPageHeader>
+    <UPage>
+      <UPageBody>
+        <div
+          v-if="post.image && post.image.src"
+          class="flex justify-center items-center"
+        >
+          <nuxt-img
 
-        <UPage>
-            <UPageBody prose>
-                <div
-                    v-if="post.image && post.image.src"
-                    class="flex justify-center items-center"
-                >
-                    <nuxt-img
+            :src="post.image.src"
+            :alt="post.image.alt"
+            class="rounded-lg w-4/5 h-auto"
+          />
+        </div>
+        <ContentRenderer
+          v-if="post"
+          :value="post"
+        />
 
-                        :src="post.image.src"
-                        :alt="post.image.alt"
-                        class="rounded-lg w-4/5 h-auto"
-                    />
-                </div>
-                <ContentRenderer
-                    v-if="post && post.body"
-                    :value="post"
-                />
+        <USeparator v-if="surround?.length" />
 
-                <hr v-if="surround?.length">
+        <UContentSurround :surround="surround" />
+      </UPageBody>
 
-                <UContentSurround :surround="surround" />
-            </UPageBody>
-
-            <template #right>
-                <UContentToc
-                    v-if="post.body && post.body.toc"
-                    :links="post.body.toc.links"
-                />
-            </template>
-        </UPage>
-    </UContainer>
+      <template
+        v-if="post?.body?.toc?.links?.length"
+        #right
+      >
+        <UContentToc :links="post.body.toc.links" />
+      </template>
+    </UPage>
+  </UContainer>
 </template>

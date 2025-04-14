@@ -14,7 +14,7 @@ date: 2021-09-23
 - GitHub - <https://github.com/ChrisTowles/vscode-markdown-paste-image>
 - Marketplace - <https://marketplace.visualstudio.com/items?itemName=chris-towles.markdown-paste-image>
 
-
+ 
 ## Why?
 I write a lot of Markdown! However, one of the few things easier to do in Word Or Google Drive is to include pictures. 
 
