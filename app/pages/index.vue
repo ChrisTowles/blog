@@ -34,6 +34,16 @@ useSeoMeta({
 
     </UPageMarquee>
 
+    <UContainer>
+        <UPageHeader
+            class="py-[50px]"
+            title="Blog Posts"
+        />
+        <UPageBody>
+            <BlogPostList />
+        </UPageBody>
+    </UContainer>
+
     <UPageSection :title="page.features.title" :description="page.features.description">
       <UPageGrid>
         <UPageCard v-for="(item, index) in page.features.items" :key="index" v-bind="item" spotlight />

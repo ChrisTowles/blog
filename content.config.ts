@@ -77,41 +77,41 @@ export default defineContentConfig({
 
       })
     }),
-    landing: defineCollection({
+    // landing: defineCollection({
+    //   type: 'page',
+    //   source: 'index.yml'
+    // }),
+  
+    // apps: defineCollection({
+    //   type: 'page',
+    //   source: 'apps/**/*.md',
+    //   schema: AppEntrySchema,
+    // }),
+
+
+    posts: defineCollection({
       type: 'page',
-      source: 'index.yml'
-    }),
-    docs: defineCollection({
-      type: 'page',
-      source: {
-        include: '**',
-        exclude: ['index.yml']
-      },
+      source: '2.blog/**/*',
       schema: z.object({
-        links: z.array(z.object({
-          label: z.string(),
-          icon: z.string(),
-          to: z.string(),
-          target: z.string().optional()
-        })).optional()
+        title: z.string().nonempty(),
+        description: z.string().nonempty(),
+        image: z.object({ src: z.string().nonempty() }),
+        authors: z.array(
+          z.object({
+            name: z.string().nonempty(),
+            to: z.string().nonempty(),
+            avatar: z.object({ src: z.string().nonempty() })
+          })
+        ),
+        date: z.string().nonempty(),
+        badge: z.object({ label: z.string().nonempty() })
       })
     }),
-    apps: defineCollection({
-      type: 'page',
-      source: 'apps/**/*.md',
-      schema: AppEntrySchema,
-    }),
-
     blog: defineCollection({
-      source: 'blog/**/*.md',
-      type: 'page',
-      schema: BlogPostSchema
-      // Define custom schema for docs collection
-      // schema: z.object({
-      //   tags: z.array(z.string()),
-      //   image: z.string(),
-      //   date: z.date()
-      // })
-    })
+      source: '2.blog.yml',
+      type: 'data',
+      schema: sectionSchema
+    }),
+    
   }
 })

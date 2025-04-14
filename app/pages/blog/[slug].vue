@@ -1,30 +1,37 @@
 <script setup lang="ts">
-import { joinURL } from 'ufo'
 
 const route = useRoute()
 
+const { data: post } = await useAsyncData(route.path, () => queryCollection('posts').path(route.path).first())
+if (!post.value) {
+  throw createError({ statusCode: 404, statusMessage: 'Post not found', fatal: true })
+}
 
-
-
-const { data } = await useAsyncData(route.path, () => Promise.all([
-  queryCollection('blog').path(route.path).first(),
-  queryCollectionItemSurroundings('blog', route.path, {
-    fields: ['title', 'description'],
-  }),
-]), {
-  transform: ([page, surround]) => ({ page, surround }),
+const { data: surround } = await useAsyncData(`${route.path}-surround`, () => {
+  return queryCollectionItemSurroundings('posts', route.path, {
+    fields: ['description']
+  })
 })
 
-const post = computed(() => data.value?.page)
-const surround = computed(() => data.value?.surround)
-
+const title = post.value.title
+const description = post.value.description
 
 useSeoMeta({
-  title: post.value.seo.title,
-  ogTitle: post.value.seo.title,
-  description: post.value.seo.description,
-  ogDescription: post.value.seo.description
+  title,
+  ogTitle: title,
+  description,
+  ogDescription: description
 })
+
+if (post.value.image?.src) {
+  defineOgImage({
+    url: post.value.image.src
+  })
+} else {
+  defineOgImageComponent('Saas', {
+    headline: 'Blog'
+  })
+}
 
 </script>
 

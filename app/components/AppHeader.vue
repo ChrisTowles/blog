@@ -23,7 +23,6 @@ const items = computed(() => [{
       <NuxtLink to="/">
         {{ title }}
       </NuxtLink>
-      <TemplateMenu />
     </template>
 
     <UNavigationMenu

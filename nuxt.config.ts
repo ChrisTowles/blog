@@ -18,6 +18,7 @@ export default defineNuxtConfig({
         'nuxt-gtag',
         // '@nuxtjs/sitemap',
         '@nuxt/icon',
+        'nuxt-og-image',
     ],
     css: ['~/assets/css/main.css'],
 
