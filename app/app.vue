@@ -33,9 +33,9 @@ useSeoMeta({
 })
 
 
-//  const { data: navigation } = await useAsyncData('navigation', () => queryCollectionNavigation('docs'), {
-//    transform: data => data.find(item => item.path === '/docs')?.children || []
-//  })
+ const { data: navigation } = await useAsyncData('navigation', () => queryCollectionNavigation('posts'), {
+   transform: data => data.find(item => item.path === '/blog')?.children || []
+ })
 const { data: files } = useLazyAsyncData('search', () => queryCollectionSearchSections('posts'), {
   server: false
 })

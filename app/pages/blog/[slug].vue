@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 const route = useRoute()
 
 const { data: post } = await useAsyncData(route.path, () => queryCollection('posts').path(route.path).first())
@@ -13,14 +12,12 @@ const { data: surround } = await useAsyncData(`${route.path}-surround`, () => {
   })
 })
 
-const title = post.value.title
-const description = post.value.description
 
 useSeoMeta({
-  title,
-  ogTitle: title,
-  description,
-  ogDescription: description
+  title: post.value.title,
+  ogTitle: post.value.title,
+  description: post.value.description,
+  ogDescription: post.value.description
 })
 
 if (post.value.image?.src) {
@@ -55,8 +52,7 @@ if (post.value.image?.src) {
                     v-for="(author, index) in post.authors"
                     :key="index"
                     :to="author.to"
-
-                    color="white"
+                    color="primary"
                     target="_blank"
                     size="sm"
                 >

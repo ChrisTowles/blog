@@ -1,24 +1,15 @@
 <script setup lang="ts">
-import type { AppEntry } from '~/types/appEntry'
-import { getAppsPageAndCheckRouteExistsOrThrow404 } from '~/utils/appsService';
 
 const route = useRoute()
-const page = await getAppsPageAndCheckRouteExistsOrThrow404(route)
+const { data: page } = await useAsyncData('app', () => queryCollection('apps').first())
+const { data: appEntries } = await useAsyncData(route.path, () => queryCollection('appEntry').all())
 
-// const { data: apps } = await useAsyncData('apps-list', () => queryContent<AppEntry>('/apps')
-//     .where({
-//         _extension: 'md',
-//         type: { $exists: true },
-//     })
-// // .sort({ date: -1 })
-//     .find())
-
-// useSeoMeta({
-//     title: page.value.title,
-//     ogTitle: page.value.title,
-//     description: page.value.description,
-//     ogDescription: page.value.description,
-// })
+useSeoMeta({
+    title: page.value!.title,
+    ogTitle: page.value!.title,
+    description: page.value!.description,
+    ogDescription: page.value!.description,
+})
 </script>
 
 <template>
@@ -28,28 +19,25 @@ const page = await getAppsPageAndCheckRouteExistsOrThrow404(route)
             class="py-[50px]"
         />
         <UPageBody>
-            <UBlogList>
+            <UBlogPosts>
                 <UBlogPost
-                    v-for="(post, index) in apps"
-                    :key="index"
-                    :to="post._path"
-                    :title="post.title"
-                    :description="post.description"
-                    :image="post.image"
-
-                    :orientation="index === 0 ? 'horizontal' : 'vertical'"
-                    :class="[index === 0 && 'col-span-full']"
-                    :ui="{
-                        description: 'line-clamp-2',
-                    }"
+                v-for="(post, index) in appEntries"
+                :key="index"
+                :to="post.path"
+                :title="post.title"
+                :description="post.description"
+                :image="post.image"
+                :date="new Date(post.date).toLocaleDateString('en', { year: 'numeric', month: 'short', day: 'numeric' })"
+                :authors="post.authors"
+                :badge="post.badge"
+                :orientation="index === 0 ? 'horizontal' : 'vertical'"
+                :class="[index === 0 && 'col-span-full']"
+                variant="naked"
+                :ui="{
+                    description: 'line-clamp-2'
+                }"
                 />
-                <!--
-           :date="new Date(post.date).toLocaleDateString('en', { year: 'numeric', month: 'short', day: 'numeric' })"
-          :authors="post.authors"
-          :badge="post.badge"
-
-        -->
-            </UBlogList>
+            </UBlogPosts>
         </UPageBody>
     </UContainer>
 </template>

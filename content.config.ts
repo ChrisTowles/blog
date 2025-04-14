@@ -1,6 +1,7 @@
 import { defineContentConfig, defineCollection, z } from '@nuxt/content'
 import { BlogPostSchema } from './app/types/blogPost'
 import { AppEntrySchema } from './app/types/appEntry'
+import { a } from '#build/ui-pro/prose'
 
 
 const variantEnum = z.enum(['solid', 'outline', 'subtle', 'soft', 'ghost', 'link'])
@@ -95,7 +96,7 @@ export default defineContentConfig({
       schema: z.object({
         title: z.string().nonempty(),
         description: z.string().nonempty(),
-        image: z.object({ src: z.string().nonempty() }),
+        image: z.object({ src: z.string().nonempty(), alt: z.string().optional() }),
         authors: z.array(
           z.object({
             name: z.string().nonempty(),
@@ -112,6 +113,30 @@ export default defineContentConfig({
       type: 'data',
       schema: sectionSchema
     }),
-    
+    // --- apps
+    appEntry: defineCollection({
+      type: 'page',
+      source: '3.apps/**/index.md',
+      schema: z.object({
+        title: z.string().nonempty(),
+        description: z.string().nonempty(),
+        image: z.object({ src: z.string().nonempty(), alt: z.string().optional() }),
+        authors: z.array(
+          z.object({
+            name: z.string().nonempty(),
+            to: z.string().nonempty(),
+            avatar: z.object({ src: z.string().nonempty() })
+          })
+        ),
+        date: z.string().nonempty(),
+        badge: z.object({ label: z.string().nonempty() })
+      })
+    }),
+    apps: defineCollection({
+      source: '3.apps.yml',
+      type: 'data',
+      schema: sectionSchema
+    }),
+    // end apps
   }
 })

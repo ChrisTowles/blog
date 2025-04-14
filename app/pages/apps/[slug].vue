@@ -1,67 +1,57 @@
 <script setup lang="ts">
-import { withoutTrailingSlash, joinURL } from 'ufo'
+const route = useRoute()
 
-const imageClasses = {
-    wrapper: 'ring-1 ring-gray-200 dark:ring-gray-800 relative overflow-hidden aspect-[16/9] w-full rounded-lg pointer-events-none',
-    base: 'object-cover object-top w-full h-full transform transition-transform duration-200 group-hover:scale-105',
+const { data: appEntry } = await useAsyncData(route.path, () => queryCollection('appEntry').path(route.path).first())
+if (!appEntry.value) {
+  throw createError({ statusCode: 404, statusMessage: 'Post not found', fatal: true })
 }
 
-const route = useRoute()
-const post = await getAppsPageAndCheckRouteExistsOrThrow404(route)
-
-// const { data: surround } = await useAsyncData(`${route.path}-surround`, () => queryContent('/blog')
-//     .where({ _extension: 'md', title: { $exists: true } })
-//     .without(['body', 'excerpt'])
-//     .sort({ date: -1 })
-//     .findSurround(withoutTrailingSlash(route.path)), { default: () => [] })
-
-const title = post.value.head?.title || post.value.title
-const description = post.value.head?.description || post.value.description
-
-useSeoMeta({
-    title,
-    ogTitle: title,
-    description,
-    ogDescription: description,
+const { data: surround } = await useAsyncData(`${route.path}-surround`, () => {
+  return queryCollectionItemSurroundings('appEntry', route.path, {
+    fields: ['description']
+  })
 })
 
-if (post.value.image?.src) {
-    //const site = useSiteConfig()
 
-    useSeoMeta({
-        ogImage: joinURL("", post.value.image.src),
-        twitterImage: joinURL("", post.value.image.src),
-    })
-}
-else {
-    // TODO: fix this
-    // defineOgImage({
-    //   component: 'Saas',
-    //   title,
-    //   description,
-    //   headline: 'Blog',
-    // })
+
+useSeoMeta({
+  title: appEntry.value.title,
+  ogTitle: appEntry.value.title,
+  description: appEntry.value.description,
+  ogDescription: appEntry.value.description
+})
+
+
+
+if (appEntry.value.image?.src) {
+  defineOgImage({
+    url: appEntry.value.image.src
+  })
+} else {
+  defineOgImageComponent('App', {
+    headline: 'App'
+  })
 }
 </script>
 
 <template>
-    <UContainer v-if="post">
+    <UContainer v-if="appEntry">
         <UPageHeader
-            :title="post.title"
-            :description="post.description"
+            :title="appEntry.title"
+            :description="appEntry.description"
         >
             <template #headline>
                 <UBadge
-                    v-bind="post.badge"
+                    v-bind="appEntry.badge"
                     variant="subtle"
                 />
                 <span class="text-gray-500 dark:text-gray-400">&middot;</span>
-                <time class="text-gray-500 dark:text-gray-400">{{ new Date(post.date).toLocaleDateString('en', { year: 'numeric', month: 'short', day: 'numeric' }) }}</time>
+                <time class="text-gray-500 dark:text-gray-400">{{ new Date(appEntry.date).toLocaleDateString('en', { year: 'numeric', month: 'short', day: 'numeric' }) }}</time>
             </template>
 
             <div class="flex flex-wrap items-center gap-3 mt-4">
                 <UButton
-                    v-for="(author, index) in post.authors"
+                    v-for="(author, index) in appEntry.authors"
                     :key="index"
                     :to="author.to"
                     color="primary"
@@ -82,30 +72,21 @@ else {
         <UPage>
             <UPageBody prose>
                 <div
-                    v-if="post.image && post.image.src"
-                    :class="imageClasses.wrapper"
+                    v-if="appEntry.image && appEntry.image.src"
+             class="flex justify-center items-center"
                 >
                     <NuxtImg
-                        :src="post.image.src"
-                        :alt="post.image.alt"
+                        :src="appEntry.image.src"
+                        :alt="appEntry.image.alt"
 
-                        :class="imageClasses.base"
+                     class="rounded-lg w-4/5 h-auto"
                     />
-                </div>
-                <!-- <div
-          v-if="post.image && post.image.src"
-          class="flex justify-center items-center"
-        >
-          <nuxt-img
 
-            :src="post.image.src"
-            :alt="post.image.alt"
-            class="rounded-lg w-4/5 h-auto"
-          />
-        </div> -->
+             
+        </div>
                 <ContentRenderer
-                    v-if="post && post.body"
-                    :value="post"
+                    v-if="appEntry && appEntry.body"
+                    :value="appEntry"
                 />
 
                 <hr v-if="surround?.length">
@@ -115,8 +96,8 @@ else {
 
             <template #right>
                 <UContentToc
-                    v-if="post.body && post.body.toc"
-                    :links="post.body.toc.links"
+                    v-if="appEntry.body && appEntry.body.toc"
+                    :links="appEntry.body.toc.links"
                 />
             </template>
         </UPage>

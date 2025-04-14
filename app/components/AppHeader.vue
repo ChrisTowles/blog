@@ -12,8 +12,8 @@ const items = computed(() => [{
 },
 {
   label: 'Apps',
-  to: '/app',
-  active: route.path.startsWith('/app')
+  to: '/apps',
+  active: route.path.startsWith('/apps')
 }])
 </script>
 
