@@ -63,6 +63,9 @@ export default defineNuxtConfig({
     }
   },
 
+  hub: {
+    ai: true
+  },
   typescript: {
     //    typeCheck: true,
     //     strict: true,
