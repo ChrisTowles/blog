@@ -2,7 +2,7 @@ name: Deploy to NuxtHub
 on: push
 
 jobs:
-  deploy:
+  ci:
   
     name: "Deploy to NuxtHub"
     runs-on: ubuntu-latest
