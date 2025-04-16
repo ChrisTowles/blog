@@ -7,7 +7,6 @@ export default defineNuxtConfig({
     '@nuxt/ui-pro',
     '@nuxt/content',
     '@vueuse/nuxt',
-
     // '@nuxt/fonts',
     // '@nuxtjs/eslint-module', { /* module options */ }],
     // 'nuxt-og-image',
@@ -20,7 +19,8 @@ export default defineNuxtConfig({
     'nuxt-gtag',
     // '@nuxtjs/sitemap',
     // '@nuxt/icon',
-    'nuxt-og-image'
+    'nuxt-og-image',
+    '@nuxthub/core'
   ],
   devtools: {
     enabled: true
