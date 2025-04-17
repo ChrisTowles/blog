@@ -2,16 +2,16 @@ name: Deploy to NuxtHub
 on: push
 
 jobs:
-  ci:
+  deploy:
   
     name: "Deploy to NuxtHub"
     runs-on: ubuntu-latest
     environment:
-      name: ${{ github.ref == 'refs/heads/main' && 'ci' || 'ci' }}
+      name: ${{ github.ref == 'refs/heads/main' && 'ci' || 'ci' }} # just putting this here to avoid worrying putting env in both. 
       url: ${{ steps.deploy.outputs.deployment-url }}
     env:
       NUXT_UI_PRO_LICENSE: ${{ secrets.NUXT_UI_PRO_LICENSE }}
-      
+
     permissions:
       contents: read
       id-token: write
