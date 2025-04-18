@@ -20,13 +20,22 @@ export default defineNuxtConfig({
     // '@nuxtjs/sitemap',
     // '@nuxt/icon',
     'nuxt-og-image',
-    '@nuxthub/core'
+    '@nuxtjs/mdc',
+    '@nuxthub/core',
+    'nuxt-auth-utils'
   ],
   devtools: {
     enabled: true
   },
 
   css: ['~/assets/css/main.css'],
+
+  mdc: {
+    highlight: {
+      // noApiRoute: true
+      shikiEngine: 'javascript'
+    }
+  },
 
   routeRules: {
     '/': { prerender: true }
@@ -35,6 +44,11 @@ export default defineNuxtConfig({
   future: {
     compatibilityVersion: 4
   },
+
+  experimental: {
+    viewTransition: true
+  },
+
   // app: {
   //     head: {
   //         charset: 'utf-16',
@@ -52,7 +66,7 @@ export default defineNuxtConfig({
 
   // },
 
-  compatibilityDate: '2025-04-01',
+  compatibilityDate: '2025-04-18',
 
   nitro: {
     prerender: {
@@ -60,11 +74,18 @@ export default defineNuxtConfig({
         '/'
       ],
       crawlLinks: true
+    },
+    experimental: {
+      openAPI: true
     }
   },
 
+  // nitro: {
+  //   prerender: {
+
   hub: {
-    ai: true
+    ai: true,
+    database: true
   },
   typescript: {
     //    typeCheck: true,
@@ -79,16 +100,6 @@ export default defineNuxtConfig({
       }
     }
   },
-
-  // nitro: {
-  //   prerender: {
-  //     autoSubfolderIndex: false, // https://nuxt.com/deploy/cloudflare
-  //     crawlLinks: true,
-  //     routes: [
-  //       '/',
-  //     ],
-  //   },
-  // },
 
   // set in .env with NUXT_PUBLIC_GTAG_ID
   // gtag: {
