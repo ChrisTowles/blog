@@ -15,9 +15,12 @@ This is just my personal blog at <https://Chris.Towles.dev>
 - Cloudflare
   - Paid for Cloudflare ($5 Monthly)
   - can likely go back to free but ran over the 1mb file limit.
+- [NuxtHub](https://hub.nuxt.com/)
+  - this switched hosting to cloudflare workers from cloudflare pages.
 - Icons
   - <https://heroicons.com/>
   - <https://simpleicons.org/>
+  
 
 - Check Google Search Indexing - <https://search.google.com/search-console/>
   - verify the domain via DNS verification

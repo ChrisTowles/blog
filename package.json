@@ -17,6 +17,7 @@
     "typecheck": "nuxt typecheck",
     "prepare": "husky",
     "deploy:main": "wrangler pages deploy",
+    "deploy:nuxthub": "npx nuxthub deploy",
     "deploy:preview": "wrangler pages dev",
     "cleanup": "rm -rf .data/content/contents.sqlite && npx nuxi cleanup"
   },
