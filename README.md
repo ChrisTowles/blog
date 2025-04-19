@@ -17,6 +17,8 @@ This is just my personal blog at <https://Chris.Towles.dev>
   - can likely go back to free but ran over the 1mb file limit.
 - [NuxtHub](https://hub.nuxt.com/)
   - this switched hosting to cloudflare workers from cloudflare pages.
+- [Nuxt Chat](https://github.com/nuxt-ui-pro/chat)
+  - using the Nuxt UI Pro Chat Template
 - Icons
   - <https://heroicons.com/>
   - <https://simpleicons.org/>

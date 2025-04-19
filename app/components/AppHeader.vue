@@ -19,6 +19,12 @@ const items = computed(() => [
     to: '/apps',
     icon: 'i-heroicons-device-phone-mobile',
     active: route.path.startsWith('/apps')
+  },
+  {
+    label: 'Chat',
+    to: '/chat',
+    icon: 'i-heroicons-device-phone-mobile',
+    active: route.path.startsWith('/apps')
   }])
 </script>
 
@@ -41,6 +47,7 @@ const items = computed(() => [
     />
 
     <template #right>
+      <!-- <UDashboardSearchButton :kbds="['alt', 'O']" /> -->
       <UColorModeButton />
 
       <!-- <UButton
