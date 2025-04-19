@@ -1,19 +1,10 @@
 export default defineAppConfig({
   ui: {
-    // colors: {
-    //     primary: 'green',
-    //     neutral: 'zinc'
-    // },
-    primary: 'blue',
-    // gray: 'zinc',
-    variables: {
-      light: {
-        background: 'var(--color-gray-50)'
-      },
-      dark: {
-        background: 'var(--color-gray-950)'
-      }
+    colors: {
+      primary: 'sky',
+      neutral: 'zinc'
     },
+
     button: {
       rounded: 'rounded-full',
       default: {
@@ -41,18 +32,7 @@ export default defineAppConfig({
       bottom: {
         wrapper: 'border-t border-gray-200 dark:border-gray-800'
       }
-    },
-    pricing: {
-      card: {
-        highlight: 'ring-gray-900 dark:ring-white',
-        features: {
-          item: {
-            icon: {
-              base: 'text-gray-900 dark:text-white'
-            }
-          }
-        }
-      }
     }
+
   }
 })

@@ -30,6 +30,16 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
+  // set in .env with NUXT_PUBLIC_GTAG_ID
+  // gtag: {
+  //     id: 'G-X0H34W6PGC', // set correct here, but over ridden locally G-XXXXXXXXX
+  //     config: { anonymize_ip: false },
+  // },
+
+  colorMode: {
+    preference: 'dark' // default value of $colorMode.preference
+  },
+
   mdc: {
     highlight: {
       // noApiRoute: true
@@ -100,16 +110,6 @@ export default defineNuxtConfig({
       }
     }
   },
-
-  // set in .env with NUXT_PUBLIC_GTAG_ID
-  // gtag: {
-  //     id: 'G-X0H34W6PGC', // set correct here, but over ridden locally G-XXXXXXXXX
-  //     config: { anonymize_ip: false },
-  // },
-
-  // ui: {
-  //     icons: ['heroicons', 'simple-icons'],
-  // },
   icon: {
     serverBundle: {
       collections: ['simple-icons', 'heroicons'] // <!--- this
