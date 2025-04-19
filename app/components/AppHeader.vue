@@ -1,27 +1,37 @@
 <script setup lang="ts">
 const route = useRoute()
 
-
-const title = "Chris Towles\'s Blog"
-
-const items = computed(() => [{
-  label: 'Blog',
-  to: '/blog',
-  icon: 'i-heroicons-device-phone-mobile',
-  active: route.path.startsWith('/blog')
-},
-{
-  label: 'Apps',
-  to: '/apps',
-  active: route.path.startsWith('/apps')
-}])
+const items = computed(() => [
+  {
+    label: 'Home',
+    to: '/',
+    icon: 'i-heroicons-home',
+    active: route.path === '/'
+  },
+  {
+    label: 'Blog',
+    to: '/blog',
+    icon: 'i-lucide-notebook-text',
+    active: route.path.startsWith('/blog')
+  },
+  {
+    label: 'Apps',
+    to: '/apps',
+    icon: 'i-heroicons-device-phone-mobile',
+    active: route.path.startsWith('/apps')
+  }])
 </script>
 
 <template>
   <UHeader>
     <template #left>
-      <NuxtLink to="/">
-        {{ title }}
+      <NuxtLink to="/" class="flex items-end gap-0.5">
+
+        <Logo />
+        <span class="text-xl font-bold text-(--ui-text-highlighted)">
+          Chris Towles's
+          <span style="color: var(--ui-primary)">Blog</span>
+        </span>
       </NuxtLink>
     </template>
 
@@ -65,9 +75,8 @@ const items = computed(() => [{
         class="-mx-2.5"
       />
 
-
       <USeparator class="my-6" />
-       <!--
+      <!--
       <UButton
         label="Sign in"
         color="neutral"
