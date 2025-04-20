@@ -10,7 +10,11 @@ hero:
       trailing: true
       to: 'blog'
       size: xl
- 
+    - label: AI Chat
+      icon: i-heroicons-chat-bubble-left-right
+      trailing: false
+      to: 'chat'
+      size: xl
 
     
 logos:

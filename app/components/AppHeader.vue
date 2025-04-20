@@ -39,41 +39,19 @@ const items = computed(() => [
       variant="link"
     />
 
-    <template #right>
+    <template #right="{ collapsed }">
       <!-- <UDashboardSearchButton :kbds="['alt', 'O']" /> -->
       <UColorModeButton v-if="!loggedIn" />
-      <UserMenu v-if="loggedIn" :collapsed="false" />
+      <UserMenu v-if="loggedIn" :collapsed="collapsed" />
+
       <UButton
-        v-if="loggedIn"
-        label="Login"
+        v-if="!loggedIn"
+        :label="collapsed ? '' : 'Login with GitHub'"
+        icon="i-simple-icons-github"
         color="neutral"
         variant="ghost"
         @click="openInPopup('/auth/github')"
       />
-
-      <!-- <UButton
-        icon="i-lucide-log-in"
-        color="neutral"
-        variant="ghost"
-        to="/login"
-        class="lg:hidden"
-      />
-
-      <UButton
-        label="Sign in"
-        color="neutral"
-        variant="ghost"
-        to="/login"
-        class="hidden lg:inline-flex"
-      />
-
-      <UButton
-        label="Sign up"
-        color="neutral"
-        trailing-icon="i-lucide-arrow-right"
-        class="hidden lg:inline-flex"
-        to="/signup"
-      /> -->
     </template>
 
     <template #body>
@@ -82,23 +60,6 @@ const items = computed(() => [
         orientation="vertical"
         class="-mx-2.5"
       />
-
-      <USeparator class="my-6" />
-      <!--
-      <UButton
-        label="Sign in"
-        color="neutral"
-        variant="subtle"
-        to="/login"
-        block
-        class="mb-3"
-      />
-      <UButton
-        label="Sign up"
-        color="neutral"
-        to="/signup"
-        block
-      /> -->
     </template>
   </UHeader>
 </template>
