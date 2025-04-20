@@ -73,13 +73,13 @@ async function deleteChat(id: string) {
   refreshChats()
 
   if (route.params.id === id) {
-    navigateTo('/')
+    navigateTo('/chat')
   }
 }
 
 defineShortcuts({
   c: () => {
-    navigateTo('/')
+    navigateTo('/chat')
   }
 })
 </script>
@@ -89,18 +89,14 @@ defineShortcuts({
     <UDashboardSidebar
       id="default"
       v-model:open="open"
-      :min-size="12"
+      :min-size="24"
       collapsible
       resizable
       class="bg-(--ui-bg-elevated)/50"
     >
       <template #header="{ collapsed }">
-        <NuxtLink to="/" class="flex items-end gap-0.5">
-          <Logo class="h-8 w-auto shrink-0" />
-          <span v-if="!collapsed" class="text-xl font-bold text-(--ui-text-highlighted)">Chat</span>
-        </NuxtLink>
-
         <div v-if="!collapsed" class="flex items-center gap-1.5 ms-auto">
+          <LogoAndHeader />
           <UDashboardSearchButton collapsed />
           <UDashboardSidebarCollapse />
         </div>
@@ -112,7 +108,7 @@ defineShortcuts({
             v-bind="collapsed ? { icon: 'i-lucide-plus' } : { label: 'New chat' }"
             variant="soft"
             block
-            to="/"
+            to="/chat"
             @click="open = false"
           />
 
@@ -165,7 +161,7 @@ defineShortcuts({
         id: 'links',
         items: [{
           label: 'New chat',
-          to: '/',
+          to: '/chat',
           icon: 'i-lucide-square-pen'
         }]
       }, ...groups]"

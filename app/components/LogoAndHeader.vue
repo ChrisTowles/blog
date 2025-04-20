@@ -1,5 +1,13 @@
 <template>
-  <UIcon name="i-lucide-lightbulb" class="h-8 size-5" style="color: var(--ui-primary)" />
+  <NuxtLink to="/" class="flex items-end gap-0.5">
+
+    <UIcon name="i-lucide-lightbulb" class="h-8 size-5" style="color: var(--ui-primary)" />
+    <span class="text-xl font-bold text-(--ui-text-highlighted)">
+      Chris Towles's
+      <span style="color: var(--ui-primary)">Blog</span>
+    </span>
+  </NuxtLink>
+
   <!-- <svg
     width="264"
     height="264"

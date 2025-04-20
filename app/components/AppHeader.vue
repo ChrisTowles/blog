@@ -31,14 +31,7 @@ const items = computed(() => [
 <template>
   <UHeader>
     <template #left>
-      <NuxtLink to="/" class="flex items-end gap-0.5">
-
-        <Logo />
-        <span class="text-xl font-bold text-(--ui-text-highlighted)">
-          Chris Towles's
-          <span style="color: var(--ui-primary)">Blog</span>
-        </span>
-      </NuxtLink>
+      <LogoAndHeader />
     </template>
 
     <UNavigationMenu
@@ -51,8 +44,8 @@ const items = computed(() => [
       <UColorModeButton v-if="!loggedIn" />
       <UserMenu v-if="loggedIn" :collapsed="false" />
       <UButton
-        v-else
-        :label="collapsed ? '' : 'Login'"
+        v-if="loggedIn"
+        label="Login"
         color="neutral"
         variant="ghost"
         @click="openInPopup('/auth/github')"

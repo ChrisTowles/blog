@@ -23,9 +23,14 @@ export default defineNuxtConfig({
     '@nuxtjs/mdc',
     '@nuxthub/core',
     'nuxt-auth-utils'
+    // '@nuxt/test-utils/module'
   ],
   devtools: {
-    enabled: true
+    enabled: true,
+
+    timeline: {
+      enabled: true
+    }
   },
 
   css: ['~/assets/css/main.css'],
@@ -97,6 +102,7 @@ export default defineNuxtConfig({
     ai: true,
     database: true
   },
+
   typescript: {
     //    typeCheck: true,
     //     strict: true,

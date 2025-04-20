@@ -1,4 +1,6 @@
 <script setup lang="ts">
+// Note: it took me way to long to figure, out that this file needed to be a index in the chat folder to work correctly.
+
 definePageMeta({
   layout: 'chat-side-nav'
 })

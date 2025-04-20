@@ -104,6 +104,9 @@ onMounted(() => {
           </template>
         </UChatPrompt>
       </UContainer>
+
+      {{ messages }}
+      error: {{ error }}
     </template>
   </UDashboardPanel>
 </template>

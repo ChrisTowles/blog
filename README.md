@@ -17,11 +17,16 @@ This is just my personal blog at <https://Chris.Towles.dev>
   - can likely go back to free but ran over the 1mb file limit.
 - [NuxtHub](https://hub.nuxt.com/)
   - this switched hosting to cloudflare workers from cloudflare pages.
+  - AI
+    - hubAI() is disabled: link a project with `npx nuxthub link` to run AI models in development mode.
 - [Nuxt Chat](https://github.com/nuxt-ui-pro/chat)
   - using the Nuxt UI Pro Chat Template
 - Icons
   - <https://heroicons.com/>
   - <https://simpleicons.org/>
+
+
+- [@ai-sdk/vue](https://sdk.vercel.ai/docs/getting-started/nuxt)
 
 - GitHub OAuth client ID - Setup 
  - https://github.com/settings/developers

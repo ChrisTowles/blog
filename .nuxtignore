@@ -1,0 +1,2 @@
+# ignore test files.
+*.spec.ts
