@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const route = useRoute()
-
+const { loggedIn, openInPopup } = useUserSession()
 const items = computed(() => [
   {
     label: 'Home',
@@ -48,7 +48,15 @@ const items = computed(() => [
 
     <template #right>
       <!-- <UDashboardSearchButton :kbds="['alt', 'O']" /> -->
-      <UColorModeButton />
+      <UColorModeButton v-if="!loggedIn" />
+      <UserMenu v-if="loggedIn" :collapsed="false" />
+      <UButton
+        v-else
+        :label="collapsed ? '' : 'Login'"
+        color="neutral"
+        variant="ghost"
+        @click="openInPopup('/auth/github')"
+      />
 
       <!-- <UButton
         icon="i-lucide-log-in"

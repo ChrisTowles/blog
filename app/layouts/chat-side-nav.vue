@@ -148,7 +148,7 @@ defineShortcuts({
       <template #footer="{ collapsed }">
         <UserMenu v-if="loggedIn" :collapsed="collapsed" />
         <UButton
-          v-else
+          v-if="!loggedIn"
           :label="collapsed ? '' : 'Login with GitHub'"
           icon="i-simple-icons-github"
           color="neutral"

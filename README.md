@@ -22,7 +22,11 @@ This is just my personal blog at <https://Chris.Towles.dev>
 - Icons
   - <https://heroicons.com/>
   - <https://simpleicons.org/>
-  
+
+- GitHub OAuth client ID - Setup 
+ - https://github.com/settings/developers
+ - https://nuxt.com/modules/auth-utils
+
 
 - Check Google Search Indexing - <https://search.google.com/search-console/>
   - verify the domain via DNS verification
