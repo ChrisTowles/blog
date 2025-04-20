@@ -17,10 +17,15 @@ useSeoMeta({
 <template>
   <div v-if="page">
     <UPageHero
-      :title="page.hero.title"
       :description="page.hero.description"
       :links="page.hero.links"
     >
+      <template #title>
+        <span class="font-bold text-(--ui-text-highlighted)">
+          Chris Towles's
+          <span style="color: var(--ui-primary)">Blog</span>
+        </span>
+      </template>
       <template #top>
         <div
           class="absolute rounded-full dark:bg-(--ui-primary) blur-[300px] size-60 sm:size-80 transform -translate-x-1/2 left-1/2 -translate-y-80"

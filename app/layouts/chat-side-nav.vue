@@ -142,7 +142,7 @@ defineShortcuts({
       </template>
 
       <template #footer="{ collapsed }">
-        <UserMenu v-if="loggedIn" :collapsed="collapsed" />
+        <UserMenu v-if="loggedIn" :collapsed="collapsed" :block="true" />
         <UButton
           v-if="!loggedIn"
           :label="collapsed ? '' : 'Login with GitHub'"

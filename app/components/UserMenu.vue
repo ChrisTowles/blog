@@ -3,6 +3,7 @@ import type { DropdownMenuItem } from '@nuxt/ui'
 
 defineProps<{
   collapsed?: boolean
+  block?: boolean // wither or not to have componet take full width
 }>()
 
 const colorMode = useColorMode()
@@ -117,7 +118,7 @@ const items = computed<DropdownMenuItem[][]>(() => ([[{
       }"
       color="neutral"
       variant="ghost"
-
+      :block="block ? true : false"
       :square="collapsed"
       class="data-[state=open]:bg-(--ui-bg-elevated)"
       :ui="{
