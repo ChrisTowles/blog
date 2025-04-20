@@ -2,6 +2,10 @@
 import { useChat, type Message } from '@ai-sdk/vue'
 import { useClipboard } from '@vueuse/core'
 
+definePageMeta({
+  layout: 'chat-side-nav'
+})
+
 const route = useRoute()
 const toast = useToast()
 const clipboard = useClipboard()
@@ -105,8 +109,8 @@ onMounted(() => {
         </UChatPrompt>
       </UContainer>
 
-      {{ messages }}
-      error: {{ error }}
+      <!-- {{ messages }}
+      error: {{ error }} -->
     </template>
   </UDashboardPanel>
 </template>

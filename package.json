@@ -9,7 +9,8 @@
   "scripts": {
     "build": "nuxt build",
     "build:cf": "nuxt build --preset=cloudflare_pages",
-    "dev": "nuxt dev",
+    "dev:no-remote": "nuxt dev",
+    "dev": "nuxt dev --remote",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",

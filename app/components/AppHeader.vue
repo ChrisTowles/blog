@@ -21,9 +21,9 @@ const items = computed(() => [
     active: route.path.startsWith('/apps')
   },
   {
-    label: 'Chat',
+    label: 'AI Chat',
     to: '/chat',
-    icon: 'i-heroicons-device-phone-mobile',
+    icon: 'i-heroicons-chat-bubble-left-right',
     active: route.path.startsWith('/apps')
   }])
 </script>
