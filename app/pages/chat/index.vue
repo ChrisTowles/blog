@@ -29,6 +29,10 @@ const quickChats = [
   {
     label: 'Tell me a joke',
     icon: 'i-heroicons-outline-light-bulb'
+  },
+  {
+    label: 'write a script in python more than one page long.',
+    icon: 'i-heroicons-command-line'
   }
 ]
 </script>

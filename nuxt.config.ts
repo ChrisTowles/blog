@@ -49,6 +49,12 @@ export default defineNuxtConfig({
     highlight: {
       // noApiRoute: true
       shikiEngine: 'javascript'
+    },
+    components: {
+      prose: false // Disable predefined prose components
+      // map: {
+      //   p: 'MyCustomPComponent'
+      // }
     }
   },
 
@@ -121,4 +127,5 @@ export default defineNuxtConfig({
       collections: ['simple-icons', 'heroicons'] // <!--- this
     }
   }
+
 })

@@ -23,11 +23,12 @@ export function useLLM() {
     '@cf/meta-llama/llama-2-7b-chat-hf-lora',
     '@cf/meta/m2m100-1.2b',
     '@cf/microsoft/phi-2',
-    '@cf/microsoft/resnet-50',
+    // '@cf/microsoft/resnet-50',
     '@cf/openai/whisper',
     '@cf/openai/whisper-large-v3-turbo',
     '@cf/openai/whisper-tiny-en'
   ]
+
   const model = useCookie<string>('llm-model', { default: () => '@cf/meta/llama-4-scout-17b-16e-instruct' })
 
   return {

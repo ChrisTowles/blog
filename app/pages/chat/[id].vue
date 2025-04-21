@@ -85,7 +85,12 @@ onMounted(() => {
           :spacing-offset="160"
         >
           <template #content="{ message }">
-            <MDC :value="message.content" :cache-key="message.id" unwrap="p" />
+            <pre>{{ message.content }}
+            </pre>
+            <!-- <MDC :value="message.content"
+            :cache-key="message.id"
+
+            tag="article" /> -->
           </template>
         </UChatMessages>
 
