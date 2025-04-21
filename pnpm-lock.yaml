@@ -22,8 +22,8 @@ importers:
         specifier: 0.8.24
         version: 0.8.24(db0@0.3.1(better-sqlite3@11.9.1)(drizzle-orm@0.42.0(@cloudflare/workers-types@4.20250416.0)(@opentelemetry/api@1.9.0)(better-sqlite3@11.9.1)(gel@2.0.2)))(ioredis@5.6.0)(magicast@0.3.5)(vite@6.2.4(@types/node@22.14.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.37.0)(yaml@2.7.1))
       '@nuxtjs/mdc':
-        specifier: https://pkg.pr.new/@nuxtjs/mdc@c44090f
-        version: https://pkg.pr.new/@nuxtjs/mdc@c44090f(magicast@0.3.5)
+        specifier: https://pkg.pr.new/@nuxtjs/mdc@947176d
+        version: https://pkg.pr.new/@nuxtjs/mdc@947176d(magicast@0.3.5)
       '@tanstack/vue-virtual':
         specifier: ^3.13.6
         version: 3.13.6(vue@3.5.13(typescript@5.8.3))
@@ -1215,8 +1215,8 @@ packages:
   '@nuxtjs/mdc@0.16.1':
     resolution: {integrity: sha512-di9Ox9QY5pO2eIkQPyKFe9O8L3RvIrGbmjI3rJQRj1xGYRFj2S9RvBPCFbvfaqQGOTjOfxHLg8KtQIGj1Iw/lg==}
 
-  '@nuxtjs/mdc@https://pkg.pr.new/@nuxtjs/mdc@c44090f':
-    resolution: {tarball: https://pkg.pr.new/@nuxtjs/mdc@c44090f}
+  '@nuxtjs/mdc@https://pkg.pr.new/@nuxtjs/mdc@947176d':
+    resolution: {tarball: https://pkg.pr.new/@nuxtjs/mdc@947176d}
     version: 0.16.1
 
   '@nuxtjs/sitemap@7.2.10':
@@ -7500,7 +7500,7 @@ snapshots:
       c12: 3.0.2(magicast@0.3.5)
       consola: 3.4.2
       defu: 6.1.4
-      destr: 2.0.3
+      destr: 2.0.5
       errx: 0.1.0
       exsolve: 1.0.4
       globby: 14.1.0
@@ -7864,7 +7864,7 @@ snapshots:
       consola: 3.4.2
       debug: 4.4.0
       defu: 6.1.4
-      destr: 2.0.3
+      destr: 2.0.5
       detab: 3.0.2
       github-slugger: 2.0.0
       hast-util-format: 1.1.0
@@ -7900,7 +7900,7 @@ snapshots:
       - magicast
       - supports-color
 
-  '@nuxtjs/mdc@https://pkg.pr.new/@nuxtjs/mdc@c44090f(magicast@0.3.5)':
+  '@nuxtjs/mdc@https://pkg.pr.new/@nuxtjs/mdc@947176d(magicast@0.3.5)':
     dependencies:
       '@nuxt/kit': 3.16.2(magicast@0.3.5)
       '@shikijs/langs': 3.2.1
