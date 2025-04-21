@@ -6,15 +6,17 @@ hero:
   description: I'm a software engineer and Solution architect. Usually in AWS, Vue, Typescript, Python and tinkering with everything else. 
   links:
     - label: Blog
-      icon: i-heroicons-arrow-right-20-solid
-      trailing: true
+      icon: i-lucide-notebook-text
+      trailing: false
       to: 'blog'
       size: xl
+      variant: outline
     - label: AI Chat
       icon: i-heroicons-chat-bubble-left-right
       trailing: false
       to: 'chat'
       size: xl
+      variant: solid
 
     
 logos:
