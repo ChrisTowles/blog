@@ -139,6 +139,15 @@ defineShortcuts({
             </div>
           </template>
         </UNavigationMenu>
+        <USeparator v-if="!collapsed" class="pt-8" />
+
+        <UContainer v-if="!collapsed">
+          This entire Chat app is from <ULink to="https://github.com/nuxt-ui-pro/chat">Nuxt UI Pro Chat</ULink>.
+
+          Its the amazing work of <ULink to="https://github.com/benjamincanac" target="_blank">
+            <UAvatar src="https://github.com/benjamincanac.png" alt="Benjamin Canac" />Benjamin Canac</ULink> and <ULink to="https://github.com/Atinux" target="_blank">
+            <UAvatar src="https://github.com/atinux.png" alt="Sébastien Chopin" />Sébastien Chopin</ULink>.
+        </UContainer>
       </template>
 
       <template #footer="{ collapsed }">

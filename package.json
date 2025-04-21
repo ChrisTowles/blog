@@ -28,7 +28,7 @@
     "@ai-sdk/vue": "^1.2.8",
     "@nuxt/ui-pro": "https://pkg.pr.new/@nuxt/ui-pro@fa00f85",
     "@nuxthub/core": "0.8.24",
-    "@nuxtjs/mdc": "https://pkg.pr.new/@nuxtjs/mdc@947176d",
+    "@nuxtjs/mdc": "https://pkg.pr.new/@nuxtjs/mdc@c44090f",
     "@tanstack/vue-virtual": "^3.13.6",
     "ai": "^4.3.9",
     "date-fns": "^4.1.0",

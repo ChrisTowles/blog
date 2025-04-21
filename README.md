@@ -4,10 +4,11 @@
 
 This is just my personal blog at <https://Chris.Towles.dev>
 
-## Hosting
+## Quick Links
 
 - https://admin.hub.nuxt.com/
 - https://dash.cloudflare.com/
+- https://ui.nuxt.com/components#element
 
 ## Blog Tech Stack
 

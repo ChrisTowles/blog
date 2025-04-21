@@ -87,6 +87,8 @@ onMounted(() => {
           <template #content="{ message }">
             <pre>{{ message.content }}
             </pre>
+            <!-- <MDC :value="message.content " tag="article" />
+            <MDC :value="message.content" :cache-key="message.id" unwrap="p" /> -->
             <!-- <MDC :value="message.content"
             :cache-key="message.id"
 

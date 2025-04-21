@@ -1,5 +1,10 @@
 # NuxtHub Notes
 
+## .nuxtrc
+
+include `hub.workers=true`
+
+
 ## can't exstablish connection with hubAI
 
 ### Checks
