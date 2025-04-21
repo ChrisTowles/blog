@@ -27,11 +27,11 @@ function onSubmit() {
 
 const quickChats = [
   {
-    label: 'Tell me a joke',
+    label: 'Tell me a joke about programing',
     icon: 'i-heroicons-outline-light-bulb'
   },
   {
-    label: 'write a script in python more than one page long.',
+    label: 'write a script in python to sort a list.',
     icon: 'i-heroicons-command-line'
   }
 ]
