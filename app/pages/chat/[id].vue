@@ -85,8 +85,10 @@ onMounted(() => {
           :spacing-offset="160"
         >
           <template #content="{ message }">
-            <pre>{{ message.content }}
-            </pre>
+            <UCard>
+              <div>{{ message.content }}</div>
+            </UCard>
+
             <!-- <MDC :value="message.content " tag="article" />
             <MDC :value="message.content" :cache-key="message.id" unwrap="p" /> -->
             <!-- <MDC :value="message.content"

@@ -33,6 +33,14 @@ const quickChats = [
   {
     label: 'write a script in python to sort a list.',
     icon: 'i-heroicons-command-line'
+  },
+  {
+    label: 'write a script in javascript to sort a list.',
+    icon: 'i-heroicons-command-line'
+  },
+  {
+    label: 'write a script in typescript to sort a list.',
+    icon: 'i-heroicons-command-line'
   }
 ]
 </script>
