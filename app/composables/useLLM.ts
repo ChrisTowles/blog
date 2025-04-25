@@ -4,20 +4,12 @@ export function useLLM() {
   const models = [
     '@cf/deepseek-ai/deepseek-math-7b-instruct',
     '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
-    '@cf/google/gemma-2b-it-lora',
     '@cf/google/gemma-3-12b-it',
     '@cf/google/gemma-7b-it-lora',
-    '@cf/meta/llama-2-7b-chat-fp16',
-    '@cf/meta/llama-2-7b-chat-int8',
-    '@cf/meta/llama-3.1-8b-instruct',
-    '@cf/meta/llama-3.1-8b-instruct-awq',
-    '@cf/meta/llama-3.1-8b-instruct-fp8',
     '@cf/meta/llama-3.2-11b-vision-instruct',
     '@cf/meta/llama-3.2-1b-instruct',
     '@cf/meta/llama-3.2-3b-instruct',
     '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
-    '@cf/meta/llama-3-8b-instruct',
-    '@cf/meta/llama-3-8b-instruct-awq',
     '@cf/meta/llama-4-scout-17b-16e-instruct',
     '@cf/meta/llama-guard-3-8b',
     '@cf/meta-llama/llama-2-7b-chat-hf-lora',
@@ -30,7 +22,14 @@ export function useLLM() {
     '@cf/openai/whisper-tiny-en'
   ]
 
-  const model = useCookie<string>('llm-model', { default: () => '@cf/meta/llama-4-scout-17b-16e-instruct' })
+  const default_model = '@cf/meta/llama-4-scout-17b-16e-instruct' 
+
+  const model = useCookie<string>('llm-model', { default: () => default_model })
+
+  // ensure the selected model is in the list of models
+  if (models.indexOf(model.value) == -1) {
+    model.value = default_model
+  }
 
   return {
     models,

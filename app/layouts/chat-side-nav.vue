@@ -77,6 +77,29 @@ async function deleteChat(id: string) {
   }
 }
 
+
+
+async function deleteChatsAll() {
+  const instance = deleteModal.open()
+  const result = await instance.result
+  if (!result) {
+    return
+  }
+
+  await $fetch(`/api/chats`, { method: 'DELETE' })
+
+  toast.add({
+    title: 'All Chats deleted',
+    description: 'All your chats has been deleted',
+    icon: 'i-lucide-trash'
+  })
+
+  refreshChats()
+
+  navigateTo('/chat')
+
+}
+
 defineShortcuts({
   c: () => {
     navigateTo('/chat')
@@ -140,6 +163,16 @@ defineShortcuts({
             </div>
           </template>
         </UNavigationMenu>
+        <UButton
+                icon="i-lucide-x"
+                color="warning"
+                variant="ghost"
+                size="xs"
+                label="Delete all chats"
+              
+                tabindex="-1"
+                @click.stop.prevent="deleteChatsAll()"
+              />
         <USeparator v-if="!collapsed" class="pt-8" />
 
         <UContainer v-if="!collapsed">

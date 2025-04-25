@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
 
   if (!chat.title) {
     // @ts-expect-error - response is not typed
-    const { response: title } = await hubAI().run('@cf/meta/llama-3.1-8b-instruct-fast', {
+    const { response: title } = await hubAI().run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
       stream: false,
       messages: [{
         role: 'system',
@@ -45,7 +45,6 @@ export default defineEventHandler(async (event) => {
         - Generate a short title based on the first user's message
         - The title should be less than 30 characters long
         - The title should be a summary of the user's message
-        - Do not use quotes (' or ") or colons (:) or any other punctuation
         - Do not use markdown, just plain text`
       }, {
         role: 'user',
@@ -70,7 +69,7 @@ export default defineEventHandler(async (event) => {
   return streamText({
     model: workersAI(model),
     maxTokens: 10000,
-    system: 'You are a helpful assistant that can answer questions and help.',
+    system: 'You are a helpful assistant that that can answer questions and help. You must answer in markdown syntax.',
     messages,
     async onFinish(response) {
       await db.insert(tables.messages).values({

@@ -4,21 +4,49 @@
 definePageMeta({
   layout: 'chat-side-nav'
 })
-const input = ref('')
-const loading = ref(false)
 
 const { model } = useLLM()
 
-async function createChat(prompt: string) {
+
+const input = ref('')
+const loading = ref(false)
+
+async function setPrompt(prompt: string) {
   input.value = prompt
+
+}
+
+async function createChat(prompt: string) {
+
+  input.value = prompt
+
+
+  if (loading.value) {
+    console.log('loading already so canceling');
+    return
+  } else {
+    loading.value = true
+  }
+
   loading.value = true
-  const chat = await $fetch('/api/chats', {
+  $fetch('/api/chats', {
     method: 'POST',
     body: { input: prompt }
-  })
-
-  refreshNuxtData('chats')
-  navigateTo(`/chat/${chat.id}`)
+  }).then((chat) => {
+    console.log(chat, 'chat');
+    refreshNuxtData('chats')
+    navigateTo(`/chat/${chat.id}`)
+    loading.value = false
+  }).catch((error) => {
+    console.log(error, 'error');
+    loading.value = false
+    const { message } = typeof error.message === 'string' && error.message[0] === '{' ? JSON.parse(error.message) : error
+    toast.add({
+      description: message,
+      icon: 'i-lucide-alert-circle',
+      color: 'error'
+    })
+  }) 
 }
 
 function onSubmit() {
@@ -27,7 +55,7 @@ function onSubmit() {
 
 const quickChats = [
   {
-    label: 'Tell me a joke about programing but put it in a code block.',
+    label: 'Tell me a joke about programing.',
     icon: 'i-heroicons-outline-light-bulb'
   },
   {
@@ -39,7 +67,7 @@ const quickChats = [
     icon: 'i-heroicons-command-line'
   },
   {
-    label: 'Make a markdown tables of states.',
+    label: 'Make a markdown table 5 jokes.',
     icon: 'i-heroicons-command-line'
   }
 
@@ -58,13 +86,8 @@ const quickChats = [
           Playground for me to test AI agents and other tooling.
         </h1>
 
-        <UChatPrompt
-          v-model="input"
-          :status="loading ? 'streaming' : 'ready'"
-          class="[view-transition-name:chat-prompt]"
-          variant="subtle"
-          @submit="onSubmit"
-        >
+        <UChatPrompt v-model="input" :status="loading ? 'streaming' : 'ready'"
+          class="[view-transition-name:chat-prompt]" variant="subtle" @submit="onSubmit">
           <UChatPromptSubmit color="neutral" />
 
           <template #footer>
@@ -73,17 +96,9 @@ const quickChats = [
         </UChatPrompt>
 
         <div class="flex flex-wrap gap-2">
-          <UButton
-            v-for="quickChat in quickChats"
-            :key="quickChat.label"
-            :icon="quickChat.icon"
-            :label="quickChat.label"
-            size="sm"
-            color="neutral"
-            variant="outline"
-            class="rounded-full"
-            @click="createChat(quickChat.label)"
-          />
+          <UButton v-for="quickChat in quickChats" :key="quickChat.label" :icon="quickChat.icon"
+            :label="quickChat.label" size="sm" color="neutral" variant="outline" class="rounded-full"
+            :disabled="loading" @click="setPrompt(quickChat.label)" />
         </div>
       </UContainer>
     </template>

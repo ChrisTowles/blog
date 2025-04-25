@@ -91,13 +91,16 @@ onMounted(() => {
           :spacing-offset="160"
         >
           <template #content="{ message }">
-            <MDCCached
-              :value="message.content"
-              :cache-key="message.id"
+            
+            <!-- Issue when cached responsed when using the MDCCached version-->
+            <MDCCachedLocal
+              :value="message.content" 
+              :cache-key="message.id"        
               unwrap="p"
               :components="components"
               :parser-options="{ highlight: false }"
             />
+            <!-- <pre>{{ message }}</pre> -->
           </template>
         </UChatMessages>
 
