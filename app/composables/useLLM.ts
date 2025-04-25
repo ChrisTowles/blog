@@ -23,6 +23,7 @@ export function useLLM() {
     '@cf/meta-llama/llama-2-7b-chat-hf-lora',
     '@cf/meta/m2m100-1.2b',
     '@cf/microsoft/phi-2',
+    '@cf/defog/sqlcoder-7b-2',
     // '@cf/microsoft/resnet-50',
     '@cf/openai/whisper',
     '@cf/openai/whisper-large-v3-turbo',

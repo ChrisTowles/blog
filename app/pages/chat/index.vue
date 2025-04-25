@@ -27,7 +27,7 @@ function onSubmit() {
 
 const quickChats = [
   {
-    label: 'Tell me a joke about programing',
+    label: 'Tell me a joke about programing but put it in a code block.',
     icon: 'i-heroicons-outline-light-bulb'
   },
   {
@@ -35,13 +35,14 @@ const quickChats = [
     icon: 'i-heroicons-command-line'
   },
   {
-    label: 'write a script in javascript to sort a list.',
+    label: 'write a script in typescript to sort a list.',
     icon: 'i-heroicons-command-line'
   },
   {
-    label: 'write a script in typescript to sort a list.',
+    label: 'Make a markdown tables of states.',
     icon: 'i-heroicons-command-line'
   }
+
 ]
 </script>
 
@@ -53,7 +54,7 @@ const quickChats = [
 
     <template #body>
       <UContainer class="flex-1 flex flex-col justify-center gap-4 sm:gap-6 py-8">
-        <h1 class="text-3xl sm:text-4xl text-(--ui-text-highlighted) font-bold">
+        <h1 class="text-3xl sm:text-4xl text-highlighted font-bold">
           Playground for me to test AI agents and other tooling.
         </h1>
 

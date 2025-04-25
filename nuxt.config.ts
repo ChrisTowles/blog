@@ -51,7 +51,7 @@ export default defineNuxtConfig({
       shikiEngine: 'javascript'
     },
     components: {
-      prose: false
+      prose: true
       // map: {
       //   p: 'MyCustomPComponent'
       // }

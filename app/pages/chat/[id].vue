@@ -1,10 +1,16 @@
 <script setup lang="ts">
 import { useChat, type Message } from '@ai-sdk/vue'
 import { useClipboard } from '@vueuse/core'
+import type { DefineComponent } from 'vue'
+import ProseStreamPre from '../../components/prose/PreStream.vue'
 
 definePageMeta({
   layout: 'chat-side-nav'
 })
+
+const components = {
+  pre: ProseStreamPre as unknown as DefineComponent
+}
 
 const route = useRoute()
 const toast = useToast()
@@ -85,16 +91,13 @@ onMounted(() => {
           :spacing-offset="160"
         >
           <template #content="{ message }">
-            <UCard>
-              <div>{{ message.content }}</div>
-            </UCard>
-
-            <!-- <MDC :value="message.content " tag="article" />
-            <MDC :value="message.content" :cache-key="message.id" unwrap="p" /> -->
-            <!-- <MDC :value="message.content"
-            :cache-key="message.id"
-
-            tag="article" /> -->
+            <MDCCached
+              :value="message.content"
+              :cache-key="message.id"
+              unwrap="p"
+              :components="components"
+              :parser-options="{ highlight: false }"
+            />
           </template>
         </UChatMessages>
 
