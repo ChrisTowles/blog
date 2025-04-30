@@ -27,11 +27,10 @@ const { data: chats, refresh: refreshChats } = await useFetch('/api/chats', {
 })
 
 onNuxtReady(async () => {
-  const nuxtApp = useNuxtApp()
   const first10 = (chats.value || []).slice(0, 10)
   for (const chat of first10) {
-    // prefetch the chat and store it in the payload
-    nuxtApp.payload.data[`chats/${chat.id}`] = await $fetch(`/api/chats/${chat.id}`)
+    // prefetch the chat and let the browser cache it
+    await $fetch(`/api/chats/${chat.id}`)
   }
 })
 
@@ -77,8 +76,6 @@ async function deleteChat(id: string) {
   }
 }
 
-
-
 async function deleteChatsAll() {
   const instance = deleteModal.open()
   const result = await instance.result
@@ -97,7 +94,6 @@ async function deleteChatsAll() {
   refreshChats()
 
   navigateTo('/chat')
-
 }
 
 defineShortcuts({
@@ -164,15 +160,16 @@ defineShortcuts({
           </template>
         </UNavigationMenu>
         <UButton
-                icon="i-lucide-x"
-                color="warning"
-                variant="ghost"
-                size="xs"
-                label="Delete all chats"
-              
-                tabindex="-1"
-                @click.stop.prevent="deleteChatsAll()"
-              />
+          v-if="items.length > 0"
+          icon="i-lucide-x"
+          color="warning"
+          variant="ghost"
+          size="xs"
+          label="Delete all chats"
+
+          tabindex="-1"
+          @click.stop.prevent="deleteChatsAll()"
+        />
         <USeparator v-if="!collapsed" class="pt-8" />
 
         <UContainer v-if="!collapsed">

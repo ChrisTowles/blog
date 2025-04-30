@@ -18,13 +18,10 @@ const clipboard = useClipboard()
 const { model } = useLLM()
 
 const { data: chat } = await useFetch(`/api/chats/${route.params.id}`, {
-  key: `chats/${route.params.id}`,
-  getCachedData(key, nuxtApp) {
-    return nuxtApp.payload.data[key]
-  }
+  cache: 'force-cache'
 })
 if (!chat.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Chat not found' })
+  throw createError({ statusCode: 404, statusMessage: 'Chat not found', fatal: true })
 }
 
 const { messages, input, handleSubmit, reload, stop, status, error } = useChat({
@@ -42,8 +39,6 @@ const { messages, input, handleSubmit, reload, stop, status, error } = useChat({
     if (response.headers.get('X-Chat-Title')) {
       refreshNuxtData('chats')
     }
-    // Clear the cache to fetch all messages next time we go on this chat
-    clearNuxtData(`chats/${route.params.id}`)
   },
   onError(error) {
     const { message } = typeof error.message === 'string' && error.message[0] === '{' ? JSON.parse(error.message) : error
@@ -91,11 +86,10 @@ onMounted(() => {
           :spacing-offset="160"
         >
           <template #content="{ message }">
-            
-            <!-- Issue when cached responsed when using the MDCCached version-->
+            <!-- Issue when cached responsed when using the MDCCached version -->
             <MDCCachedLocal
-              :value="message.content" 
-              :cache-key="message.id"        
+              :value="message.content"
+              :cache-key="message.id"
               unwrap="p"
               :components="components"
               :parser-options="{ highlight: false }"
