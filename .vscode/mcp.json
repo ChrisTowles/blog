@@ -1,0 +1,8 @@
+{
+    "servers": {
+        "my-mcp-server-0eea3982": {
+            "type": "sse",
+            "url": "https://remote-mcp-server-authless.chris-towles.workers.dev/sse"
+        }
+    }
+}
