@@ -16,7 +16,6 @@
       :components="props.components"
     />
   </slot>
-  
 </template>
 
 <script setup lang="ts">
@@ -85,6 +84,8 @@ const props = defineProps({
    * The map of custom components to use for rendering.
    */
   components: {
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     type: Object as PropType<Record<string, string | DefineComponent<any, any, any>>>,
     default: () => ({})
   }

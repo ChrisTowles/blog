@@ -10,8 +10,6 @@ useSeoMeta({
   description: page.value?.description,
   ogDescription: page.value?.description
 })
-
-// const posts = await getBlogPosts({ limit: 10 })
 </script>
 
 <template>

@@ -22,7 +22,7 @@ export function useLLM() {
     '@cf/openai/whisper-tiny-en'
   ]
 
-  const default_model = '@cf/meta/llama-4-scout-17b-16e-instruct' 
+  const default_model = '@cf/meta/llama-4-scout-17b-16e-instruct'
 
   const model = useCookie<string>('llm-model', { default: () => default_model })
 

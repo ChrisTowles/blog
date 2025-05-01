@@ -1,13 +1,9 @@
 import { defineContentConfig, defineCollection, z } from '@nuxt/content'
-import { BlogPostSchema } from './app/types/blogPost'
-import { AppEntrySchema } from './app/types/appEntry'
-import { a } from '#build/ui-pro/prose'
-
 
 const variantEnum = z.enum(['solid', 'outline', 'subtle', 'soft', 'ghost', 'link'])
 const colorEnum = z.enum(['primary', 'secondary', 'neutral', 'error', 'warning', 'success', 'info'])
 const sizeEnum = z.enum(['xs', 'sm', 'md', 'lg', 'xl'])
-const orientationEnum = z.enum(['vertical', 'horizontal'])
+// const orientationEnum = z.enum(['vertical', 'horizontal'])
 
 const baseSchema = {
   title: z.string().nonempty(),
@@ -25,12 +21,12 @@ const linkSchema = z.object({
   variant: variantEnum.optional()
 })
 
-const imageSchema = z.object({
-  src: z.string().nonempty(),
-  alt: z.string().optional(),
-  loading: z.string().optional(),
-  srcset: z.string().optional()
-})
+// const imageSchema = z.object({
+//   src: z.string().nonempty(),
+//   alt: z.string().optional(),
+//   loading: z.string().optional(),
+//   srcset: z.string().optional()
+// })
 
 const featureItemSchema = z.object({
   ...baseSchema,
@@ -61,20 +57,19 @@ export default defineContentConfig({
         }),
         logos: z.object({
           title: z.string().nonempty(),
-        
+
           links: z.array(
             z.object({
               label: z.string().nonempty(),
               icon: z.string().nonempty(),
-              to: z.string().nonempty(),
+              to: z.string().nonempty()
             })
           )
         }),
-  
+
         features: sectionSchema.extend({
           items: z.array(featureItemSchema)
-        }),
-        
+        })
 
       })
     }),
@@ -82,13 +77,12 @@ export default defineContentConfig({
     //   type: 'page',
     //   source: 'index.yml'
     // }),
-  
+
     // apps: defineCollection({
     //   type: 'page',
     //   source: 'apps/**/*.md',
     //   schema: AppEntrySchema,
     // }),
-
 
     posts: defineCollection({
       type: 'page',
@@ -136,7 +130,7 @@ export default defineContentConfig({
       source: '3.apps.yml',
       type: 'data',
       schema: sectionSchema
-    }),
+    })
     // end apps
   }
 })

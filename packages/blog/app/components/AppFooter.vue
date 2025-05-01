@@ -2,20 +2,20 @@
 const columns = [{
   label: 'Social',
   children: [{
-        label: 'GitHub',
-        to: 'https://github.com/ChrisTowles',
-    },
-    {
-        label: 'X / Twitter',
-        to: 'https://x.com/Chris_Towles',
-    },
-    {
-        label: 'Bluesky',
-        to: 'https://bsky.app/profile/chris-towles.bsky.social',
-    }]
+    label: 'GitHub',
+    to: 'https://github.com/ChrisTowles'
+  },
+  {
+    label: 'X / Twitter',
+    to: 'https://x.com/Chris_Towles'
+  },
+  {
+    label: 'Bluesky',
+    to: 'https://bsky.app/profile/chris-towles.bsky.social'
+  }]
 }]
 
-const toast = useToast()
+// const toast = useToast()
 
 // const email = ref('')
 // const loading = ref(false)

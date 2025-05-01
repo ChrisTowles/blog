@@ -41,4 +41,5 @@ jobs:
         uses: nuxt-hub/action@v1
         id: deploy
         with:
+          directory: ./packages/blog/dist # Path to the directory to deploy
           project-key: blog-7kvi
