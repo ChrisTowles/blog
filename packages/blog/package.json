@@ -17,7 +17,7 @@
     "lint": "eslint .",
     "typecheck": "nuxt typecheck",
     "test": "vitest",
-    "prepare": "husky",
+
     "deploy:main": "wrangler pages deploy",
     "deploy:nuxthub": "npx nuxthub deploy",
     "deploy:preview": "wrangler pages dev",
