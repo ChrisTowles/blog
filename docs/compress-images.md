@@ -15,15 +15,37 @@ du * | sort -nr
 
 ## Compress all PNG files in repo not yet checked in
 png-compress() {
-  # Get all PNG files not yet committed
-  LIST=($(find . -name '*.png' | grep .png))
-  for file in $LIST
-  do
-    echo "-- Processing $file..."
-    du -h "$file"
-    pngquant "$file" --ext .png --force
-    du -h "$file"
-  done
+
+    # Check if pngquant is installed
+    if ! command -v pngquant &> /dev/null
+    then
+        echo "pngquant could not be found, please install it first."
+        return
+    fi
+    
+    LIST=($(find . -name '*.png' | grep .png))
+    # Get all PNG files not yet committed
+    # LIST=($(git status -s | cut -c4- | grep .png))
+    for file in $LIST
+    do
+        tempfile=$(echo "$file" | sed 's/\.png/_temp.png/')
+        echo "-- Processing $file... and creating $tempfile"
+        du -h "$file"
+        pngquant "$file" --output "$tempfile" --force
+        echo "file: $file size: $(du -b "$tempfile")"
+        echo "tempfile: $tempfile size: $(du -b "$tempfile")"
+        # Check if the temp file is smaller
+        # update for zsh
+        if [ $(du -b "$tempfile" | cut -f1) -lt $(du -b "$file" | cut -f1) ]; then
+        echo "  -- Replacing $file with $tempfile"
+        mv "$tempfile" "$file"
+        else
+        echo "  -- Keeping original $file"
+        rm "$tempfile"
+        fi
+
+        du -h "$file"
+    done
 }
 
 ```
