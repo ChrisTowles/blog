@@ -21,10 +21,18 @@ export default defineNuxtConfig({
     // '@nuxt/icon',
     'nuxt-og-image',
     '@nuxtjs/mdc',
-    '@nuxthub/core',
-    'nuxt-auth-utils'
-    // '@nuxt/test-utils/module'
+    'nuxt-mcp',
+    '@nuxthub/core', // for nuxt-hub
+    'nuxt-auth-utils',
+    '@nuxt/test-utils/module' // for testing
   ],
+  $development: {
+    // https://github.com/nuxt-hub/core/blob/main/docs/content/docs/1.getting-started/4.remote-storage.md?plain=1
+    hub: {
+      remote: true
+    }
+  },
+  ssr: true,
   devtools: {
     enabled: true,
 
@@ -44,7 +52,6 @@ export default defineNuxtConfig({
   colorMode: {
     preference: 'dark' // default value of $colorMode.preference
   },
-
   mdc: {
     highlight: {
       // noApiRoute: true

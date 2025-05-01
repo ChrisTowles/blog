@@ -10,9 +10,10 @@ then
     echo "pngquant could not be found, please install it first."
     return
 fi
-LIST=($(find . -name '*.png' | grep .png))
+
+#LIST=($(find . -name '*.png' | grep .png))
 # Get all PNG files not yet committed
-#LIST=($(git status -s | cut -c4- | grep .png))
+LIST=($(git status -s | cut -c4- | grep .png))
 for file in $LIST
 do
     tempfile=$(echo "$file" | sed 's/\.png/_temp.png/')
