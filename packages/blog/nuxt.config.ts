@@ -21,10 +21,9 @@ export default defineNuxtConfig({
     // '@nuxt/icon',
     'nuxt-og-image',
     '@nuxtjs/mdc',
-    'nuxt-mcp',
+    // 'nuxt-mcp', // not yet working
     '@nuxthub/core', // for nuxt-hub
     'nuxt-auth-utils',
-    '@nuxt/test-utils/module' // for testing
   ],
   $development: {
     // https://github.com/nuxt-hub/core/blob/main/docs/content/docs/1.getting-started/4.remote-storage.md?plain=1

@@ -1,5 +1,7 @@
-import { streamText } from 'ai'
-import { createWorkersAI } from 'workers-ai-provider'
+import { streamText, tool } from 'ai'
+import { Chat, setupAIWorkers } from './../../tools/chatAgent'
+// sdk-agnostic imports
+import { z } from 'zod'
 
 defineRouteMeta({
   openAPI: {
@@ -17,13 +19,7 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
   // Enable AI Gateway if defined in environment variables
-  const gateway = process.env.CLOUDFLARE_AI_GATEWAY_ID
-    ? {
-        id: process.env.CLOUDFLARE_AI_GATEWAY_ID,
-        cacheTtl: 60 * 60 * 24 // 24 hours
-      }
-    : undefined
-  const workersAI = createWorkersAI({ binding: hubAI(), gateway })
+  const { gateway, workersAI } = setupAIWorkers()
 
   const chat = await db.query.chats.findFirst({
     where: (chat, { eq }) => and(eq(chat.id, id as string), eq(chat.userId, session.user?.id || session.id)),
@@ -34,6 +30,7 @@ export default defineEventHandler(async (event) => {
   if (!chat) {
     throw createError({ statusCode: 404, statusMessage: 'Chat not found' })
   }
+
 
   if (!chat.title) {
     // @ts-expect-error - response is not typed
@@ -66,12 +63,46 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+
+
+  console.info('AI prompt:', {
+    model,
+    messages,
+    chatId: chat.id,
+  })
+
   return streamText({
     model: workersAI(model),
     maxTokens: 10000,
+  // this is the key line which uses the `@agentic/ai-sdk` adapter
+    tools: {
+      getWeatherInformation: {
+        description: 'show the weather in a given city to the user',
+        parameters: z.object({ city: z.string() }),
+        execute: async ({}: { city: string }) => {
+          const weatherOptions = ['sunny', 'cloudy', 'rainy', 'snowy', 'windy'];
+          return weatherOptions[
+            Math.floor(Math.random() * weatherOptions.length)
+          ];
+        },
+      },
+    },
+    maxSteps: 10, // allow up to 5 steps
+    toolCallStreaming: true,
     system: 'You are a helpful assistant that that can answer questions and help. You must answer in markdown syntax.',
     messages,
+    async onStepFinish(result) {
+      console.info('onStepFinish:', {
+        result,
+      })
+    },
     async onFinish(response) {
+
+      console.info('onFinish:', {
+        steps: response.steps,
+      })
+      
+
       await db.insert(tables.messages).values({
         chatId: chat.id,
         role: 'assistant',

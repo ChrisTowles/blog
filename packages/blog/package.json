@@ -10,14 +10,14 @@
     "build": "nuxt build",
     "build:cf": "nuxt build --preset=cloudflare_pages",
     "dev:no-remote": "nuxt dev",
-    "dev": "nuxt dev --remote",
+    "dev": "DEBUG=*:*:*,vite:*:*  nuxt dev --remote",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
     "typecheck": "nuxt typecheck",
     "test": "vitest",
-
+    "prepare": "today=$(date +%Y-%m-%d) && echo \"compatibility_date = '$today'\" > ./.data/hub/wrangler.toml && wrangler --config ./.data/hub/wrangler.toml types",
     "deploy:main": "wrangler pages deploy",
     "deploy:nuxthub": "npx nuxthub deploy",
     "deploy:preview": "wrangler pages dev",
@@ -25,12 +25,15 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
-    "@ai-sdk/vue": "^1.2.9",
+    "@agentic/ai-sdk": "^7.6.4",
+    "@agentic/stdlib": "^7.6.4",
+    "@ai-sdk/vue": "^1.2.10",
     "@nuxt/ui-pro": "^3.1.0",
     "@nuxthub/core": "0.8.24",
     "@nuxtjs/mdc": "^0.17.0",
     "@tanstack/vue-virtual": "^3.13.6",
-    "ai": "^4.3.12",
+    "agents": "^0.0.76",
+    "ai": "^4.3.13",
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.43.1",
     "nuxt": "^3.17.1",
@@ -67,6 +70,6 @@
     "typescript": "^5.8.3",
     "vitest": "^3.1.2",
     "vue-tsc": "^2.2.10",
-    "wrangler": "^4.14.0"
+    "wrangler": "^4.14.1"
   }
 }

@@ -5,6 +5,7 @@ definePageMeta({
   layout: 'chat-side-nav'
 })
 
+const toast = useToast()
 const { model } = useLLM()
 
 const input = ref('')
@@ -64,6 +65,10 @@ const quickChats = [
   },
   {
     label: 'Make a markdown table 5 jokes.',
+    icon: 'i-heroicons-command-line'
+  },
+  {
+    label: 'what is the tempture in Ohio.',
     icon: 'i-heroicons-command-line'
   }
 

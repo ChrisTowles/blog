@@ -42,6 +42,9 @@ const { messages, input, handleSubmit, reload, stop, status, error } = useChat({
   },
   onError(error) {
     const { message } = typeof error.message === 'string' && error.message[0] === '{' ? JSON.parse(error.message) : error
+
+    console.error( 'error back from UseChat', error)
+
     toast.add({
       description: message,
       icon: 'i-lucide-alert-circle',
