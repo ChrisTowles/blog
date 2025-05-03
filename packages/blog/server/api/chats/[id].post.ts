@@ -1,7 +1,7 @@
-import { streamText, tool } from 'ai'
-import { Chat, setupAIWorkers } from './../../tools/chatAgent'
-// sdk-agnostic imports
-import { z } from 'zod'
+import util from 'util'
+import { streamText } from 'ai'
+// import { z } from 'zod'
+import { generateChatTitle } from '~~/server/utils/ai-sdk-utils'
 
 defineRouteMeta({
   openAPI: {
@@ -31,25 +31,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Chat not found' })
   }
 
-
   if (!chat.title) {
-    // @ts-expect-error - response is not typed
-    const { response: title } = await hubAI().run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
-      stream: false,
-      messages: [{
-        role: 'system',
-        content: `You are a title generator for a chat:
-        - Generate a short title based on the first user's message
-        - The title should be less than 30 characters long
-        - The title should be a summary of the user's message
-        - Do not use markdown, just plain text`
-      }, {
-        role: 'user',
-        content: chat.messages[0]!.content
-      }]
-    }, {
-      gateway
-    })
+    const title = await generateChatTitle({ gateway, content: messages[0].content })
+
     setHeader(event, 'X-Chat-Title', title.replace(/:/g, '').split('\n')[0])
     await db.update(tables.chats).set({ title }).where(eq(tables.chats.id, id as string))
   }
@@ -63,50 +47,51 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-
-
   console.info('AI prompt:', {
     model,
     messages,
-    chatId: chat.id,
+    chatId: chat.id
   })
 
   return streamText({
     model: workersAI(model),
     maxTokens: 10000,
-  // this is the key line which uses the `@agentic/ai-sdk` adapter
-    tools: {
-      getWeatherInformation: {
-        description: 'show the weather in a given city to the user',
-        parameters: z.object({ city: z.string() }),
-        execute: async ({}: { city: string }) => {
-          const weatherOptions = ['sunny', 'cloudy', 'rainy', 'snowy', 'windy'];
-          return weatherOptions[
-            Math.floor(Math.random() * weatherOptions.length)
-          ];
-        },
-      },
-    },
+    // this is the key line which uses the `@agentic/ai-sdk` adapter
+    // tools: {
+    //   getWeatherInformation: {
+    //     description: 'show the weather in a given city to the user',
+    //     parameters: z.object({ city: z.string() }),
+    //     execute: async ({}: { city: string }) => {
+    //       const weatherOptions = ['sunny', 'cloudy', 'rainy', 'snowy', 'windy'];
+    //       return weatherOptions[
+    //         Math.floor(Math.random() * weatherOptions.length)
+    //       ];
+    //     },
+    //   },
+    // },
     maxSteps: 10, // allow up to 5 steps
     toolCallStreaming: true,
     system: 'You are a helpful assistant that that can answer questions and help. You must answer in markdown syntax.',
     messages,
     async onStepFinish(result) {
       console.info('onStepFinish:', {
-        result,
+        result
       })
     },
     async onFinish(response) {
-
       console.info('onFinish:', {
-        steps: response.steps,
+        a: util.inspect(response, { colors: true })
       })
-      
 
       await db.insert(tables.messages).values({
         chatId: chat.id,
         role: 'assistant',
         content: response.text
+      })
+    },
+    async onError(error) {
+      console.error('onError:', {
+        error
       })
     }
   }).toDataStreamResponse()

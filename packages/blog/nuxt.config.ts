@@ -24,6 +24,7 @@ export default defineNuxtConfig({
     // 'nuxt-mcp', // not yet working
     '@nuxthub/core', // for nuxt-hub
     'nuxt-auth-utils',
+    '@nuxt/test-utils/module'
   ],
   $development: {
     // https://github.com/nuxt-hub/core/blob/main/docs/content/docs/1.getting-started/4.remote-storage.md?plain=1
@@ -111,6 +112,19 @@ export default defineNuxtConfig({
   //   prerender: {
 
   hub: {
+
+    // bindings: {
+    //   observability: {
+    //     // enable with default settings
+    //     logs: true,
+
+    //     // customise settings
+    //     logs: {
+    //       head_sampling_rate: 0.5,
+    //       invocation_logs: false
+    //     }
+    //   }
+    // },
     ai: true,
     database: true
   },

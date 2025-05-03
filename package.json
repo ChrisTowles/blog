@@ -9,23 +9,22 @@
   "scripts": {
     "build": "pnpm -r run build",
     "dev": "pnpm -r run dev",
-
     "lint": "eslint .",
     "typecheck": "pnpm -r run typecheck",
     "test": "pnpm -r run test",
     "prepare": "husky",
-    "mcp:inspect": "npx @modelcontextprotocol/inspector"
+    "mcp:inspect": "pnpx @modelcontextprotocol/inspector",
+    "deps:update": "pnpx taze --interactive --recursive"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^22.15.3",
     "dotenv": "^16.5.0",
-    "eslint": "^9.25.1",
+    "eslint": "^9.26.0",
     "husky": "^9.1.7",
     "lint-staged": "^15.5.1",
     "typescript": "^5.8.3",
-    "wrangler": "^4.14.0"
+    "wrangler": "^4.14.1"
   },
   "resolutions": {
     "unimport": "4.1.1"

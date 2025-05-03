@@ -52,3 +52,14 @@ Inorder for the local `hubAI()` to work normally in wrangler you'd have to run `
 
 
 
+## Must use Main branch
+
+- so using any branch other than main will cause the nuxt to use the preview deployment which doesn't have the AI Gateway setup.
+- this is a bug in the nuxthub and nuxt dev. 
+- the fail out is that if you create a branch and try nuxt dev it will say and fail to start. 
+
+```bash
+ℹ Using preview environment     nuxt:hub 2:15:45 PM
+
+ ERROR  No deployment found for preview, make sure to deploy the project using npx nuxthub deploy.                       nuxt:hub 2:15:45 PM
+ ```

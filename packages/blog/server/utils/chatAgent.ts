@@ -2,7 +2,7 @@
 
 // import { unstable_getSchedulePrompt } from "agents/schedule";
 // import { AIChatAgent } from "agents/ai-chat-agent";
-import { createWorkersAI } from 'workers-ai-provider'
+// import { createWorkersAI } from 'workers-ai-provider'
 // import {
 //   createDataStreamResponse,
 //   generateId,
@@ -14,22 +14,6 @@ import { createWorkersAI } from 'workers-ai-provider'
 // import { tools, executions } from "./tools";
 // import { processToolCalls } from "./utils";
 
-
-export const setupAIWorkers = () => {
-    const gateway = process.env.CLOUDFLARE_AI_GATEWAY_ID
-      ? {
-        id: process.env.CLOUDFLARE_AI_GATEWAY_ID,
-        cacheTtl: 60 * 60 * 24 // 24 hours
-      }
-      : undefined
-    const workersAI = createWorkersAI({ 
-        binding: hubAI() as any,
-        gateway: gateway
-     })
-    return { gateway, workersAI }
-  }
-
-  
 // const { gateway, workersAI } = setupAIWorkers()
 
 // // Cloudflare AI Gateway
@@ -78,7 +62,7 @@ export const setupAIWorkers = () => {
 //         // Stream the AI response using GPT-4
 //         const result = streamText({
 //           model,
-//           system: `You are a helpful assistant that can do various tasks... 
+//           system: `You are a helpful assistant that can do various tasks...
 
 // ${unstable_getSchedulePrompt({ date: new Date() })}
 
@@ -118,8 +102,6 @@ export const setupAIWorkers = () => {
 //   }
 // }
 
-
-
 // /**
 //  * Worker entry point that routes incoming requests to the appropriate handler
 //  */
@@ -128,7 +110,7 @@ export const setupAIWorkers = () => {
 //     const url = new URL(request.url);
 
 //     return (
-  
+
 //     // Route the request to our agent via the Agents SDK
 //     // This automatically handles routing to the correct agent (coder or solver)
 //     // and manages WebSocket connections properly
