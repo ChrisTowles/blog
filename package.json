@@ -16,7 +16,6 @@
     "mcp:inspect": "pnpx @modelcontextprotocol/inspector",
     "deps:update": "pnpx taze --interactive --recursive"
   },
-  "dependencies": {},
   "devDependencies": {
     "@types/node": "^22.15.3",
     "dotenv": "^16.5.0",
