@@ -26,8 +26,6 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
-    "@agentic/ai-sdk": "^7.6.4",
-    "@agentic/stdlib": "^7.6.4",
     "@ai-sdk/vue": "^1.2.10",
     "@cloudflare/ai-utils": "^1.0.1",
     "@nuxt/ui-pro": "^3.1.1",

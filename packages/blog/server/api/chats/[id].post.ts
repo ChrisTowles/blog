@@ -2,7 +2,6 @@ import util from 'util'
 import { streamText, tool } from 'ai'
 import { generateChatTitle } from '~~/server/utils/ai-sdk-utils'
 import { z } from 'zod'
-import { autoTrimTools, runWithTools} from '@cloudflare/ai-utils'
 
 
 defineRouteMeta({
@@ -19,33 +18,9 @@ export const weatherTool = tool({
   }),
   // location below is inferred to be a string:
   execute: async ({ location }) => ({
-    temperature: 72 + Math.floor(Math.random() * 21) - 10,
+    temperature: Math.random() * 100,
   }),
 });
-
-
-
-// export const weatherTool2 = tool({
-//  				name: "get-weather",
-// 				description: "Gets weather information of a particular city",
-// 				parameters: {
-// 					type: "object",
-// 					properties: {
-// 						city: {
-// 							type: "string",
-// 							description: "The city name",
-// 						},
-// 					},
-// 					required: ["city"],
-// 				},
-// 				function: async ({ city }) => {
-// 					// fetch weather data from an API
-// 					console.log("value from llm", city);
-
-// 					return city;
-// 				},
-			
-// });
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
@@ -56,7 +31,7 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
   // Enable AI Gateway if defined in environment variables
-  const { gateway, workersAi, hubAi } = setupAIWorkers()
+  const { gateway, workersAi } = setupAIWorkers()
 
   const chat = await db.query.chats.findFirst({
     where: (chat, { eq }) => and(eq(chat.id, id as string), eq(chat.userId, session.user?.id || session.id)),
@@ -85,47 +60,62 @@ export default defineEventHandler(async (event) => {
   }
 
 
-//   const result = await runWithTools(
-//       workersAi(model),
+//   return await runWithTools(
+//      hubAI,
 //      '@cf/meta/llama-3.1-8b-instruct', 
 //   {
 //     messages: messages,
-//     tools: [weatherTool2],
 
+//     tools: [
+//       {
+//         name: 'get-weather',
+//         description: 'Gets the weather for a given city',
+//         parameters: {
+//           type: 'object',
+//           properties: {
+//             city: { 
+//               type: 'number', 
+//               description: 'The city to retrieve weather information for'
+//             },
+//           },
+//           required: ['city'],
+//         },
+//         function: (args: any): Promise<string> => {
+//           // use an API to get the weather information
+//           return   Promise.resolve('72');
+//         },
+//       },
+//     ]
 //   }, 
 //   {
 //     // options
 //     streamFinalResponse: true,
 //     verbose: true,
 //     maxRecursiveToolRuns: 1,
-//     	// If there's too many tools, you can enable this
-// 		trimFunction: autoTrimTools,
 //   }
 // )
-  // return result;
 
   return streamText({
     model: workersAi(model),
+    maxTokens: 10000,
+    toolChoice: 'auto',
     // this is the key line which uses the `@agentic/ai-sdk` adapter
-    // tools: {
-    //   "getWeatherInformation": weatherTool,
-    //   // getWeather: {
-    //   //   toolName: 'get-weather',
-    //   //   description: 'show the weather in a given city to the user',
-    //   //   parameters: z.object({ city: z.string() }),
-    //   //   execute: async ({}: { city: string }) => {
-    //   //     const weatherOptions = ['sunny', 'cloudy', 'rainy', 'snowy', 'windy'];
-    //   //     return weatherOptions[
-    //   //       Math.floor(Math.random() * weatherOptions.length)
-    //   //     ];
-    //   //   },
-    //   // },
-    // },
+    tools: {
+      getWeatherInformation: weatherTool,
+      // getWeather: {
+      //   toolName: 'get-weather',
+      //   description: 'show the weather in a given city to the user',
+      //   parameters: z.object({ city: z.string() }),
+      //   execute: async ({}: { city: string }) => {
+      //     const weatherOptions = ['sunny', 'cloudy', 'rainy', 'snowy', 'windy'];
+      //     return weatherOptions[
+      //       Math.floor(Math.random() * weatherOptions.length)
+      //     ];
+      //   },
+      // },
+    },
     maxSteps: 10, // allow up to 5 steps
     toolCallStreaming: true,
-    tools: {
-      getWeather: weatherTool,
-    },
     system: 'You are a helpful assistant that that can answer questions and help. You must answer in markdown syntax.',
     messages,
     async onStepFinish(result) {
@@ -150,8 +140,5 @@ export default defineEventHandler(async (event) => {
       })
     }
   }).toDataStreamResponse()
-
-
-
 
 })
