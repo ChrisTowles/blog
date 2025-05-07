@@ -1,4 +1,5 @@
-import { createWorkersAI } from 'workers-ai-provider'
+import { createWorkersAI, WorkersAI } from 'workers-ai-provider'
+import { Ai } from '@cloudflare/workers-types/experimental'
 
 export const generateChatTitle = async ({ content, gateway }: { content: string, gateway: GatewayOptions }): Promise<string> => {
   // @ts-expect-error - response is not typed
@@ -21,7 +22,13 @@ export const generateChatTitle = async ({ content, gateway }: { content: string,
   return title
 }
 
-export const setupAIWorkers = () => {
+export interface AiWorkersSetupResult {
+  gateway: GatewayOptions
+  workersAi: WorkersAI
+  hubAi: any
+}
+
+export const setupAIWorkers = (): AiWorkersSetupResult => {
   // Enable AI Gateway if defined in environment variables
   if (!process.env.CLOUDFLARE_AI_GATEWAY_ID) {
     throw new Error('CLOUDFLARE_AI_GATEWAY_ID is not defined')
@@ -31,11 +38,12 @@ export const setupAIWorkers = () => {
     id: process.env.CLOUDFLARE_AI_GATEWAY_ID,
     cacheTtl: 60 * 60 * 24 // 24 hours
   }
+  const hubAi = hubAI() as Ai
 
   const workersAI = createWorkersAI({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    binding: hubAI() as any,
-    gateway: gateway
+    binding: hubAi as any,
+    gateway: gateway,
   })
-  return { gateway, workersAI }
+  return { gateway, workersAi: workersAI, hubAi: hubAi }
 }

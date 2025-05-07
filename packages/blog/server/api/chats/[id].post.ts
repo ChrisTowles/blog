@@ -1,7 +1,9 @@
 import util from 'util'
-import { streamText } from 'ai'
-// import { z } from 'zod'
+import { streamText, tool } from 'ai'
 import { generateChatTitle } from '~~/server/utils/ai-sdk-utils'
+import { z } from 'zod'
+import { autoTrimTools, runWithTools} from '@cloudflare/ai-utils'
+
 
 defineRouteMeta({
   openAPI: {
@@ -9,6 +11,41 @@ defineRouteMeta({
     tags: ['ai']
   }
 })
+
+export const weatherTool = tool({
+  description: 'Get the weather in a location',
+  parameters: z.object({
+    location: z.string().describe('The location to get the weather for'),
+  }),
+  // location below is inferred to be a string:
+  execute: async ({ location }) => ({
+    temperature: 72 + Math.floor(Math.random() * 21) - 10,
+  }),
+});
+
+
+
+// export const weatherTool2 = tool({
+//  				name: "get-weather",
+// 				description: "Gets weather information of a particular city",
+// 				parameters: {
+// 					type: "object",
+// 					properties: {
+// 						city: {
+// 							type: "string",
+// 							description: "The city name",
+// 						},
+// 					},
+// 					required: ["city"],
+// 				},
+// 				function: async ({ city }) => {
+// 					// fetch weather data from an API
+// 					console.log("value from llm", city);
+
+// 					return city;
+// 				},
+			
+// });
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
@@ -19,7 +56,7 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
   // Enable AI Gateway if defined in environment variables
-  const { gateway, workersAI } = setupAIWorkers()
+  const { gateway, workersAi, hubAi } = setupAIWorkers()
 
   const chat = await db.query.chats.findFirst({
     where: (chat, { eq }) => and(eq(chat.id, id as string), eq(chat.userId, session.user?.id || session.id)),
@@ -47,30 +84,48 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  console.info('AI prompt:', {
-    model,
-    messages,
-    chatId: chat.id
-  })
+
+//   const result = await runWithTools(
+//       workersAi(model),
+//      '@cf/meta/llama-3.1-8b-instruct', 
+//   {
+//     messages: messages,
+//     tools: [weatherTool2],
+
+//   }, 
+//   {
+//     // options
+//     streamFinalResponse: true,
+//     verbose: true,
+//     maxRecursiveToolRuns: 1,
+//     	// If there's too many tools, you can enable this
+// 		trimFunction: autoTrimTools,
+//   }
+// )
+  // return result;
 
   return streamText({
-    model: workersAI(model),
-    maxTokens: 10000,
+    model: workersAi(model),
     // this is the key line which uses the `@agentic/ai-sdk` adapter
     // tools: {
-    //   getWeatherInformation: {
-    //     description: 'show the weather in a given city to the user',
-    //     parameters: z.object({ city: z.string() }),
-    //     execute: async ({}: { city: string }) => {
-    //       const weatherOptions = ['sunny', 'cloudy', 'rainy', 'snowy', 'windy'];
-    //       return weatherOptions[
-    //         Math.floor(Math.random() * weatherOptions.length)
-    //       ];
-    //     },
-    //   },
+    //   "getWeatherInformation": weatherTool,
+    //   // getWeather: {
+    //   //   toolName: 'get-weather',
+    //   //   description: 'show the weather in a given city to the user',
+    //   //   parameters: z.object({ city: z.string() }),
+    //   //   execute: async ({}: { city: string }) => {
+    //   //     const weatherOptions = ['sunny', 'cloudy', 'rainy', 'snowy', 'windy'];
+    //   //     return weatherOptions[
+    //   //       Math.floor(Math.random() * weatherOptions.length)
+    //   //     ];
+    //   //   },
+    //   // },
     // },
     maxSteps: 10, // allow up to 5 steps
     toolCallStreaming: true,
+    tools: {
+      getWeather: weatherTool,
+    },
     system: 'You are a helpful assistant that that can answer questions and help. You must answer in markdown syntax.',
     messages,
     async onStepFinish(result) {
@@ -80,7 +135,7 @@ export default defineEventHandler(async (event) => {
     },
     async onFinish(response) {
       console.info('onFinish:', {
-        a: util.inspect(response, { colors: true })
+        response
       })
 
       await db.insert(tables.messages).values({
@@ -95,4 +150,8 @@ export default defineEventHandler(async (event) => {
       })
     }
   }).toDataStreamResponse()
+
+
+
+
 })

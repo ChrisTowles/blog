@@ -1,2 +1,6 @@
 # ignore test files.
 *.spec.ts
+*.*.spec.ts
+
+
+ server/api/tests/generate-chat-title.get.spec.ts
