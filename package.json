@@ -17,13 +17,13 @@
     "deps:update": "pnpx taze --interactive --recursive"
   },
   "devDependencies": {
-    "@types/node": "^22.15.14",
+    "@types/node": "^22.15.17",
     "dotenv": "^16.5.0",
     "eslint": "^9.26.0",
     "husky": "^9.1.7",
     "lint-staged": "^15.5.2",
     "typescript": "^5.8.3",
-    "wrangler": "^4.14.1"
+    "wrangler": "^4.14.4"
   },
   "resolutions": {
     "unimport": "4.1.1"
