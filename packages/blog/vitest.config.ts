@@ -4,6 +4,8 @@ import { config } from 'dotenv'
 
 export default defineVitestConfig({
   test: {
+    testTimeout: 60_000, // 60 seconds
+    // https://vitest.dev/config/
     environment: 'nuxt', // nuxt testing - https://nuxt.com/docs/getting-started/testing
     // you can optionally set Nuxt-specific environment options
     environmentOptions: {

@@ -33,7 +33,7 @@
       "workerd"
     ]
   },
-  "packageManager": "pnpm@10.10.0",
+  "packageManager": "pnpm@10.11.0",
   "lint-staged": {
     "*": "eslint --fix"
   }

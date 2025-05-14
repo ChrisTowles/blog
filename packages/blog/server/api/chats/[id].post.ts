@@ -1,3 +1,4 @@
+import { anthropic } from '@ai-sdk/anthropic'
 import { streamText, tool } from 'ai'
 import { z } from 'zod'
 import { generateChatTitle } from '~~/server/utils/ai-sdk-utils'
@@ -29,8 +30,6 @@ export default defineEventHandler(async (event) => {
   const { model, messages } = await readBody(event)
 
   const db = useDrizzle()
-  // Enable AI Gateway if defined in environment variables
-  const { gateway, workersAi } = setupAIWorkers()
 
   const chat = await db.query.chats.findFirst({
     where: (chat, { eq }) => and(eq(chat.id, id as string), eq(chat.userId, session.user?.id || session.id)),
@@ -43,7 +42,7 @@ export default defineEventHandler(async (event) => {
   }
 
   if (!chat.title) {
-    const title = await generateChatTitle({ gateway, content: messages[0].content })
+    const title = await generateChatTitle({ content: messages[0].content })
 
     setHeader(event, 'X-Chat-Title', title.replace(/:/g, '').split('\n')[0])
     await db.update(tables.chats).set({ title }).where(eq(tables.chats.id, id as string))
@@ -94,24 +93,24 @@ export default defineEventHandler(async (event) => {
   // )
 
   return streamText({
-    model: workersAi(model),
-    maxTokens: 10000,
+    model: anthropic(model),
+    maxTokens: 8192,
     toolChoice: 'auto',
     // this is the key line which uses the `@agentic/ai-sdk` adapter
-    // tools: {
-    //   getWeatherInformation: weatherTool,
-    //   // getWeather: {
-    //   //   toolName: 'get-weather',
-    //   //   description: 'show the weather in a given city to the user',
-    //   //   parameters: z.object({ city: z.string() }),
-    //   //   execute: async ({}: { city: string }) => {
-    //   //     const weatherOptions = ['sunny', 'cloudy', 'rainy', 'snowy', 'windy'];
-    //   //     return weatherOptions[
-    //   //       Math.floor(Math.random() * weatherOptions.length)
-    //   //     ];
-    //   //   },
-    //   // },
-    // },
+    tools: {
+      getWeatherInformation: weatherTool
+      // getWeather: {
+      //   toolName: 'get-weather',
+      //   description: 'show the weather in a given city to the user',
+      //   parameters: z.object({ city: z.string() }),
+      //   execute: async ({}: { city: string }) => {
+      //     const weatherOptions = ['sunny', 'cloudy', 'rainy', 'snowy', 'windy'];
+      //     return weatherOptions[
+      //       Math.floor(Math.random() * weatherOptions.length)
+      //     ];
+      //   },
+      // },
+    },
     maxSteps: 10, // allow up to 5 steps
     toolCallStreaming: true,
     system: 'You are a helpful assistant that that can answer questions and help. You must answer in markdown syntax.',

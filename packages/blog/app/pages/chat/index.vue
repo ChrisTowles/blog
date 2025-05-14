@@ -64,11 +64,11 @@ const quickChats = [
     icon: 'i-heroicons-command-line'
   },
   {
-    label: 'Make a markdown table 5 jokes.',
+    label: 'Make a markdown table with 5 jokes.',
     icon: 'i-heroicons-command-line'
   },
   {
-    label: 'what is the tempture in Ohio.',
+    label: 'what is the weather in Ohio.',
     icon: 'i-heroicons-command-line'
   }
 

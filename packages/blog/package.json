@@ -26,7 +26,7 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
-    "@ai-sdk/amazon-bedrock": "2.2.8",
+    "@ai-sdk/anthropic": "^1.2.11",
     "@ai-sdk/vue": "^1.2.12",
     "@aws-sdk/credential-providers": "^3.806.0",
     "@cloudflare/ai-utils": "^1.0.1",
