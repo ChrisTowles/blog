@@ -1,6 +1,6 @@
 # Copilot Instructions
 
-This project is a web application of a personal blog. The application is built using NuxtJs, NuxtJs UI PRO and hosted on cloudflare. Tests are in vitest. 
+This project is a web application of a personal blog. The application is built using Typescrikp; NuxtJs, NuxtJs UI PRO and hosted on cloudflare. Tests are in vitest. 
 
 ## Coding Standards
 
