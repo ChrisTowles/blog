@@ -14,7 +14,7 @@ This project is a web application of a personal blog. The application is built u
 - Use destructuring for objects and arrays.
 - Use template literals for strings that contain variables.
 - Use the latest JavaScript features (ES6+) where possible.
-<!-- 
+
  
 ### MANDATORY PLANNING PHASE
 	When working with large files (>300 lines) or complex changes:
@@ -47,4 +47,6 @@ This project is a web application of a personal blog. The application is built u
 		"✅ Completed edit [#] of [total]. Ready for next edit?"
 	- If you discover additional needed changes during editing:
 	- STOP and update the plan
-	- Get approval before continuing -->
+	- Get approval before continuing 
+
+
