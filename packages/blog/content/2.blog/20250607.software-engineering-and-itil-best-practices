@@ -2,7 +2,7 @@
 
 ## Why This Matters to YOU
 
-Following software development best practices and ITIL patterns isn't just about pleasing managers or meeting compliance requirements. These practices are designed to make your work life significantly better, reduce stress, and help you deliver faster while maintaining quality.
+Following software development best practices and ITIL patterns isn't just about pleasing managers or checking a box ☑️. These practices are designed to make your work life significantly better, reduce stress, and help you deliver faster while maintaining quality.
 
 ## The Personal Benefits
 
@@ -38,6 +38,10 @@ Following software development best practices and ITIL patterns isn't just about
 **Continuous Integration**
 - *What it is*: Automatic building and testing of code changes
 - *Personal benefit*: Immediate feedback, no more "it works on my machine" scenarios
+
+**Training**
+
+TODO: add more here.
 
 ### ITIL Service Management
 
