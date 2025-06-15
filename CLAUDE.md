@@ -1,6 +1,6 @@
-# Copilot Instructions
+# CLAUDE.md
 
-This project is a web application of a personal blog. The application is built using Typescript; NuxtJs, NuxtJs UI PRO and hosted on cloudflare. Tests are in vitest.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Structure
 
