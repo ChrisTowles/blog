@@ -1,0 +1,553 @@
+{
+  "id": "0ff12c6d-3bbc-41ea-b5ba-1a5bd28810a2",
+  "revision": 0,
+  "last_node_id": 28,
+  "last_link_id": 108,
+  "nodes": [
+    {
+      "id": 28,
+      "type": "Prompt With Style V2",
+      "pos": [
+        322.7421569824219,
+        -176.560302734375
+      ],
+      "size": [
+        400,
+        382
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip_base",
+          "type": "CLIP",
+          "link": 107
+        },
+        {
+          "name": "clip_refiner",
+          "type": "CLIP",
+          "link": 108
+        }
+      ],
+      "outputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "links": [
+            105
+          ]
+        },
+        {
+          "name": "base_pos_cond",
+          "type": "CONDITIONING",
+          "links": [
+            99
+          ]
+        },
+        {
+          "name": "base_neg_cond",
+          "type": "CONDITIONING",
+          "links": [
+            100
+          ]
+        },
+        {
+          "name": "refiner_pos_cond",
+          "type": "CONDITIONING",
+          "links": [
+            101
+          ]
+        },
+        {
+          "name": "refiner_neg_cond",
+          "type": "CONDITIONING",
+          "links": [
+            102
+          ]
+        },
+        {
+          "name": "positive_prompt",
+          "type": "STRING",
+          "links": [
+            103
+          ]
+        },
+        {
+          "name": "negative_prompt",
+          "type": "STRING",
+          "links": [
+            104
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "mikey_nodes",
+        "ver": "1.0.4",
+        "Node name for S&R": "Prompt With Style V2"
+      },
+      "widgets_values": [
+        "software engineering best practices and ITIL for a better work-life balance",
+        "Negative Prompt",
+        "SAI-Fantasy art",
+        "1:1 [1024x1024 square]",
+        1,
+        667665097865989,
+        "randomize"
+      ]
+    },
+    {
+      "id": 27,
+      "type": "Note",
+      "pos": [
+        -597.2962036132812,
+        -176.560302734375
+      ],
+      "size": [
+        490,
+        510
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "text": ""
+      },
+      "widgets_values": [
+        "This node allows you to prompt with a style and loras. You can add a lora with <lora:lora_name> or <lora:lora_name:0.8> syntax for a weight of 0.8 as an example.\n\nYou can add styles by using the <style:style_name> syntax. You can add more than one style\n\nBuilt in styles:\n\nDigital Art: 3d-model, SAI-3d-model, SAI-Digital art, SAI-Enhance, SAI-Fantasy art, SAI-Isometric, SAI-Line art, SAI-Lowpoly, SAI-Neonpunk,  SAI-pixel art, SAI-Texture, digital-art, isometric, low-poly, neon-punk, pixel-art, sticker, vector-art\n\nCartoons and Anime: anime, SAI-Anime, SAI-Comic book, comic-book\n\nTraditional Art Forms: abstract, batik, charcoal, color-pencil, crayon, fantasy-art, lithography, mosaic, oil-painting, statue, tattoo, watercolor, woodblock-print\n\nPhotography: analog-film, cinematic, deep-field, documentary, nature-photography, photographic, polaroid, red, SAI-Photographic, SAI-Analog film, SAI-Cinematic\n\nGraffiti: bubble-graffiti, stencil-graffiti, tag-graffiti, throw-up-graffiti, wildstyle-graffiti\n\nCrafting: collage, craft-clay, SAI-Craft clay, cross-stitch, diorama, felting, felt, macrame, marquetry, miniatures, modeling-compound, SAI-Origami, origami, paper-mache, pottery, quilling, scrapbook, stained-glass\n\nLooks and Filters: album-art, clarendon, dark-fantasy, glam, gingham, haunting, juno, kaleidoscope, lark, mecha, nonagon, padam, vaporwave, wes-anderson\n\n\n\n"
+      ],
+      "color": "#423e24",
+      "bgcolor": "#635d36"
+    },
+    {
+      "id": 13,
+      "type": "Save Image With Prompt Data",
+      "pos": [
+        1213.1495361328125,
+        -176.560302734375
+      ],
+      "size": [
+        950,
+        1000
+      ],
+      "flags": {
+        "collapsed": false,
+        "pinned": false
+      },
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 40
+        },
+        {
+          "name": "positive_prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "positive_prompt"
+          },
+          "link": 103
+        },
+        {
+          "name": "negative_prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "negative_prompt"
+          },
+          "link": 104
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "mikey_nodes",
+        "ver": "1.0.4",
+        "Node name for S&R": "Save Image With Prompt Data"
+      },
+      "widgets_values": [
+        "Positive Prompt",
+        "Negative Prompt",
+        "",
+        ""
+      ],
+      "color": "#243642",
+      "bgcolor": "#365063"
+    },
+    {
+      "id": 12,
+      "type": "VAEDecode",
+      "pos": [
+        1217.124267578125,
+        -266.6103820800781
+      ],
+      "size": [
+        140,
+        46
+      ],
+      "flags": {
+        "pinned": false
+      },
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 89
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 39
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            40
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.43",
+        "Node name for S&R": "VAEDecode"
+      },
+      "widgets_values": [],
+      "color": "#422424",
+      "bgcolor": "#633636"
+    },
+    {
+      "id": 25,
+      "type": "Mikey Sampler",
+      "pos": [
+        690.0527954101562,
+        -178.1402130126953
+      ],
+      "size": [
+        520,
+        1000
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "base_model",
+          "type": "MODEL",
+          "link": 106
+        },
+        {
+          "name": "refiner_model",
+          "type": "MODEL",
+          "link": 82
+        },
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 105
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 84
+        },
+        {
+          "name": "positive_cond_base",
+          "type": "CONDITIONING",
+          "link": 99
+        },
+        {
+          "name": "negative_cond_base",
+          "type": "CONDITIONING",
+          "link": 100
+        },
+        {
+          "name": "positive_cond_refiner",
+          "type": "CONDITIONING",
+          "link": 101
+        },
+        {
+          "name": "negative_cond_refiner",
+          "type": "CONDITIONING",
+          "link": 102
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "slot_index": 0,
+          "links": [
+            89
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "mikey_nodes",
+        "ver": "1.0.4",
+        "Node name for S&R": "Mikey Sampler"
+      },
+      "widgets_values": [
+        "lollypop.pth",
+        1069204538739927,
+        "randomize",
+        1,
+        1
+      ],
+      "color": "#244235",
+      "bgcolor": "#366350"
+    },
+    {
+      "id": 3,
+      "type": "CheckpointLoaderSimple",
+      "pos": [
+        351.767333984375,
+        421.9062194824219
+      ],
+      "size": [
+        320,
+        100
+      ],
+      "flags": {
+        "pinned": false
+      },
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "slot_index": 0,
+          "links": [
+            82
+          ]
+        },
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "slot_index": 1,
+          "links": [
+            108
+          ]
+        },
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "slot_index": 2,
+          "links": [
+            39
+          ]
+        }
+      ],
+      "title": "Refiner Checkpoint",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.43",
+        "Node name for S&R": "CheckpointLoaderSimple"
+      },
+      "widgets_values": [
+        "SDXL/sd_xl_refiner_1.0_0.9vae.safetensors"
+      ],
+      "color": "#42243e",
+      "bgcolor": "#63365d"
+    },
+    {
+      "id": 2,
+      "type": "CheckpointLoaderSimple",
+      "pos": [
+        358.0415344238281,
+        249.73915100097656
+      ],
+      "size": [
+        320,
+        100
+      ],
+      "flags": {
+        "pinned": false
+      },
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "slot_index": 0,
+          "links": [
+            106
+          ]
+        },
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "slot_index": 1,
+          "links": [
+            107
+          ]
+        },
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "slot_index": 2,
+          "links": [
+            84
+          ]
+        }
+      ],
+      "title": "Base Checkpoint",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.43",
+        "Node name for S&R": "CheckpointLoaderSimple"
+      },
+      "widgets_values": [
+        "SDXL/sd_xl_base_1.0_0.9vae.safetensors"
+      ],
+      "color": "#2c2442",
+      "bgcolor": "#433663"
+    }
+  ],
+  "links": [
+    [
+      39,
+      3,
+      2,
+      12,
+      1,
+      "VAE"
+    ],
+    [
+      40,
+      12,
+      0,
+      13,
+      0,
+      "IMAGE"
+    ],
+    [
+      82,
+      3,
+      0,
+      25,
+      1,
+      "MODEL"
+    ],
+    [
+      84,
+      2,
+      2,
+      25,
+      3,
+      "VAE"
+    ],
+    [
+      89,
+      25,
+      0,
+      12,
+      0,
+      "LATENT"
+    ],
+    [
+      99,
+      28,
+      1,
+      25,
+      4,
+      "CONDITIONING"
+    ],
+    [
+      100,
+      28,
+      2,
+      25,
+      5,
+      "CONDITIONING"
+    ],
+    [
+      101,
+      28,
+      3,
+      25,
+      6,
+      "CONDITIONING"
+    ],
+    [
+      102,
+      28,
+      4,
+      25,
+      7,
+      "CONDITIONING"
+    ],
+    [
+      103,
+      28,
+      5,
+      13,
+      1,
+      "STRING"
+    ],
+    [
+      104,
+      28,
+      6,
+      13,
+      2,
+      "STRING"
+    ],
+    [
+      105,
+      28,
+      0,
+      25,
+      2,
+      "LATENT"
+    ],
+    [
+      106,
+      2,
+      0,
+      25,
+      0,
+      "MODEL"
+    ],
+    [
+      107,
+      2,
+      1,
+      28,
+      0,
+      "CLIP"
+    ],
+    [
+      108,
+      3,
+      1,
+      28,
+      1,
+      "CLIP"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 1.1326917971358488,
+      "offset": [
+        -43.02490291503864,
+        316.9747497169319
+      ]
+    },
+    "frontendVersion": "1.23.4"
+  },
+  "version": 0.4
+}
