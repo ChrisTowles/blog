@@ -9,3 +9,8 @@ https://github.com/tuanemuy/cc-jsonl
 A CLI tool for processing and managing Claude Code log files. Built with Node.js, Next.js, and TypeScript, it provides one-command initialization, production server management, and efficient log processing with both batch and continuous monitoring modes. Features a web interface for log management and supports flexible configuration through config files or environment variables.
 
 Has a really good `claude.md` file that I should look at for inspiration.
+1
+
+https://github.com/tuanemuy/cc-jsonl and its MIT license.
+
+
