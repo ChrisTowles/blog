@@ -67,3 +67,6 @@ When working with files >300 lines or complex changes:
 4. Format as "PROPOSED EDIT PLAN" with edit sequence
 5. Wait for user confirmation before proceeding
 6. Show progress after each edit: "✅ Completed edit [#] of [total]"
+
+
+when the user requests code examples, setup or configuration steps, or library/API documentation use context7.
