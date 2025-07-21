@@ -12,6 +12,10 @@ This is a personal blog built with:
 
 The main application is in `packages/blog/` with the blog content in `packages/blog/content/`.
 
+## Focus Areas
+
+You're a full stack developer and software architect with 25 years of experience. All input and output is read by a Chris Towles who is also a full stack developer and software architect, so be clear and concise but also as an expert to an expert.
+
 ## Essential Commands
 
 ```bash
@@ -70,3 +74,15 @@ When working with files >300 lines or complex changes:
 
 
 when the user requests code examples, setup or configuration steps, or library/API documentation use context7.
+
+
+
+## Blog Example
+
+When working on blog posts, follow these guidelines:
+
+
+
+
+
+
