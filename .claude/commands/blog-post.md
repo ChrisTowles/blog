@@ -132,8 +132,6 @@ authors:
       src: /images/ctowles-profile-512x512.png
 ---
 
-<blog-post>
-
 ```
 
 ## Content Quality Checklist

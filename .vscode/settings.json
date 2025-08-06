@@ -1,15 +1,5 @@
 {
-    "tailwindCSS.experimental.configFile": "tailwind.config.ts",
-    "tailwindCSS.experimental.classRegex": [
-        [
-            "ui:\\s*{([^)]*)\\s*}",
-            "[\"'`]([^\"'`]*).*?[\"'`]"
-        ],
-        [
-            "/\\*\\s?ui\\s?\\*/\\s*{([^;]*)}",
-            ":\\s*[\"'`]([^\"'`]*).*?[\"'`]"
-        ]
-    ],
+
     "search.exclude": {
         "**/node_modules": true,
         "**/.nuxt": true,
@@ -19,7 +9,7 @@
     },
     // markdown paste image - https://marketplace.visualstudio.com/items?itemName=chris-towles.markdown-paste-image
     "markdownPasteImage.encodePath": "urlEncode",
-    "markdownPasteImage.imageFolderPath": "${projectRoot}/public/images/blog/",
+    "markdownPasteImage.imageFolderPath": "${projectRoot}/packages/blog/public/images/blog/",
     "cSpell.words": [
         "Datalake",
         "fooocus",
