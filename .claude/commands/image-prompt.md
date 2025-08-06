@@ -1,6 +1,23 @@
-# Goal
+---
+title: image-prompt
+---
 
-Generate a prompt to feed to an image generation model to create images that match the style described below.
+Generate a concise 2-3 sentence prompt for AI image generation based on the blog post.
+
+## Topic
+
+Blog post path or topic : $ARGUMENTS
 
 
-The prompt should create <image_starting_prompt>$ARGUMENTS</image_starting_prompt>
+## Brand Essentials
+
+**Style**: Cinematic realism with warm/cool contrast, Fantasy or comic book features, professional photography quality
+**Mood**: Contemplative
+
+## Output
+
+- Save to `.temp/images/{YYYY}-{MM}-{DD}-{HH}{MM}-{blog-title}.md`
+- include section for prompt
+- include recommanded file name `{YYYY}{MM}{DD}-{HH}{MM}-{blog-title}.webp`
+- incude the blog post title
+- link to run at: https://huggingface.co/spaces/black-forest-labs/FLUX.1-dev

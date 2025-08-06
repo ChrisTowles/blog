@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Structure
 
 This is a personal blog built with:
+
 - **Nuxt 3** with Nuxt UI Pro
 - **NuxtHub** for Cloudflare Workers deployment
 - **Vitest** for testing
@@ -75,17 +76,4 @@ When working with files >300 lines or complex changes:
 5. Wait for user confirmation before proceeding
 6. Show progress after each edit: "✅ Completed edit [#] of [total]"
 
-
 when the user requests code examples, setup or configuration steps, or library/API documentation use context7.
-
-
-
-## Blog Example
-
-When working on blog posts, follow these guidelines:
-
-
-
-
-
-
