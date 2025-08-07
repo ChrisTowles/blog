@@ -20,4 +20,6 @@ Blog post path or topic : $ARGUMENTS
 - include section for prompt
 - include recommanded file name `{YYYY}{MM}{DD}-{HH}{MM}-{blog-title}.webp`
 - incude the blog post title
-- link to run at: https://huggingface.co/spaces/black-forest-labs/FLUX.1-dev
+- link to run at either: 
+  - https://huggingface.co/spaces/black-forest-labs/FLUX.1-dev
+  - https://aistudio.google.com/prompts/new_image using the 16:9 aspect ratio
