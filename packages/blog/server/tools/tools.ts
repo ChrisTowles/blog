@@ -2,8 +2,8 @@
  * Tool definitions for the AI chat agent
  * Tools can either require human confirmation or execute automatically
  */
-import { tool } from "ai";
-import { z } from "zod";
+import { tool } from 'ai'
+import { z } from 'zod'
 
 // import type { Chat } from "./server";
 // import { getCurrentAgent } from "agents";
@@ -15,10 +15,10 @@ import { z } from "zod";
  * The actual implementation is in the executions object below
  */
 const getWeatherInformation = tool({
-  description: "show the weather in a given city to the user",
-  parameters: z.object({ city: z.string() }),
+  description: 'show the weather in a given city to the user',
+  parameters: z.object({ city: z.string() })
   // Omitting execute function makes this tool require human confirmation
-});
+})
 
 /**
  * Local time tool that executes automatically
@@ -26,13 +26,13 @@ const getWeatherInformation = tool({
  * This is suitable for low-risk operations that don't need oversight
  */
 const getLocalTime = tool({
-  description: "get the local time for a specified location",
+  description: 'get the local time for a specified location',
   parameters: z.object({ location: z.string() }),
   execute: async ({ location }) => {
-    console.log(`Getting local time for ${location}`);
-    return "10am";
-  },
-});
+    console.log(`Getting local time for ${location}`)
+    return '10am'
+  }
+})
 
 // const scheduleTask = tool({
 //   description: "A tool to schedule a task to be executed at a later time",
@@ -115,11 +115,11 @@ const getLocalTime = tool({
  */
 export const tools = {
   getWeatherInformation,
-  getLocalTime,
+  getLocalTime
 //   scheduleTask,
 //   getScheduledTasks,
 //   cancelScheduledTask,
-};
+}
 
 /**
  * Implementation of confirmation-required tools
@@ -128,7 +128,7 @@ export const tools = {
  */
 export const executions = {
   getWeatherInformation: async ({ city }: { city: string }) => {
-    console.log(`Getting weather information for ${city}`);
-    return `The weather in ${city} is sunny`;
-  },
-};
+    console.log(`Getting weather information for ${city}`)
+    return `The weather in ${city} is sunny`
+  }
+}

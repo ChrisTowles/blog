@@ -1,11 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  ignore: [
-    "**\/*.{spec,test}.{js,cts,mts,ts,jsx,tsx}",
-
-    "**/*.*.{spec,test}.{js,cts,mts,ts,jsx,tsx}",
-
-  ],
   modules: [
     '@nuxt/eslint',
     '@nuxt/image',
@@ -69,6 +63,10 @@ export default defineNuxtConfig({
       // }
     }
   },
+  ignore: [
+    '**/*.{spec,test}.{js,cts,mts,ts,jsx,tsx}',
+    '**/*.*.{spec,test}.{js,cts,mts,ts,jsx,tsx}'
+  ],
 
   routeRules: {
     '/': { prerender: true }
