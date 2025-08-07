@@ -5,6 +5,7 @@
  * to invoke AI models using the REST API endpoint
  */
 
+import { config } from 'dotenv'
 import * as CloudflareTypes from './cloudflare-ai-types.js'
 
 type CloudflareAIRequest = CloudflareTypes.CloudflareAIRequest
@@ -12,6 +13,8 @@ type CloudflareAIResponse = CloudflareTypes.CloudflareAIResponse
 type CloudflareAIStreamResponse = CloudflareTypes.CloudflareAIStreamResponse
 type CloudflareCredentials = CloudflareTypes.CloudflareCredentials
 const { CloudflareAIError, CLOUDFLARE_MODELS, validateAIRequest } = CloudflareTypes
+
+config({ path: '.env' })
 
 /**
  * Get Cloudflare credentials from environment variables
@@ -272,19 +275,23 @@ async function main() {
 
     // Example 2: Streaming response
     console.log('\n🌊 Example 2: Streaming response')
-    // const streamRequest: CloudflareAIRequest = {
-    //   messages: [
-    //     {
-    //       role: 'user',
-    //       content: 'Write a haiku about TypeScript programming.'
-    //     }
-    //   ],
-    //   max_tokens: 150,
-    //   temperature: 0.8
-    // }
+    const streamRequest: CloudflareAIRequest = {
+      messages: [
+        {
+          role: 'user',
+          content: 'Write a haiku about TypeScript programming.'
+        }
+      ],
+      max_tokens: 150,
+      temperature: 0.8
+    }
 
     console.log('Streaming response:')
-    // const fullStreamResponse = await invokeCloudflareAIStream(credentials, modelName, streamRequest)
+    const fullStreamResponse = await invokeCloudflareAIStream(credentials, modelName, streamRequest)
+
+    console.log('Streaming response:')
+    console.log(fullStreamResponse)
+
     console.log('\n✅ Streaming completed')
 
     // Example 3: Code generation
@@ -310,28 +317,30 @@ async function main() {
 
     // Example 4: Custom chunk handler for streaming
     console.log('\n🎯 Example 4: Custom streaming handler')
-    // let chunkCount = 0
-    // const customStreamRequest: CloudflareAIRequest = {
-    //   messages: [
-    //     {
-    //       role: 'user',
-    //       content: 'List 3 benefits of using TypeScript.'
-    //     }
-    //   ],
-    //   max_tokens: 200,
-    //   temperature: 0.5
-    // }
+    let chunkCount = 0
+    const customStreamRequest: CloudflareAIRequest = {
+      messages: [
+        {
+          role: 'user',
+          content: 'List 3 benefits of using TypeScript.'
+        }
+      ],
+      max_tokens: 200,
+      temperature: 0.5
+    }
 
-    // const customResponse = await invokeCloudflareAIStream(
-    //   credentials,
-    //   modelName,
-    //   customStreamRequest,
-    //   (chunk) => {
-    //     chunkCount++
-    //     console.log(`[Chunk ${chunkCount}]: ${chunk}`)
-    //   }
-    // )
-    // console.log(`\n✅ Custom streaming completed with ${chunkCount} chunks`)
+    const customResponse = await invokeCloudflareAIStream(
+      credentials,
+      modelName,
+      customStreamRequest,
+      (chunk) => {
+        chunkCount++
+        console.log(`[Chunk ${chunkCount}]: ${chunk}`)
+      }
+    )
+    console.log('Custom streaming response:')
+    console.log(customResponse)
+    console.log(`\n✅ Custom streaming completed with ${chunkCount} chunks`)
 
     console.log('\n🎉 All examples completed successfully!')
   } catch (error) {
