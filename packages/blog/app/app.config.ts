@@ -5,16 +5,7 @@ export default defineAppConfig({
       neutral: 'zinc'
     },
 
-    button: {
-      rounded: 'rounded-full',
-      default: {
-        size: 'md',
-        color: 'black'
-      }
-    },
-    input: {
-      rounded: 'rounded-full'
-    },
+    button: {},
     header: {
       wrapper: 'lg:!border-transparent bg-gray-50 dark:bg-gray-950',
       links: {

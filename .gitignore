@@ -135,3 +135,7 @@ dist
 
 # nuxt content
 .data/
+
+
+# cloudflare
+.wrangler/

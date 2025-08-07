@@ -25,6 +25,14 @@ export const weatherTool = tool({
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
 
+  const userId = session.user?.id
+  if (!userId) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'Unauthorized'
+    })
+  }
+
   const { id } = getRouterParams(event)
   // TODO: Use readValidatedBody
   const { model, messages } = await readBody(event)
@@ -32,7 +40,7 @@ export default defineEventHandler(async (event) => {
   const db = useDrizzle()
 
   const chat = await db.query.chats.findFirst({
-    where: (chat, { eq }) => and(eq(chat.id, id as string), eq(chat.userId, session.user?.id || session.id)),
+    where: (chat, { eq }) => and(eq(chat.id, id as string), eq(chat.userId, userId)),
     with: {
       messages: true
     }
