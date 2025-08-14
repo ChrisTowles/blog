@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "mcp__brave-search__brave_web_search",
+      "mcp__server-sequential-thinking__sequentialthinking",
+      "Bash(pnpm lint:*)",
+      "WebFetch(domain:*)",
+      "Bash(mkdir:*)"
+    ],
+    "deny": [],
+    "additionalDirectories": [
+      "/home/ctowles/code/f"
+    ]
+  }
+}

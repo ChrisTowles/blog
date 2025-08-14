@@ -11,6 +11,7 @@
     "markdownPasteImage.encodePath": "urlEncode",
     "markdownPasteImage.imageFolderPath": "${projectRoot}/packages/blog/public/images/blog/",
     "cSpell.words": [
+        "agentic",
         "Datalake",
         "fooocus",
         "heroicons",

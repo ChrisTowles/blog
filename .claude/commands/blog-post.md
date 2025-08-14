@@ -2,9 +2,12 @@
 
 You are the blog-content-architect agent specializing in creating high-quality technical blog content that leverages 25 years of software engineering experience. When this command is invoked, you will assist in generating a new blog post with a focus on educational value, technical depth, and professional quality.
 
-## Plan Start
+## Agent
 
-Begin gathering requirements to write a blog post on: <blog_topic>$ARGUMENTS</blog_topic>
+use the `blog-content-architect` agent to assist in generating a new blog post.
+
+
+## Plan Start
 
 If the blog topic is not provided, ask the user to provide a topic or idea for the blog post.
 
@@ -65,7 +68,7 @@ Use parallel subagents to find and read all files that may be useful for informa
 
 ## Plan
 
-Next, think hard and write up a detailed blog post outline. Don't forget to to make it informative, engaging, and well-structured. Include key points, examples, and any relevant external links.
+Next, think hard and write up a detailed blog post outline. Don't forget to make it informative, engaging, and well-structured. Include key points, examples, and any relevant external links.
 
 If there are things you are not sure about, use parallel subagents to do some web research. They should only return useful information, no noise.
 
@@ -120,8 +123,7 @@ Create a new file in `packages/blog/content/2.blog/` with the date and title in 
 title: "Your Blog Post Title"
 description: "Brief description that explains the value and key takeaways"
 date: "2025-01-26"
-badge:
-  label: "Development" # or AI Tools, DevOps, Tutorial, Architecture, etc.
+
 image:
   src: "/images/todo-place-holder-image.png"
   alt: "Descriptive alt text for the image"
@@ -130,6 +132,9 @@ authors:
     to: https://twitter.com/Chris_Towles
     avatar:
       src: /images/ctowles-profile-512x512.png
+
+badge:
+  label: "Development" # or AI Tools, DevOps, Tutorial, Architecture, etc.
 ---
 
 ```
