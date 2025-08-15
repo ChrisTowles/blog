@@ -6,9 +6,7 @@ jobs:
   
     name: "Deploy to NuxtHub"
     runs-on: ubuntu-latest
-    environment:
-      name: ${{ github.ref == 'refs/heads/main' && 'ci' || 'ci' }} # just putting this here to avoid worrying putting env in both. 
-      url: ${{ steps.deploy.outputs.deployment-url }}
+
     env:
       NUXT_UI_PRO_LICENSE: ${{ secrets.NUXT_UI_PRO_LICENSE }}
 
@@ -17,29 +15,25 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
+        with:
+          version: 10
 
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 23
+          node-version: 24
           cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install
 
-      - name: Ensure NuxtHub module is installed
-        run: pnpm dlx nuxthub@latest ensure
-
-      - name: Build application
-        run: pnpm build
-
       - name: Deploy to NuxtHub
         uses: nuxt-hub/action@v2
-        id: deploy
         with:
-          directory: ./packages/blog/dist # Path to the directory to deploy
+          directory: ./packages/blog # Path to the directory to deploy
           project-key: blog-7kvi
