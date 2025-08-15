@@ -1,9 +1,9 @@
 title: Chris Towles's - Blog
-description: Usually in AWS, Vue, Typescript and Python tinkering with everything else. 
+description: Usually in AWS, AI, Python, Typescript, and tinkering with everything else
 navigation: false
 hero:
   title: Chris Towles's Blog
-  description: I'm a software engineer and Solution architect. Usually in AWS, Vue, Typescript, Python and tinkering with everything else. 
+  description: I'm a Principal Architect for Cloud AI at GE Aerospace and full stack developer. Usually in AWS, AI, Python, Typescript, and tinkering with everything else. 
   links:
     - label: Blog
       icon: i-lucide-notebook-text
@@ -20,7 +20,7 @@ hero:
 
     
 logos:
-  title: Writing about the following
+  title: My thoughts are my own as I write about...
   links:
     - label: Amazon AWS
       to: 'https://aws.amazon.com'
@@ -28,10 +28,14 @@ logos:
     - label: Node.js
       to: 'https://nodejs.org'
       icon: i-simple-icons-nodedotjs
-    - label: Vue
-      to: 'https://vuejs.org'
-      icon: i-simple-icons-vuedotjs
 
+    - label: Anthropic
+      to: 'https://www.anthropic.com'
+      icon: i-simple-icons-anthropic
+
+    - label: OpenAI
+      to: 'https://www.openai.com'
+      icon: i-simple-icons-openai
     - label: Cloudflare
       to: 'https://www.cloudflare.com'
       icon: i-simple-icons-cloudflare
@@ -45,6 +49,10 @@ logos:
     - label: Nuxt.js
       to: 'https://nuxtjs.org'
       icon: i-simple-icons-nuxtdotjs
+    
+    - label: Vue
+      to: 'https://vuejs.org'
+      icon: i-simple-icons-vuedotjs
     
 
 features:
