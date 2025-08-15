@@ -32,7 +32,7 @@ jobs:
         run: pnpm install
 
       - name: Ensure NuxtHub module is installed
-        run: pnpx nuxthub@latest ensure
+        run: pnpm dlx nuxthub@latest ensure
 
       - name: Build application
         run: pnpm build
