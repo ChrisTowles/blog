@@ -46,7 +46,8 @@ function compressImage(filePath: string): boolean {
   console.log(`   Original size: ${formatBytes(originalSize)}`)
 
   try {
-    execSync(`pngquant "${filePath}" --output "${tempFile}" --force --quality=65-80`, {
+    // speed = 1 slow
+    execSync(`pngquant --speed 1  --strip --output "${tempFile}" 256 "${filePath}"`, {
       stdio: 'ignore'
     })
 
@@ -67,8 +68,9 @@ function compressImage(filePath: string): boolean {
       unlinkSync(tempFile)
       return false
     }
-  } catch {
+  } catch (ex) {
     console.error(`   ❌ Failed to compress ${basename(filePath)}`)
+    console.error(ex)
     if (existsSync(tempFile)) {
       unlinkSync(tempFile)
     }
