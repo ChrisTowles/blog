@@ -38,7 +38,7 @@ jobs:
         run: pnpm build
 
       - name: Deploy to NuxtHub
-        uses: nuxt-hub/action@v1
+        uses: nuxt-hub/action@v2
         id: deploy
         with:
           directory: ./packages/blog/dist # Path to the directory to deploy
