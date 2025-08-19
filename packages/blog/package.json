@@ -22,7 +22,7 @@
     "test-ai": "tsx scripts/test-cloudflare-ai.ts",
     "prepare": "today=$(date +%Y-%m-%d) && echo \"compatibility_date = '$today'\" > ./.data/hub/wrangler.toml && wrangler --config ./.data/hub/wrangler.toml types",
     "deploy:main": "wrangler pages deploy",
-    "deploy:nuxthub": "npx nuxthub deploy",
+    "deploy:nuxthub": "npx nuxthub deploy --production",
     "deploy:preview": "wrangler pages dev",
     "cleanup": "rm -rf .data/content/contents.sqlite && npx nuxi cleanup",
     "db:migrate": "drizzle-kit migrate"

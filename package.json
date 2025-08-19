@@ -9,6 +9,7 @@
   "scripts": {
     "build": "pnpm -r run build",
     "dev": "pnpm -r run dev",
+    "deploy": "pnpm -r run deploy:nuxthub",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "pnpm -r run typecheck",
