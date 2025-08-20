@@ -22,7 +22,7 @@
     "test-ai": "tsx scripts/test-cloudflare-ai.ts",
     "prepare": "today=$(date +%Y-%m-%d) && echo \"compatibility_date = '$today'\" > ./.data/hub/wrangler.toml && wrangler --config ./.data/hub/wrangler.toml types",
     "deploy:main": "wrangler pages deploy",
-    "deploy:nuxthub": "npx nuxthub deploy",
+    "deploy:nuxthub": "npx nuxthub deploy --production",
     "deploy:preview": "wrangler pages dev",
     "cleanup": "rm -rf .data/content/contents.sqlite && npx nuxi cleanup",
     "db:migrate": "drizzle-kit migrate"
@@ -33,7 +33,7 @@
     "@aws-sdk/credential-providers": "^3.806.0",
     "@cloudflare/ai-utils": "^1.0.1",
     "@nuxt/ui-pro": "^3.1.1",
-    "@nuxthub/core": "^0.8.27",
+    "@nuxthub/core": "^0.9.0",
     "@nuxtjs/mdc": "^0.17.0",
     "@tanstack/vue-virtual": "^3.13.8",
     "ai": "^4.3.15",
