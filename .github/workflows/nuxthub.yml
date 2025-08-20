@@ -6,7 +6,7 @@ jobs:
   
     name: "Deploy to NuxtHub"
     runs-on: ubuntu-latest
-
+    environment: ci # testing
     env:
       NUXT_UI_PRO_LICENSE: ${{ secrets.NUXT_UI_PRO_LICENSE }}
 
