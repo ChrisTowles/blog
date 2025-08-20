@@ -19,15 +19,15 @@
     "deps:update": "pnpx taze --interactive --recursive"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250803.0",
-    "@types/node": "^22.15.17",
-    "dotenv": "^16.5.0",
-    "eslint": "^9.26.0",
+    "@cloudflare/workers-types": "^4.20250819.0",
+    "@types/node": "^24.3.0",
+    "dotenv": "^17.2.1",
+    "eslint": "^9.33.0",
     "husky": "^9.1.7",
-    "lint-staged": "^15.5.2",
+    "lint-staged": "^16.1.5",
     "nuxthub": "^0.9.3",
-    "typescript": "^5.8.3",
-    "wrangler": "^4.14.4"
+    "typescript": "^5.9.2",
+    "wrangler": "^4.31.0"
   },
   "resolutions": {
     "unimport": "4.1.1"
@@ -46,7 +46,7 @@
       "ws"
     ]
   },
-  "packageManager": "pnpm@10.14.0",
+  "packageManager": "pnpm@10.15.0",
   "engines": {
     "node": ">=24.0.0"
   },
