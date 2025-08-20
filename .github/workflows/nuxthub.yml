@@ -6,7 +6,10 @@ jobs:
   
     name: "Deploy to NuxtHub"
     runs-on: ubuntu-latest
-    environment: ci # testing
+    environment:
+      name: ci #${{ github.ref == 'refs/heads/main' && 'ci' || 'ci' }}
+      #url: ${{ steps.deploy.outputs.deployment-url }}
+
     env:
       NUXT_UI_PRO_LICENSE: ${{ secrets.NUXT_UI_PRO_LICENSE }}
 
