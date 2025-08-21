@@ -19,7 +19,7 @@ jobs:
             
             // Create issue in target repo
             const newIssue = await github.rest.issues.create({
-              owner: 'chris-towles',
+              owner: 'ChrisTowles',
               repo: 'towles-tool',
               title: issue.title,
               body: `${issue.body}\n\n---\n*Transferred from ${context.repo.owner}/${context.repo.repo}#${issue.number}*`,
