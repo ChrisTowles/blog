@@ -42,4 +42,6 @@ jobs:
               state_reason: 'not_planned'
             });
             
+
+            
             console.log(`Issue transferred: ${newIssue.data.html_url}`);
