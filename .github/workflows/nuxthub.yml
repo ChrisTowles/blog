@@ -7,7 +7,7 @@ jobs:
     name: "Deploy to NuxtHub"
     runs-on: ubuntu-latest
     environment:
-      name: ci #${{ github.ref == 'refs/heads/main' && 'ci' || 'ci' }}
+      name: ${{ github.ref == 'refs/heads/main' && 'ci' || 'anything else' }}
       #url: ${{ steps.deploy.outputs.deployment-url }}
 
     env:
