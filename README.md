@@ -6,9 +6,11 @@ This is just my personal blog at <https://Chris.Towles.dev>
 
 ## Quick Links
 
-- https://admin.hub.nuxt.com/
-- https://dash.cloudflare.com/
-- https://ui.nuxt.com/components#element
+- [Blog](https://chris.towles.dev)
+- [NuxtHub Admin](https://admin.hub.nuxt.com/)
+- [Cloudflare Dashboard](https://dash.cloudflare.com/)
+- [Nuxt UI Components](https://ui.nuxt.com/components#element)
+- [Google Search Console](https://search.google.com/search-console/)
 
 ## Blog Tech Stack
 
@@ -39,8 +41,31 @@ This is just my personal blog at <https://Chris.Towles.dev>
  - https://nuxt.com/modules/auth-utils
 
 
-- Check Google Search Indexing - <https://search.google.com/search-console/>
-  - verify the domain via DNS verification
+## Development
+
+```bash
+# Install dependencies
+pnpm install
+
+# Start dev server with remote storage
+pnpm dev
+
+# Run tests
+pnpm test
+
+# Build for production
+pnpm build
+```
+
+## Content Management
+
+Blog posts are stored in `packages/blog/content/2.blog/` using Markdown with frontmatter.
+
+### Creating Blog Posts
+
+File naming: `YYYYMMDD.post-title.md`
+
+Use the blog-content-architect agent for creating focused, concise posts (800-1500 words).
 
 ## Great Examples of Nuxt UI Pro
 

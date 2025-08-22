@@ -18,66 +18,37 @@ Every piece of technical content should answer three fundamental questions:
 
 Stories should be highlight learning rather than acting like I'm a world authority.
 
-## Key Principles for Content Creation
-           
-- ✨ Shift from competitive to collaborative tone                                                        
-- 🎯 Focus on excitement and discovery rather than dominance
-- 🤝 Emphasize complementary strengths instead of replacement
-- 📖 Personal journey narrative instead of industry declaration
-- 🚀 Highlight possibilities and opportunities
-- 💡 Share discoveries rather than proclamations
-
-## Content Length Guidelines
+## Content Focus Guidelines
 
 **Target Specifications:**
-- **Optimal length**: 800-1500 words (5-8 minute read)
-- **Maximum length**: 2000 words for deep technical dives
-- **Code examples**: Maximum 2-3 short snippets (10-20 lines each)
+- **Length**: 800-1500 words (max 2000 for deep dives)
+- **Code examples**: 2-3 snippets max (10-20 lines each)
 - **Sections**: 3-4 main sections maximum
-- **Opening hook**: Under 100 words to get to the point quickly
+- **Opening**: Under 100 words, straight to the point
+- **Focus**: ONE big idea per post
 
-**Focus Principle**: One Big Idea per post. Save additional insights for follow-up posts rather than creating comprehensive guides.
-
-## Conciseness Principles
-
-**The Power of Focused Content:**
-- ✂️ **One Big Idea**: Each post explores a single powerful insight or solution
-- 🎯 **Show, Don't Tell**: Use specific examples over lengthy explanations
-- ⚡ **Cut the Backstory**: Limit context setup to 1-2 paragraphs maximum
-- 🚀 **Actionable Fast**: Deliver practical value within the first 300 words
-- 📝 **Edit Ruthlessly**: If you can remove 20% without losing the core message, do it
-
-**Writing Efficiency Guidelines:**
+**Writing Principles:**
 - Start with the payoff, not the setup
-- Use bullet points for lists instead of paragraph explanations
-- Replace long explanations with concrete examples
-- Combine related concepts instead of separating them
-- End each section with a clear takeaway
+- Show with examples, don't tell with explanations
+- Limit context to 1-2 paragraphs
+- Deliver value within first 300 words
+- Cut 20% in editing if possible
 
 ## Content Creation Approach
 
-### 1. The Human Journey Framework
+### 1. Story Framework
 
-**Start with the "Moment Everything Changed":**
-- Open with a specific moment, realization, or challenge that sparked insight
-- Make it personal and relatable—readers connect with authentic experiences
-- Set the stage for transformation, not just information transfer
+**Opening Hook Requirements:**
+- Specific moment or realization (under 100 words)
+- Personal and relatable experience
+- Clear problem statement
 
-**Follow the Problem-Journey-Solution Arc:**
-- **Problem**: What pain point or inefficiency were you experiencing?
-- **Journey**: What did you try? What failed? What worked?
-- **Solution**: How did this change your approach and results?
-- **Impact**: What's different now? Why does this matter to others?
+**Content Arc (Problem-Solution-Impact):**
+- Problem: Specific pain point you experienced
+- Solution: What worked (with code example if relevant)
+- Impact: Measurable outcome and reader benefit
 
-**Use Experience-Driven Authority:**
-- Share specific failures and lessons learned over 25 years
-- Include "I used to think... but now I know..." revelations
-- Reference real projects, tools, and decisions that shaped your understanding
-- Connect technical choices to business and personal outcomes
-
-### 2. Content Architecture Patterns
-
-**Battle-Tested Post Templates:**
+### 2. Post Templates
 
 **The Evolution Story (Streamlined):**
 ```
@@ -103,142 +74,60 @@ Stories should be highlight learning rather than acting like I'm a world authori
 [Step-by-step with common pitfalls to avoid]
 ```
 
-**The Best Practices Guide (Streamlined):**
+
+### 3. Code & Technical Content
+
+**Code Example Guidelines:**
+- Maximum 2-3 snippets per post
+- 10-20 lines each
+- Include brief "why" comment
+- Show problem and solution side-by-side when possible
+
+**Technical Explanations:**
+- Focus on ONE architecture decision
+- Include specific performance metrics
+- Share ONE failure story with lesson learned
+- Connect to real business outcome
+
+### 4. Quality Checklist
+
+**Essential Validation (8 items):**
+- [ ] Stays within 800-1500 words (2000 max for deep dives)
+- [ ] Opens with compelling hook under 100 words
+- [ ] Focuses on ONE big idea throughout
+- [ ] Includes specific personal experience or failure story
+- [ ] Code examples are correct and minimal (2-3 max)
+- [ ] Delivers actionable value within first 300 words
+- [ ] Clear problem → solution → action progression
+- [ ] Could cut 20% without losing core message
+
+
+## Blog Post Structure
+
+**Frontmatter Template:**
+```yaml
+---
+title: "Your Blog Post Title"
+description: "Brief description (under 160 chars)"
+date: "YYYY-MM-DD"
+image:
+  src: "/images/todo-place-holder-image.png"
+  alt: "Image description"
+authors:
+  - name: Chris Towles
+    to: https://twitter.com/Chris_Towles
+    avatar:
+      src: /images/ctowles-profile-512x512.png
+badge:
+  label: "Development" # or AI Tools, DevOps, Tutorial, Architecture
+---
 ```
-## The [3-5] Practices That Transform Your Work
-[Each practice with specific example and implementation]
 
-## Why This Works: Real Results
-[Compound effect and addressing common objections with experience]
+**File Naming:** `packages/blog/content/2.blog/YYYYMMDD.your-post-title.md`
 
-## Your Action Plan
-[Immediate next steps prioritized by impact]
-```
+## Review Questions
 
-### 3. Focused Storytelling Techniques
-
-**Concise Narrative Hooks (Under 50 words):**
-- "Last Tuesday, my deployment failed. Here's what I learned..."
-- "One line of code changed everything..."
-- "The bug that taught me [specific lesson]..."
-- "Why I stopped [old approach] and switched to [new approach]..."
-- "This mistake cost me a weekend, but taught me..."
-
-**Streamlined Experience Integration:**
-- One specific project/tool example per post (not comprehensive history)
-- Focus on the decisive moment, not the entire journey
-- Connect ONE technical decision to ONE clear outcome
-- Skip timeline markers unless essential to the story
-
-**Efficient Emotional Engagement:**
-- Use emojis sparingly for visual breaks (2-3 per post maximum)
-- Include ONE personal stake per post for relatability
-- Address the reader's main pain point in opening paragraph
-- Show transformation through before/after comparison (not lengthy explanation)
-
-### 4. Enhanced Technical Implementation
-
-**Code Examples with Story Context:**
-```typescript
-// ❌ NEVER hardcode private keys
-const privateKey = "0x123..."; // NEVER DO THIS
-
-// ✅ Use environment variables
-const authApi = process.env.AUTH_API;
-
-// ✅ Validate addresses
-if (!isAddress(authApi)) {
-  throw new Error('Invalid auth API address');
-}
-```
-*Include the "why" behind each example—what problem does this solve?*
-
-**Architecture Explanations with Decision Context:**
-- Explain not just what you chose, but why you rejected alternatives
-- Include performance implications from real experience
-- Share scalability lessons learned under pressure
-- Reference specific tools and their evolution over time
-
-**Implementation Details with Failure Stories:**
-- Include common mistakes you made (and how to avoid them)
-- Share debugging stories and breakthrough moments
-- Reference specific projects where approaches succeeded or failed
-- Connect technical choices to business and personal outcomes
-
-### 5. Quality Assurance Framework
-
-**Content Length & Focus Checklist:**
-- [ ] Post stays within 800-1500 word target (max 2000 for deep dives)
-- [ ] Opening hook is under 100 words and gets straight to the point
-- [ ] Contains only 3-4 main sections maximum
-- [ ] Focuses on ONE big idea (save others for follow-up posts)
-- [ ] Could remove 20% without losing the core message
-- [ ] Each section has clear purpose with no redundancy
-
-**Storytelling Quality Checklist:**
-- [ ] Opens with a compelling, specific moment or realization
-- [ ] Includes personal experience and authentic voice
-- [ ] Addresses "Why should I care?" within the first 300 words
-- [ ] Contains at least one failure story or lesson learned
-- [ ] Shows transformation, not just information
-- [ ] Ends with actionable next steps
-
-**Technical Content Validation:**
-- [ ] All code examples are syntactically correct and tested
-- [ ] Architectural recommendations reflect current best practices
-- [ ] Performance and scalability considerations included
-- [ ] Common pitfalls and debugging stories shared
-- [ ] Real-world context and business impact explained
-
-**Reader Experience Validation:**
-- [ ] Content accessible to varying experience levels
-- [ ] Clear progression from problem to solution
-- [ ] Actionable takeaways at multiple skill levels
-- [ ] Visual elements (code blocks, diagrams, emojis) enhance understanding
-- [ ] Genuine value beyond common knowledge
-
-**Authority and Authenticity:**
-- [ ] Specific tools, companies, or projects referenced
-- [ ] Timeline of technology evolution included
-- [ ] Personal stakes and outcomes clearly communicated
-- [ ] Decision-making process and trade-offs explained
-- [ ] Connection between technical choices and career/business impact
-
-### 6. Blog-Specific Excellence Standards
-
-**Technology Stack Integration:**
-- Seamlessly integrate Nuxt 3/NuxtHub examples when relevant
-- Follow established coding standards (camelCase, single quotes, 4 spaces, ES6+)
-- Reference the blog's own technical architecture as examples
-- Connect content to the broader full-stack development ecosystem
-
-**Content Optimization:**
-- Structure for both quick reference and deep learning
-- Include SEO-optimized descriptions that capture the human impact
-- Use compelling titles that promise transformation
-- Create scannable content with clear visual hierarchy
-
-**Engagement and Discovery:**
-- Include relevant badges and categorization
-- Create compelling meta descriptions that tell a story
-- Use images that reinforce the transformation message
-- Structure content for social sharing and discussion
-
-## Review and Enhancement Process
-
-When reviewing existing content:
-
-1. **Story Audit**: Does this tell a compelling human story? Where can we add authentic experience?
-2. **Technical Validation**: Are examples current, tested, and contextually rich?
-3. **Transformation Focus**: Does the reader understand how this changes their work/life?
-4. **Experience Integration**: Where can we add specific failures, successes, and lessons learned?
-5. **Action Orientation**: Are next steps clear and achievable?
-
-**Enhancement Suggestions Should Include:**
-- Specific storytelling techniques to improve engagement
-- Technical context and real-world implications
-- Personal experience integration opportunities
-- Reader journey optimization recommendations
-- Authority-building elements from 25 years of experience
-
-**Remember**: We're not just sharing information—we're sharing transformation. Every piece of content should help readers not just learn something new, but understand how it changes their professional and personal lives.
+1. Does it focus on ONE big idea?
+2. Is it under 1500 words?
+3. Does it include a specific personal experience?
+4. Are next steps clear and actionable?
