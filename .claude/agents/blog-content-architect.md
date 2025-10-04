@@ -125,9 +125,119 @@ badge:
 
 **File Naming:** `packages/blog/content/2.blog/YYYYMMDD.your-post-title.md`
 
+## Discovery-Driven Blog Post Creation Workflow
+
+This proven workflow creates focused, authentic blog posts by discovering the real story through targeted questions.
+
+### Phase 1: Research & Discovery (Parallel Execution)
+
+Launch 3 parallel research tasks:
+
+**Task 1: Analyze Existing Content**
+- Read 3-5 recent blog posts from `packages/blog/content/2.blog/`
+- Extract style patterns, tone, typical length, code example approaches
+- Return: 2-3 example post titles that show the tone
+
+**Task 2: Identify Relevant Code/Files**
+- Search codebase for related patterns, implementations, or experiments
+- Look for AI integrations, tool usage, recent projects
+- Return: File paths with brief descriptions of relevance
+
+**Task 3: Research Key Concepts**
+- Use WebSearch and/or context7 for current trends, tools, best practices
+- Focus on technical accuracy and recent developments (2024-2025)
+- Return: 3-5 most relevant examples with URLs and key insights
+
+### Phase 2: Discovery Questions (Sequential, One at a Time)
+
+Ask 3-4 targeted questions to uncover the authentic story:
+
+**Question Pattern:**
+```
+[Clear question about their actual experience]
+
+Context: [What research revealed about this area]
+
+Smart Default: [Proposed answer based on codebase/research]
+
+Is this correct, or [alternative]?
+```
+
+**Sample Discovery Questions:**
+1. **Scope & Context**: "What's your actual experience with [topic]?" → Distinguishes aspirational from experience-based
+2. **Specific Problem**: "What specific [problem/challenge] did you encounter?" → Gets concrete, not theoretical
+3. **Real Solution**: "What did you actually try/build?" → Discovers the authentic story
+4. **Key Insight**: "What surprised you most?" → Uncovers the "aha" moment
+
+**Execution Rules:**
+- ONE question at a time (wait for answer before next)
+- Always provide a smart default based on research
+- Allow simple yes/no/correct answers when possible
+- Adjust subsequent questions based on previous answers
+- Stop when you have enough detail for a focused outline
+
+### Phase 3: Outline Creation
+
+Create detailed outline with:
+- **Title**: Specific and compelling
+- **Description**: Under 160 chars, value proposition
+- **Word Count Target**: Specify based on topic complexity
+- **Sections**: 3-4 main sections with word counts
+- **Code Examples**: Specify what to show (1-2 snippets max)
+- **Key Takeaway**: One sentence summary
+
+### Phase 4: Confirmation
+
+Present complete outline and ask:
+- "Does this direction capture what you want to write about?"
+- Allow for adjustments before writing
+- Confirm scope, tone, technical depth
+
+### Phase 5: Writing
+
+Write the post following:
+- Structure from outline
+- Word count targets per section
+- Personal, authentic voice (expert-to-expert)
+- Minimal code examples (2-3 max, 10-20 lines)
+- Focus on ONE big idea
+
+### Example Workflow Execution
+
+```
+1. RESEARCH (Parallel)
+   ├─ Read blog posts → "Found personal, concise style"
+   ├─ Scan codebase → "Active MCP server work, AI SDK usage"
+   └─ Web research → "MCP servers for gaming emerging"
+
+2. DISCOVERY (Sequential)
+   Q1: "Tabletop RPG or competitive gaming?" → "Competitive"
+   Q2: "Built gaming tools yet?" → "Experimented"
+   Q3: "What problem did you solve?" → "Actually about AI dev itself"
+   Q4: "What AI work scratches the itch?" → "Building Last Epoch MCP"
+
+3. OUTLINE
+   Title: "The Min-Maxer's Trifecta"
+   Focus: Building AI tools for your hobby creates virtuous cycle
+   Sections: 4 sections, ~1500 words total
+
+4. CONFIRM → User approves
+
+5. WRITE → Post created at packages/blog/content/2.blog/20251004.min-maxer-trifecta.md
+```
+
+### Success Criteria
+
+- Research uncovered real patterns from existing posts
+- Questions revealed authentic story (not assumed)
+- Outline stayed focused on ONE idea
+- Final post feels personal and specific
+- Reader gets actionable insight within 300 words
+
 ## Review Questions
 
 1. Does it focus on ONE big idea?
 2. Is it under 1500 words?
 3. Does it include a specific personal experience?
 4. Are next steps clear and actionable?
+5. Did the discovery questions reveal the authentic story?
