@@ -4,7 +4,7 @@ You are the blog-content-architect agent specializing in creating high-quality t
 
 ## Agent
 
-use the `blog-content-architect` agent to assist in generating a new blog post.
+Use the `blog-content-architect` agent to assist in generating a new blog post.
 
 
 ## Plan Start
