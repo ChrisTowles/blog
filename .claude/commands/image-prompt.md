@@ -1,25 +1,91 @@
 ---
 title: image-prompt
+description: Generate optimized AI image prompts for blog post hero images
 ---
 
-Generate a concise 2-3 sentence prompt for AI image generation based on the blog post.
+Generate a compelling, detailed prompt for AI image generation that captures the essence of the blog post while maintaining consistent brand aesthetics.
 
-## Topic
+## Input
 
-Blog post path or topic : $ARGUMENTS
+**Blog post**: $ARGUMENTS (path to markdown file or topic description)
 
+## Workflow
 
-## Brand Essentials
+1. **Analyze Content**: Read the blog post or understand the topic to identify:
+   - Core concept/theme
+   - Key technical elements or metaphors
+   - Emotional tone
+   - Target audience context
 
-**Style**: Cinematic realism with warm/cool contrast, Fantasy or comic book features, professional photography quality
-**Mood**: Contemplative
+2. **Craft Prompt**: Create a 3-4 sentence prompt that:
+   - Opens with the primary subject/scene
+   - Includes specific visual details and composition
+   - Specifies lighting, mood, and atmosphere
+   - Incorporates brand style elements
+   - Avoids text/typography (AI struggles with text rendering)
 
-## Output
+## Brand Guidelines
 
-- Save to `.temp/images/{YYYY}-{MM}-{DD}-{HH}{MM}-{blog-title}.md`
-- include section for prompt
-- include recommanded file name `{YYYY}{MM}{DD}-{HH}{MM}-{blog-title}.webp`
-- incude the blog post title
-- link to run at either: 
-  - https://huggingface.co/spaces/black-forest-labs/FLUX.1-dev
-  - https://aistudio.google.com/prompts/new_image using the 16:9 aspect ratio
+**Visual Style**:
+- Cinematic realism with dramatic lighting
+- Warm/cool color contrast for depth
+- Professional photography quality (8k, photorealistic)
+- Optional: Fantasy, sci-fi, or comic book elements when appropriate
+
+**Mood**: Contemplative, thought-provoking, professional yet approachable
+
+**Composition**:
+- 16:9 aspect ratio (landscape)
+- Rule of thirds or centered dramatic composition
+- Depth of field for focus
+- Negative space for text overlay if needed
+
+## Prompt Template Structure
+
+```
+[Main subject/scene], [specific details], [environment/setting]. [Lighting description], [mood/atmosphere], [technical quality specs]. [Style modifiers], [color palette], [composition notes].
+```
+
+## Output Format
+
+Save to `.temp/images/{YYYY}-{MM}-{DD}-{HH}{MM}-{blog-title}.md`:
+
+```markdown
+# Image Prompt: {Blog Post Title}
+
+**Blog Post**: {path or title}
+**Date**: {YYYY-MM-DD HH:MM}
+
+## Generated Prompt
+
+{Your 3-4 sentence prompt here}
+
+## Metadata
+
+- **Recommended filename**: `{YYYY}{MM}{DD}-{HH}{MM}-{blog-title}.png`
+- **Aspect ratio**: 16:9 (landscape)
+- **Suggested generators**:
+  - [FLUX.1-dev on HuggingFace](https://huggingface.co/spaces/black-forest-labs/FLUX.1-dev)
+  - [Google AI Studio](https://aistudio.google.com/prompts/new_image) - use 16:9 aspect ratio
+- **Alternative**: Midjourney, DALL-E 3, or Stable Diffusion XL
+
+## Post-Generation Notes
+
+{Add any notes about variations to try, color adjustments, or alternative concepts}
+```
+
+## Examples
+
+**For a post about performance optimization**:
+> A sleek, futuristic engine room with glowing holographic performance graphs floating in mid-air, a software engineer studying the data with focused intensity. Dramatic side lighting creates contrast between cool blue holographic displays and warm ambient light, shallow depth of field. Cinematic realism, professional photography, 8k quality, high contrast color grading with teal and orange tones.
+
+**For a post about architecture decisions**:
+> An architect's desk from above showing scattered blueprints transforming into floating 3D holographic building structures, hands gesturing between physical and digital elements. Golden hour lighting through windows, contemplative atmosphere, photorealistic with subtle sci-fi elements. 16:9 composition, rule of thirds, high detail, cinematic color grading.
+
+## Tips
+
+- Use specific nouns over generic terms (e.g., "MacBook Pro" vs "laptop")
+- Include camera perspective (overhead, side angle, close-up, etc.)
+- Specify material qualities (metallic, glass, matte, glossy)
+- Add environmental context for depth
+- Use photography terminology (bokeh, depth of field, golden hour, etc.)

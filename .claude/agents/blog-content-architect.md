@@ -111,7 +111,7 @@ title: "Your Blog Post Title"
 description: "Brief description (under 160 chars)"
 date: "YYYY-MM-DD"
 image:
-  src: "/images/todo-place-holder-image.png"
+  src: "/images/blog/todo-place-holder-image.png"
   alt: "Image description"
 authors:
   - name: Chris Towles
