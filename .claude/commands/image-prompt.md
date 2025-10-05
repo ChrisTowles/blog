@@ -65,9 +65,7 @@ Save to `.temp/images/{YYYY}-{MM}-{DD}-{HH}{MM}-{blog-title}.md`:
 - **Recommended filename**: `{YYYY}{MM}{DD}-{HH}{MM}-{blog-title}.png`
 - **Aspect ratio**: 16:9 (landscape)
 - **Suggested generators**:
-  - [FLUX.1-dev on HuggingFace](https://huggingface.co/spaces/black-forest-labs/FLUX.1-dev)
   - [Google AI Studio](https://aistudio.google.com/prompts/new_image) - use 16:9 aspect ratio
-- **Alternative**: Midjourney, DALL-E 3, or Stable Diffusion XL
 
 ## Post-Generation Notes
 
