@@ -2,7 +2,7 @@ import { describe, test, expect } from 'vitest'
 import { anthropic } from '@ai-sdk/anthropic'
 import { generateText } from 'ai'
 
-describe('anthropic-utils', async () => {
+describe.skip('anthropic-utils', async () => {
   test('generateText', async () => {
     const { text } = await generateText({
       model: anthropic('claude-3-haiku-20240307'),
