@@ -78,6 +78,10 @@ When working with files >300 lines or complex changes:
 
 When the user requests code examples, setup or configuration steps, or library/API documentation use context7.
 
+## Available MCP Tools
+
+- **Playwright MCP**: Available for taking screenshots of web pages and visual testing
+
 ## Blog Content Creation
 
 When creating blog posts, use the streamlined blog-content-architect agent which enforces:

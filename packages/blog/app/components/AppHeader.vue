@@ -39,14 +39,14 @@ const items = computed(() => [
       variant="link"
     />
 
-    <template #right="{ collapsed }">
+    <template #right="slotProps">
       <!-- <UDashboardSearchButton :kbds="['alt', 'O']" /> -->
       <UColorModeButton v-if="!loggedIn" />
-      <UserMenu v-if="loggedIn" :collapsed="collapsed" />
+      <UserMenu v-if="loggedIn" :collapsed="(slotProps as any)?.collapsed" />
 
       <UButton
         v-if="!loggedIn"
-        :label="collapsed ? '' : 'Login with GitHub'"
+        :label="(slotProps as any)?.collapsed ? '' : 'Login with GitHub'"
         icon="i-simple-icons-github"
         color="neutral"
         variant="ghost"
