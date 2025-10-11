@@ -76,4 +76,18 @@ When working with files >300 lines or complex changes:
 5. Wait for user confirmation before proceeding
 6. Show progress after each edit: "✅ Completed edit [#] of [total]"
 
-when the user requests code examples, setup or configuration steps, or library/API documentation use context7.
+When the user requests code examples, setup or configuration steps, or library/API documentation use context7.
+
+## Available MCP Tools
+
+- **Playwright MCP**: Available for taking screenshots of web pages and visual testing
+
+## Blog Content Creation
+
+When creating blog posts, use the streamlined blog-content-architect agent which enforces:
+- **Length**: 800-1500 words (max 2000 for deep technical dives)
+- **Focus**: ONE big idea per post
+- **Structure**: 3-4 sections maximum
+- **Code**: 2-3 minimal snippets (10-20 lines each)
+
+Blog posts go in `packages/blog/content/2.blog/` with naming format: `YYYYMMDD.post-title.md`

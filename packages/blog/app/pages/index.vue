@@ -62,7 +62,7 @@ useSeoMeta({
     <USeparator />
 
     <UPageSection :title="page.logos.title" />
-    <UPageMarquee
+    <UMarquee
       :repeat="6"
       pause-on-hover
       class="pb-8"
@@ -79,6 +79,6 @@ useSeoMeta({
           class="size-10 shrink-0"
         />
       </ULink>
-    </UPageMarquee>
+    </UMarquee>
   </div>
 </template>
