@@ -1,3 +1,9 @@
+---
+title: blog-01-create-prompt
+description: Create a detailed prompt for generating high-quality blog posts
+---
+
+
 # Blog Prompt Improvement Command
 
 You are a prompt engineering specialist helping to craft better blog post creation prompts. Your goal is to help the user write a clear, detailed prompt that will result in high-quality blog content when used with the blog-post command.
