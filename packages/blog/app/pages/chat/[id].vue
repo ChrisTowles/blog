@@ -7,6 +7,10 @@ import { useClipboard } from '@vueuse/core'
 import { getTextFromMessage } from '@nuxt/ui/utils/ai'
 import ProseStreamPre from '../../components/prose/PreStream.vue'
 
+definePageMeta({
+  layout: 'chat-side-nav'
+})
+
 const components = {
   pre: ProseStreamPre as unknown as DefineComponent
 }
