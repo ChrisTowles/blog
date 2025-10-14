@@ -54,8 +54,6 @@
   "lint-staged": {
     "*.png": "node --experimental-strip-types scripts/compress-images.ts",
     "*.{js,ts,vue}": "eslint --fix"
-  },
-  "dependencies": {
-    "@nuxthub/core": "0.9.0"
   }
+
 }

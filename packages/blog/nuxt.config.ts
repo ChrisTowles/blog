@@ -98,6 +98,10 @@ export default defineNuxtConfig({
   },
 
   vite: {
+    // include bebug fixed a issue, in mdx, does not provide an export named 'default' (at create-tokenizer.js
+    optimizeDeps: {
+      include: ['debug']
+    },
     $server: {
       build: {
         rollupOptions: {
