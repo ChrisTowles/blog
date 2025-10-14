@@ -31,6 +31,7 @@ async function createChat(prompt: string) {
       method: 'POST',
       body: { input: prompt }
     })
+    console.log('chat', chat)
     refreshNuxtData('chats')
     navigateTo(`/chat/${chat.id}`)
     // no loading state to reset, because we are navigating away.

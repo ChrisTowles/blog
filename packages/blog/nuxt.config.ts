@@ -21,7 +21,7 @@ export default defineNuxtConfig({
     'nuxt-og-image',
     '@nuxtjs/mdc',
     // 'nuxt-mcp', // not yet working
-    '@nuxthub/core', // for nuxt-hub
+    // '@nuxthub/core', // for nuxt-hub
     'nuxt-auth-utils',
     '@nuxt/test-utils/module'
   ],
@@ -42,15 +42,10 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
-  // set in .env with NUXT_PUBLIC_GTAG_ID
-  // gtag: {
-  //     id: 'G-X0H34W6PGC', // set correct here, but over ridden locally G-XXXXXXXXX
-  //     config: { anonymize_ip: false },
-  // },
-
   colorMode: {
     preference: 'dark' // default value of $colorMode.preference
   },
+
   mdc: {
     highlight: {
       // noApiRoute: true
@@ -58,9 +53,6 @@ export default defineNuxtConfig({
     },
     components: {
       prose: true
-      // map: {
-      //   p: 'MyCustomPComponent'
-      // }
     }
   },
   ignore: [
@@ -97,46 +89,46 @@ export default defineNuxtConfig({
 
   // },
 
-  compatibilityDate: '2025-04-18',
-
-  // vite: {
-  //   optimizeDeps: {
-  //     include: ['debug']
-  //   }
-  // },
+  compatibilityDate: '2025-10-13',
 
   nitro: {
-    prerender: {
-      routes: [
-        '/'
-      ],
-      crawlLinks: true
-    },
     experimental: {
       openAPI: true
+    }
+  },
+
+  vite: {
+    $server: {
+      build: {
+        rollupOptions: {
+          output: {
+            preserveModules: true
+          }
+        }
+      }
     }
   },
 
   // nitro: {
   //   prerender: {
 
-  hub: {
+  // hub: {
 
-    // bindings: {
-    //   observability: {
-    //     // enable with default settings
-    //     logs: true,
+  //   // bindings: {
+  //   //   observability: {
+  //   //     // enable with default settings
+  //   //     logs: true,
 
-    //     // customise settings
-    //     logs: {
-    //       head_sampling_rate: 0.5,
-    //       invocation_logs: false
-    //     }
-    //   }
-    // },
-    ai: false,
-    database: false
-  },
+  //   //     // customise settings
+  //   //     logs: {
+  //   //       head_sampling_rate: 0.5,
+  //   //       invocation_logs: false
+  //   //     }
+  //   //   }
+  //   // },
+  //   ai: false,
+  //   database: false
+  // },
 
   typescript: {
     //    typeCheck: true,
