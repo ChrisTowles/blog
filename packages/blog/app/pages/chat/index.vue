@@ -1,15 +1,16 @@
 <script setup lang="ts">
 // Note: it took me way to long to figure, out that this file needed to be a index in the chat folder to work correctly.
+import { extractErrorMessage } from '~~/shared/error-util'
 
 definePageMeta({
   layout: 'chat-side-nav'
 })
 
 const toast = useToast()
-const { model } = useLLM()
 
 const input = ref('')
 const loading = ref(false)
+const { model } = useModels()
 
 async function setPrompt(prompt: string) {
   input.value = prompt
@@ -18,32 +19,31 @@ async function setPrompt(prompt: string) {
 async function createChat(prompt: string) {
   input.value = prompt
 
-  if (loading.value) {
-    console.log('loading already so canceling')
-    return
-  } else {
-    loading.value = true
-  }
+  // if (loading.value) {
+  //   console.log('loading already so canceling')
+  //   return
+  // }
 
   loading.value = true
-  $fetch('/api/chats', {
-    method: 'POST',
-    body: { input: prompt }
-  }).then((chat) => {
-    console.log(chat, 'chat')
+
+  try {
+    const chat = await $fetch('/api/chats', {
+      method: 'POST',
+      body: { input: prompt }
+    })
     refreshNuxtData('chats')
     navigateTo(`/chat/${chat.id}`)
+    // no loading state to reset, because we are navigating away.
+  } catch (error) {
+    console.error('error', error)
+
     loading.value = false
-  }).catch((error) => {
-    console.log(error, 'error')
-    loading.value = false
-    const { message } = typeof error.message === 'string' && error.message[0] === '{' ? JSON.parse(error.message) : error
     toast.add({
-      description: message,
+      description: extractErrorMessage(error),
       icon: 'i-lucide-alert-circle',
       color: 'error'
     })
-  })
+  }
 }
 
 function onSubmit() {
@@ -52,7 +52,7 @@ function onSubmit() {
 
 const quickChats = [
   {
-    label: 'Tell me a joke about programing.',
+    label: 'Tell me a joke about programming.',
     icon: 'i-heroicons-outline-light-bulb'
   },
   {
@@ -68,8 +68,8 @@ const quickChats = [
     icon: 'i-heroicons-command-line'
   },
   {
-    label: 'what is the weather in Ohio.',
-    icon: 'i-heroicons-command-line'
+    label: 'Why use Nuxt UI?',
+    icon: 'i-logos-nuxt-icon'
   }
 
 ]

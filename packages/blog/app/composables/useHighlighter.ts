@@ -1,4 +1,6 @@
-import { createHighlighter, createJavaScriptRegexEngine, type HighlighterGeneric } from 'shiki'
+import { createHighlighter } from 'shiki'
+import type { HighlighterGeneric } from 'shiki'
+import { createJavaScriptRegexEngine } from 'shiki/engine-javascript.mjs'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let highlighter: HighlighterGeneric<any, any> | null = null

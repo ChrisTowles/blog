@@ -99,6 +99,12 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2025-04-18',
 
+  // vite: {
+  //   optimizeDeps: {
+  //     include: ['debug']
+  //   }
+  // },
+
   nitro: {
     prerender: {
       routes: [
@@ -128,8 +134,8 @@ export default defineNuxtConfig({
     //     }
     //   }
     // },
-    ai: true,
-    database: true
+    ai: false,
+    database: false
   },
 
   typescript: {

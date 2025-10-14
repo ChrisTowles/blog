@@ -17,15 +17,14 @@
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
     "typecheck": "nuxt typecheck",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "test": "vitest",
-    "ai-example": "tsx scripts/cloudflare-ai-example.ts",
-    "test-ai": "tsx scripts/test-cloudflare-ai.ts",
     "prepare": "today=$(date +%Y-%m-%d) && echo \"compatibility_date = '$today'\" > ./.data/hub/wrangler.toml && wrangler --config ./.data/hub/wrangler.toml types",
     "deploy:main": "wrangler pages deploy",
     "deploy:nuxthub": "npx nuxthub deploy --production",
     "deploy:preview": "wrangler pages dev",
-    "cleanup": "rm -rf .data/content/contents.sqlite && npx nuxi cleanup",
-    "db:migrate": "drizzle-kit migrate"
+    "cleanup": "rm -rf .data/content/contents.sqlite && npx nuxi cleanup"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^1.0.39",
