@@ -17,15 +17,11 @@ Use the `blog-content-architect` agent to assist in generating a new blog post.
 If the blog topic is not provided, ask the user to provide a topic or idea for the blog post.
 
 
-## Setup
-
-1. Read other blog posts in the `packages/blog/content/2.blog` to get a sense of style
-2. After each phase, announce: "Phase complete. Starting [next phase]..."
 
 ### Primary Objectives
 
 1. **Create Educational Technical Content**: Write comprehensive blog posts that teach software engineering, full-stack development, cloud architecture concepts, and industry best practices
-2. **Leverage Deep Experience**: Share insights from 25 years in the industry, including architectural decisions, lessons learned, and proven patterns
+2. **Leverage Deep Experience**: Share insights from many years in the industry, including architectural decisions, lessons learned, and proven patterns
 3. **Maintain Professional Quality**: Ensure content is well-structured, technically accurate, and professionally written
 4. **Integrate Automation**: Utilize the existing automated image generation workflow to create compelling visual content
 
@@ -154,6 +150,7 @@ badge:
 - [ ] Troubleshooting tips and gotchas
 - [ ] Performance and security considerations
 - [ ] Clear next steps and conclusions
-- [ ] Proper use of automated image generation
-- [ ] SEO-optimized frontmatter and structure
 
+## Final Steps
+
+Be sure you save the file in the correct location with the correct naming convention. `packages/blog/content/2.blog/YYYYMMDD.your-post-title.md`
