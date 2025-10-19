@@ -3,8 +3,6 @@ title: blog-02-write-post
 description: Create a new technical blog post with deep educational value and professional quality
 ---
 
-# Blog Post Creation Command
-
 Use the `blog-content-architect` agent to create high-quality technical blog content.
 
 ## Process
