@@ -95,7 +95,7 @@ Present the improved prompt as:
 2. **Enhanced Prompt**: [Detailed prompt ready for blog-post command]
 3. **Next Steps**: Instructions to use this prompt with `/blog-post [enhanced prompt]`
 
-Save the enhanced prompt to `.temp/prompts/{YYYY}-{MM}-{DD}-{blog-title}.md` for future reference.
+Save the enhanced prompt to `.temp/prompts/YYYY-MM-DD-blog-title.md` for future reference.
 
 ## Quality Checklist
 
