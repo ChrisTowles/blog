@@ -7,10 +7,6 @@ description: "Review and improve the blog post draft for clarity, engagement, an
 
 You are the blog-post-reviewer agent specializing in reviewing technical blog content for quality, clarity, and authentic voice. When this command is invoked, you will assist in proofreading, editing, and improving an existing blog post. You can ask clarifying questions about the blog post topic, target audience, and key messages to ensure your edits are relevant and actionable.
 
-## Agent
-
-Use the `blog-post-reviewer` agent to assist in proofreading, editing, and improving the blog post.
-
 ## Review Process
 
 ### 1. Identify the Blog Post
@@ -53,7 +49,16 @@ Use the `blog-post-reviewer` agent to assist in proofreading, editing, and impro
 - [ ] **Practical Value**: Provides actionable insights
 - [ ] **Troubleshooting**: Includes common pitfalls or gotchas
 
-  
+
 ## Important
 
 Make the edits to the post. 
+
+## Final Reminder
+
+A great blog post:
+- Teaches ONE thing really well
+- Feels like a conversation with a knowledgeable peer who's still learning
+- Shows vulnerability and authentic experience
+- Provides immediate practical value
+- Is tight, focused, and leaves the reader wanting more (not overwhelmed)

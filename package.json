@@ -21,15 +21,15 @@
     "deps:update": "pnpx taze --interactive --recursive"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250819.0",
-    "@types/node": "^24.3.0",
-    "dotenv": "^17.2.1",
-    "eslint": "^9.33.0",
+    "@cloudflare/workers-types": "^4.20251014.0",
+    "@types/node": "^24.9.2",
+    "dotenv": "^17.2.3",
+    "eslint": "^9.38.0",
     "husky": "^9.1.7",
-    "lint-staged": "^16.1.5",
+    "lint-staged": "^16.2.6",
     "nuxthub": "^0.9.3",
-    "typescript": "^5.9.2",
-    "wrangler": "^4.31.0"
+    "typescript": "^5.9.3",
+    "wrangler": "^4.45.1"
   },
   "resolutions": {
     "unimport": "4.1.1"
@@ -47,7 +47,7 @@
       "workerd"
     ]
   },
-  "packageManager": "pnpm@10.15.0",
+  "packageManager": "pnpm@10.20.0",
   "engines": {
     "node": ">=24.0.0"
   },
@@ -55,5 +55,4 @@
     "*.png": "node --experimental-strip-types scripts/compress-images.ts",
     "*.{js,ts,vue}": "eslint --fix"
   }
-
 }
