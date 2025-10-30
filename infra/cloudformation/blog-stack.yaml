@@ -1,0 +1,105 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'RDS PostgreSQL Database for Blog Application'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: production
+    AllowedValues:
+      - development
+      - staging
+      - production
+    Description: Environment name
+
+  DBUsername:
+    Type: String
+    Default: blogadmin
+    Description: Master username for database
+    MinLength: 1
+    MaxLength: 16
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+
+  DBPassword:
+    Type: String
+    NoEcho: true
+    Description: Master password for database (min 8 characters)
+    MinLength: 8
+    MaxLength: 41
+
+Conditions:
+  IsProduction: !Equals [!Ref Environment, production]
+
+Resources:
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for blog RDS instance
+      SubnetIds:
+        - !Ref DBSubnet1
+        - !Ref DBSubnet2
+      Tags:
+        - Key: Name
+          Value: !Sub "towles-blog-db-subnet-group-${Environment}"
+        - Key: Environment
+          Value: !Ref Environment
+
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for blog RDS instance
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub "towles-blog-db-sg-${Environment}"
+        - Key: Environment
+          Value: !Ref Environment
+
+  DBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub "towles-blog-db-${Environment}"
+      DBInstanceClass: db.t4g.micro
+      Engine: postgres
+      EngineVersion: '16.3'
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      AllocatedStorage: 20
+      StorageType: gp2
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      VPCSecurityGroups:
+        - !Ref DBSecurityGroup
+      BackupRetentionPeriod: !If [IsProduction, 7, 1]
+      DeletionProtection: !If [IsProduction, true, false]
+      PubliclyAccessible: false
+      Tags:
+        - Key: Name
+          Value: !Sub "towles-blog-db-${Environment}"
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ManagedBy
+          Value: CloudFormation
+
+Outputs:
+  DBInstanceIdentifier:
+    Description: The Blog RDS instance identifier
+    Value: !Ref DBInstance
+    Export:
+      Name: !Sub '${AWS::StackName}-DBInstanceIdentifier'
+
+  DBEndpoint:
+    Description: The Blog RDS instance endpoint
+    Value: !GetAtt DBInstance.Endpoint.Address
+    Export:
+      Name: !Sub '${AWS::StackName}-DBEndpoint'
+
+  DBPort:
+    Description: The Blog RDS instance port
+    Value: !GetAtt DBInstance.Endpoint.Port
+    Export:
+      Name: !Sub '${AWS::StackName}-DBPort'
+

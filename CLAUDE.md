@@ -21,3 +21,6 @@ The main application is in `packages/blog/` with the blog content directory sort
 
 
 
+## Running Slides for Talks
+
+Slides for talks made with `slidev`. They are in `packages/slides/`. Use `pnpm run slides:upgrade` to start the slide server locally.

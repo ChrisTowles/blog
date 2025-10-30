@@ -57,6 +57,14 @@ pnpm test
 pnpm build
 ```
 
+
+## Deployment
+
+```bash
+
+nr deploy 2>&1 | tail -n 50
+```
+
 ## Content Management
 
 Blog posts are stored in `packages/blog/content/2.blog/` using Markdown with frontmatter.

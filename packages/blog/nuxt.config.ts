@@ -1,12 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: [
-    '@nuxt/eslint',
-    '@nuxt/image',
-    '@nuxt/ui',
-    '@nuxt/content',
-    '@vueuse/nuxt',
-    // '@nuxt/fonts',
+  modules: ['@nuxt/eslint', '@nuxt/image', '@nuxt/ui', '@nuxt/content', '@vueuse/nuxt', // '@nuxt/fonts',
     // '@nuxtjs/eslint-module', { /* module options */ }],
     // 'nuxt-og-image',
     // '@nuxtjs/robots',
@@ -15,16 +9,13 @@ export default defineNuxtConfig({
     // '@stefanobartoletti/nuxt-social-share',
 
     // '@nuxtjs/seo',
-    'nuxt-gtag',
-    // '@nuxtjs/sitemap',
+    'nuxt-gtag', // '@nuxtjs/sitemap',
     // '@nuxt/icon',
     'nuxt-og-image',
-    '@nuxtjs/mdc',
-    // 'nuxt-mcp', // not yet working
+    '@nuxtjs/mdc', // 'nuxt-mcp', // not yet working
     // '@nuxthub/core', // for nuxt-hub
-    'nuxt-auth-utils',
-    '@nuxt/test-utils/module'
-  ],
+    'nuxt-auth-utils', '@nuxt/test-utils/module', '@nuxthub/core'],
+
   $development: {
     // https://github.com/nuxt-hub/core/blob/main/docs/content/docs/1.getting-started/4.remote-storage.md?plain=1
     hub: {
