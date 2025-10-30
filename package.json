@@ -14,6 +14,7 @@
     "db:generate": "pnpm -r run db:generate",
     "db:migrate": "pnpm -r run db:migrate",
     "slides": "pnpm --filter @chris-towles/slides run dev",
+    "slides:export": "pnpm --filter @chris-towles/slides run export",
     "slides:no-brainer": "pnpm --filter @chris-towles/slides run dev no-brainer-upgrade.slides.md",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -31,10 +32,11 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.2.6",
     "nuxthub": "^0.9.3",
+    "playwright-chromium": "^1.56.1",
+    "tsx": "^4.20.4",
     "typescript": "^5.9.3",
     "wrangler": "^4.45.1",
-    "zx": "^8.8.5",
-    "tsx": "^4.20.4"
+    "zx": "^8.8.5"
   },
   "resolutions": {
     "unimport": "4.1.1"
