@@ -1,12 +1,15 @@
 ---
-theme: seriph
+# theme: seriph
+
+theme: default
+background: https://images.unsplash.com/photo-1516849841032-87cbac4d88f7?q=80&w=2070
+highlighter: shiki
+
 title: "The No-Brainer Upgrade"
+
 info: |
   ## Claude Sonnet 4.5 vs 3.5
   Same price, dramatically better performance
-
-  Target Audience: Mixed (50% technical / 50% managers)
-  Duration: 10 minutes
 class: text-center
 drawings:
   persist: false
@@ -15,15 +18,61 @@ mdc: true
 duration: 10min
 ---
 
-# The No-Brainer Upgrade
+<div class="absolute inset-0 bg-gradient-to-br from-black/60 to-black/40" />
 
-## Claude Sonnet 4.5 vs 3.5
+<div class="relative z-10">
 
-Same price. Dramatically better performance.
+# 🚀 The No-Brainer Upgrade
+
+## From Good to Great: AI Model Evolution
+
+<div class="text-sm opacity-75 mt-4">
+Why upgrading your AI model is like upgrading from a prop plane to a rocket
+</div>
+
+</div>
 
 <!--
-Core Message: Same price, dramatically better performance
-Persuasion Strategy: Economic rationality - identical cost makes it a pure gain decision
+Opening hook: We've been using AI for over a year. Everyone says "AI is moving fast" - but let me show you exactly HOW fast with concrete numbers. This isn't hype; these are measurable, verified improvements that translate directly to business value.
+-->
+
+---
+layout: center
+class: text-center
+---
+
+# How do we measure "better"?
+
+<v-clicks>
+
+<div class="text-2xl mt-10 opacity-90">
+
+You can't just <span class="text-red-400">**vibe check**</span> AI improvements 🤷
+
+</div>
+
+<div class="text-2xl mt-8 opacity-90">
+
+You can't rely on <span class="text-orange-400">**gut feelings**</span> 🎲
+
+</div>
+
+<div class="text-3xl mt-12 text-green-400 font-bold">
+
+You need <span class="text-cyan-400">📊 benchmarks</span> and <span class="text-purple-400">📈 metrics</span>
+
+</div>
+
+<div class="text-xl mt-10 opacity-75">
+
+The only way to objectively track progress
+
+</div>
+
+</v-clicks>
+
+<!--
+Key point: Establish credibility early. Can't measure AI with vibes. Wait for clicks to build - let each point land. This sets up why the benchmarks coming next actually matter. Without objective metrics, we're just guessing.
 -->
 
 ---
@@ -33,13 +82,12 @@ class: text-center
 
 # Would you upgrade your laptop to 2x performance for free?
 
-<v-click>
+
+<v-clicks>
 
 But there are a few catches:
 
-</v-click>
 
-<v-clicks>
 
 - ✅ No budget approval needed
 - ✅ You don't need to wait for your "refresh cycle"
@@ -54,8 +102,7 @@ But there are a few catches:
 </v-click>
 
 <!--
-Opening Hook - 1 minute
-Get audience engaged with relatable analogy
+Opening Hook (1 min): Make it relatable. Everyone wants free performance. Build anticipation with the catches - they expect a trick. Then reveal: there IS no catch. Same price, better model. Let that sink in before moving forward.
 -->
 
 ---
@@ -65,7 +112,7 @@ layout: two-cols
 # The Free Upgrade
 
 <div class="text-6xl mt-10">
-$3 / $15
+💰 $3 / $15
 </div>
 
 <div class="text-2xl mt-5 opacity-75">
@@ -74,112 +121,92 @@ Claude 3.5 Sonnet
 
 ::right::
 
-<div class="mt-16"></div>
+<div class="mt-20"></div>
 
+<v-click>
 <div class="text-6xl mt-10">
-$3 / $15
+💰 $3 / $15
 </div>
+
+
 
 <div class="text-2xl mt-5 opacity-75">
 Claude 4.5 Sonnet
 </div>
 
 <div class="text-3xl mt-10 text-green-400">
-58% better performance
+~50+% better performance
 </div>
 
+</v-click>
+
 <!--
-Slide Suggestion:
-- Visual: Side-by-side price tags showing "$3/$15" for both models
-- Subtext: "Same cost. 58% better performance."
+The reveal: Same exact price. Pause after showing left side. Then click to show right side with performance boost. Let the audience process: free upgrade = no budget approval needed. This removes the biggest barrier to adoption.
 -->
 
 ---
 
-# This is happening in AI, right now
+# The Easiest Performance Win
 
-Every few months, new models come out that are significantly better than the last generation.
+<div class="text-2xl mt-10">
 
-But unlike hardware, where you have to budget, approve, and wait for refresh cycles, with AI models you can upgrade **instantly at no extra cost**.
+With new models dropping every month, the biggest improvement you can make isn't:
 
+</div>
+
+<v-clicks>
+
+- ❌ Rewriting your prompts
+- ❌ Fine-tuning a custom model
+- ❌ Adding more RAG context
+- ❌ Implementing complex workflows
+
+<div class="text-3xl mt-10 text-green-400">
+
+✅ **Just upgrade the model**
+
+</div>
+
+</v-clicks>
+
+<v-click>
+
+<div class="text-xl mt-10 opacity-75">
+
+A couple minute code change. No budget approval. Instant 50%+ gains.
+
+</div>
+
+</v-click>
+
+<!--
+Critical message: Don't overcomplicate this. The biggest gains aren't from fancy prompt engineering or custom models. It's literally just changing one string in your code. Emphasize the simplicity - this is the lowest-effort, highest-impact change they can make.
+-->
 
 ---
 layout: center
+class: text-center
 ---
 
-# The Numbers
-## 3 minutes
+# Sounds too good to be true?
+
+Let me show you the benchmarks
 
 <!--
-THE NUMBERS section - show concrete data
-Part A: Pricing Confirmation (45 seconds)
+Transition to proof (3 min section starts): They're skeptical. Good. Now back up every claim with data. This isn't marketing fluff - these are industry-standard benchmarks that can't be gamed. Prepare to show real numbers.
 -->
 
----
-layout: two-cols
-layoutClass: gap-16
----
-
-# Cost Comparison
-
-## Claude 3.5 Sonnet
-<div class="text-4xl mt-5">
-💰 $3 / $15
-</div>
-
-<div class="text-lg mt-3 opacity-75">
-per million tokens (input/output)
-</div>
-
-::right::
-
-<div class="mt-16"></div>
-
-## Claude 4.5 Sonnet
-<div class="text-4xl mt-5">
-💰 $3 / $15
-</div>
-
-<div class="text-lg mt-3 opacity-75">
-per million tokens (input/output)
-</div>
-
----
-
-<div class="text-center mt-20">
-<div class="text-8xl">=</div>
-<div class="text-3xl mt-10 font-bold">Zero price increase. Zero budget discussion.</div>
-</div>
-
-<div class="mt-10">
-
-**Additional Cost Savings**:
-- Prompt caching: Up to 90% savings on repeated contexts
-
-</div>
-
-<!--
-Key Facts:
-- Identical pricing - drop-in replacement
-- No budget approval needed
--->
-
----
-
-# Where Am I Getting These Numbers?
-
-## Performance Benchmarks
-
-Real-world testing, not marketing claims
-
-<!--
-Transition to credibility - show we have data
--->
 
 ---
 
 # SWE-bench Verified
 ## Real-World Coding Performance
+
+<!--
+Blank slide - use this beat to transition tone from promises to proof. Take a breath. The next section is data-heavy, so signal the shift in your delivery.
+-->
+
+
 
 **What it measures:**
 - Real GitHub issues and pull requests
@@ -196,30 +223,25 @@ Transition to credibility - show we have data
 </v-clicks>
 
 <!--
-Benchmark 1: SWE-bench Verified (Real-World Coding)
-This is the most important metric for developers
+Benchmark 1 (most important): SWE-bench uses REAL GitHub issues - not toy problems. Emphasize: real pull requests, real bugs, real codebases. 58% improvement means tasks that failed now succeed. Wait for clicks - let each number sink in. The 77% → 82% shows it's still improving with better infrastructure.
 -->
 
 ---
-layout: center
----
 
-# Take a step back
-
-## Look at the timeline
-
----
-
-# AI Evolution Timeline
+# The Rapid Evolution
 
 | Timeframe | Model | Human Equivalent | Score |
 |-----------|-------|------------------|-------|
-| 2022 Mar | GPT-3.5 | Seen code, doesn't understand | ~3% |
-| 2024 Mar | GPT-4 / Claude 3 | Eager Intern | ~13-28% |
-| 2024 Jun | Claude 3.5 | Junior dev | ~49% |
-| 2025 Feb | Claude 3.7 | Mid-level | ~62% |
-| 2025 May | Claude 4 | Experienced Dev | ~72% |
-| 2025 Oct | **Claude 4.5** | **Senior+** | **77.2%** |
+| 2022 Mar | GPT-3.5 | 🤔 Seen code, doesn't understand | <span class="text-red-400">~3%</span> |
+| 2024 Mar | GPT-4 / Claude 3 | 👶 Eager Intern | <span class="text-orange-400">~13-28%</span> |
+| 2024 Jun |  [Claude Sonnet 3.5](https://www.anthropic.com/news/claude-3-5-sonnet) | 💼 Junior dev | <span class="text-yellow-400">~33-49*%</span> |
+| 2025 Feb | [Claude Sonnet 3.7](https://www.anthropic.com/news/claude-3-7-sonnet) | 🎯 Mid-level | <span class="text-blue-400">~62%</span> |
+| 2025 May | [Claude Sonnet 4](https://www.anthropic.com/news/claude-4)  | 🚀 Experienced Dev | <span class="text-cyan-400">~72%</span> |
+| 2025 Oct | **[Claude Sonnet 4.5](https://www.anthropic.com/news/claude-sonnet-4-5) ** | **⭐ Senior+** | **<span class="text-green-400 text-xl">77.2%</span>** |
+
+<div class="mt-8 text-xl text-center opacity-75">
+That's <span class="text-green-400 font-bold">25x improvement</span> in solving real GitHub issues 🚀
+</div>
 
 <style>
 table {
@@ -228,8 +250,174 @@ table {
 </style>
 
 <!--
-Show the rapid progression of AI capabilities
-In just 3 years, we went from barely understanding code to senior-level performance
+The big picture: This table shows the INSANE pace of improvement. 3 years from "can't code" to "senior dev level." Point out: GPT-3.5 at 3% was only 3 years ago. We've had 25x improvement. Linear time, exponential progress. This isn't slowing down - if anything, it's accelerating.
+-->
+
+---
+
+# Why Coding is the Best Benchmark
+
+<div class="grid grid-cols-3 gap-12 mt-12 text-lg">
+
+<div v-click class="space-y-4">
+
+### 🎯 Objectively<br/>Measurable
+
+<div class="space-y-3 mt-6">
+
+- <span class="text-green-400">✅ Works</span> or <span class="text-red-400">❌ doesn't</span>
+- Tests pass or fail
+- <span class="text-cyan-400 font-bold">Zero ambiguity</span>
+- No tricks allowed
+
+</div>
+
+</div>
+
+<div v-click class="space-y-4">
+
+### 🤔 Other Tasks<br/>Fail
+
+<div class="space-y-3 mt-6">
+
+- <span class="opacity-50">"Product review"</span><br/>Sounds good, means nothing
+- <span class="opacity-50">"Summarize doc"</span><br/>Hard to measure
+- <span class="opacity-50">"Marketing copy"</span><br/>Persuasive ≠ correct
+
+</div>
+
+</div>
+
+<div v-click class="space-y-4">
+
+### 🧠 Real<br/>Understanding
+
+<div class="space-y-3 mt-6">
+
+- Requirements, architecture, edge cases
+- <span class="text-orange-400 font-bold">Can't fake it</span> 🔨
+- Compiler/tests ruthless
+- Beyond <span class="text-green-400">works</span> vs <span class="text-red-400">broken</span>
+
+</div>
+
+</div>
+
+</div>
+
+<!--
+Address the skeptic: Why trust these benchmarks? Because code either works or it doesn't. Tests pass or fail. No wiggle room, no subjective grading. Wait for each click - contrast objective coding tasks with fuzzy tasks like "write marketing copy." Code benchmarks can't be gamed or optimized for.
+-->
+
+---
+layout: center
+class: text-center
+---
+
+# Better Every Call = Compounding Wins
+
+The math gets interesting fast when you consider multiple attempts vs "single shot"
+
+<!--
+Transition to advanced concept: Most people think linearly about improvements. But AI gets retried - debugging, iterations, agent loops. Better per-call means MUCH better over multiple attempts. Set up the math coming next.
+-->
+
+---
+
+# The Compounding Effect
+
+<div class="grid grid-cols-2 gap-8">
+<div>
+
+## Single Attempt
+
+**Claude 3.5:**
+- Chance of success: 49%
+- Chance of failure: 51%
+
+**Claude 4.5:**
+- Chance of success: 77%
+- Chance of failure: 23%
+
+</div>
+<div v-click>
+
+## With 3 Attempts
+
+**Claude 3.5:**
+- Chance you solve it: **87.5%**
+- (At least 1 of 3 succeeds)
+
+**Claude 4.5:**
+- Chance you solve it: **98.8%**
+- (At least 1 of 3 succeeds)
+
+<div class="text-green-400 text-2xl mt-5">
+11.3% absolute improvement
+</div>
+
+</div>
+</div>
+
+<v-click>
+
+<div class="mt-8 text-center text-xl">
+
+**Real Impact:** Bug you'd retry 3 times goes from 87% → 99% fix rate
+
+</div>
+
+</v-click>
+
+<!--
+The killer insight: With retries, 49% → 77% single-shot becomes 87% → 99% success rate. Walk through the math slowly. Show left side first (single attempt), then click to reveal right side (3 attempts). That 11% absolute improvement is MASSIVE - it's the difference between "usually works" and "almost always works." This is why better models compound in real workflows.
+Math: 1 - (failure_rate^attempts). 3.5: 1-(0.51³)=87.5%. 4.5: 1-(0.23³)=98.8%
+-->
+
+---
+
+# Switching Models: One Line of Code
+
+```python {all|2|5|all}
+import boto3
+bedrock = boto3.client('bedrock-runtime', region_name='us-east-1')
+
+response = bedrock.invoke_model(
+    modelId='anthropic.claude-sonnet-3-5-v2',  # Old model
+    body=json.dumps({
+        "anthropic_version": "bedrock-2023-05-31",
+        "max_tokens": 1024,
+        "messages": [{"role": "user", "content": "Hello!"}]
+    })
+)
+```
+
+<v-click>
+
+```python {5}
+import boto3
+bedrock = boto3.client('bedrock-runtime', region_name='us-east-1')
+
+response = bedrock.invoke_model(
+    modelId='anthropic.claude-sonnet-4-5-v2',  # New model - that's it!
+    body=json.dumps({
+        "anthropic_version": "bedrock-2023-05-31",
+        "max_tokens": 1024,
+        "messages": [{"role": "user", "content": "Hello!"}]
+    })
+)
+```
+
+</v-click>
+
+<div v-click class="text-center mt-5 text-xl">
+
+Change one string. Get 58% better performance. Same price.
+
+</div>
+
+<!--
+The proof it's easy: Live code example. Highlight line 2 (old model), then click to show line 5 (new model). ONE STRING CHANGE. Same API, same parameters, same code structure. No refactoring, no migration guide, no breaking changes. Emphasize: this is literally all you need to change. If you have more complex code, it's still just this one modelId parameter.
 -->
 
 ---
@@ -257,43 +445,54 @@ In just 3 years, we went from barely understanding code to senior-level performa
 </v-clicks>
 
 <!--
-Benchmark 2: OSWorld (Computer Use)
-Shows capability for automation and agentic workflows
+Benchmark 2 - Agentic capabilities: OSWorld tests autonomous computer use - navigating UIs, running commands, multi-step workflows. This matters for automation and agent applications. 45% improvement in just 4 months (4.0 to 4.5). If you're building agents or automation, this benchmark shows it can actually do the work autonomously now.
+-->
+
+---
+
+<!--
+Separator slide - pause for questions or take a breath. Transitioning from benchmarks to autonomous work capability.
+-->
+
+---
+layout: center
+class: text-center
+---
+
+# It can work for 30+ hours straight
+
+Without losing focus or context
+
+<!--
+The attention-grabber: 30+ HOURS. Let that number land. No human can do this. Sets up the practical implications on next slide. This is where AI stops being a tool and becomes a tireless teammate.
 -->
 
 ---
 
 # Autonomous Work Duration
 
-<v-click>
-
-A few caveats: These models can do long-running tasks autonomously, but how long can they actually stay focused?
-
-</v-click>
-
-<v-click>
-
-The AI agent needs a way to measure if it's improving. That usually means tests, some feedback loop, etc.
-
-</v-click>
+Here's the game-changer: how long can it stay focused without human intervention?
 
 <v-clicks>
 
 **Performance:**
 - **Claude 4.0 Opus**: 7 hours of focused work
-- **Claude 4.5 Sonnet**: 30+ hours of focused work
+- **Claude 4.5 Sonnet**: <span class="text-green-400 text-4xl font-bold">30+ hours</span> of focused work
 - **Improvement**: <span class="text-green-400 text-2xl font-bold">4x longer</span> autonomous operation
 
-**Translation:**
-- Can handle overnight tasks
-- Won't lose context mid-project
-- Fewer interruptions for supervision
+**What this means:**
+- Start it Friday evening, review Monday morning
+- Handles complex refactors while you sleep
+- Fewer "I need to ask the human" interruptions
 
 </v-clicks>
 
+<div v-click class="mt-5 text-sm opacity-75">
+*Requires proper feedback loops (tests, linting, etc.)
+</div>
+
 <!--
-Important context about long-running autonomous tasks
-The feedback loop is critical for sustained performance
+The game-changer metric: 7 hours → 30+ hours is a 4x improvement in autonomous operation. Emphasize the practical applications: start Friday, review Monday. Complex refactors overnight. The asterisk matters - this requires good feedback loops (tests, linters). It's not magic, it's proper engineering + AI capability. Wait for clicks to build the story.
 -->
 
 ---
@@ -303,13 +502,10 @@ class: text-center
 
 # Real Business Impact
 
-## What companies actually achieved with Claude 4.5 in production
-
-<div class="text-sm opacity-75 mt-5">4 minutes</div>
+What companies actually achieved with Claude 4.5 in production
 
 <!--
-Introduction (15 seconds):
-Transition from benchmarks to real-world results
+Transition to business value (15 sec): Benchmarks are great, but business leaders want ROI. Now show what companies ACTUALLY achieved in production. These aren't cherry-picked examples - these are case studies from Anthropic's public customer stories.
 -->
 
 ---
@@ -342,32 +538,43 @@ layout: two-cols
 </v-clicks>
 
 <!--
-Case Study 1: HackerOne - Security Engineering (1 minute)
+Case Study 1 - HackerOne (1 min): Bug bounty platform, time-sensitive security work. Read company context first to establish credibility. Then reveal results with clicks. 44% faster + 25% more accurate. In security, both matter enormously - speed reduces exposure window, accuracy reduces wasted effort on false positives. This is measurable business impact.
 Source: https://www.anthropic.com/research/building-ai-cyber-defenders
-
-Business Value:
-- Security teams can handle more volume
-- Faster time-to-patch means reduced exposure
-- Better accuracy = fewer false positives/negatives
 -->
 
 ---
+layout: center
+---
 
-# HackerOne: Impact
+# The HackerOne Impact
 
-> "Nearly half the time, a quarter more accurate - that's the difference between reactive and proactive security."
+<div class="text-3xl mt-10">
+44% faster + 25% more accurate
+</div>
 
-**Business Value:**
-- Security teams can handle more volume
-- Faster time-to-patch = reduced exposure
-- Better accuracy = fewer false positives/negatives
+<div class="mt-8 text-xl">
+= Security teams go from reactive to proactive
+</div>
+
+<v-click>
+
+<div class="mt-10">
+
+**What changed:**
+- Process 2x more vulnerability reports with same team
+- Critical patches deployed hours faster, not days
+- Fewer false positives wasting engineer time
+
+</div>
+
+</v-click>
 
 <div class="text-sm opacity-50 mt-10">
 Source: Building AI for cyber defenders - Anthropic
 </div>
 
 <!--
-Key takeaway: Speed + accuracy improvements in security
+Drill into the implications: What does 44% faster + 25% accurate actually MEAN? It means going from reactive (overwhelmed by volume) to proactive (ahead of threats). Wait for click, then spell it out: 2x volume, hours not days for patches, fewer false positives. Make it concrete and relatable.
 -->
 
 ---
@@ -403,27 +610,51 @@ layout: two-cols
 </v-clicks>
 
 <!--
-Case Study 2: Palo Alto Networks - Developer Productivity (1 min 15 sec)
+Case Study 2 - Palo Alto (1m 15s): Massive scale - 2,500 developers (growing to 3,500). Read context: world's largest cybersecurity company, complex products. Then clicks for results: 20-30% faster feature velocity, 70% faster onboarding. That onboarding number is HUGE - junior devs productive in weeks not months. The scale proves this isn't a fluke.
 Source: https://www.claude.com/customers/palo-alto-networks
 -->
 
 ---
+layout: center
+---
 
-# Palo Alto Networks: Impact
+# The Palo Alto Networks Impact
 
-> "Junior developers with zero prior knowledge completing integration tasks 70% faster. That's like hiring experienced engineers."
+<div class="text-3xl mt-10">
+2,500 developers. 20-30% faster.
+</div>
 
-**Business Value:**
-- Faster time-to-market for features
-- New hires productive immediately
-- Junior developers perform at mid-level speed
+<div class="mt-8 text-xl">
+Junior devs onboard 70% faster
+</div>
+
+<v-click>
+
+<div class="mt-10">
+
+**Think about that:**
+- If onboarding took 6 months → now takes 2 months
+- Junior devs solving mid-level problems on day one
+- Features shipping weeks faster
+
+</div>
+
+</v-click>
+
+<v-click>
+
+<div class="mt-8 text-lg opacity-75">
+Expanding to 3,500 devs because the ROI is undeniable
+</div>
+
+</v-click>
 
 <div class="text-sm opacity-50 mt-10">
 Source: Customer story | Palo Alto Networks | Claude
 </div>
 
 <!--
-Key takeaway: Massive productivity gains across large dev organization
+Make it relatable: Do the math with the audience. 6 months onboarding → 2 months. Junior solving mid-level problems day one. Features weeks faster. First click shows immediate impact, second click shows they're EXPANDING because ROI is proven. When a company adds 1,000 more developer seats, you know it's working.
 -->
 
 ---
@@ -461,55 +692,49 @@ layout: center
 </div>
 
 <!--
-Case Study 3: IG Group - Full ROI in 3 Months (1 minute)
-Business Value:
-- Self-sufficient teams
-- Faster campaign launches
-- Budget reallocation from agencies to internal capability
+Case Study 3 - IG Group (1 min): The ROI slide. Financial services, marketing + dev teams. Click to reveal results, then click for the money quote: "ROI in 90 days." That's the number finance teams care about. After 3 months, pure profit. Reduced agency dependency means cost savings AND faster execution. This addresses the "is it worth it" question directly.
 -->
 
 ---
 
 # Proven Across Industries
 
-<div class="grid grid-cols-3 gap-8 mt-10">
-<div>
+<div class="grid grid-cols-3 gap-8 mt-10 text-center">
+<div v-click>
 
 ### Devin
-**Coding Platform**
+<div class="text-sm opacity-75 mb-3">Coding Platform</div>
 
-- 18% better planning
-- 12% better end-to-end eval
+<div class="text-3xl text-green-400">+18%</div>
+<div class="text-sm">planning performance</div>
 
 </div>
-<div>
+<div v-click>
 
 ### Box AI
-**Document Processing**
+<div class="text-sm opacity-75 mb-3">Document Processing</div>
 
-- 67% → 80% accuracy
-- 84.2% on receipts/passports
+<div class="text-3xl text-green-400">67% → 80%</div>
+<div class="text-sm">image document accuracy</div>
 
 </div>
-<div>
+<div v-click>
 
 ### Novo Nordisk
-**Pharmaceutical**
+<div class="text-sm opacity-75 mb-3">Pharmaceutical</div>
 
-- 300+ page reports
-- 2.3 → significant increase
-- Regulatory docs accelerated
+<div class="text-3xl text-green-400">Dramatic</div>
+<div class="text-sm">acceleration in regulatory docs</div>
 
 </div>
 </div>
 
-<div class="text-center mt-10 text-xl">
+<div v-click class="text-center mt-10 text-xl opacity-75">
 From security to pharma, measurable results
 </div>
 
 <!--
-Supporting Case Studies (Quick Mentions - 30 seconds)
-Show breadth of use cases
+Breadth proof (30 sec): Quick-fire examples to show this isn't limited to one industry. Wait for each click - coding (Devin), documents (Box), pharma (Novo). Different use cases, all seeing measurable gains. The pattern holds across industries. This builds confidence it will work for YOUR use case too.
 -->
 
 ---
@@ -521,32 +746,29 @@ class: text-center
 
 Let's bring this home
 
-<div class="text-sm opacity-75 mt-5">2 minutes</div>
-
 <!--
-Introduction (15 seconds):
-Make it personal and actionable
+Transition to action (15 sec): Now make it personal. Stop talking about other companies. "What should YOU do?" This section is about removing barriers and giving concrete next steps they can take immediately.
 -->
 
 ---
 
-# Action Items
+# What You Should Do Monday
 
 <v-clicks>
 
-### 1. Identify Opportunities
-Multi-hour tasks currently done manually
+### 1. Pick One Painful Task
+That database migration you've been putting off? That massive refactor? Start there.
 
-### 2. Test & Measure
-Start with longest-running refactors/migrations
+### 2. Set Up Your Success Metrics
+Measure time saved, bugs caught, code quality. You need proof for the next quarterly review.
 
-### 3. Deploy & Monitor
-Set up and let it run overnight
+### 3. Start Small, Scale Fast
+One team, one project, prove value. Then roll out based on results, not hope.
 
 </v-clicks>
 
 <!--
-Specific, actionable steps for the team
+Actionable steps: Three concrete things they can do MONDAY (not "someday"). Click through each one. Pick one painful task (make it relatable - everyone has that migration they're avoiding). Set up metrics (you need proof for next quarter). Start small (reduce risk, prove value). Make each step feel achievable, not overwhelming.
 -->
 
 ---
@@ -554,27 +776,46 @@ layout: center
 class: text-center
 ---
 
-# The Bottom Line
+# So Here's the Deal
+
+<div class="text-4xl mt-10">
+
+Same price. 58% better performance.
+
+</div>
+
+<v-click>
 
 <div class="text-3xl mt-10">
 
-Same price. Better results.
-
-Proven ROI in under 3 months.
+Companies hit ROI in 90 days.
 
 </div>
 
-<div class="text-2xl mt-10 opacity-75">
+</v-click>
 
-The question isn't **whether** to upgrade—
+<v-click>
 
-it's **how fast** we can deploy it.
+<div class="text-3xl mt-10 text-green-400">
+
+Your competitors are already using it.
 
 </div>
+
+</v-click>
+
+<v-click>
+
+<div class="text-2xl mt-10">
+
+The only question: **How fast can we move?**
+
+</div>
+
+</v-click>
 
 <!--
-Closing Statement (15 seconds)
-Strong call to action
+The close (15 sec): Recap the key points as a decision framework. Same price (no budget barrier). 58% better (proven by benchmarks). 90-day ROI (proven by companies). Then the FOMO: competitors are already using it. End with urgency: "How fast can we move?" Make inaction feel riskier than action.
 -->
 
 ---
@@ -607,7 +848,7 @@ No. Drop-in replacement. Change one parameter.
 </div>
 
 <!--
-Common Q&A - be prepared for these
+Q&A preparation: These are the four most common objections/questions. Have answers ready. "Catch" = throttle limits (addressable). "Outdated" = upgrades keep coming (good thing). "Retrain" = no (removes barrier). "Hallucinations" = better accuracy (data-backed). Anticipate and address concerns proactively.
 -->
 
 ---
@@ -618,6 +859,10 @@ class: text-center
 # Appendix
 
 Additional benchmarks, sources, and technical details
+
+<!--
+Appendix intro: Backup slides for deep-dive questions. Don't present these unless asked. Have them ready for technical audience members who want more detail or sources to verify claims.
+-->
 
 ---
 
@@ -654,6 +899,10 @@ Additional benchmarks, sources, and technical details
 </div>
 </div>
 
+<!--
+Additional benchmarks backup: More proof points if anyone questions the claims. AIME shows math reasoning (100% with tools!). GPQA shows science expertise. Response quality shows safety improvements (fewer refusals, higher accuracy). Only go here if someone asks for more benchmarks or challenges the claims.
+-->
+
 ---
 
 # Follow-Up Resources
@@ -673,6 +922,10 @@ Additional benchmarks, sources, and technical details
 - Context window optimization strategies
 - [Prompt engineering best practices](https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices)
 
+<!--
+Resources slide: Have this ready to share after. Send the link to this deck or a PDF with these resources. The case studies PDF and internal pilot signup are key - make adoption easy. Mention you'll email these out so they don't need to screenshot.
+-->
+
 ---
 layout: center
 class: text-center
@@ -681,6 +934,10 @@ class: text-center
 # Thank You
 
 Questions?
+
+<!--
+Final slide: Leave this up during Q&A. End on a friendly, open note. You've made the case - now let them process and ask questions. Be ready to jump to appendix slides if needed.
+-->
 
 <div class="text-sm opacity-50 mt-10">
 Created: 2025-10-29 | Framework: "The No-Brainer Upgrade" | Version 1.0
