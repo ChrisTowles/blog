@@ -1,5 +1,7 @@
 # Migration Plan: Blog to GCP Cloud Run
 
+This is github issue [88](https://github.com/ChrisTowles/blog/issues/88)
+
 ## Overview
 
 Migrate the blog from Cloudflare Workers/NuxtHub to Google Cloud Platform using Cloud Run with containerization.
