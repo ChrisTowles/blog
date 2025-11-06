@@ -1,7 +1,7 @@
 # Copy this file to terraform.tfvars and fill in your values
 # DO NOT commit terraform.tfvars to git!
 
-project_id       = "your-staging-project-id"
+project_id       = "blog-towles-staging"
 region           = "us-central1"
 database_password = "generate-secure-password"
 site_url         = "https://staging.yourdomain.com"
