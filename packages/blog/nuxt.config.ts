@@ -12,16 +12,8 @@ export default defineNuxtConfig({
     'nuxt-gtag', // '@nuxtjs/sitemap',
     // '@nuxt/icon',
     'nuxt-og-image',
-    '@nuxtjs/mdc', // 'nuxt-mcp', // not yet working
-    // '@nuxthub/core', // for nuxt-hub
-    'nuxt-auth-utils', '@nuxt/test-utils/module', '@nuxthub/core'],
-
-  $development: {
-    // https://github.com/nuxt-hub/core/blob/main/docs/content/docs/1.getting-started/4.remote-storage.md?plain=1
-    hub: {
-      remote: true
-    }
-  },
+    '@nuxtjs/mdc',
+    'nuxt-auth-utils', '@nuxt/test-utils/module'],
   ssr: true,
   devtools: {
     enabled: true,
@@ -83,6 +75,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-10-13',
 
   nitro: {
+    preset: 'node-server',
     experimental: {
       openAPI: true
     }

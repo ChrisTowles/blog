@@ -50,10 +50,10 @@ gcloud services enable artifactregistry.googleapis.com
 ```
 
 ### 2.2 Create Cloud SQL PostgreSQL Instance
-- [ ] Create PostgreSQL 15 instance with db-f1-micro tier
+- [ ] Create PostgreSQL 17 instance with db-f1-micro tier
 ```bash
 gcloud sql instances create blog-db \
-  --database-version=POSTGRES_15 \
+  --database-version=POSTGRES_17 \
   --tier=db-f1-micro \
   --region=us-central1 \
   --project=blog-chris-towles
