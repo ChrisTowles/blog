@@ -8,11 +8,10 @@ terraform {
     }
   }
 
-  # Uncomment after creating state bucket
-  # backend "gcs" {
-  #   bucket = "YOUR-STAGING-PROJECT-ID-tfstate"
-  #   prefix = "terraform/state"
-  # }
+  backend "gcs" {
+    bucket = "blog-towles-staging-tfstate"
+    prefix = "terraform/state"
+  }
 }
 
 provider "google" {

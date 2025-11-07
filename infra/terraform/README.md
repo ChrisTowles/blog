@@ -4,10 +4,16 @@ Infrastructure as code for blog deployment on Google Cloud Platform.
 
 Uses simplified architecture with Cloud SQL public IP + Auth Proxy (no VPC) to minimize costs (~$20-30/mo for both environments).
 
+
+## GCP Projects
+- https://console.cloud.google.com/welcome?project=blog-towles-production
+- https://console.cloud.google.com/welcome?project=blog-towles-staging
+
+
 ## Structure
 
 ```
-terraform/
+infra/terraform/
 ├── modules/
 │   ├── cloud-sql/      # PostgreSQL database (public IP)
 │   ├── cloud-run/      # Container hosting
@@ -21,20 +27,34 @@ terraform/
 
 1. **Install Terraform** (>= 1.5)
    ```bash
-   brew install terraform
+   wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+   echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+   sudo apt update && sudo apt install terraform
    ```
 
 2. **Install gcloud CLI**
    ```bash
-   brew install google-cloud-sdk
+   curl https://sdk.cloud.google.com | bash 
    ```
 
 3. **Create GCP projects**
-   - Staging: `blog-staging-XXXXX`
-   - Prod: `blog-prod-XXXXX`
+   - Staging: `blog-towles-staging`
+   - Prod: `blog-towles-prod`
 
 4. **Authenticate**
+
    ```bash
+   
+   # test
+   gcloud config set project blog-towles-staging
+
+   gcloud config set project blog-towles-prod
+
+   
+   gcloud auth login
+
+   
+
    gcloud auth application-default login
    ```
 
@@ -48,14 +68,16 @@ For each environment:
 
 ```bash
 # Staging
-gcloud storage buckets create gs://YOUR-STAGING-PROJECT-ID-tfstate \
-  --project=YOUR-STAGING-PROJECT-ID \
+ENV_STAGING_PROJECT_ID="blog-towles-staging"
+gcloud storage buckets create gs://$ENV_STAGING_PROJECT_ID-tfstate \
+  --project=$ENV_STAGING_PROJECT_ID \
   --location=us-central1 \
   --uniform-bucket-level-access
 
 # Prod
-gcloud storage buckets create gs://YOUR-PROD-PROJECT-ID-tfstate \
-  --project=YOUR-PROD-PROJECT-ID \
+ENV_PROD_PROJECT_ID="blog-towles-prod"
+gcloud storage buckets create gs://$ENV_PROD_PROJECT_ID-tfstate \
+  --project=$ENV_PROD_PROJECT_ID \
   --location=us-central1 \
   --uniform-bucket-level-access
 ```
@@ -63,8 +85,8 @@ gcloud storage buckets create gs://YOUR-PROD-PROJECT-ID-tfstate \
 ### 2. Enable versioning (recommended)
 
 ```bash
-gcloud storage buckets update gs://YOUR-STAGING-PROJECT-ID-tfstate --versioning
-gcloud storage buckets update gs://YOUR-PROD-PROJECT-ID-tfstate --versioning
+gcloud storage buckets update "gs://$ENV_STAGING_PROJECT_ID-tfstate" --versioning
+gcloud storage buckets update "gs://$ENV_PROD_PROJECT_ID-tfstate" --versioning
 ```
 
 ### 3. Configure environment
@@ -99,14 +121,14 @@ Repeat for prod environment.
 ### Deploy to staging
 
 ```bash
-cd terraform/environments/staging
+cd infra/terraform/environments/staging
 terraform apply
 ```
 
 ### Deploy to prod
 
 ```bash
-cd terraform/environments/prod
+cd infra/terraform/environments/prod
 terraform plan  # Review changes carefully
 terraform apply
 ```
@@ -128,7 +150,7 @@ terraform output
 ### Destroy staging (careful!)
 
 ```bash
-cd terraform/environments/staging
+cd infra/terraform/environments/staging
 terraform destroy
 ```
 
@@ -138,7 +160,7 @@ After applying infrastructure, build and push images:
 
 ```bash
 # Get artifact registry URL from terraform output
-REGISTRY=$(cd terraform/environments/staging && terraform output -raw container_image_base)
+REGISTRY=$(cd infra/terraform/environments/staging && terraform output -raw container_image_base)
 
 # Authenticate Docker
 gcloud auth configure-docker us-central1-docker.pkg.dev
@@ -148,22 +170,22 @@ docker build -t $REGISTRY/blog:latest .
 docker push $REGISTRY/blog:latest
 
 # Update Cloud Run with new image
-cd terraform/environments/staging
+cd infra/terraform/environments/staging
 terraform apply -var="container_image=$REGISTRY/blog:latest"
 ```
 
 ## Environment Differences
 
-| Feature | Staging | Prod |
-|---------|---------|------|
-| Cloud SQL Tier | db-f1-micro | db-f1-micro |
-| Availability | Zonal | Zonal |
-| Point-in-time Recovery | No | No |
-| Deletion Protection | No | Yes |
-| Min Instances | 0 | 0 |
-| Max Instances | 2 | 2 |
-| CPU | 1 | 1 |
-| Memory | 512Mi | 512Mi |
+| Feature                | Staging     | Prod        |
+| ---------------------- | ----------- | ----------- |
+| Cloud SQL Tier         | db-f1-micro | db-f1-micro |
+| Availability           | Zonal       | Zonal       |
+| Point-in-time Recovery | No          | No          |
+| Deletion Protection    | No          | Yes         |
+| Min Instances          | 0           | 0           |
+| Max Instances          | 2           | 2           |
+| CPU                    | 1           | 1           |
+| Memory                 | 512Mi       | 512Mi       |
 
 *Prod has same resource allocation as staging to minimize costs. Only difference is deletion protection.*
 
