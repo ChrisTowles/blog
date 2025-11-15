@@ -1,5 +1,6 @@
 {
   "name": "chris-towles-blog",
+  "version": "0.1.0",
   "private": true,
   "author": "Chris Towles<Chris.Towles@gmail.com>",
   "maintainers": [
@@ -10,6 +11,9 @@
     "build": "pnpm -r run build",
     "dev": "pnpm -r run dev",
     "deploy": "pnpm -r run deploy:nuxthub",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "changeset tag",
     "aws:deploy": "tsx ./infra/deploy.mts",
     "gcp:staging:init": "cd infra/terraform/environments/staging && terraform init",
     "gcp:staging:plan": "cd infra/terraform/environments/staging && terraform plan",
@@ -31,6 +35,8 @@
     "deps:update": "pnpx taze --interactive --recursive"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/cli": "^2.29.7",
     "@cloudflare/workers-types": "^4.20251014.0",
     "@types/node": "^24.9.2",
     "dotenv": "^17.2.3",

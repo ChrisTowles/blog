@@ -1,5 +1,6 @@
 {
   "name": "@chris-towles/blog",
+  "version": "0.1.0",
   "private": true,
   "author": "Chris Towles<Chris.Towles@gmail.com>",
   "maintainers": [
