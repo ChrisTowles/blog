@@ -1,5 +1,6 @@
 {
   "name": "chris-towles-blog",
+  "version": "0.1.0",
   "private": true,
   "author": "Chris Towles<Chris.Towles@gmail.com>",
   "maintainers": [
@@ -10,7 +11,16 @@
     "build": "pnpm -r run build",
     "dev": "pnpm -r run dev",
     "deploy": "pnpm -r run deploy:nuxthub",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "changeset tag",
     "aws:deploy": "tsx ./infra/deploy.mts",
+    "gcp:staging:init": "cd infra/terraform/environments/staging && terraform init",
+    "gcp:staging:plan": "cd infra/terraform/environments/staging && terraform plan",
+    "gcp:staging:apply": "cd infra/terraform/environments/staging && terraform apply -auto-approve",
+    "gcp:staging:deploy": "node --experimental-strip-types scripts/build-and-push.ts staging",
+    "gcp:staging:destroy": "cd infra/terraform/environments/staging && terraform destroy",
+    "gcp:prod:deploy": "node --experimental-strip-types scripts/build-and-push.ts prod",
     "db:generate": "pnpm -r run db:generate",
     "db:migrate": "pnpm -r run db:migrate",
     "slides": "pnpm --filter @chris-towles/slides run dev",
@@ -25,6 +35,8 @@
     "deps:update": "pnpx taze --interactive --recursive"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/cli": "^2.29.7",
     "@cloudflare/workers-types": "^4.20251014.0",
     "@types/node": "^24.9.2",
     "dotenv": "^17.2.3",
@@ -47,9 +59,11 @@
     ],
     "onlyBuiltDependencies": [
       "@parcel/watcher",
-      "better-sqlite3",
+      "@tailwindcss/oxide",
       "esbuild",
+      "playwright-chromium",
       "sharp",
+      "unrs-resolver",
       "vue-demi",
       "workerd"
     ]
