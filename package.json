@@ -9,6 +9,7 @@
   "type": "module",
   "scripts": {
     "build": "pnpm -r run build",
+    "build:container": "node --experimental-strip-types scripts/build-and-test.ts staging",
     "dev": "pnpm -r run dev",
     "deploy": "pnpm -r run deploy:nuxthub",
     "changeset": "changeset",
@@ -30,6 +31,7 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "pnpm -r run typecheck",
     "test": "pnpm -r run test",
+    "test:docker": "tsx scripts/test-docker.ts",
     "prepare": "husky",
     "mcp:inspect": "pnpx @modelcontextprotocol/inspector",
     "deps:update": "pnpx taze --interactive --recursive"
