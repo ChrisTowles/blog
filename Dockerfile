@@ -2,8 +2,7 @@
 FROM node:24-slim AS builder
 
 # Install build dependencies for native modules (better-sqlite3)
-RUN apt-get update 
-#&& apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -17,17 +16,23 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 # Copy package files for all workspaces
 COPY packages/blog/package.json ./packages/blog/
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies with cache mount and shamefully hoist for Docker compatibility
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile --shamefully-hoist
 
-# Rebuild better-sqlite3 native module
-#RUN pnpm rebuild better-sqlite3
-
-# Copy source code
+# Copy source code first (needed before building better-sqlite3 and nuxt)
 COPY packages/blog ./packages/blog
+
+# Build better-sqlite3 native module directly
+RUN cd /app/node_modules/.pnpm/better-sqlite3@12.4.1/node_modules/better-sqlite3 && \
+    npm run build-release
 
 # Build the application
 WORKDIR /app/packages/blog
+ENV NUXT_CONTENT_DATABASE=false
+ENV NITRO_PRESET=node-server
+# Remove routeRules prerender for Docker build
+RUN sed -i '/routeRules:/,/},/s/^/\/\/ /' nuxt.config.ts
 RUN pnpm run build
 
 # Production stage
