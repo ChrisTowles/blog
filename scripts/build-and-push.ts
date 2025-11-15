@@ -25,7 +25,7 @@ function run(command: string, options: { silent?: boolean } = {}): string {
       encoding: 'utf8',
       stdio: options.silent ? 'pipe' : 'inherit'
     })
-    return result.trim()
+    return result ? result.trim() : ''
   } catch (error) {
     console.error(`❌ Command failed: ${command}`)
     throw error
