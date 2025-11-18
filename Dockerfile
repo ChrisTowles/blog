@@ -11,14 +11,14 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
 # Copy workspace configuration
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
 
 # Copy package files for all workspaces
 COPY packages/blog/package.json ./packages/blog/
 
-# Install dependencies with cache mount and shamefully hoist for Docker compatibility
+# Install dependencies with cache mount
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile --shamefully-hoist
+    pnpm install --frozen-lockfile
 
 # Copy source code first (needed before building better-sqlite3 and nuxt)
 COPY packages/blog ./packages/blog
@@ -33,12 +33,17 @@ ENV NUXT_CONTENT_DATABASE=false
 ENV NITRO_PRESET=node-server
 # Remove routeRules prerender for Docker build
 RUN sed -i '/routeRules:/,/},/s/^/\/\/ /' nuxt.config.ts
-RUN pnpm run build
+# Use pnpm exec to run nuxt with proper module resolution
+RUN cd /app && pnpm exec nuxt build packages/blog
 
 # Production stage
 FROM node:24-slim AS runner
 
 WORKDIR /app
+
+# Install sharp for image optimization
+RUN npm install sharp
+
 
 # Copy built application from builder
 COPY --from=builder /app/packages/blog/.output /app/.output
