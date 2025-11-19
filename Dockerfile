@@ -16,9 +16,8 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
 # Copy package files for all workspaces
 COPY packages/blog/package.json ./packages/blog/
 
-# Install dependencies with cache mount
-RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile
+# Install dependencies
+RUN pnpm install --frozen-lockfile
 
 # Copy source code first (needed before building better-sqlite3 and nuxt)
 COPY packages/blog ./packages/blog
