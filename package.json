@@ -10,6 +10,7 @@
   "scripts": {
     "build": "pnpm -r run build",
     "build:container": "node --experimental-strip-types scripts/build-and-test.ts staging",
+    "build:container:keep": "node --experimental-strip-types scripts/build-and-test.ts staging --keep",
     "dev": "pnpm -r run dev",
     "deploy": "pnpm -r run deploy:nuxthub",
     "changeset": "changeset",

@@ -65,15 +65,24 @@ async function main() {
     await $`docker rm -f ${CONTAINER_NAME}`.quiet().nothrow()
 
     console.log(chalk.yellow(`\n🚀 Starting container on port ${PORT}...`))
+    console.log(chalk.gray(`> docker run -d --name ${CONTAINER_NAME} -p ${PORT}:3000 ${IMAGE_NAME}`))
     await $`docker run -d --name ${CONTAINER_NAME} -p ${PORT}:3000 ${IMAGE_NAME}`
 
     const success = await waitForHealthy()
 
-    await cleanup()
+    if (!argv.keep) {
+      await cleanup()
+    } else {
+      console.log(chalk.yellow('\nℹ️  Skipping cleanup as requested (--keep)'))
+    }
     process.exit(success ? 0 : 1)
   } catch (error) {
     console.error(chalk.red('❌ Error:'), error)
-    await cleanup()
+    if (!argv.keep) {
+      await cleanup()
+    } else {
+      console.log(chalk.yellow('\nℹ️  Skipping cleanup as requested (--keep)'))
+    }
     process.exit(1)
   }
 }

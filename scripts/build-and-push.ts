@@ -18,18 +18,28 @@ if (!fs.existsSync(terraformDir)) {
 }
 
 async function main() {
+  const rootDir = process.cwd()
   console.log(chalk.yellow(`🚀 Building and pushing container for ${environment}...`))
 
   // Step 1: Get artifact registry URL from terraform output
   console.log(chalk.yellow('\n📦 Getting registry URL from Terraform...'))
   cd(terraformDir)
-  const registry = (await $`terraform output -raw container_image_base`).stdout.trim()
-  cd('-')
+  let registry = ''
+  try {
+    registry = (await $`terraform output -raw container_image_base`).stdout.trim()
+  } catch {
+    console.log(chalk.yellow('⚠️  Could not get registry URL. Initializing infrastructure...'))
+    await $`terraform init`
+    await $`terraform apply -target=module.shared -auto-approve`
+    registry = (await $`terraform output -raw container_image_base`).stdout.trim()
+  }
+  cd(rootDir)
   console.log(`   Registry: ${registry}`)
 
   // Step 2: Authenticate Docker
   console.log(chalk.yellow('\n🔐 Authenticating Docker...'))
-  await $`gcloud auth configure-docker us-central1-docker.pkg.dev`
+  const registryHostname = registry.split('/')[0]
+  await $`gcloud auth configure-docker ${registryHostname}`
 
   // Step 3: Build the image
   const imageTag = `${registry}/blog:${tag}`
@@ -43,8 +53,10 @@ async function main() {
   // Step 5: Update Cloud Run
   console.log(chalk.yellow(`\n☁️  Updating Cloud Run with new image...`))
   cd(terraformDir)
+  $.verbose = true
   await $`terraform apply -auto-approve -var="container_image=${imageTag}"`
-  cd('-')
+  $.verbose = false
+  cd(rootDir)
 
   console.log(chalk.green(`\n✅ Successfully deployed ${imageTag} to ${environment}!`))
 }
