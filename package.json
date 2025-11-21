@@ -25,6 +25,8 @@
     "gcp:prod:deploy": "node --experimental-strip-types scripts/build-and-push.ts prod",
     "db:generate": "pnpm -r run db:generate",
     "db:migrate": "pnpm -r run db:migrate",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
     "slides": "pnpm --filter @chris-towles/slides run dev",
     "slides:export": "pnpm --filter @chris-towles/slides run export",
     "slides:no-brainer": "pnpm --filter @chris-towles/slides run dev no-brainer-upgrade.slides.md",
