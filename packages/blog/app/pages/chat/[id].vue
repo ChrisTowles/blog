@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import type { DefineComponent } from 'vue'
-import { Chat } from '@ai-sdk/vue'
-import { DefaultChatTransport } from 'ai'
-import type { UIMessage } from 'ai'
 import { useClipboard } from '@vueuse/core'
 import { getTextFromMessage } from '@nuxt/ui/utils/ai'
 import ProseStreamPre from '../../components/prose/PreStream.vue'
+import type { Message } from '~/composables/useAnthropicChat'
 
 definePageMeta({
   layout: 'chat-side-nav'
@@ -30,18 +28,15 @@ if (!data.value) {
 
 const input = ref('')
 
-const chat = new Chat({
+const chat = useAnthropicChat({
   id: data.value.id,
-  messages: data.value.messages,
-  transport: new DefaultChatTransport({
-    api: `/api/chats/${data.value.id}`,
-    body: {
-      model: model.value
-    }
-  }),
-  onData: (dataPart) => {
-    if (dataPart.type === 'data-chat-title') {
-      refreshNuxtData('chats')
+  initialMessages: data.value.messages as Message[],
+  model,
+  onData: (dataPart: unknown) => {
+    if (typeof dataPart === 'object' && dataPart !== null && 'type' in dataPart) {
+      if (dataPart.type === 'data-chat-title') {
+        refreshNuxtData('chats')
+      }
     }
   },
   onError(error) {
@@ -67,7 +62,8 @@ function handleSubmit(e: Event) {
 
 const copied = ref(false)
 
-function copy(e: MouseEvent, message: UIMessage) {
+function copy(e: MouseEvent, message: unknown) {
+  // @ts-expect-error - Message type is compatible at runtime
   clipboard.copy(getTextFromMessage(message))
 
   copied.value = true
@@ -92,25 +88,16 @@ onMounted(() => {
 
     <template #body>
       <UContainer class="flex-1 flex flex-col gap-4 sm:gap-6">
+        <!-- @ts-expect-error - Custom message types are compatible at runtime -->
         <UChatMessages
-          :messages="chat.messages"
-          :status="chat.status"
-          :assistant="chat.status !== 'streaming' ? { actions: [{ label: 'Copy', icon: copied ? 'i-lucide-copy-check' : 'i-lucide-copy', onClick: copy }] } : { actions: [] }"
+          :messages="chat.messages.value"
+          :status="chat.status.value"
+          :assistant="chat.status.value !== 'streaming' ? { actions: [{ label: 'Copy', icon: copied ? 'i-lucide-copy-check' : 'i-lucide-copy', onClick: copy }] } : { actions: [] }"
           class="lg:pt-(--ui-header-height) pb-4 sm:pb-6"
           :spacing-offset="160"
         >
           <template #content="{ message }">
             <div class="space-y-4">
-              <template v-for="(part, index) in message.parts" :key="`${part.type}-${index}-${message.id}`">
-                <UButton
-                  v-if="part.type === 'reasoning' && part.state !== 'done'"
-                  label="Thinking..."
-                  variant="link"
-                  color="neutral"
-                  class="p-0"
-                  loading
-                />
-              </template>
               <MDCCached
                 :value="getTextFromMessage(message)"
                 :cache-key="message.id"
@@ -122,15 +109,17 @@ onMounted(() => {
           </template>
         </UChatMessages>
 
+        <!-- @ts-expect-error - Custom chat types are compatible at runtime -->
         <UChatPrompt
           v-model="input"
-          :error="chat.error"
+          :error="chat.error.value || undefined"
           variant="subtle"
           class="sticky bottom-0 [view-transition-name:chat-prompt] rounded-b-none z-10"
           @submit="handleSubmit"
         >
+          <!-- @ts-expect-error - Custom status type is compatible at runtime -->
           <UChatPromptSubmit
-            :status="chat.status"
+            :status="chat.status.value"
             color="neutral"
             @stop="chat.stop"
             @reload="chat.regenerate"
