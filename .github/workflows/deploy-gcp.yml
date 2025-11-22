@@ -1,0 +1,148 @@
+name: Deploy to GCP
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        type: choice
+        options:
+          - staging
+          - prod
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  setup:
+    name: Setup Environment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.determine-env.outputs.environment }}
+      project_id: ${{ steps.determine-env.outputs.project_id }}
+      service_name: ${{ steps.determine-env.outputs.service_name }}
+      region: ${{ steps.determine-env.outputs.region }}
+      image_tag: ${{ steps.determine-env.outputs.image_tag }}
+    steps:
+      - name: Determine environment
+        id: determine-env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            ENV="${{ github.event.inputs.environment }}"
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            ENV="prod"
+          else
+            ENV="staging"
+          fi
+
+          echo "environment=${ENV}" >> $GITHUB_OUTPUT
+          echo "region=us-central1" >> $GITHUB_OUTPUT
+
+          if [[ "${ENV}" == "prod" ]]; then
+            echo "project_id=blog-towles-prod" >> $GITHUB_OUTPUT
+            echo "service_name=prod-blog" >> $GITHUB_OUTPUT
+          else
+            echo "project_id=blog-towles-staging" >> $GITHUB_OUTPUT
+            echo "service_name=staging-blog" >> $GITHUB_OUTPUT
+          fi
+
+          # Generate image tag
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+          else
+            TAG="${SHORT_SHA}"
+          fi
+          echo "image_tag=${TAG}" >> $GITHUB_OUTPUT
+
+  build:
+    name: Build and Push Image
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ needs.setup.outputs.region }}-docker.pkg.dev
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --tag ${{ needs.setup.outputs.region }}-docker.pkg.dev/${{ needs.setup.outputs.project_id }}/${{ needs.setup.outputs.environment }}-containers/blog:${{ needs.setup.outputs.image_tag }} \
+            --tag ${{ needs.setup.outputs.region }}-docker.pkg.dev/${{ needs.setup.outputs.project_id }}/${{ needs.setup.outputs.environment }}-containers/blog:latest \
+            -f Dockerfile \
+            .
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ needs.setup.outputs.region }}-docker.pkg.dev/${{ needs.setup.outputs.project_id }}/${{ needs.setup.outputs.environment }}-containers/blog:${{ needs.setup.outputs.image_tag }}
+          docker push ${{ needs.setup.outputs.region }}-docker.pkg.dev/${{ needs.setup.outputs.project_id }}/${{ needs.setup.outputs.environment }}-containers/blog:latest
+
+  deploy:
+    name: Deploy to Cloud Run
+    runs-on: ubuntu-latest
+    needs: [setup, build]
+    environment:
+      name: ${{ needs.setup.outputs.environment }}
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        run: |
+          gcloud run deploy ${{ needs.setup.outputs.service_name }} \
+            --image=${{ needs.setup.outputs.region }}-docker.pkg.dev/${{ needs.setup.outputs.project_id }}/${{ needs.setup.outputs.environment }}-containers/blog:${{ needs.setup.outputs.image_tag }} \
+            --region=${{ needs.setup.outputs.region }} \
+            --project=${{ needs.setup.outputs.project_id }} \
+            --platform=managed \
+            --allow-unauthenticated \
+            --format=json > deploy-output.json
+
+          URL=$(cat deploy-output.json | jq -r '.status.url')
+          echo "url=${URL}" >> $GITHUB_OUTPUT
+          echo "Deployed to: ${URL}"
+
+      - name: Verify deployment
+        run: |
+          sleep 10
+          URL="${{ steps.deploy.outputs.url }}"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${URL}")
+
+          if [[ "${HTTP_CODE}" == "200" ]] || [[ "${HTTP_CODE}" == "301" ]] || [[ "${HTTP_CODE}" == "302" ]]; then
+            echo "✅ Deployment verified successfully (HTTP ${HTTP_CODE})"
+          else
+            echo "❌ Deployment verification failed (HTTP ${HTTP_CODE})"
+            exit 1
+          fi
