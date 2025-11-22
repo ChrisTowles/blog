@@ -1,19 +1,14 @@
 export function useModels() {
   const models = [
-    // OpenAI Models
-    'openai/gpt-5',
-    'openai/gpt-5-mini',
-    'openai/gpt-4o',
-    'openai/gpt-4o-mini',
     // Anthropic Claude Models
-    'anthropic/claude-sonnet-4',
-    'anthropic/claude-sonnet-3.7',
-    // Google Gemini Models
-    'google/gemini-2.5-pro',
-    'google/gemini-2.5-flash'
+    'claude-sonnet-4',
+    'claude-sonnet-3.7',
+    'claude-sonnet-3.5',
+    'claude-haiku-3.5',
+    'claude-opus-4'
   ]
 
-  const model = useCookie<string>('model', { default: () => 'openai/gpt-4o-mini' })
+  const model = useCookie<string>('model', { default: () => 'claude-sonnet-3.5' })
 
   return {
     models,

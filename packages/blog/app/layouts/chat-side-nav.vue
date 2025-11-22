@@ -83,6 +83,7 @@ async function deleteChatsAll() {
     return
   }
 
+  // @ts-expect-error - DELETE method is valid but type definitions are restrictive
   await $fetch(`/api/chats`, { method: 'DELETE' })
 
   toast.add({
