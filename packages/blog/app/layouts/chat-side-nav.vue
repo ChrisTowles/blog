@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { LazyModalConfirm } from '#components'
 
+import { TEST_IDS } from '~~/shared/test-ids'
+
 const route = useRoute()
 const toast = useToast()
 const overlay = useOverlay()
@@ -127,6 +129,7 @@ defineShortcuts({
         <div class="flex flex-col gap-1.5">
           <UButton
             v-bind="collapsed ? { icon: 'i-lucide-plus' } : { label: 'New chat' }"
+            :data-testid="TEST_IDS.CHAT.NEW_CHAT_BUTTON"
             variant="soft"
             block
             to="/chat"
@@ -143,6 +146,7 @@ defineShortcuts({
           v-if="!collapsed"
           :items="items"
           :collapsed="collapsed"
+          :data-testid="TEST_IDS.CHAT.SIDEBAR"
           orientation="vertical"
           :ui="{ link: 'overflow-hidden' }"
         >

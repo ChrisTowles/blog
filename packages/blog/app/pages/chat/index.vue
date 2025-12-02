@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Note: it took me way to long to figure, out that this file needed to be a index in the chat folder to work correctly.
 import { extractErrorMessage } from '~~/shared/error-util'
+import { TEST_IDS } from '~~/shared/test-ids'
 
 definePageMeta({
   layout: 'chat-side-nav'
@@ -93,16 +94,17 @@ const quickChats = [
           :status="loading ? 'streaming' : 'ready'"
           class="[view-transition-name:chat-prompt]"
           variant="subtle"
+          :data-testid="TEST_IDS.CHAT.INPUT"
           @submit="onSubmit"
         >
-          <UChatPromptSubmit color="neutral" />
+          <UChatPromptSubmit color="neutral" :data-testid="TEST_IDS.CHAT.SUBMIT" />
 
           <template #footer>
             <ModelSelect v-model="model" />
           </template>
         </UChatPrompt>
 
-        <div class="flex flex-wrap gap-2">
+        <div class="flex flex-wrap gap-2" :data-testid="TEST_IDS.CHAT.QUICK_ACTIONS">
           <UButton
             v-for="quickChat in quickChats"
             :key="quickChat.label"
@@ -113,6 +115,7 @@ const quickChats = [
             variant="outline"
             class="rounded-full"
             :disabled="loading"
+            :data-testid="TEST_IDS.CHAT.QUICK_ACTION_BUTTON"
             @click="setPrompt(quickChat.label)"
           />
         </div>

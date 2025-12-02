@@ -1,30 +1,36 @@
 <script setup lang="ts">
+import { TEST_IDS } from '~~/shared/test-ids'
+
 const route = useRoute()
 const { loggedIn, openInPopup } = useUserSession()
 const items = computed(() => [
   {
-    label: 'Home',
-    to: '/',
-    icon: 'i-heroicons-home',
-    active: route.path === '/'
+    'label': 'Home',
+    'to': '/',
+    'icon': 'i-heroicons-home',
+    'active': route.path === '/',
+    'data-testid': TEST_IDS.NAVIGATION.HOME_LINK
   },
   {
-    label: 'Blog',
-    to: '/blog',
-    icon: 'i-lucide-notebook-text',
-    active: route.path.startsWith('/blog')
+    'label': 'Blog',
+    'to': '/blog',
+    'icon': 'i-lucide-notebook-text',
+    'active': route.path.startsWith('/blog'),
+    'data-testid': TEST_IDS.NAVIGATION.BLOG_LINK
   },
   {
-    label: 'Apps',
-    to: '/apps',
-    icon: 'i-heroicons-device-phone-mobile',
-    active: route.path.startsWith('/apps')
+    'label': 'Apps',
+    'to': '/apps',
+    'icon': 'i-heroicons-device-phone-mobile',
+    'active': route.path.startsWith('/apps'),
+    'data-testid': TEST_IDS.NAVIGATION.APPS_LINK
   },
   {
-    label: 'AI Chat',
-    to: '/chat',
-    icon: 'i-heroicons-chat-bubble-left-right',
-    active: route.path.startsWith('/apps')
+    'label': 'AI Chat',
+    'to': '/chat',
+    'icon': 'i-heroicons-chat-bubble-left-right',
+    'active': route.path.startsWith('/chat'),
+    'data-testid': TEST_IDS.NAVIGATION.CHAT_LINK
   }])
 </script>
 
