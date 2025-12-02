@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import type { DefineComponent } from 'vue'
 import { useClipboard } from '@vueuse/core'
-import { getTextFromMessage } from '@nuxt/ui/utils/ai'
 import ProseStreamPre from '../../components/prose/PreStream.vue'
 import type { Message } from '~/composables/useAnthropicChat'
+
+function getTextFromMessage(message: Message): string {
+  return message.content
+    .filter(block => block.type === 'text')
+    .map(block => block.type === 'text' ? block.text : '')
+    .join('')
+}
 
 definePageMeta({
   layout: 'chat-side-nav'

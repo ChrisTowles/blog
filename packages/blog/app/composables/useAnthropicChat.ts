@@ -1,19 +1,10 @@
 import { ref } from 'vue'
-
-export interface MessagePart {
-  type: 'text' | 'tool-call' | 'tool-result'
-  text?: string
-  toolCallId?: string
-  toolName?: string
-  args?: Record<string, unknown>
-  result?: unknown
-  isError?: boolean
-}
+import type Anthropic from '@anthropic-ai/sdk'
 
 export interface Message {
   id: string
   role: 'user' | 'assistant'
-  parts: MessagePart[]
+  content: Anthropic.ContentBlock[]
 }
 
 export type ChatStatus = 'idle' | 'streaming' | 'awaiting-message'
@@ -33,10 +24,8 @@ export function useAnthropicChat(options: UseAnthropicChatOptions) {
   const abortController = ref<AbortController | null>(null)
 
   let currentMessageId = ''
-  let currentParts: MessagePart[] = []
-  let currentTextPart = ''
-  let currentToolCall: Partial<MessagePart> | null = null
-  let currentToolJson = ''
+  let currentContent: Anthropic.ContentBlock[] = []
+  let currentTextBlock = ''
 
   async function sendMessage(content: { text: string }) {
     if (status.value === 'streaming') return
@@ -45,7 +34,11 @@ export function useAnthropicChat(options: UseAnthropicChatOptions) {
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: 'user',
-      parts: [{ type: 'text', text: content.text }]
+      content: [{
+        type: 'text',
+        text: content.text,
+        citations: null
+      }]
     }
     messages.value.push(userMessage)
 
@@ -71,15 +64,13 @@ export function useAnthropicChat(options: UseAnthropicChatOptions) {
 
     // Initialize new assistant message
     currentMessageId = crypto.randomUUID()
-    currentParts = []
-    currentTextPart = ''
-    currentToolCall = null
-    currentToolJson = ''
+    currentContent = []
+    currentTextBlock = ''
 
     const assistantMessage: Message = {
       id: currentMessageId,
       role: 'assistant',
-      parts: []
+      content: []
     }
     messages.value.push(assistantMessage)
 
@@ -119,14 +110,14 @@ export function useAnthropicChat(options: UseAnthropicChatOptions) {
         buffer = lines.pop() || ''
 
         for (const line of lines) {
-          if (!line.trim()) continue
+          if (!line.trim() || !line.startsWith('data:')) continue
 
-          const eventMatch = line.match(/^event: (.+)\ndata: (.+)$/)
-          if (eventMatch && eventMatch[1] && eventMatch[2]) {
-            const [, eventType, dataStr] = eventMatch
+          const dataStr = line.slice(5).trim()
+          try {
             const data = JSON.parse(dataStr)
-
-            handleEvent(eventType, data)
+            handleEvent(data)
+          } catch (e) {
+            // Skip invalid JSON
           }
         }
       }
@@ -150,115 +141,36 @@ export function useAnthropicChat(options: UseAnthropicChatOptions) {
     }
   }
 
-  function handleEvent(eventType: string, data: unknown) {
+  function handleEvent(data: { type: string; text?: string; message?: string }) {
     const currentMessage = messages.value[messages.value.length - 1]
     if (!currentMessage) return
 
-    switch (eventType) {
-      case 'text-delta': {
-        const { delta } = data as { delta: string }
-        currentTextPart += delta
+    if (data.type === 'text' && data.text) {
+      // Accumulate text
+      currentTextBlock += data.text
 
-        // Update current text part in real-time
-        const textPartIndex = currentParts.findIndex(p => p.type === 'text' && !p.text)
-        if (textPartIndex >= 0) {
-          currentParts[textPartIndex] = { type: 'text', text: currentTextPart }
-        } else {
-          currentParts.push({ type: 'text', text: currentTextPart })
-        }
-
-        currentMessage.parts = [...currentParts]
-        break
+      // Update content with current text block
+      const textBlock: Anthropic.TextBlock = {
+        type: 'text',
+        text: currentTextBlock,
+        citations: null
       }
 
-      case 'tool-call-start': {
-        const { toolCallId, toolName } = data as { toolCallId: string, toolName: string }
-
-        // Finalize current text part if any
-        if (currentTextPart) {
-          currentTextPart = ''
-        }
-
-        currentToolCall = {
-          type: 'tool-call',
-          toolCallId,
-          toolName,
-          args: {}
-        }
-        currentToolJson = ''
-        break
+      if (currentContent.length === 0 || currentContent[currentContent.length - 1]?.type !== 'text') {
+        currentContent.push(textBlock)
+      } else {
+        currentContent[currentContent.length - 1] = textBlock
       }
 
-      case 'tool-call-delta': {
-        const { delta } = data as { delta: string }
-        currentToolJson += delta
-        break
+      currentMessage.content = [...currentContent]
+    } else if (data.type === 'done') {
+      if (options.onData) {
+        options.onData({ type: 'done' })
       }
-
-      case 'tool-execute': {
-        const { toolName } = data as { toolCallId: string, toolName: string }
-
-        // Finalize tool call
-        if (currentToolCall && currentToolJson) {
-          try {
-            currentToolCall.args = JSON.parse(currentToolJson)
-          } catch {
-            currentToolCall.args = {}
-          }
-
-          currentParts.push(currentToolCall as MessagePart)
-          currentMessage.parts = [...currentParts]
-        }
-
-        // Show tool execution status
-        currentParts.push({
-          type: 'text',
-          text: `\n\n_Using tool: ${toolName}_\n\n`
-        })
-        currentMessage.parts = [...currentParts]
-
-        currentToolCall = null
-        currentToolJson = ''
-        break
-      }
-
-      case 'tool-result': {
-        const { toolCallId, toolName, result } = data as { toolCallId: string, toolName: string, result: string }
-
-        currentParts.push({
-          type: 'tool-result',
-          toolCallId,
-          toolName,
-          result
-        })
-
-        // Show result to user
-        currentParts.push({
-          type: 'text',
-          text: `**Result:** ${result}\n\n`
-        })
-
-        currentMessage.parts = [...currentParts]
-        break
-      }
-
-      case 'done': {
-        if (currentTextPart) {
-          currentTextPart = ''
-        }
-        if (options.onData) {
-          options.onData({ type: 'data-chat-title' })
-        }
-        break
-      }
-
-      case 'error': {
-        const { message } = data as { message: string }
-        error.value = new Error(message)
-        if (options.onError) {
-          options.onError(error.value)
-        }
-        break
+    } else if (data.type === 'error' && data.message) {
+      error.value = new Error(data.message)
+      if (options.onError) {
+        options.onError(error.value)
       }
     }
   }

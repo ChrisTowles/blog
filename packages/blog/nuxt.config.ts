@@ -55,6 +55,12 @@ export default defineNuxtConfig({
     viewTransition: true
   },
 
+  runtimeConfig: {
+    anthropicApiKey: process.env.ANTHROPIC_API_KEY!,
+    model_fast: 'claude-haiku-4-5',
+    model: 'claude-sonnet-4-5'
+  },
+
   // app: {
   //     head: {
   //         charset: 'utf-16',

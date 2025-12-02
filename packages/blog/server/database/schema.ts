@@ -43,7 +43,7 @@ export const messages = pgTable('messages', {
   id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   chatId: varchar({ length: 36 }).notNull().references(() => chats.id, { onDelete: 'cascade' }),
   role: varchar({ length: 20 }).notNull(), // 'user' | 'assistant'
-  parts: jsonb(),
+  content: jsonb(),
   ...timestamps
 }, table => [
   index('messages_chat_id_idx').on(table.chatId)

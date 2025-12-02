@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   await db.insert(tables.messages).values({
     chatId: chat.id,
     role: 'user',
-    parts: [{ type: 'text', text: input }]
+    content: [{ type: 'text', text: input, citations: null }]
   })
 
   return chat

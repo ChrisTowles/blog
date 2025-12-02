@@ -1,14 +1,12 @@
 export function useModels() {
+  const config = useRuntimeConfig()
   const models = [
     // Anthropic Claude Models
-    'claude-sonnet-4',
-    'claude-sonnet-3.7',
-    'claude-sonnet-3.5',
-    'claude-haiku-3.5',
-    'claude-opus-4'
+    config.model_fast,
+    config.model
   ]
 
-  const model = useCookie<string>('model', { default: () => 'claude-sonnet-3.5' })
+  const model = useCookie<string>('model', { default: () => config.model_fast })
 
   return {
     models,
