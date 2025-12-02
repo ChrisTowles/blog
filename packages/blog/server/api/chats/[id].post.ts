@@ -1,5 +1,20 @@
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod'
+import {
+  convertToAnthropicMessages,
+  generateChatTitle,
+  formatSSEEvent,
+  processStreamChunk,
+  extractTextFromContent
+} from '../../utils/chat'
+import {
+  findChatByIdAndUser,
+  updateChatTitle,
+  saveUserMessage,
+  saveAssistantMessage,
+  chatNeedsTitle,
+  shouldSaveUserMessage
+} from '../../utils/chat-db'
 
 defineRouteMeta({
   openAPI: {
@@ -14,75 +29,66 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const { id } = getRouterParams(event)
 
-  interface Message {
-    id: string
-    role: 'user' | 'assistant'
-    content: Anthropic.ContentBlock[]
-  }
+  // Zod schema for message validation
+  const messageSchema = z.object({
+    id: z.string(),
+    role: z.enum(['user', 'assistant']),
+    content: z.union([
+      z.string(),
+      z.array(z.any())
+    ])
+  })
 
   const { model, messages } = await readValidatedBody(event, z.object({
     model: z.string(),
-    messages: z.array(z.custom<Message>())
+    messages: z.array(messageSchema)
   }).parse)
 
   const db = useDrizzle()
 
-  const chat = await db.query.chats.findFirst({
-    where: (chat, { eq }) => and(eq(chat.id, id as string), eq(chat.userId, session.user?.id || session.id)),
-    with: {
-      messages: true
-    }
-  })
+  const chat = await findChatByIdAndUser(
+    db,
+    id as string,
+    session.user?.id || session.id
+  )
+
   if (!chat) {
     throw createError({ statusCode: 404, statusMessage: 'Chat not found' })
   }
 
   const client = new Anthropic({
     apiKey: config.anthropicApiKey
-  });
+  })
 
+  // Generate title if needed
+  if (chatNeedsTitle(chat)) {
+    const firstUserMessage = messages.find(m => m.role === 'user')
+    let firstMessageText = 'New chat'
 
-  if (!chat.title) {
+    if (firstUserMessage) {
+      if (typeof firstUserMessage.content === 'string') {
+        firstMessageText = firstUserMessage.content
+      } else {
+        firstMessageText = extractTextFromContent(firstUserMessage.content)
+      }
+    }
 
+    const title = await generateChatTitle(
+      client,
+      firstMessageText,
+      config.model_fast as string
+    )
 
-    const params: Anthropic.MessageCreateParams = {
-      max_tokens: 1024,
-      system: `You are a title generator for a chat:
-          - Generate a short title based on the first user's message
-          - The title should be less than 30 characters long
-          - The title should be a summary of the user's message
-          - Do not use quotes (' or ") or colons (:) or any other punctuation
-          - Do not use markdown, just plain text`,
-      messages: [{ role: 'user', content: "test 123" }],
-      model: config.model_fast as string,
-
-    };
-    const titleTemplate = await client.messages.create(params);
-
-    const title  = titleTemplate.content.toString().trim();
-
-    await db.update(tables.chats).set({ title }).where(eq(tables.chats.id, id as string))
+    await updateChatTitle(db, id as string, title)
   }
 
   const lastMessage = messages[messages.length - 1]
-  if (lastMessage.role === 'user' && messages.length > 1) {
-    await db.insert(tables.messages).values({
-      chatId: id as string,
-      role: 'user',
-      content: lastMessage.content
-    })
+  if (shouldSaveUserMessage(messages, lastMessage)) {
+    await saveUserMessage(db, id as string, lastMessage.content)
   }
 
   // Convert messages to Anthropic format
-  const anthropicMessages: Anthropic.MessageParam[] = messages.map(msg => ({
-    role: msg.role,
-    content: msg.content.map(block => {
-      if (block.type === 'text') {
-        return { type: 'text' as const, text: block.text }
-      }
-      return block
-    }).filter(block => block.type === 'text')
-  }))
+  const anthropicMessages = convertToAnthropicMessages(messages)
 
   // Start streaming
   const stream = client.messages.stream({
@@ -106,25 +112,23 @@ export default defineEventHandler(async (event) => {
 
   try {
     for await (const chunk of stream) {
-      if (chunk.type === 'content_block_delta') {
-        if (chunk.delta.type === 'text_delta') {
-          send(`data: ${JSON.stringify({ type: 'text', text: chunk.delta.text })}\n\n`)
-        }
+      const eventData = processStreamChunk(chunk)
+      if (eventData) {
+        send(eventData)
       }
     }
 
     const finalMessage = await stream.finalMessage()
 
     // Save assistant message to database
-    await db.insert(tables.messages).values({
-      chatId: chat.id,
-      role: 'assistant',
-      content: finalMessage.content
-    })
+    await saveAssistantMessage(db, chat.id, finalMessage.content)
 
-    send(`data: ${JSON.stringify({ type: 'done' })}\n\n`)
+    send(formatSSEEvent({ type: 'done' }))
   } catch (error) {
-    send(`data: ${JSON.stringify({ type: 'error', message: error instanceof Error ? error.message : 'Unknown error' })}\n\n`)
+    send(formatSSEEvent({
+      type: 'error',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    }))
   }
 
   event.node.res.end()

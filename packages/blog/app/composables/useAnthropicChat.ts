@@ -1,10 +1,11 @@
 import { ref } from 'vue'
 import type Anthropic from '@anthropic-ai/sdk'
 
-export interface Message {
+/**
+ * Message type extending Anthropic SDK with UI metadata
+ */
+export interface Message extends Anthropic.MessageParam {
   id: string
-  role: 'user' | 'assistant'
-  content: Anthropic.ContentBlock[]
 }
 
 export type ChatStatus = 'idle' | 'streaming' | 'awaiting-message'
@@ -34,11 +35,7 @@ export function useAnthropicChat(options: UseAnthropicChatOptions) {
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: 'user',
-      content: [{
-        type: 'text',
-        text: content.text,
-        citations: null
-      }]
+      content: content.text
     }
     messages.value.push(userMessage)
 
@@ -70,7 +67,7 @@ export function useAnthropicChat(options: UseAnthropicChatOptions) {
     const assistantMessage: Message = {
       id: currentMessageId,
       role: 'assistant',
-      content: []
+      content: [] // Will be built up as ContentBlock[]
     }
     messages.value.push(assistantMessage)
 
@@ -116,7 +113,7 @@ export function useAnthropicChat(options: UseAnthropicChatOptions) {
           try {
             const data = JSON.parse(dataStr)
             handleEvent(data)
-          } catch (e) {
+          } catch {
             // Skip invalid JSON
           }
         }
@@ -141,7 +138,7 @@ export function useAnthropicChat(options: UseAnthropicChatOptions) {
     }
   }
 
-  function handleEvent(data: { type: string; text?: string; message?: string }) {
+  function handleEvent(data: { type: string, text?: string, message?: string }) {
     const currentMessage = messages.value[messages.value.length - 1]
     if (!currentMessage) return
 

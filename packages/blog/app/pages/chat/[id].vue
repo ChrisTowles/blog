@@ -5,6 +5,9 @@ import ProseStreamPre from '../../components/prose/PreStream.vue'
 import type { Message } from '~/composables/useAnthropicChat'
 
 function getTextFromMessage(message: Message): string {
+  if (typeof message.content === 'string') {
+    return message.content
+  }
   return message.content
     .filter(block => block.type === 'text')
     .map(block => block.type === 'text' ? block.text : '')
