@@ -38,6 +38,14 @@ export default defineNuxtConfig({
       prose: true
     }
   },
+
+  runtimeConfig: {
+    anthropicApiKey: process.env.ANTHROPIC_API_KEY!,
+    public: {
+      model_fast: 'claude-haiku-4-5',
+      model: 'claude-sonnet-4-5'
+    }
+  },
   ignore: [
     '**/*.{spec,test}.{js,cts,mts,ts,jsx,tsx}',
     '**/*.*.{spec,test}.{js,cts,mts,ts,jsx,tsx}'
@@ -53,12 +61,6 @@ export default defineNuxtConfig({
 
   experimental: {
     viewTransition: true
-  },
-
-  runtimeConfig: {
-    anthropicApiKey: process.env.ANTHROPIC_API_KEY!,
-    model_fast: 'claude-haiku-4-5',
-    model: 'claude-sonnet-4-5'
   },
 
   // app: {

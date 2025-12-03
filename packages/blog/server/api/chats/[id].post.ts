@@ -76,7 +76,7 @@ export default defineEventHandler(async (event) => {
     const title = await generateChatTitle(
       client,
       firstMessageText,
-      config.model_fast as string
+      config.public.model_fast as string
     )
 
     await updateChatTitle(db, id as string, title)

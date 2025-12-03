@@ -70,6 +70,33 @@ test.describe('AI Chat', () => {
     const url = page.url()
     expect(url).toContain('localhost:3001')
   })
+
+  test.skip('can submit message and get AI response', async ({ page }) => {
+    await page.goto('/chat', { waitUntil: 'networkidle' })
+
+    // Find chat input
+    const chatInput = page.getByTestId(TEST_IDS.CHAT.INPUT)
+    await chatInput.waitFor({ state: 'visible', timeout: 10000 })
+
+    // Type a simple math question
+    await chatInput.fill('What is 7 + 7? Reply with just the number.')
+
+    // Find and click submit button
+    const submitButton = page.getByTestId(TEST_IDS.CHAT.SUBMIT)
+    await submitButton.click()
+
+    // Wait for navigation to chat detail page (will have ID in URL)
+    await page.waitForURL(/\/chat\/[a-zA-Z0-9-]+/, { timeout: 15000 })
+
+    // TODO: Improve waiting for response - currently just waits for new message to appear
+
+    // Get the last message (assistant's response)
+    const lastMessage = messages.last()
+    const responseText = await lastMessage.textContent()
+
+    // Verify the response contains "14"
+    expect(responseText).toContain('14')
+  })
 })
 
 test.describe('Chat History', () => {

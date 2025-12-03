@@ -97,6 +97,7 @@ onMounted(() => {
 
     <template #body>
       <UContainer class="flex-1 flex flex-col gap-4 sm:gap-6">
+        <!-- https://ui.nuxt.com/docs/components/chat-messages -->
         <!-- @ts-expect-error - Custom message types are compatible at runtime -->
         <UChatMessages
           :messages="chat.messages.value"

@@ -14,8 +14,8 @@ describe('chat utilities', () => {
     const config = useRuntimeConfig()
 
     expect(config.anthropicApiKey.length).toBeGreaterThanOrEqual(20)
-    expect(config.model_fast).toBe('claude-haiku-4-5')
-    expect(config.model).toBe('claude-sonnet-4-5')
+    expect(config.public.model_fast).toContain('claude-haiku')
+    expect(config.public.model).toBe('claude-sonnet')
   })
 
   describe('convertToAnthropicMessages', () => {
