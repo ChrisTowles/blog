@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   await db.insert(tables.messages).values({
     chatId: chat.id,
     role: 'user',
-    content: input // Store as string, per Anthropic.MessageParam
+    parts: input
   })
 
   return chat

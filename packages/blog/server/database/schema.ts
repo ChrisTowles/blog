@@ -1,9 +1,12 @@
-import { pgTable, varchar, timestamp, index, uniqueIndex, jsonb } from 'drizzle-orm/pg-core'
+import { pgTable, varchar, pgEnum, timestamp, index, uniqueIndex, json } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
 const timestamps = {
-  createdAt: timestamp({ mode: 'date' }).$defaultFn(() => new Date()).notNull()
+  createdAt: timestamp().defaultNow().notNull()
 }
+
+export const providerEnum = pgEnum('provider', ['github'])
+export const roleEnum = pgEnum('role', ['user', 'assistant'])
 
 export const users = pgTable('users', {
   id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -11,7 +14,7 @@ export const users = pgTable('users', {
   name: varchar({ length: 100 }).notNull(),
   avatar: varchar({ length: 500 }).notNull(),
   username: varchar({ length: 50 }).notNull(),
-  provider: varchar({ length: 20 }).notNull(), // 'github'
+  provider: providerEnum().notNull(),
   providerId: varchar({ length: 50 }).notNull(),
   ...timestamps
 }, table => [
@@ -42,8 +45,8 @@ export const chatsRelations = relations(chats, ({ one, many }) => ({
 export const messages = pgTable('messages', {
   id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   chatId: varchar({ length: 36 }).notNull().references(() => chats.id, { onDelete: 'cascade' }),
-  role: varchar({ length: 20 }).notNull(), // 'user' | 'assistant'
-  content: jsonb(),
+  role: roleEnum().notNull(),
+  parts: json(),
   ...timestamps
 }, table => [
   index('messages_chat_id_idx').on(table.chatId)
