@@ -57,3 +57,37 @@ resource "google_artifact_registry_repository_iam_member" "ci_writer" {
   role       = "roles/artifactregistry.writer"
   member     = "serviceAccount:${var.ci_service_account_email}"
 }
+
+# AI Gateway API Key Secret
+resource "google_secret_manager_secret" "ai_gateway_api_key" {
+  secret_id = "${var.environment}-ai-gateway-api-key"
+  project   = var.project_id
+
+  replication {
+    auto {}
+  }
+
+  depends_on = [google_project_service.required_apis]
+}
+
+resource "google_secret_manager_secret_version" "ai_gateway_api_key" {
+  secret      = google_secret_manager_secret.ai_gateway_api_key.id
+  secret_data = var.ai_gateway_api_key
+}
+
+# Nuxt Session Password Secret
+resource "google_secret_manager_secret" "session_password" {
+  secret_id = "${var.environment}-session-password"
+  project   = var.project_id
+
+  replication {
+    auto {}
+  }
+
+  depends_on = [google_project_service.required_apis]
+}
+
+resource "google_secret_manager_secret_version" "session_password" {
+  secret      = google_secret_manager_secret.session_password.id
+  secret_data = var.session_password
+}

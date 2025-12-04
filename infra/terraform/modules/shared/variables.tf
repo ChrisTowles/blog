@@ -19,3 +19,15 @@ variable "ci_service_account_email" {
   type        = string
   default     = ""
 }
+
+variable "ai_gateway_api_key" {
+  description = "Vercel AI Gateway API key"
+  type        = string
+  sensitive   = true
+}
+
+variable "session_password" {
+  description = "Nuxt session password (minimum 32 characters)"
+  type        = string
+  sensitive   = true
+}

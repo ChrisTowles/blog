@@ -17,3 +17,13 @@ output "container_image_base" {
   description = "Base URL for container images"
   value       = "${google_artifact_registry_repository.containers.location}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.containers.name}"
 }
+
+output "ai_gateway_api_key_secret_id" {
+  description = "Secret Manager secret ID for AI Gateway API key"
+  value       = google_secret_manager_secret.ai_gateway_api_key.secret_id
+}
+
+output "session_password_secret_id" {
+  description = "Secret Manager secret ID for Nuxt session password"
+  value       = google_secret_manager_secret.session_password.secret_id
+}

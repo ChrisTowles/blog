@@ -70,3 +70,15 @@ variable "additional_env_vars" {
   type        = map(string)
   default     = {}
 }
+
+variable "ai_gateway_api_key_secret_id" {
+  description = "Secret Manager secret ID for AI Gateway API key"
+  type        = string
+  default     = ""
+}
+
+variable "session_password_secret_id" {
+  description = "Secret Manager secret ID for Nuxt session password"
+  type        = string
+  default     = ""
+}

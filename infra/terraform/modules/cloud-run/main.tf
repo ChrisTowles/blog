@@ -45,6 +45,32 @@ resource "google_cloud_run_v2_service" "main" {
       }
 
       dynamic "env" {
+        for_each = var.ai_gateway_api_key_secret_id != "" ? [1] : []
+        content {
+          name = "AI_GATEWAY_API_KEY"
+          value_source {
+            secret_key_ref {
+              secret  = var.ai_gateway_api_key_secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
+
+      dynamic "env" {
+        for_each = var.session_password_secret_id != "" ? [1] : []
+        content {
+          name = "NUXT_SESSION_PASSWORD"
+          value_source {
+            secret_key_ref {
+              secret  = var.session_password_secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
+
+      dynamic "env" {
         for_each = var.additional_env_vars
         content {
           name  = env.key
