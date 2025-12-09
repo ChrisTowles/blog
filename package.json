@@ -21,6 +21,8 @@
     "gcp:staging:apply": "cd infra/terraform/environments/staging && terraform apply -auto-approve",
     "gcp:staging:deploy": "node --experimental-strip-types scripts/build.ts deploy staging",
     "gcp:staging:destroy": "cd infra/terraform/environments/staging && terraform destroy",
+    "gcp:prod:init": "cd infra/terraform/environments/prod && terraform init",
+    "gcp:prod:apply": "cd infra/terraform/environments/prod && terraform apply -auto-approve",
     "gcp:prod:deploy": "node --experimental-strip-types scripts/build.ts deploy prod",
     "logs:staging": "node --experimental-strip-types infra/logs.ts --environment=staging",
     "logs:prod": "node --experimental-strip-types infra/logs.ts --environment=production",
