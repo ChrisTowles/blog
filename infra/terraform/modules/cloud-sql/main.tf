@@ -59,7 +59,7 @@ resource "google_secret_manager_secret" "db_connection_string" {
 
 resource "google_secret_manager_secret_version" "db_connection_string" {
   secret = google_secret_manager_secret.db_connection_string.id
-  secret_data = "postgresql://${google_sql_user.user.name}:${var.database_password}@${google_sql_database_instance.main.public_ip_address}:5432/${google_sql_database.database.name}?host=/cloudsql/${google_sql_database_instance.main.connection_name}"
+  secret_data = "postgresql://${google_sql_user.user.name}:${var.database_password}@localhost/${google_sql_database.database.name}?host=/cloudsql/${google_sql_database_instance.main.connection_name}"
 }
 
 # Alternative: Store connection name for Cloud SQL Proxy

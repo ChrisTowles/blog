@@ -60,13 +60,11 @@ function usage() {
   console.log(`Usage: ${process.argv[1]} [OPTIONS]
 
 Options:
+  -e, --environment ENV Environment (staging/production)
   -t, --tail            Tail logs (live stream)
   -f, --filter FILTER   Filter logs (e.g., "severity>=ERROR")
   -l, --limit N         Limit number of log entries (default: 50)
   -h, --help            Show this help message
-
-Environment variable:
-  ENVIRONMENT           Environment (development/staging/production)
 `)
   process.exit(1)
 }
@@ -97,7 +95,7 @@ async function getLogs(options = {}) {
   ]
 
   if (!options.tail) {
-    args.push(`--limit=${options.limit || 50}`)
+    args.push(`--limit=${options.limit || 150}`)
   }
 
   if (options.filter) {
@@ -132,8 +130,14 @@ for (let i = 2; i < process.argv.length; i++) {
     case '--help':
       usage()
       break
+    case '-e':
+    case '--environment':
+      process.env.ENVIRONMENT = process.argv[++i]
+      break
     default:
-      if (arg.startsWith('-')) {
+      if (arg.startsWith('--environment=')) {
+        process.env.ENVIRONMENT = arg.split('=')[1]
+      } else if (arg.startsWith('-')) {
         console.error(`Unknown option: ${arg}`)
         usage()
       }

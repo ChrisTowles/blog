@@ -26,7 +26,7 @@ module "shared" {
   environment               = "staging"
   region                    = var.region
   ci_service_account_email  = var.ci_service_account_email
-  ai_gateway_api_key        = var.ai_gateway_api_key
+  anthropic_api_key         = var.anthropic_api_key
   session_password          = var.session_password
 }
 
@@ -55,7 +55,8 @@ module "cloud_run" {
   container_image               = var.container_image
   service_account_email         = module.shared.service_account_email
   database_connection_secret_id = module.cloud_sql.connection_string_secret_id
-  ai_gateway_api_key_secret_id  = module.shared.ai_gateway_api_key_secret_id
+  cloud_sql_connection_name     = module.cloud_sql.instance_connection_name
+  anthropic_api_key_secret_id   = module.shared.anthropic_api_key_secret_id
   session_password_secret_id    = module.shared.session_password_secret_id
   site_url                      = var.site_url
   min_instances                 = 0

@@ -18,9 +18,9 @@ output "container_image_base" {
   value       = "${google_artifact_registry_repository.containers.location}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.containers.name}"
 }
 
-output "ai_gateway_api_key_secret_id" {
-  description = "Secret Manager secret ID for AI Gateway API key"
-  value       = google_secret_manager_secret.ai_gateway_api_key.secret_id
+output "anthropic_api_key_secret_id" {
+  description = "Secret Manager secret ID for Anthropic API key"
+  value       = google_secret_manager_secret.anthropic_api_key.secret_id
 }
 
 output "session_password_secret_id" {

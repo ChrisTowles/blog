@@ -18,7 +18,7 @@ variable "database_password" {
 variable "container_image" {
   description = "Container image URL"
   type        = string
-  default     = "us-central1-docker.pkg.dev/PROJECT_ID/prod-containers/blog:latest"
+  default     = "us-central1-docker.pkg.dev/blog-towles-prod/prod-containers/blog:latest"
 }
 
 variable "site_url" {

@@ -20,8 +20,8 @@ export default defineNitroPlugin(() => {
       || key.toLowerCase().includes('token')
 
     let value = env[key] ?? ''
-    if (isSensitive && value.length >= 4) {
-      value = `${value.slice(0, 2)}***${value.slice(-2)}`
+    if (isSensitive && value.length >= 6) {
+      value = `${value.slice(0, 2)}***${value.slice(-4)}`
     } else if (isSensitive) {
       value = '***'
     }

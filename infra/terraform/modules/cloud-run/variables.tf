@@ -71,14 +71,20 @@ variable "additional_env_vars" {
   default     = {}
 }
 
-variable "ai_gateway_api_key_secret_id" {
-  description = "Secret Manager secret ID for AI Gateway API key"
+variable "anthropic_api_key_secret_id" {
+  description = "Secret Manager secret ID for Anthropic API key"
   type        = string
   default     = ""
 }
 
 variable "session_password_secret_id" {
   description = "Secret Manager secret ID for Nuxt session password"
+  type        = string
+  default     = ""
+}
+
+variable "cloud_sql_connection_name" {
+  description = "Cloud SQL instance connection name (project:region:instance)"
   type        = string
   default     = ""
 }

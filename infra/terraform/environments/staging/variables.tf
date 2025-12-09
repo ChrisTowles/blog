@@ -18,7 +18,7 @@ variable "database_password" {
 variable "container_image" {
   description = "Container image URL"
   type        = string
-  default     = "us-central1-docker.pkg.dev/PROJECT_ID/staging-containers/blog:latest"
+  default     = "us-central1-docker.pkg.dev/blog-towles-staging/staging-containers/blog:latest"
 }
 
 variable "site_url" {
@@ -33,8 +33,8 @@ variable "ci_service_account_email" {
   default     = ""
 }
 
-variable "ai_gateway_api_key" {
-  description = "Vercel AI Gateway API key"
+variable "anthropic_api_key" {
+  description = "Anthropic API key"
   type        = string
   sensitive   = true
 }

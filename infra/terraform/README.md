@@ -89,7 +89,40 @@ gcloud storage buckets update "gs://$ENV_STAGING_PROJECT_ID-tfstate" --versionin
 gcloud storage buckets update "gs://$ENV_PROD_PROJECT_ID-tfstate" --versioning
 ```
 
-### 3. Configure environment
+### 3. Set API and Nuxt Session secret values
+
+Terraform creates secrets in Secret Manager. Provide values via environment variables:
+
+```bash
+# Required for terraform apply
+export TF_VAR_anthropic_api_key="your-anthropic-api-key"
+export TF_VAR_session_password="$(openssl rand -base64 32)"
+pnpm run gcp:staging:apply
+```
+
+To update secrets after initial creation:
+```bash
+# Staging
+echo -n "NEW_VALUE" | gcloud secrets versions add staging-anthropic-api-key --data-file=- --project=blog-towles-staging
+echo -n "NEW_VALUE" | gcloud secrets versions add staging-session-password --data-file=- --project=blog-towles-staging
+
+# Production
+echo -n "NEW_VALUE" | gcloud secrets versions add prod-anthropic-api-key --data-file=- --project=blog-towles-prod
+echo -n "NEW_VALUE" | gcloud secrets versions add prod-session-password --data-file=- --project=blog-towles-prod
+```
+
+To retrieve current secret values:
+```bash
+# Staging
+gcloud secrets versions access latest --secret=staging-anthropic-api-key --project=blog-towles-staging
+gcloud secrets versions access latest --secret=staging-session-password --project=blog-towles-staging
+
+# Production
+gcloud secrets versions access latest --secret=prod-anthropic-api-key --project=blog-towles-prod
+gcloud secrets versions access latest --secret=prod-session-password --project=blog-towles-prod
+```
+
+### 4. Configure environment
 
 ```bash
 cd terraform/environments/staging
@@ -97,16 +130,11 @@ cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars with your values
 ```
 
-Generate secure password:
-```bash
-openssl rand -base64 32
-```
-
-### 4. Uncomment backend config
+### 5. Uncomment backend config
 
 In `main.tf`, uncomment the backend block and update bucket name.
 
-### 5. Initialize and apply
+### 6. Initialize and apply
 
 ```bash
 terraform init

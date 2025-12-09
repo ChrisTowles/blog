@@ -4,7 +4,6 @@ import 'zx/globals'
 const args = process.argv.slice(2)
 const command = args[0]
 const environment = args[1] || 'staging'
-const tag = args[2] || 'latest'
 
 // Configuration
 const IMAGE_NAME = 'blog-test'
@@ -16,19 +15,21 @@ function printUsage() {
   console.log(`
 Usage:
   build.ts test [environment] [--keep]    - Build and test container locally
-  build.ts deploy <environment> [tag]     - Build, push and deploy to GCP Cloud Run
+  build.ts deploy <environment>           - Build, push and deploy to GCP Cloud Run
 
 Arguments:
   environment  - staging or prod (default: staging)
-  tag         - Docker image tag (default: latest)
 
 Options:
   --keep      - Keep container running after test (for test command)
 
+Notes:
+  Images are tagged with date-time (YYYY-MM-DD-HH-mm) and also pushed as 'latest'
+
 Examples:
   build.ts test staging --keep
-  build.ts deploy staging latest
-  build.ts deploy prod v1.0.0
+  build.ts deploy staging
+  build.ts deploy prod
 `)
 }
 
@@ -126,8 +127,19 @@ async function deployContainer() {
     process.exit(1)
   }
 
+  // Generate date-time tag: YYYY-MM-DD-HH-mm
+  const now = new Date()
+  const dateTag = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+    String(now.getHours()).padStart(2, '0'),
+    String(now.getMinutes()).padStart(2, '0')
+  ].join('-')
+
   const rootDir = process.cwd()
   console.log(chalk.yellow(`🚀 Building and pushing container for ${environment}...`))
+  console.log(chalk.yellow(`   Tag: ${dateTag}`))
 
   // Step 1: Get artifact registry URL from terraform output
   console.log(chalk.yellow('\n📦 Getting registry URL from Terraform...'))
@@ -149,24 +161,26 @@ async function deployContainer() {
   const registryHostname = registry.split('/')[0]
   await $`gcloud auth configure-docker ${registryHostname}`
 
-  // Step 3: Build the image
-  const imageTag = `${registry}/blog:${tag}`
-  console.log(chalk.yellow(`\n🔨 Building Docker image: ${imageTag}`))
-  await $`docker build -t ${imageTag} .`
+  // Step 3: Build the image with both date tag and latest
+  const imageWithDateTag = `${registry}/blog:${dateTag}`
+  const imageWithLatest = `${registry}/blog:latest`
+  console.log(chalk.yellow(`\n🔨 Building Docker image: ${imageWithDateTag}`))
+  await $`docker build -t ${imageWithDateTag} -t ${imageWithLatest} .`
 
-  // Step 4: Push the image
-  console.log(chalk.yellow(`\n📤 Pushing image to registry...`))
-  await $`docker push ${imageTag}`
+  // Step 4: Push both tags
+  console.log(chalk.yellow(`\n📤 Pushing images to registry...`))
+  await $`docker push ${imageWithDateTag}`
+  await $`docker push ${imageWithLatest}`
 
-  // Step 5: Update Cloud Run
+  // Step 5: Update Cloud Run with the dated image
   console.log(chalk.yellow(`\n☁️  Updating Cloud Run with new image...`))
   cd(terraformDir)
   $.verbose = true
-  await $`terraform apply -auto-approve -var="container_image=${imageTag}"`
+  await $`terraform apply -auto-approve -var="container_image=${imageWithDateTag}"`
   $.verbose = false
   cd(rootDir)
 
-  console.log(chalk.green(`\n✅ Successfully deployed ${imageTag} to ${environment}!`))
+  console.log(chalk.green(`\n✅ Successfully deployed ${imageWithDateTag} to ${environment}!`))
 }
 
 async function main() {

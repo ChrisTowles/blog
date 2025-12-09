@@ -58,9 +58,9 @@ resource "google_artifact_registry_repository_iam_member" "ci_writer" {
   member     = "serviceAccount:${var.ci_service_account_email}"
 }
 
-# AI Gateway API Key Secret
-resource "google_secret_manager_secret" "ai_gateway_api_key" {
-  secret_id = "${var.environment}-ai-gateway-api-key"
+# Anthropic API Key Secret
+resource "google_secret_manager_secret" "anthropic_api_key" {
+  secret_id = "${var.environment}-anthropic-api-key"
   project   = var.project_id
 
   replication {
@@ -70,9 +70,9 @@ resource "google_secret_manager_secret" "ai_gateway_api_key" {
   depends_on = [google_project_service.required_apis]
 }
 
-resource "google_secret_manager_secret_version" "ai_gateway_api_key" {
-  secret      = google_secret_manager_secret.ai_gateway_api_key.id
-  secret_data = var.ai_gateway_api_key
+resource "google_secret_manager_secret_version" "anthropic_api_key" {
+  secret      = google_secret_manager_secret.anthropic_api_key.id
+  secret_data = var.anthropic_api_key
 }
 
 # Nuxt Session Password Secret

@@ -45,12 +45,12 @@ resource "google_cloud_run_v2_service" "main" {
       }
 
       dynamic "env" {
-        for_each = var.ai_gateway_api_key_secret_id != "" ? [1] : []
+        for_each = var.anthropic_api_key_secret_id != "" ? [1] : []
         content {
-          name = "AI_GATEWAY_API_KEY"
+          name = "ANTHROPIC_API_KEY"
           value_source {
             secret_key_ref {
-              secret  = var.ai_gateway_api_key_secret_id
+              secret  = var.anthropic_api_key_secret_id
               version = "latest"
             }
           }
@@ -75,6 +75,24 @@ resource "google_cloud_run_v2_service" "main" {
         content {
           name  = env.key
           value = env.value
+        }
+      }
+
+      dynamic "volume_mounts" {
+        for_each = var.cloud_sql_connection_name != "" ? [1] : []
+        content {
+          name       = "cloudsql"
+          mount_path = "/cloudsql"
+        }
+      }
+    }
+
+    dynamic "volumes" {
+      for_each = var.cloud_sql_connection_name != "" ? [1] : []
+      content {
+        name = "cloudsql"
+        cloud_sql_instance {
+          instances = [var.cloud_sql_connection_name]
         }
       }
     }

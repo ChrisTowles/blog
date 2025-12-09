@@ -86,6 +86,42 @@ export default defineNuxtConfig({
     preset: 'node-server',
     experimental: {
       openAPI: true
+    },
+    hooks: {
+      async compiled(nitro) {
+        const { rollup } = await import('rollup')
+        const { default: typescript } = await import('@rollup/plugin-typescript')
+        const { default: resolve } = await import('@rollup/plugin-node-resolve')
+        const { cp, mkdir } = await import('node:fs/promises')
+        const { join } = await import('node:path')
+
+        const rootDir = nitro.options.rootDir
+        const outputDir = nitro.options.output.dir
+
+        // Ensure database output dir exists
+        await mkdir(join(outputDir, 'database'), { recursive: true })
+
+        // Bundle migrate script with rollup
+        const bundle = await rollup({
+          input: join(rootDir, 'scripts/migrate.ts'),
+          plugins: [resolve(), typescript({ tsconfig: join(rootDir, 'tsconfig.json') })],
+          external: ['pg', /^node:/]
+        })
+        await bundle.write({
+          file: join(outputDir, 'database/migrate.mjs'),
+          format: 'esm'
+        })
+        await bundle.close()
+        console.log('✓ Built migrate script')
+
+        // Copy migrations
+        await cp(
+          join(rootDir, 'server/database/migrations'),
+          join(outputDir, 'database/migrations'),
+          { recursive: true }
+        )
+        console.log('✓ Copied migrations')
+      }
     }
   },
 

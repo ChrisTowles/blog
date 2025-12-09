@@ -40,12 +40,15 @@ FROM node:24-slim AS runner
 
 WORKDIR /app
 
-# Install sharp for image optimization
-RUN npm install sharp
+# Install sharp for image optimization and pg for migrations
+RUN npm install sharp pg
 
-
-# Copy built application from builder
+# Copy built application (includes migrate.mjs and migrations/ from Nitro hook)
 COPY --from=builder /app/packages/blog/.output /app/.output
+
+# Copy entrypoint
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
 
 # Set environment variables
 ENV NODE_ENV=production
@@ -56,4 +59,4 @@ ENV PORT=3000
 EXPOSE 3000
 
 # Start the application
-CMD ["node", ".output/server/index.mjs"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
