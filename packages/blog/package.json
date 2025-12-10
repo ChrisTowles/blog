@@ -23,7 +23,6 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
-    "deploy:gcp": "gcloud builds submit --tag us-central1-docker.pkg.dev/blog-chris-towles/blog-images/blog:latest --project=blog-chris-towles && gcloud run deploy blog --image us-central1-docker.pkg.dev/blog-chris-towles/blog-images/blog:latest --region us-central1 --project=blog-chris-towles",
     "cleanup": "npx nuxi cleanup"
   },
   "dependencies": {

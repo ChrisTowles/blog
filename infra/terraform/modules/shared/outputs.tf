@@ -20,10 +20,10 @@ output "container_image_base" {
 
 output "anthropic_api_key_secret_id" {
   description = "Secret Manager secret ID for Anthropic API key"
-  value       = google_secret_manager_secret.anthropic_api_key.secret_id
+  value       = data.google_secret_manager_secret.anthropic_api_key.secret_id
 }
 
 output "session_password_secret_id" {
   description = "Secret Manager secret ID for Nuxt session password"
-  value       = google_secret_manager_secret.session_password.secret_id
+  value       = data.google_secret_manager_secret.session_password.secret_id
 }

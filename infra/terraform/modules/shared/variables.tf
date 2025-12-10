@@ -3,11 +3,6 @@ variable "project_id" {
   type        = string
 }
 
-variable "environment" {
-  description = "Environment name (staging/prod)"
-  type        = string
-}
-
 variable "region" {
   description = "GCP region"
   type        = string
@@ -18,16 +13,4 @@ variable "ci_service_account_email" {
   description = "Service account email for CI/CD to push images"
   type        = string
   default     = ""
-}
-
-variable "anthropic_api_key" {
-  description = "Anthropic API key"
-  type        = string
-  sensitive   = true
-}
-
-variable "session_password" {
-  description = "Nuxt session password (minimum 32 characters)"
-  type        = string
-  sensitive   = true
 }

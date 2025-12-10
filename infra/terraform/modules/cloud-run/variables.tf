@@ -3,11 +3,6 @@ variable "project_id" {
   type        = string
 }
 
-variable "environment" {
-  description = "Environment name (staging/prod)"
-  type        = string
-}
-
 variable "region" {
   description = "GCP region"
   type        = string

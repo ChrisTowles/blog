@@ -1,5 +1,5 @@
 resource "google_cloud_run_v2_service" "main" {
-  name     = "${var.environment}-blog"
+  name     = "blog"
   location = var.region
   project  = var.project_id
 
@@ -23,7 +23,7 @@ resource "google_cloud_run_v2_service" "main" {
 
       env {
         name  = "NODE_ENV"
-        value = var.environment == "prod" ? "production" : "staging"
+        value = can(regex("production", var.project_id)) ? "production" : "staging"
       }
 
       env {

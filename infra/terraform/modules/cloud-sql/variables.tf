@@ -3,11 +3,6 @@ variable "project_id" {
   type        = string
 }
 
-variable "environment" {
-  description = "Environment name (staging/prod)"
-  type        = string
-}
-
 variable "region" {
   description = "GCP region"
   type        = string
@@ -66,10 +61,4 @@ variable "database_user" {
   description = "Database user"
   type        = string
   default     = "blog_app"
-}
-
-variable "database_password" {
-  description = "Database password"
-  type        = string
-  sensitive   = true
 }

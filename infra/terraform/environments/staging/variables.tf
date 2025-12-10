@@ -9,22 +9,17 @@ variable "region" {
   default     = "us-central1"
 }
 
-variable "database_password" {
-  description = "Database password (use terraform.tfvars or env var)"
-  type        = string
-  sensitive   = true
-}
-
 variable "container_image" {
   description = "Container image URL"
   type        = string
-  default     = "us-central1-docker.pkg.dev/blog-towles-staging/staging-containers/blog:latest"
+  default     = "us-central1-docker.pkg.dev/blog-towles-staging/containers/blog:latest"
 }
 
 variable "site_url" {
   description = "Public URL for staging site"
   type        = string
-  default     = "https://staging.yourdomain.com"
+  default     = "https://staging-chris.towles.dev/"
+
 }
 
 variable "ci_service_account_email" {
@@ -33,14 +28,3 @@ variable "ci_service_account_email" {
   default     = ""
 }
 
-variable "anthropic_api_key" {
-  description = "Anthropic API key"
-  type        = string
-  sensitive   = true
-}
-
-variable "session_password" {
-  description = "Nuxt session password (minimum 32 characters)"
-  type        = string
-  sensitive   = true
-}
