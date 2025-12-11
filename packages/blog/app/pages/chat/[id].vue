@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import type { DefineComponent } from 'vue'
-import { Chat } from '@ai-sdk/vue'
-import { DefaultChatTransport } from 'ai'
-import type { UIMessage } from 'ai'
 import { useClipboard } from '@vueuse/core'
-import { getTextFromMessage } from '@nuxt/ui/utils/ai'
+import type { ChatMessage } from '~~/shared/chat-types'
 import ProseStreamPre from '../../components/prose/PreStream.vue'
 
 definePageMeta({
@@ -28,30 +25,29 @@ if (!data.value) {
 
 const input = ref('')
 
-const chat = new Chat({
-  id: data.value.id,
-  messages: data.value.messages,
-  transport: new DefaultChatTransport({
-    api: `/api/chats/${data.value.id}`,
-    body: {
-      model: model.value
-    }
-  }),
-  onData: (dataPart) => {
-    if (dataPart.type === 'data-chat-title') {
-      refreshNuxtData('chats')
-    }
-  },
-  onError(error) {
-    const { message } = typeof error.message === 'string' && error.message[0] === '{' ? JSON.parse(error.message) : error
-    console.error('Chat error:', message)
+// Convert API messages to ChatMessage format (dates are serialized)
+const initialMessages: ChatMessage[] = (data.value.messages || []).map(msg => ({
+  id: msg.id,
+  role: msg.role as 'user' | 'assistant',
+  parts: msg.parts as ChatMessage['parts'],
+  createdAt: msg.createdAt ? new Date(msg.createdAt) : undefined
+}))
 
+const chat = useChat({
+  id: data.value.id,
+  initialMessages,
+  model,
+  onError(error) {
+    console.error('Chat error:', error.message)
     toast.add({
-      description: message,
+      description: error.message,
       icon: 'i-lucide-alert-circle',
       color: 'error',
       duration: 0
     })
+  },
+  onTitleUpdate() {
+    refreshNuxtData('chats')
   }
 })
 
@@ -59,16 +55,21 @@ function handleSubmit(e: Event) {
   e.preventDefault()
   if (input.value.trim()) {
     console.log('Sending message:', input.value)
-    chat.sendMessage({
-      text: input.value
-    })
+    chat.sendMessage(input.value)
     input.value = ''
   }
 }
 
 const copied = ref(false)
 
-function copy(e: MouseEvent, message: UIMessage) {
+function getTextFromMessage(message: ChatMessage): string {
+  return message.parts
+    .filter(p => p.type === 'text')
+    .map(p => 'text' in p ? p.text : '')
+    .join('\n')
+}
+
+function copy(e: MouseEvent, message: ChatMessage) {
   clipboard.copy(getTextFromMessage(message))
   copied.value = true
 
@@ -102,9 +103,9 @@ onMounted(() => {
         <!-- {{ chat.messages }} -->
         <UChatMessages
           should-auto-scroll
-          :messages="chat.messages"
-          :status="chat.status"
-          :assistant="chat.status !== 'streaming' ? { actions: [{ label: 'Copy', icon: copied ? 'i-lucide-copy-check' : 'i-lucide-copy', onClick: copy }] } : { actions: [] }"
+          :messages="chat.messages.value"
+          :status="chat.status.value"
+          :assistant="chat.status.value !== 'streaming' ? { actions: [{ label: 'Copy', icon: copied ? 'i-lucide-copy-check' : 'i-lucide-copy', onClick: copy }] } : { actions: [] }"
           class="lg:pt-(--ui-header-height) pb-4 sm:pb-6"
           :spacing-offset="160"
         >
@@ -134,7 +135,7 @@ onMounted(() => {
 
         <UChatPrompt
           v-model="input"
-          :error="chat.error"
+          :error="chat.error.value"
           variant="subtle"
           class="sticky bottom-0 [view-transition-name:chat-prompt] rounded-b-none z-10"
           @submit="handleSubmit"
@@ -142,7 +143,7 @@ onMounted(() => {
           <template #footer>
             <ModelSelect v-model="model" />
             <UChatPromptSubmit
-              :status="chat.status"
+              :status="chat.status.value"
               color="neutral"
               @stop="chat.stop()"
               @reload="chat.regenerate()"

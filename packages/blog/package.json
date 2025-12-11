@@ -26,14 +26,12 @@
     "cleanup": "npx nuxi cleanup"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^2.0.53",
-    "@ai-sdk/vue": "^2.0.106",
+    "@anthropic-ai/sdk": "^0.52.0",
     "@iconify-json/logos": "^1.2.10",
     "@iconify-json/lucide": "^1.2.77",
     "@iconify-json/simple-icons": "^1.2.61",
     "@nuxt/ui": "^4.2.1",
     "@nuxtjs/mdc": "^0.19.1",
-    "ai": "^5.0.106",
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.44.7",
     "nuxt": "^4.2.1",
