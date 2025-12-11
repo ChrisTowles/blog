@@ -1,5 +1,5 @@
 resource "google_cloud_run_v2_service" "main" {
-  name     = "${var.environment}-blog"
+  name     = "blog"
   location = var.region
   project  = var.project_id
 
@@ -23,7 +23,7 @@ resource "google_cloud_run_v2_service" "main" {
 
       env {
         name  = "NODE_ENV"
-        value = var.environment == "prod" ? "production" : "staging"
+        value = can(regex("production", var.project_id)) ? "production" : "staging"
       }
 
       env {
@@ -45,10 +45,54 @@ resource "google_cloud_run_v2_service" "main" {
       }
 
       dynamic "env" {
+        for_each = var.anthropic_api_key_secret_id != "" ? [1] : []
+        content {
+          name = "ANTHROPIC_API_KEY"
+          value_source {
+            secret_key_ref {
+              secret  = var.anthropic_api_key_secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
+
+      dynamic "env" {
+        for_each = var.session_password_secret_id != "" ? [1] : []
+        content {
+          name = "NUXT_SESSION_PASSWORD"
+          value_source {
+            secret_key_ref {
+              secret  = var.session_password_secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
+
+      dynamic "env" {
         for_each = var.additional_env_vars
         content {
           name  = env.key
           value = env.value
+        }
+      }
+
+      dynamic "volume_mounts" {
+        for_each = var.cloud_sql_connection_name != "" ? [1] : []
+        content {
+          name       = "cloudsql"
+          mount_path = "/cloudsql"
+        }
+      }
+    }
+
+    dynamic "volumes" {
+      for_each = var.cloud_sql_connection_name != "" ? [1] : []
+      content {
+        name = "cloudsql"
+        cloud_sql_instance {
+          instances = [var.cloud_sql_connection_name]
         }
       }
     }

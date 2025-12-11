@@ -15,9 +15,9 @@ resource "google_project_service" "required_apis" {
 
 # Service Account for Cloud Run
 resource "google_service_account" "cloud_run" {
-  account_id   = "${var.environment}-cloud-run"
+  account_id   = "cloud-run"
   project      = var.project_id
-  display_name = "Cloud Run Service Account for ${var.environment}"
+  display_name = "Cloud Run Service Account"
 
   depends_on = [google_project_service.required_apis]
 }
@@ -40,8 +40,8 @@ resource "google_project_iam_member" "cloud_run_sql_client" {
 resource "google_artifact_registry_repository" "containers" {
   location      = var.region
   project       = var.project_id
-  repository_id = "${var.environment}-containers"
-  description   = "Container registry for ${var.environment}"
+  repository_id = "containers"
+  description   = "Container registry"
   format        = "DOCKER"
 
   depends_on = [google_project_service.required_apis]
@@ -56,4 +56,44 @@ resource "google_artifact_registry_repository_iam_member" "ci_writer" {
   repository = google_artifact_registry_repository.containers.name
   role       = "roles/artifactregistry.writer"
   member     = "serviceAccount:${var.ci_service_account_email}"
+}
+
+# Reference existing secrets from GCP Secret Manager
+data "google_secret_manager_secret" "anthropic_api_key" {
+  secret_id = "anthropic-api-key"
+  project   = var.project_id
+}
+
+data "google_secret_manager_secret" "session_password" {
+  secret_id = "session-password"
+  project   = var.project_id
+}
+
+# Removed blocks to safely remove resources from state without deleting them
+removed {
+  from = google_secret_manager_secret.anthropic_api_key
+  lifecycle {
+    destroy = false
+  }
+}
+
+removed {
+  from = google_secret_manager_secret_version.anthropic_api_key
+  lifecycle {
+    destroy = false
+  }
+}
+
+removed {
+  from = google_secret_manager_secret.session_password
+  lifecycle {
+    destroy = false
+  }
+}
+
+removed {
+  from = google_secret_manager_secret_version.session_password
+  lifecycle {
+    destroy = false
+  }
 }

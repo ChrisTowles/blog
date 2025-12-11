@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import { TEST_IDS } from '~~/shared/test-ids'
+
 const route = useRoute()
 
 const { data: posts } = await useAsyncData(route.path, () => queryCollection('posts').order('date', 'DESC').all())
 </script>
 
 <template>
-  <UBlogPosts>
+  <UBlogPosts :data-testid="TEST_IDS.BLOG.POST_LIST">
     <UBlogPost
       v-for="(post, index) in posts"
       :key="index"
@@ -15,7 +17,7 @@ const { data: posts } = await useAsyncData(route.path, () => queryCollection('po
       :image="post.image"
       :date="new Date(post.date).toLocaleDateString('en', { year: 'numeric', month: 'short', day: 'numeric' })"
       :authors="post.authors"
-
+      :data-testid="TEST_IDS.BLOG.POST_CARD"
       :badge="{
         label: post.badge ? post.badge.label : '',
         color: 'primary'

@@ -16,13 +16,16 @@
     "changeset": "changeset",
     "version": "changeset version",
     "release": "changeset tag",
-    "aws:deploy": "tsx ./infra/deploy.mts",
     "gcp:staging:init": "cd infra/terraform/environments/staging && terraform init",
     "gcp:staging:plan": "cd infra/terraform/environments/staging && terraform plan",
     "gcp:staging:apply": "cd infra/terraform/environments/staging && terraform apply -auto-approve",
     "gcp:staging:deploy": "node --experimental-strip-types scripts/build.ts deploy staging",
     "gcp:staging:destroy": "cd infra/terraform/environments/staging && terraform destroy",
+    "gcp:prod:init": "cd infra/terraform/environments/prod && terraform init",
+    "gcp:prod:apply": "cd infra/terraform/environments/prod && terraform apply -auto-approve",
     "gcp:prod:deploy": "node --experimental-strip-types scripts/build.ts deploy prod",
+    "gcp:staging:logs": "node --experimental-strip-types scripts/logs.ts --environment=staging",
+    "gcp:prod:logs": "node --experimental-strip-types scripts/logs.ts --environment=production",
     "db:generate": "pnpm --filter @chris-towles/blog run db:generate",
     "db:migrate": "pnpm --filter @chris-towles/blog run db:migrate",
     "docker:up": "docker compose up -d",
@@ -40,19 +43,18 @@
     "deps:update": "pnpx taze --interactive --recursive"
   },
   "devDependencies": {
-    "@changesets/changelog-github": "^0.5.1",
-    "@changesets/cli": "^2.29.7",
-    "@cloudflare/workers-types": "^4.20251014.0",
-    "@types/node": "^24.9.2",
+    "@changesets/changelog-github": "^0.5.2",
+    "@changesets/cli": "^2.29.8",
+    "@types/node": "^24.10.1",
     "dotenv": "^17.2.3",
-    "eslint": "^9.38.0",
+    "eslint": "^9.39.1",
     "husky": "^9.1.7",
-    "lint-staged": "^16.2.6",
-    "nuxthub": "^0.9.3",
-    "playwright-chromium": "^1.56.1",
-    "tsx": "^4.20.4",
+    "lint-staged": "^16.2.7",
+    "nuxthub": "^0.9.4",
+    "playwright-chromium": "^1.57.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "wrangler": "^4.45.1",
+    "wrangler": "^4.51.0",
     "zx": "^8.8.5"
   },
   "resolutions": {
@@ -73,7 +75,7 @@
       "workerd"
     ]
   },
-  "packageManager": "pnpm@10.20.0",
+  "packageManager": "pnpm@10.24.0",
   "engines": {
     "node": ">=24.0.0"
   },

@@ -39,7 +39,7 @@ infra/terraform/
 
 3. **Create GCP projects**
    - Staging: `blog-towles-staging`
-   - Prod: `blog-towles-prod`
+   - Prod: `blog-towles-production`
 
 4. **Authenticate**
 
@@ -48,7 +48,7 @@ infra/terraform/
    # test
    gcloud config set project blog-towles-staging
 
-   gcloud config set project blog-towles-prod
+   gcloud config set project blog-towles-production
 
    
    gcloud auth login
@@ -75,7 +75,7 @@ gcloud storage buckets create gs://$ENV_STAGING_PROJECT_ID-tfstate \
   --uniform-bucket-level-access
 
 # Prod
-ENV_PROD_PROJECT_ID="blog-towles-prod"
+ENV_PROD_PROJECT_ID="blog-towles-production"
 gcloud storage buckets create gs://$ENV_PROD_PROJECT_ID-tfstate \
   --project=$ENV_PROD_PROJECT_ID \
   --location=us-central1 \
@@ -89,7 +89,55 @@ gcloud storage buckets update "gs://$ENV_STAGING_PROJECT_ID-tfstate" --versionin
 gcloud storage buckets update "gs://$ENV_PROD_PROJECT_ID-tfstate" --versioning
 ```
 
-### 3. Configure environment
+### 3. Create secrets in GCP Secret Manager
+
+Terraform references existing secrets rather than creating them. Secret names are the same in each project (project provides environment isolation).
+
+#### Staging
+```bash
+export PROJECT=blog-towles-staging
+export DB_PASSWORD="$(openssl rand -base64 16)"
+
+# Create secrets (first time only)
+echo -n "REPLACE_ME" | gcloud secrets create anthropic-api-key --data-file=- --project=$PROJECT
+echo -n "$(openssl rand -base64 32)" | gcloud secrets create session-password --data-file=- --project=$PROJECT
+echo "DB_PASSWORD: $DB_PASSWORD"
+echo -n "$DB_PASSWORD" | gcloud secrets create database-password --data-file=- --project=$PROJECT
+```
+
+#### Production
+```bash
+export PROJECT=blog-towles-production
+export DB_PASSWORD="$(openssl rand -base64 16)"
+
+# Create secrets (first time only)
+echo -n "REPLACE_ME" | gcloud secrets create anthropic-api-key --data-file=- --project=$PROJECT
+echo -n "$(openssl rand -base64 32)" | gcloud secrets create session-password --data-file=- --project=$PROJECT
+echo "DB_PASSWORD: $DB_PASSWORD"
+echo -n "$DB_PASSWORD" | gcloud secrets create database-password --data-file=- --project=$PROJECT
+```
+
+#### Update secrets
+```bash
+# Set PROJECT to staging or production
+export PROJECT=blog-towles-staging  # or blog-towles-production
+
+echo -n "NEW_VALUE" | gcloud secrets versions add anthropic-api-key --data-file=- --project=$PROJECT
+echo -n "NEW_VALUE" | gcloud secrets versions add session-password --data-file=- --project=$PROJECT
+echo -n "NEW_VALUE" | gcloud secrets versions add database-password --data-file=- --project=$PROJECT
+```
+
+#### View secrets
+```bash
+# Set PROJECT to staging or production
+export PROJECT=blog-towles-staging  # or blog-towles-production
+
+gcloud secrets versions access latest --secret=anthropic-api-key --project=$PROJECT
+gcloud secrets versions access latest --secret=session-password --project=$PROJECT
+gcloud secrets versions access latest --secret=database-password --project=$PROJECT
+```
+
+### 4. Configure environment
 
 ```bash
 cd terraform/environments/staging
@@ -97,16 +145,11 @@ cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars with your values
 ```
 
-Generate secure password:
-```bash
-openssl rand -base64 32
-```
-
-### 4. Uncomment backend config
+### 5. Uncomment backend config
 
 In `main.tf`, uncomment the backend block and update bucket name.
 
-### 5. Initialize and apply
+### 6. Initialize and apply
 
 ```bash
 terraform init

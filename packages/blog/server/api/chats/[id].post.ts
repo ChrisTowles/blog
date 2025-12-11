@@ -1,6 +1,7 @@
-import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, generateText, streamText } from 'ai'
-import { gateway } from '@ai-sdk/gateway'
 import type { UIMessage } from 'ai'
+import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, generateText, smoothStream, stepCountIs, streamText } from 'ai'
+
+import { anthropic } from '@ai-sdk/anthropic'
 import { z } from 'zod'
 
 defineRouteMeta({
@@ -13,7 +14,10 @@ defineRouteMeta({
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
 
-  const { id } = getRouterParams(event)
+  const config = useRuntimeConfig()
+  const { id } = await getValidatedRouterParams(event, z.object({
+    id: z.string()
+  }).parse)
 
   const { model, messages } = await readValidatedBody(event, z.object({
     model: z.string(),
@@ -28,20 +32,21 @@ export default defineEventHandler(async (event) => {
       messages: true
     }
   })
+
   if (!chat) {
     throw createError({ statusCode: 404, statusMessage: 'Chat not found' })
   }
 
   if (!chat.title) {
     const { text: title } = await generateText({
-      model: gateway('openai/gpt-4o-mini'),
+      model: anthropic(config.public.model_fast),
       system: `You are a title generator for a chat:
           - Generate a short title based on the first user's message
           - The title should be less than 30 characters long
           - The title should be a summary of the user's message
           - Do not use quotes (' or ") or colons (:) or any other punctuation
           - Do not use markdown, just plain text`,
-      prompt: JSON.stringify(messages[0])
+      prompt: JSON.stringify(messages[0].parts)
     })
 
     await db.update(tables.chats).set({ title }).where(eq(tables.chats.id, id as string))
@@ -59,9 +64,42 @@ export default defineEventHandler(async (event) => {
   const stream = createUIMessageStream({
     execute: ({ writer }) => {
       const result = streamText({
-        model: gateway(model),
-        system: 'You are a helpful assistant that can answer questions and help.',
-        messages: convertToModelMessages(messages)
+        model: anthropic(model),
+        system: `You are a knowledgeable and helpful AI assistant On Chris Towles's Blog. Try to be funny but helpful. 
+Your goal is to provide clear, accurate, and well-structured responses.
+**FORMATTING RULES (CRITICAL):**
+- ABSOLUTELY NO MARKDOWN HEADINGS: Never use #, ##, ###, ####, #####, or ######
+- NO underline-style headings with === or ---
+- Use **bold text** for emphasis and section labels instead
+- Examples:
+  * Instead of "## Usage", write "**Usage:**" or just "Here's how to use it:"
+  * Instead of "# Complete Guide", write "**Complete Guide**" or start directly with content
+- Start all responses with content, never with a heading
+
+**RESPONSE QUALITY:**
+- Be concise yet comprehensive
+- Use examples when helpful
+- Break down complex topics into digestible parts
+- Maintain a friendly, professional tone`,
+        messages: convertToModelMessages(messages),
+        providerOptions: {
+          // openai: {
+          //   reasoningEffort: 'low',
+          //   reasoningSummary: 'detailed'
+          // },
+          // google: {
+          //   thinkingConfig: {
+          //     includeThoughts: true,
+          //     thinkingBudget: 2048
+          //   }
+          // }
+        },
+        stopWhen: stepCountIs(5),
+        experimental_transform: smoothStream({ chunking: 'word' }),
+        tools: {
+          // weather: weatherTool,
+          // chart: chartTool
+        }
       })
 
       if (!chat.title) {
@@ -72,7 +110,9 @@ export default defineEventHandler(async (event) => {
         })
       }
 
-      writer.merge(result.toUIMessageStream())
+      writer.merge(result.toUIMessageStream({
+        sendReasoning: true
+      }))
     },
     onFinish: async ({ messages }) => {
       await db.insert(tables.messages).values(messages.map(message => ({

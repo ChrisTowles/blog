@@ -1,19 +1,18 @@
 export function useModels() {
+  const config = useRuntimeConfig()
   const models = [
-    // OpenAI Models
-    'openai/gpt-5',
-    'openai/gpt-5-mini',
-    'openai/gpt-4o',
-    'openai/gpt-4o-mini',
     // Anthropic Claude Models
-    'anthropic/claude-sonnet-4',
-    'anthropic/claude-sonnet-3.7',
-    // Google Gemini Models
-    'google/gemini-2.5-pro',
-    'google/gemini-2.5-flash'
+    config.public.model,
+    config.public.model_fast
   ]
 
-  const model = useCookie<string>('model', { default: () => 'openai/gpt-4o-mini' })
+  const defaultModel = config.public.model_fast
+  const model = useCookie<string>('model', { default: () => defaultModel })
+
+  // if model not valid, use the default model
+  if (!models.includes(model.value)) {
+    model.value = defaultModel
+  }
 
   return {
     models,

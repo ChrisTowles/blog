@@ -20,9 +20,7 @@ const toast = useToast()
 const clipboard = useClipboard()
 const { model } = useModels()
 
-const { data } = await useFetch(`/api/chats/${route.params.id}`, {
-  cache: 'force-cache'
-})
+const { data } = await useFetch(`/api/chats/${route.params.id}`, { cache: 'force-cache' })
 
 if (!data.value) {
   throw createError({ statusCode: 404, statusMessage: 'Chat not found', fatal: true })
@@ -46,6 +44,8 @@ const chat = new Chat({
   },
   onError(error) {
     const { message } = typeof error.message === 'string' && error.message[0] === '{' ? JSON.parse(error.message) : error
+    console.error('Chat error:', message)
+
     toast.add({
       description: message,
       icon: 'i-lucide-alert-circle',
@@ -58,6 +58,7 @@ const chat = new Chat({
 function handleSubmit(e: Event) {
   e.preventDefault()
   if (input.value.trim()) {
+    console.log('Sending message:', input.value)
     chat.sendMessage({
       text: input.value
     })
@@ -69,7 +70,6 @@ const copied = ref(false)
 
 function copy(e: MouseEvent, message: UIMessage) {
   clipboard.copy(getTextFromMessage(message))
-
   copied.value = true
 
   setTimeout(() => {
@@ -77,8 +77,13 @@ function copy(e: MouseEvent, message: UIMessage) {
   }, 2000)
 }
 
+function getPartKey(messageId: string, part: unknown, index: number) {
+  const hasState = part && typeof part === 'object' && 'state' in part
+  return `${messageId}-${part && typeof part === 'object' && 'type' in part ? part.type : 'unknown'}-${index}${hasState ? `-${(part as { state: string }).state}` : ''}`
+}
+
 onMounted(() => {
-  if (data.value?.messages.length === 1) {
+  if (data.value?.messages?.length === 1) {
     chat.regenerate()
   }
 })
@@ -91,8 +96,12 @@ onMounted(() => {
     </template>
 
     <template #body>
-      <UContainer class="flex-1 flex flex-col gap-4 sm:gap-6">
+      <!-- https://ui.nuxt.com/docs/components/chat-messages -->
+
+      <UContainer>
+        <!-- {{ chat.messages }} -->
         <UChatMessages
+          should-auto-scroll
           :messages="chat.messages"
           :status="chat.status"
           :assistant="chat.status !== 'streaming' ? { actions: [{ label: 'Copy', icon: copied ? 'i-lucide-copy-check' : 'i-lucide-copy', onClick: copy }] } : { actions: [] }"
@@ -100,24 +109,25 @@ onMounted(() => {
           :spacing-offset="160"
         >
           <template #content="{ message }">
-            <div class="space-y-4">
-              <template v-for="(part, index) in message.parts" :key="`${part.type}-${index}-${message.id}`">
-                <UButton
-                  v-if="part.type === 'reasoning' && part.state !== 'done'"
-                  label="Thinking..."
-                  variant="link"
-                  color="neutral"
-                  class="p-0"
-                  loading
+            <div class="*:first:mt-0 *:last:mb-0">
+              <template
+                v-for="(part, index) in message.parts"
+                :key="getPartKey(message.id, part, index)"
+              >
+                <Reasoning
+                  v-if="part.type === 'reasoning'"
+                  :text="part.text"
+                  :is-streaming="part.state !== 'done'"
+                />
+                <MDCCached
+                  v-else-if="part.type === 'text'"
+                  :value="part.text"
+                  :cache-key="`${message.id}-${index}`"
+                  :components="components"
+                  :parser-options="{ highlight: false }"
+                  class="*:first:mt-0 *:last:mb-0"
                 />
               </template>
-              <MDCCached
-                :value="getTextFromMessage(message)"
-                :cache-key="message.id"
-                unwrap="p"
-                :components="components"
-                :parser-options="{ highlight: false }"
-              />
             </div>
           </template>
         </UChatMessages>
@@ -129,15 +139,14 @@ onMounted(() => {
           class="sticky bottom-0 [view-transition-name:chat-prompt] rounded-b-none z-10"
           @submit="handleSubmit"
         >
-          <UChatPromptSubmit
-            :status="chat.status"
-            color="neutral"
-            @stop="chat.stop"
-            @reload="chat.regenerate"
-          />
-
           <template #footer>
             <ModelSelect v-model="model" />
+            <UChatPromptSubmit
+              :status="chat.status"
+              color="neutral"
+              @stop="chat.stop()"
+              @reload="chat.regenerate()"
+            />
           </template>
         </UChatPrompt>
       </UContainer>
