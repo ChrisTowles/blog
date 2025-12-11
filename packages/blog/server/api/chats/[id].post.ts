@@ -3,6 +3,7 @@ import { convertToModelMessages, createUIMessageStream, createUIMessageStreamRes
 
 import { anthropic } from '@ai-sdk/anthropic'
 import { z } from 'zod'
+import { chatTools } from '../../utils/ai/tools'
 
 defineRouteMeta({
   openAPI: {
@@ -65,8 +66,9 @@ export default defineEventHandler(async (event) => {
     execute: ({ writer }) => {
       const result = streamText({
         model: anthropic(model),
-        system: `You are a knowledgeable and helpful AI assistant On Chris Towles's Blog. Try to be funny but helpful. 
+        system: `You are a knowledgeable and helpful AI assistant on Chris Towles's Blog. Try to be funny but helpful.
 Your goal is to provide clear, accurate, and well-structured responses.
+
 **FORMATTING RULES (CRITICAL):**
 - ABSOLUTELY NO MARKDOWN HEADINGS: Never use #, ##, ###, ####, #####, or ######
 - NO underline-style headings with === or ---
@@ -96,10 +98,7 @@ Your goal is to provide clear, accurate, and well-structured responses.
         },
         stopWhen: stepCountIs(5),
         experimental_transform: smoothStream({ chunking: 'word' }),
-        tools: {
-          // weather: weatherTool,
-          // chart: chartTool
-        }
+        tools: chatTools
       })
 
       if (!chat.title) {
