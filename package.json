@@ -40,12 +40,13 @@
     "test:docker": "tsx scripts/test-docker.ts",
     "prepare": "husky",
     "mcp:inspect": "pnpx @modelcontextprotocol/inspector",
-    "deps:update": "pnpx taze --interactive --recursive"
+    "deps:update": "pnpx taze --interactive --recursive",
+    "clean": "rm -rf node_modules packages/*/node_modules .nuxt .output .nitro dist packages/*/.nuxt packages/*/.output"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.2",
     "@changesets/cli": "^2.29.8",
-    "@types/node": "^24.10.1",
+    "@types/node": "^25.0.1",
     "dotenv": "^17.2.3",
     "eslint": "^9.39.1",
     "husky": "^9.1.7",
@@ -54,28 +55,30 @@
     "playwright-chromium": "^1.57.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "wrangler": "^4.51.0",
     "zx": "^8.8.5"
   },
   "resolutions": {
     "unimport": "4.1.1"
   },
   "pnpm": {
+    "overrides": {
+      "vue": "3.5.25",
+      "@vue/runtime-core": "3.5.25",
+      "@vue/server-renderer": "3.5.25"
+    },
     "ignoredBuiltDependencies": [
       "workerd"
     ],
     "onlyBuiltDependencies": [
       "@parcel/watcher",
-      "@tailwindcss/oxide",
+      "better-sqlite3",
       "esbuild",
-      "playwright-chromium",
       "sharp",
-      "unrs-resolver",
       "vue-demi",
       "workerd"
     ]
   },
-  "packageManager": "pnpm@10.24.0",
+  "packageManager": "pnpm@10.25.0",
   "engines": {
     "node": ">=24.0.0"
   },

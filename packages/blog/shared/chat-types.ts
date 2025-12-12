@@ -46,7 +46,7 @@ export interface Chat {
   messages: ChatMessage[]
 }
 
-export type ChatStatus = 'idle' | 'streaming' | 'error'
+export type ChatStatus = 'ready' | 'streaming' | 'error'
 
 // SSE event types
 export interface SSETextEvent {

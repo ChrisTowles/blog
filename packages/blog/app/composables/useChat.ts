@@ -10,7 +10,7 @@ interface UseChatOptions {
 
 export function useChat(options: UseChatOptions) {
   const messages = ref<ChatMessage[]>(options.initialMessages || [])
-  const status = ref<ChatStatus>('idle')
+  const status = ref<ChatStatus>('ready')
   const error = ref<Error | null>(null)
   const abortController = ref<AbortController | null>(null)
 
@@ -110,10 +110,10 @@ export function useChat(options: UseChatOptions) {
         }
       }
 
-      status.value = 'idle'
+      status.value = 'ready'
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
-        status.value = 'idle'
+        status.value = 'ready'
         return
       }
       console.error('Chat error:', err)
@@ -144,7 +144,7 @@ export function useChat(options: UseChatOptions) {
 
   function stop() {
     abortController.value?.abort()
-    status.value = 'idle'
+    status.value = 'ready'
   }
 
   async function regenerate() {

@@ -61,6 +61,7 @@
     "@vue/test-utils": "^2.4.6",
     "@vueuse/core": "^14.1.0",
     "@vueuse/nuxt": "^14.1.0",
+    "baseline-browser-mapping": "^2.9.6",
     "dotenv": "^17.2.3",
     "drizzle-kit": "^0.31.7",
     "eslint": "^9.39.1",
