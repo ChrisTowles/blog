@@ -85,5 +85,8 @@
   "lint-staged": {
     "*.png": "node --experimental-strip-types scripts/compress-images.ts",
     "*.{js,ts,vue}": "eslint --fix"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.948.0"
   }
 }

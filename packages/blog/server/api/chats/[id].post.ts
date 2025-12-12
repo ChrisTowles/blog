@@ -166,8 +166,16 @@ export default defineEventHandler(async (event) => {
               }
             } else if (event.type === 'content_block_stop') {
               if (currentToolUseId && currentToolName) {
-                // Execute tool
-                const toolResult = executeTool(currentToolName)
+                // Parse tool input and execute tool
+                let toolArgs: Record<string, unknown> = {}
+                try {
+                  if (_toolInputJson) {
+                    toolArgs = JSON.parse(_toolInputJson)
+                  }
+                } catch {
+                  // Invalid JSON, use empty args
+                }
+                const toolResult = await executeTool(currentToolName, toolArgs)
                 toolResults.push({
                   type: 'tool_result',
                   tool_use_id: currentToolUseId,
