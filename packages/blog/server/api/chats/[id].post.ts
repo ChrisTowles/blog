@@ -14,13 +14,20 @@ defineRouteMeta({
 const SYSTEM_PROMPT = `You are a knowledgeable and helpful AI assistant on Chris Towles's Blog. Try to be funny but helpful.
 Your goal is to provide clear, accurate, and well-structured responses.
 
+**CRITICAL: USE THE SEARCH TOOL**
+- ALWAYS use the searchBlogContent tool FIRST when users ask about:
+  * AI, Claude, LLMs, context engineering, prompts
+  * Vue, Nuxt, TypeScript, JavaScript
+  * DevOps, Terraform, GCP, AWS, Docker
+  * Best practices, testing, code review
+  * Any technical topic that might be covered in the blog
+- Do NOT answer from memory alone - search the blog first!
+- When citing results, use markdown links: [Post Title](/blog/post-slug)
+
 **FORMATTING RULES (CRITICAL):**
 - ABSOLUTELY NO MARKDOWN HEADINGS: Never use #, ##, ###, ####, #####, or ######
 - NO underline-style headings with === or ---
 - Use **bold text** for emphasis and section labels instead
-- Examples:
-  * Instead of "## Usage", write "**Usage:**" or just "Here's how to use it:"
-  * Instead of "# Complete Guide", write "**Complete Guide**" or start directly with content
 - Start all responses with content, never with a heading
 
 **RESPONSE QUALITY:**
@@ -143,6 +150,7 @@ export default defineEventHandler(async (event) => {
 
           let hasToolUse = false
           const toolResults: { type: 'tool_result', tool_use_id: string, content: string }[] = []
+          const toolUses: { id: string, name: string, input: Record<string, unknown> }[] = []
 
           for await (const event of streamResponse) {
             if (event.type === 'content_block_start') {
@@ -153,6 +161,8 @@ export default defineEventHandler(async (event) => {
                 currentToolName = event.content_block.name
                 _toolInputJson = ''
                 hasToolUse = true
+                // Notify client that tool is being used
+                sendSSE(controller, { type: 'tool_start', tool: currentToolName })
               }
             } else if (event.type === 'content_block_delta') {
               if (event.delta.type === 'thinking_delta') {
@@ -175,12 +185,25 @@ export default defineEventHandler(async (event) => {
                 } catch {
                   // Invalid JSON, use empty args
                 }
+
+                // Track the tool use for message history
+                toolUses.push({
+                  id: currentToolUseId,
+                  name: currentToolName,
+                  input: toolArgs
+                })
+
+                // Execute the tool
                 const toolResult = await executeTool(currentToolName, toolArgs)
                 toolResults.push({
                   type: 'tool_result',
                   tool_use_id: currentToolUseId,
                   content: JSON.stringify(toolResult)
                 })
+
+                // Notify client of tool result
+                sendSSE(controller, { type: 'tool_end', tool: currentToolName, hasResults: true })
+
                 currentToolUseId = null
                 currentToolName = null
                 _toolInputJson = ''
@@ -190,18 +213,18 @@ export default defineEventHandler(async (event) => {
 
           // If tool was used, continue the conversation
           if (hasToolUse && toolResults.length > 0) {
-            // Add assistant's tool use to messages
+            // Add assistant's tool use to messages with CORRECT tool names and inputs
             const assistantContent: Array<{ type: 'text', text: string } | { type: 'tool_use', id: string, name: string, input: Record<string, unknown> }> = []
             if (fullText) {
               assistantContent.push({ type: 'text', text: fullText })
             }
-            // Add tool uses (simplified - in reality we'd track them during streaming)
-            for (const result of toolResults) {
+            // Add actual tool uses with correct names and inputs
+            for (const toolUse of toolUses) {
               assistantContent.push({
                 type: 'tool_use',
-                id: result.tool_use_id,
-                name: 'tool', // This is simplified
-                input: {}
+                id: toolUse.id,
+                name: toolUse.name,
+                input: toolUse.input
               })
             }
 
@@ -210,6 +233,9 @@ export default defineEventHandler(async (event) => {
               { role: 'assistant' as const, content: assistantContent.length > 0 ? assistantContent : [{ type: 'text' as const, text: ' ' }] },
               { role: 'user' as const, content: toolResults }
             ]
+
+            // Reset for next turn
+            fullText = ''
           } else {
             // No tool use, we're done
             break

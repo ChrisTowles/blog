@@ -92,7 +92,7 @@ export async function rerankDocuments(
       query,
       documents,
       top_n: topN,
-      return_documents: false // We just need scores and indices
+      api_version: 2 // Required for Cohere Rerank v3 on Bedrock
     })
   })
 

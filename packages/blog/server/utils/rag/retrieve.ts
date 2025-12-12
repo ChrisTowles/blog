@@ -99,7 +99,7 @@ async function bm25Search(query: string, limit: number): Promise<Array<ChunkCand
  * Reciprocal Rank Fusion to combine semantic and BM25 results
  * Formula: score = Σ (weight / (rank + k)) where k = 60 (standard)
  */
-function reciprocalRankFusion(
+export function reciprocalRankFusion(
   semanticResults: Array<ChunkCandidate & { distance: number }>,
   bm25Results: Array<ChunkCandidate & { rank: number }>,
   semanticWeight: number,

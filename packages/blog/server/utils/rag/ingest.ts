@@ -30,7 +30,7 @@ export interface IngestResult {
  * Generate contextual description for a chunk using Claude
  * Uses prompt caching to reduce cost when processing multiple chunks from same doc
  */
-async function generateContextualDescription(
+export async function generateContextualDescription(
   docTitle: string,
   docUrl: string,
   docContent: string,

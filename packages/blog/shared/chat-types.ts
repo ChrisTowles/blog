@@ -74,4 +74,15 @@ export interface SSETitleEvent {
   title: string
 }
 
-export type SSEEvent = SSETextEvent | SSEReasoningEvent | SSEDoneEvent | SSEErrorEvent | SSETitleEvent
+export interface SSEToolStartEvent {
+  type: 'tool_start'
+  tool: string
+}
+
+export interface SSEToolEndEvent {
+  type: 'tool_end'
+  tool: string
+  hasResults: boolean
+}
+
+export type SSEEvent = SSETextEvent | SSEReasoningEvent | SSEDoneEvent | SSEErrorEvent | SSETitleEvent | SSEToolStartEvent | SSEToolEndEvent
