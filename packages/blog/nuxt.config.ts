@@ -41,6 +41,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     anthropicApiKey: process.env.ANTHROPIC_API_KEY!,
+    awsRegion: process.env.AWS_REGION || 'us-east-1',
     public: {
       model_fast: 'claude-haiku-4-5',
       model: 'claude-sonnet-4-5'
