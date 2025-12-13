@@ -41,6 +41,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     anthropicApiKey: process.env.ANTHROPIC_API_KEY!,
+    awsRegion: process.env.AWS_REGION || 'us-east-1',
     public: {
       model_fast: 'claude-haiku-4-5',
       model: 'claude-sonnet-4-5'
@@ -86,6 +87,12 @@ export default defineNuxtConfig({
     preset: 'node-server',
     experimental: {
       openAPI: true
+    },
+
+    imports: {
+      // Nitro only auto-imports top-level server/utils/ by default.
+      // This enables auto-import from nested dirs (ai/, rag/, etc.)
+      dirs: ['./server/utils/**']
     },
     hooks: {
       async compiled(nitro) {

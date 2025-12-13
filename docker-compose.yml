@@ -1,7 +1,7 @@
-
 services:
   postgres:
-    image: postgres:17
+    # pgvector image includes the vector extension for RAG embeddings
+    image: pgvector/pgvector:pg17
     container_name: blog-postgres
     environment:
       POSTGRES_USER: postgres

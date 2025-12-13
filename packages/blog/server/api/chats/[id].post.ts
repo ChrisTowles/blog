@@ -1,9 +1,8 @@
-import type { UIMessage } from 'ai'
-import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, generateText, smoothStream, stepCountIs, streamText } from 'ai'
-
-import { anthropic } from '@ai-sdk/anthropic'
+import type { MessageParam } from '@anthropic-ai/sdk/resources/messages'
 import { z } from 'zod'
-import { chatTools } from '../../utils/ai/tools'
+import type { ChatMessage, MessagePart, SSEEvent } from '~~/shared/chat-types'
+import { chatTools, executeTool } from '../../utils/ai/tools'
+import { getAnthropicClient } from '../../utils/ai/anthropic'
 
 defineRouteMeta({
   openAPI: {
@@ -11,6 +10,50 @@ defineRouteMeta({
     tags: ['ai']
   }
 })
+
+const SYSTEM_PROMPT = `You are a knowledgeable and helpful AI assistant on Chris Towles's Blog. Try to be funny but helpful.
+Your goal is to provide clear, accurate, and well-structured responses.
+
+**CRITICAL: USE THE SEARCH TOOL**
+- ALWAYS use the searchBlogContent tool FIRST when users ask about:
+  * AI, Claude, LLMs, context engineering, prompts
+  * Vue, Nuxt, TypeScript, JavaScript
+  * DevOps, Terraform, GCP, AWS, Docker
+  * Best practices, testing, code review
+  * Any technical topic that might be covered in the blog
+- Do NOT answer from memory alone - search the blog first!
+- When citing results, use markdown links: [Post Title](/blog/post-slug)
+
+**FORMATTING RULES (CRITICAL):**
+- ABSOLUTELY NO MARKDOWN HEADINGS: Never use #, ##, ###, ####, #####, or ######
+- NO underline-style headings with === or ---
+- Use **bold text** for emphasis and section labels instead
+- Start all responses with content, never with a heading
+
+**RESPONSE QUALITY:**
+- Be concise yet comprehensive
+- Use examples when helpful
+- Break down complex topics into digestible parts
+- Maintain a friendly, professional tone`
+
+function convertToAnthropicMessages(messages: ChatMessage[]): MessageParam[] {
+  return messages.map((msg) => {
+    const textContent = msg.parts
+      .filter((p): p is { type: 'text', text: string } => p.type === 'text')
+      .map(p => p.text)
+      .join('\n')
+
+    return {
+      role: msg.role,
+      content: textContent || ' '
+    }
+  })
+}
+
+function sendSSE(controller: ReadableStreamDefaultController, event: SSEEvent) {
+  const encoder = new TextEncoder()
+  controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`))
+}
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
@@ -22,7 +65,7 @@ export default defineEventHandler(async (event) => {
 
   const { model, messages } = await readValidatedBody(event, z.object({
     model: z.string(),
-    messages: z.array(z.custom<UIMessage>())
+    messages: z.array(z.custom<ChatMessage>())
   }).parse)
 
   const db = useDrizzle()
@@ -38,21 +81,30 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Chat not found' })
   }
 
-  if (!chat.title) {
-    const { text: title } = await generateText({
-      model: anthropic(config.public.model_fast),
+  // Generate title if needed
+  let generatedTitle: string | null = null
+  if (!chat.title && messages.length > 0) {
+    const client = getAnthropicClient()
+    const titleResponse = await client.messages.create({
+      model: config.public.model_fast as string,
+      max_tokens: 50,
       system: `You are a title generator for a chat:
-          - Generate a short title based on the first user's message
-          - The title should be less than 30 characters long
-          - The title should be a summary of the user's message
-          - Do not use quotes (' or ") or colons (:) or any other punctuation
-          - Do not use markdown, just plain text`,
-      prompt: JSON.stringify(messages[0].parts)
+- Generate a short title based on the first user's message
+- The title should be less than 30 characters long
+- The title should be a summary of the user's message
+- Do not use quotes (' or ") or colons (:) or any other punctuation
+- Do not use markdown, just plain text`,
+      messages: [{ role: 'user', content: JSON.stringify(messages[0]?.parts ?? '') }]
     })
 
-    await db.update(tables.chats).set({ title }).where(eq(tables.chats.id, id as string))
+    const titleContent = titleResponse.content[0]
+    if (titleContent?.type === 'text') {
+      generatedTitle = titleContent.text.slice(0, 30)
+      await db.update(tables.chats).set({ title: generatedTitle }).where(eq(tables.chats.id, id as string))
+    }
   }
 
+  // Save the last user message
   const lastMessage = messages[messages.length - 1]
   if (lastMessage?.role === 'user' && messages.length > 1) {
     await db.insert(tables.messages).values({
@@ -62,67 +114,163 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const stream = createUIMessageStream({
-    execute: ({ writer }) => {
-      const result = streamText({
-        model: anthropic(model),
-        system: `You are a knowledgeable and helpful AI assistant on Chris Towles's Blog. Try to be funny but helpful.
-Your goal is to provide clear, accurate, and well-structured responses.
+  // Create SSE stream
+  const stream = new ReadableStream({
+    async start(controller) {
+      try {
+        if (generatedTitle) {
+          sendSSE(controller, { type: 'title', title: generatedTitle })
+        }
 
-**FORMATTING RULES (CRITICAL):**
-- ABSOLUTELY NO MARKDOWN HEADINGS: Never use #, ##, ###, ####, #####, or ######
-- NO underline-style headings with === or ---
-- Use **bold text** for emphasis and section labels instead
-- Examples:
-  * Instead of "## Usage", write "**Usage:**" or just "Here's how to use it:"
-  * Instead of "# Complete Guide", write "**Complete Guide**" or start directly with content
-- Start all responses with content, never with a heading
+        const client = getAnthropicClient()
+        const anthropicMessages = convertToAnthropicMessages(messages)
 
-**RESPONSE QUALITY:**
-- Be concise yet comprehensive
-- Use examples when helpful
-- Break down complex topics into digestible parts
-- Maintain a friendly, professional tone`,
-        messages: convertToModelMessages(messages),
-        providerOptions: {
-          // openai: {
-          //   reasoningEffort: 'low',
-          //   reasoningSummary: 'detailed'
-          // },
-          // google: {
-          //   thinkingConfig: {
-          //     includeThoughts: true,
-          //     thinkingBudget: 2048
-          //   }
-          // }
-        },
-        stopWhen: stepCountIs(5),
-        experimental_transform: smoothStream({ chunking: 'word' }),
-        tools: chatTools
-      })
+        let fullText = ''
+        let reasoningText = ''
+        const messageId = crypto.randomUUID()
+        let currentToolUseId: string | null = null
+        let currentToolName: string | null = null
+        let _toolInputJson = ''
 
-      if (!chat.title) {
-        writer.write({
-          type: 'data-chat-title',
-          data: { message: 'Generating title...' },
-          transient: true
+        // Run up to 5 turns for tool use
+        let turnCount = 0
+        const maxTurns = 5
+        let currentMessages = [...anthropicMessages]
+
+        while (turnCount < maxTurns) {
+          turnCount++
+
+          const streamResponse = await client.messages.stream({
+            model,
+            max_tokens: 4096,
+            system: SYSTEM_PROMPT,
+            messages: currentMessages,
+            tools: chatTools
+          })
+
+          let hasToolUse = false
+          const toolResults: { type: 'tool_result', tool_use_id: string, content: string }[] = []
+          const toolUses: { id: string, name: string, input: Record<string, unknown> }[] = []
+
+          for await (const event of streamResponse) {
+            if (event.type === 'content_block_start') {
+              if (event.content_block.type === 'thinking') {
+                // Extended thinking block starting
+              } else if (event.content_block.type === 'tool_use') {
+                currentToolUseId = event.content_block.id
+                currentToolName = event.content_block.name
+                _toolInputJson = ''
+                hasToolUse = true
+                // Notify client that tool is being used
+                sendSSE(controller, { type: 'tool_start', tool: currentToolName })
+              }
+            } else if (event.type === 'content_block_delta') {
+              if (event.delta.type === 'thinking_delta') {
+                reasoningText += event.delta.thinking
+                sendSSE(controller, { type: 'reasoning', text: event.delta.thinking })
+              } else if (event.delta.type === 'text_delta') {
+                fullText += event.delta.text
+                sendSSE(controller, { type: 'text', text: event.delta.text })
+              } else if (event.delta.type === 'input_json_delta') {
+                _toolInputJson += event.delta.partial_json
+              }
+            } else if (event.type === 'content_block_stop') {
+              if (currentToolUseId && currentToolName) {
+                // Parse tool input and execute tool
+                let toolArgs: Record<string, unknown> = {}
+                try {
+                  if (_toolInputJson) {
+                    toolArgs = JSON.parse(_toolInputJson)
+                  }
+                } catch {
+                  // Invalid JSON, use empty args
+                }
+
+                // Track the tool use for message history
+                toolUses.push({
+                  id: currentToolUseId,
+                  name: currentToolName,
+                  input: toolArgs
+                })
+
+                // Execute the tool
+                const toolResult = await executeTool(currentToolName, toolArgs)
+                toolResults.push({
+                  type: 'tool_result',
+                  tool_use_id: currentToolUseId,
+                  content: JSON.stringify(toolResult)
+                })
+
+                // Notify client of tool result
+                sendSSE(controller, { type: 'tool_end', tool: currentToolName, hasResults: true })
+
+                currentToolUseId = null
+                currentToolName = null
+                _toolInputJson = ''
+              }
+            }
+          }
+
+          // If tool was used, continue the conversation
+          if (hasToolUse && toolResults.length > 0) {
+            // Add assistant's tool use to messages with CORRECT tool names and inputs
+            const assistantContent: Array<{ type: 'text', text: string } | { type: 'tool_use', id: string, name: string, input: Record<string, unknown> }> = []
+            if (fullText) {
+              assistantContent.push({ type: 'text', text: fullText })
+            }
+            // Add actual tool uses with correct names and inputs
+            for (const toolUse of toolUses) {
+              assistantContent.push({
+                type: 'tool_use',
+                id: toolUse.id,
+                name: toolUse.name,
+                input: toolUse.input
+              })
+            }
+
+            currentMessages = [
+              ...currentMessages,
+              { role: 'assistant' as const, content: assistantContent.length > 0 ? assistantContent : [{ type: 'text' as const, text: ' ' }] },
+              { role: 'user' as const, content: toolResults }
+            ]
+
+            // Reset for next turn
+            fullText = ''
+          } else {
+            // No tool use, we're done
+            break
+          }
+        }
+
+        // Save assistant message to database
+        const messageParts: MessagePart[] = []
+        if (reasoningText) {
+          messageParts.push({ type: 'reasoning', text: reasoningText, state: 'done' })
+        }
+        if (fullText) {
+          messageParts.push({ type: 'text', text: fullText })
+        }
+
+        await db.insert(tables.messages).values({
+          chatId: chat.id,
+          role: 'assistant',
+          parts: messageParts
         })
-      }
 
-      writer.merge(result.toUIMessageStream({
-        sendReasoning: true
-      }))
-    },
-    onFinish: async ({ messages }) => {
-      await db.insert(tables.messages).values(messages.map(message => ({
-        chatId: chat.id,
-        role: message.role as 'user' | 'assistant',
-        parts: message.parts
-      })))
+        sendSSE(controller, { type: 'done', messageId })
+        controller.close()
+      } catch (error) {
+        console.error('Stream error:', error)
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        sendSSE(controller, { type: 'error', error: errorMessage })
+        controller.close()
+      }
     }
   })
 
-  return createUIMessageStreamResponse({
-    stream
-  })
+  setHeader(event, 'Content-Type', 'text/event-stream')
+  setHeader(event, 'Cache-Control', 'no-cache')
+  setHeader(event, 'Connection', 'keep-alive')
+
+  return stream
 })
