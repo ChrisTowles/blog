@@ -74,7 +74,7 @@ export interface ParsedMarkdown {
   slug: string
 }
 
-export function parseMarkdown(markdown: string, filePath: string): ParsedMarkdown {
+export function parseBlogMarkdown(markdown: string, filePath: string): ParsedMarkdown {
   const frontmatterMatch = markdown.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/)
 
   let frontmatter: Record<string, unknown> = {}

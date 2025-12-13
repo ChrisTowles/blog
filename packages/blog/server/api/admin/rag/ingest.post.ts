@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { ingestBlogPosts, ingestDocument } from '../../../utils/rag/ingest'
+// ingestBlogPosts, ingestDocument auto-imported from server/utils/**
 
 defineRouteMeta({
   openAPI: {

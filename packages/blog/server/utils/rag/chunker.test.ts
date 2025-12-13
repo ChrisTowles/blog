@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { chunkText, parseMarkdown, hashContent, type Chunk } from './chunker'
+import { chunkText, parseBlogMarkdown, hashContent, type Chunk } from './chunker'
 
 describe('chunkText', () => {
   it('returns empty array for empty string', () => {
@@ -83,7 +83,7 @@ describe('chunkText', () => {
   })
 })
 
-describe('parseMarkdown', () => {
+describe('parseBlogMarkdown', () => {
   it('extracts frontmatter and content', () => {
     const markdown = `---
 title: Test Post
@@ -95,7 +95,7 @@ date: 2025-01-15
 
 Some content here.`
 
-    const result = parseMarkdown(markdown, '/path/to/20250115.test-post.md')
+    const result = parseBlogMarkdown(markdown, '/path/to/20250115.test-post.md')
 
     expect(result.title).toBe('Test Post')
     expect(result.frontmatter.description).toBe('A test description')
@@ -106,13 +106,13 @@ Some content here.`
   it('extracts slug from filename', () => {
     const markdown = '---\ntitle: Test\n---\nContent'
 
-    const result = parseMarkdown(markdown, '/blog/content/20250115.my-blog-slug.md')
+    const result = parseBlogMarkdown(markdown, '/blog/content/20250115.my-blog-slug.md')
     expect(result.slug).toBe('my-blog-slug')
   })
 
   it('handles markdown without frontmatter', () => {
     const markdown = '# Just a heading\n\nSome content'
-    const result = parseMarkdown(markdown, 'simple.md')
+    const result = parseBlogMarkdown(markdown, 'simple.md')
 
     expect(result.content).toBe(markdown)
     expect(result.slug).toBe('simple')
@@ -124,7 +124,7 @@ title: "Quoted Title"
 ---
 Content`
 
-    const result = parseMarkdown(markdown, 'post.md')
+    const result = parseBlogMarkdown(markdown, 'post.md')
     expect(result.title).toBe('Quoted Title')
   })
 
@@ -134,7 +134,7 @@ description: no title here
 ---
 Content`
 
-    const result = parseMarkdown(markdown, '20250115.fallback-title.md')
+    const result = parseBlogMarkdown(markdown, '20250115.fallback-title.md')
     expect(result.title).toBe('fallback-title')
   })
 })

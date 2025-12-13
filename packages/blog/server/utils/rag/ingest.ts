@@ -1,7 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { eq } from 'drizzle-orm'
-import { chunkText, parseMarkdown, hashContent } from './chunker'
+import { chunkText, parseBlogMarkdown, hashContent } from './chunker'
 import { embedTexts } from '../ai/bedrock'
 import { getAnthropicClient } from '../ai/anthropic'
 
@@ -95,7 +95,7 @@ export async function ingestBlogPosts(): Promise<IngestResult> {
       const content = await readFile(filePath, 'utf-8')
       const contentHash = await hashContent(content)
 
-      const parsed = parseMarkdown(content, file)
+      const parsed = parseBlogMarkdown(content, file)
       const url = `/blog/${parsed.slug}`
 
       // Check if document exists and is unchanged
@@ -199,7 +199,7 @@ export async function ingestDocument(slug: string): Promise<IngestResult> {
 
   // Find file matching slug
   const file = files.find((f) => {
-    const parsed = parseMarkdown('', f)
+    const parsed = parseBlogMarkdown('', f)
     return parsed.slug === slug
   })
 

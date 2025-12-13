@@ -88,6 +88,12 @@ export default defineNuxtConfig({
     experimental: {
       openAPI: true
     },
+
+    imports: {
+      // Nitro only auto-imports top-level server/utils/ by default.
+      // This enables auto-import from nested dirs (ai/, rag/, etc.)
+      dirs: ['./server/utils/**']
+    },
     hooks: {
       async compiled(nitro) {
         const { rollup } = await import('rollup')

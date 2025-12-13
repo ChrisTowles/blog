@@ -1,7 +1,6 @@
 import { z } from 'zod'
-import { retrieveRAG } from '../../../utils/rag/retrieve'
-import { embedText } from '../../../utils/ai/bedrock'
 import { sql } from 'drizzle-orm'
+// retrieveRAG, embedText auto-imported from server/utils/**
 
 interface SemanticRow {
   id: string

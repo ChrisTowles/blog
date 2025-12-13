@@ -1,9 +1,7 @@
 import { z } from 'zod'
 import { eq } from 'drizzle-orm'
 import { readFile } from 'node:fs/promises'
-import { chunkText, parseMarkdown, hashContent } from '../../../../../utils/rag/chunker'
-import { embedTexts } from '../../../../../utils/ai/bedrock'
-import { generateContextualDescription } from '../../../../../utils/rag/ingest'
+// Utils auto-imported from server/utils/** via nitro config
 
 defineRouteMeta({
   openAPI: {
@@ -42,7 +40,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const contentHash = await hashContent(content)
-  const parsed = parseMarkdown(content, existingDoc.path)
+  const parsed = parseBlogMarkdown(content, existingDoc.path)
 
   // Delete existing chunks
   await db.delete(tables.documentChunks)
