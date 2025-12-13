@@ -100,3 +100,13 @@ Full terraform docs: [infra/terraform/README.md](infra/terraform/README.md)
 - Arrow functions for callbacks
 - const/let appropriately, destructuring, template literals
 - ES6+ features preferred
+
+## Agent Usage
+
+**Always use subagents for everything.** When exploring code, researching, planning, or doing multi-step work - spawn a Task agent. This keeps context clean, enables parallelism, and matches the workflow documented in #100.
+
+Examples:
+- Codebase exploration → `Task` with `subagent_type=Explore`
+- Implementation planning → `Task` with `subagent_type=Plan`
+- Feature development → `Task` with `subagent_type=feature-dev:*`
+- Code review → `Task` with `subagent_type=feature-dev:code-reviewer`
