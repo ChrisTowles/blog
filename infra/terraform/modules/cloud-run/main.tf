@@ -47,7 +47,7 @@ resource "google_cloud_run_v2_service" "main" {
       dynamic "env" {
         for_each = var.anthropic_api_key_secret_id != "" ? [1] : []
         content {
-          name = "ANTHROPIC_API_KEY"
+          name = "NUXT_ANTHROPIC_API_KEY"
           value_source {
             secret_key_ref {
               secret  = var.anthropic_api_key_secret_id

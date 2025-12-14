@@ -6,6 +6,7 @@ import path from 'node:path'
 $.verbose = true
 
 const SCRIPT_DIR = import.meta.dirname
+const PROJECT_ROOT = path.resolve(SCRIPT_DIR, '..')
 
 function parseTfvars(filePath: string): Record<string, string> {
   const content = fs.readFileSync(filePath, 'utf-8')
@@ -21,16 +22,13 @@ function parseTfvars(filePath: string): Record<string, string> {
 
 function getEnvConfig(env: 'staging' | 'production') {
   const tfDir = env === 'staging' ? 'staging' : 'prod'
-  const tfvarsPath = path.join(SCRIPT_DIR, 'terraform', 'environments', tfDir, 'terraform.tfvars')
+  const tfvarsPath = path.join(PROJECT_ROOT, 'infra', 'terraform', 'environments', tfDir, 'terraform.tfvars')
   const vars = parseTfvars(tfvarsPath)
-
-  // Service name follows pattern: ${environment}-blog (from cloud-run module)
-  const serviceEnv = env === 'production' ? 'prod' : 'staging'
 
   return {
     project: vars.project_id,
     region: vars.region || 'us-central1',
-    service: `${serviceEnv}-blog`
+    service: 'blog'
   }
 }
 
