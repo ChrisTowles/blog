@@ -71,6 +71,32 @@ resource "google_cloud_run_v2_service" "main" {
       }
 
       dynamic "env" {
+        for_each = var.aws_access_key_id_secret_id != "" ? [1] : []
+        content {
+          name = "AWS_ACCESS_KEY_ID"
+          value_source {
+            secret_key_ref {
+              secret  = var.aws_access_key_id_secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
+
+      dynamic "env" {
+        for_each = var.aws_secret_access_key_secret_id != "" ? [1] : []
+        content {
+          name = "AWS_SECRET_ACCESS_KEY"
+          value_source {
+            secret_key_ref {
+              secret  = var.aws_secret_access_key_secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
+
+      dynamic "env" {
         for_each = var.additional_env_vars
         content {
           name  = env.key

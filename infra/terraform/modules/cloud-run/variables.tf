@@ -83,3 +83,15 @@ variable "cloud_sql_connection_name" {
   type        = string
   default     = ""
 }
+
+variable "aws_access_key_id_secret_id" {
+  description = "Secret Manager secret ID for AWS access key ID"
+  type        = string
+  default     = ""
+}
+
+variable "aws_secret_access_key_secret_id" {
+  description = "Secret Manager secret ID for AWS secret access key"
+  type        = string
+  default     = ""
+}

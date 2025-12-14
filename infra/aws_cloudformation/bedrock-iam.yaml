@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: IAM resources for Bedrock RAG (embeddings + reranking)
+
+# NOTE: These resources were created manually via AWS CLI.
+# This template is for documentation/recreation purposes.
+# The actual resources already exist in AWS account 223452314076.
+
+Parameters:
+  Environment:
+    Type: String
+    AllowedValues:
+      - staging
+      - prod
+    Description: Environment name
+
+Resources:
+  BedrockRAGPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: BedrockRAGPolicy
+      Description: Minimal permissions for Bedrock RAG (Titan Embeddings + Cohere Rerank)
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - bedrock:InvokeModel
+            Resource:
+              - arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0
+              - arn:aws:bedrock:us-east-1::foundation-model/cohere.rerank-v3-5:0
+
+  BedrockUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Sub blog-${Environment}-bedrock
+      ManagedPolicyArns:
+        - !Ref BedrockRAGPolicy
+
+  BedrockAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref BedrockUser
+
+Outputs:
+  AccessKeyId:
+    Description: AWS Access Key ID (store in GCP Secret Manager)
+    Value: !Ref BedrockAccessKey
+
+  SecretAccessKey:
+    Description: AWS Secret Access Key (store in GCP Secret Manager)
+    Value: !GetAtt BedrockAccessKey.SecretAccessKey
+
+  UserArn:
+    Description: IAM User ARN
+    Value: !GetAtt BedrockUser.Arn
+
+  PolicyArn:
+    Description: IAM Policy ARN
+    Value: !Ref BedrockRAGPolicy

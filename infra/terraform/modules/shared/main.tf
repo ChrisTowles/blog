@@ -69,6 +69,16 @@ data "google_secret_manager_secret" "session_password" {
   project   = var.project_id
 }
 
+data "google_secret_manager_secret" "aws_access_key_id" {
+  secret_id = "aws-access-key-id"
+  project   = var.project_id
+}
+
+data "google_secret_manager_secret" "aws_secret_access_key" {
+  secret_id = "aws-secret-access-key"
+  project   = var.project_id
+}
+
 # Removed blocks to safely remove resources from state without deleting them
 removed {
   from = google_secret_manager_secret.anthropic_api_key

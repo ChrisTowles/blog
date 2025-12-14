@@ -11,7 +11,10 @@ This is just my personal blog at <https://Chris.Towles.dev>
 - [Cloudflare Dashboard](https://dash.cloudflare.com/)
 - [Nuxt UI Components](https://ui.nuxt.com/components#element)
 - [Google Search Console](https://search.google.com/search-console/)
-
+- [AWS Console](https://ctowles.awsapps.com/start/#/?tab=accounts)
+  - `223452314076`
+  - `aws configure sso`
+- 
 ## Blog Tech Stack
 
 - [Nuxt](https://nuxtjs.org/)
