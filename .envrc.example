@@ -1,0 +1,19 @@
+# direnv configuration for loading environment variables
+# Copy this file to .envrc and update the path to your .env location
+#
+# Setup:
+#   1. Install direnv: brew install direnv (or apt install direnv)
+#   2. Add to shell: eval "$(direnv hook zsh)"  # or bash
+#   3. Copy this file: cp .envrc.example .envrc
+#   4. Update the path below to your .env file location
+#   5. Run: direnv allow
+#
+# For git worktrees, store .env files in a central location outside the repo
+# so all worktrees can share the same environment variables.
+
+# dotenv ~/code/p/toolbox/direnv/config/blog-env/.env
+# source_env ~/code/p/toolbox/direnv/config/blog-env/.env.stage
+# source_env ~/code/p/toolbox/direnv/config/blog-env/.env.prod
+
+###
+# source_env ~/code/p/toolbox/direnv/config/blog-env/.envrc
