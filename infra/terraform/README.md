@@ -126,6 +126,21 @@ echo -n "AKIAXXXXXXXX" | gcloud secrets create aws-access-key-id --data-file=- -
 echo -n "xxxxxxxxxx" | gcloud secrets create aws-secret-access-key --data-file=- --project=$PROJECT
 ```
 
+#### GitHub OAuth credentials
+Create OAuth apps at https://github.com/settings/developers (one per environment).
+
+Callback URLs:
+- Staging: `https://staging.emmer.dev/api/auth/github`
+- Production: `https://emmer.dev/api/auth/github`
+
+```bash
+# Set PROJECT to staging or production
+export PROJECT=blog-towles-staging  # or blog-towles-production
+
+echo -n "YOUR_CLIENT_ID" | gcloud secrets create github-oauth-client-id --data-file=- --project=$PROJECT
+echo -n "YOUR_CLIENT_SECRET" | gcloud secrets create github-oauth-client-secret --data-file=- --project=$PROJECT
+```
+
 #### Update secrets
 ```bash
 # Set PROJECT to staging or production
@@ -136,6 +151,8 @@ echo -n "NEW_VALUE" | gcloud secrets versions add session-password --data-file=-
 echo -n "NEW_VALUE" | gcloud secrets versions add database-password --data-file=- --project=$PROJECT
 echo -n "NEW_VALUE" | gcloud secrets versions add aws-access-key-id --data-file=- --project=$PROJECT
 echo -n "NEW_VALUE" | gcloud secrets versions add aws-secret-access-key --data-file=- --project=$PROJECT
+echo -n "NEW_VALUE" | gcloud secrets versions add github-oauth-client-id --data-file=- --project=$PROJECT
+echo -n "NEW_VALUE" | gcloud secrets versions add github-oauth-client-secret --data-file=- --project=$PROJECT
 ```
 
 #### View secrets
@@ -146,6 +163,8 @@ export PROJECT=blog-towles-staging  # or blog-towles-production
 gcloud secrets versions access latest --secret=anthropic-api-key --project=$PROJECT
 gcloud secrets versions access latest --secret=session-password --project=$PROJECT
 gcloud secrets versions access latest --secret=database-password --project=$PROJECT
+gcloud secrets versions access latest --secret=github-oauth-client-id --project=$PROJECT
+gcloud secrets versions access latest --secret=github-oauth-client-secret --project=$PROJECT
 ```
 
 ### 4. Configure environment

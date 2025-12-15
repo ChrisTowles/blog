@@ -1,33 +1,73 @@
+import { z } from 'zod'
+
+const envSchema = z.object({
+  // Database
+  DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+
+  // Nuxt Auth
+  NUXT_SESSION_PASSWORD: z.string().min(32, 'NUXT_SESSION_PASSWORD must be at least 32 characters'),
+
+  // Anthropic
+  ANTHROPIC_API_KEY: z.string().min(1, 'ANTHROPIC_API_KEY is required'),
+
+  // GitHub OAuth
+  NUXT_OAUTH_GITHUB_CLIENT_ID: z.string().min(1, 'NUXT_OAUTH_GITHUB_CLIENT_ID is required'),
+  NUXT_OAUTH_GITHUB_CLIENT_SECRET: z.string().min(1, 'NUXT_OAUTH_GITHUB_CLIENT_SECRET is required'),
+
+  // AWS Bedrock
+  AWS_REGION: z.string().default('us-east-1'),
+  AWS_ACCESS_KEY_ID: z.string().min(1, 'AWS_ACCESS_KEY_ID is required'),
+  AWS_SECRET_ACCESS_KEY: z.string().min(1, 'AWS_SECRET_ACCESS_KEY is required')
+})
+
+type EnvConfig = z.infer<typeof envSchema>
+
+const SENSITIVE_KEYS = new Set([
+  'DATABASE_URL',
+  'NUXT_SESSION_PASSWORD',
+  'ANTHROPIC_API_KEY',
+  'NUXT_OAUTH_GITHUB_CLIENT_SECRET',
+  'AWS_SECRET_ACCESS_KEY'
+])
+
+function maskValue(key: string, value: string): string {
+  if (!SENSITIVE_KEYS.has(key)) return value
+  if (value.length >= 6) return `${value.slice(0, 2)}***${value.slice(-4)}`
+  return '***'
+}
+
+function logConfig(config: EnvConfig) {
+  console.log('='.repeat(60))
+  console.log('SERVER STARTUP - Validated Environment')
+  console.log('='.repeat(60))
+
+  for (const [key, value] of Object.entries(config).sort(([a], [b]) => a.localeCompare(b))) {
+    console.log(`${key}=${maskValue(key, String(value))}`)
+  }
+
+  console.log('='.repeat(60))
+}
+
 export default defineNitroPlugin(() => {
-  // Skip in local dev mode
-  if (import.meta.dev) {
-    console.log('='.repeat(10) + ' Skipping startup log in dev mode ' + '='.repeat(10))
-    return
-  }
+  const result = envSchema.safeParse(process.env)
 
-  console.log('='.repeat(60))
-  console.log('SERVER STARTUP - Environment Variables')
-  console.log('='.repeat(60))
-
-  const env = process.env
-  const sortedKeys = Object.keys(env).sort()
-
-  for (const key of sortedKeys) {
-    // Mask sensitive values
-    const isSensitive = key.toLowerCase().includes('secret')
-      || key.toLowerCase().includes('password')
-      || key.toLowerCase().includes('key')
-      || key.toLowerCase().includes('token')
-
-    let value = env[key] ?? ''
-    if (isSensitive && value.length >= 6) {
-      value = `${value.slice(0, 2)}***${value.slice(-4)}`
-    } else if (isSensitive) {
-      value = '***'
+  if (!result.success) {
+    console.error('='.repeat(60))
+    console.error('ENV VALIDATION FAILED')
+    console.error('='.repeat(60))
+    for (const issue of result.error.issues) {
+      console.error(`  ${issue.path.join('.')}: ${issue.message}`)
     }
-
-    console.log(`${key}=${value}`)
+    console.error('='.repeat(60))
+    throw new Error('Environment validation failed')
+  } else {
+    console.log('Environment validation succeeded')
   }
 
-  console.log('='.repeat(60))
+  if (import.meta.dev) {
+    console.log('='.repeat(10) + ' Skipping env logging in dev mode ' + '='.repeat(10))
+    // return
+  }
+
+  logConfig(result.data)
 })

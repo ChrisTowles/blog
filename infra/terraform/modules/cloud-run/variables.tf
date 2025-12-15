@@ -95,3 +95,15 @@ variable "aws_secret_access_key_secret_id" {
   type        = string
   default     = ""
 }
+
+variable "github_oauth_client_id_secret_id" {
+  description = "Secret Manager secret ID for GitHub OAuth client ID"
+  type        = string
+  default     = ""
+}
+
+variable "github_oauth_client_secret_secret_id" {
+  description = "Secret Manager secret ID for GitHub OAuth client secret"
+  type        = string
+  default     = ""
+}

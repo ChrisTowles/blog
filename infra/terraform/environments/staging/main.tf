@@ -50,11 +50,13 @@ module "cloud_run" {
   service_account_email         = module.shared.service_account_email
   database_connection_secret_id = module.cloud_sql.connection_string_secret_id
   cloud_sql_connection_name     = module.cloud_sql.instance_connection_name
-  anthropic_api_key_secret_id     = module.shared.anthropic_api_key_secret_id
-  session_password_secret_id      = module.shared.session_password_secret_id
-  aws_access_key_id_secret_id     = module.shared.aws_access_key_id_secret_id
-  aws_secret_access_key_secret_id = module.shared.aws_secret_access_key_secret_id
-  site_url                        = var.site_url
+  anthropic_api_key_secret_id          = module.shared.anthropic_api_key_secret_id
+  session_password_secret_id           = module.shared.session_password_secret_id
+  aws_access_key_id_secret_id          = module.shared.aws_access_key_id_secret_id
+  aws_secret_access_key_secret_id      = module.shared.aws_secret_access_key_secret_id
+  github_oauth_client_id_secret_id     = module.shared.github_oauth_client_id_secret_id
+  github_oauth_client_secret_secret_id = module.shared.github_oauth_client_secret_secret_id
+  site_url                             = var.site_url
   min_instances                 = 0
   max_instances                 = 2
 
