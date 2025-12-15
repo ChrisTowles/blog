@@ -61,7 +61,8 @@ export default defineNuxtConfig({
   },
 
   experimental: {
-    viewTransition: true
+    viewTransition: true,
+    rolldown: true
   },
 
   // app: {
@@ -133,19 +134,12 @@ export default defineNuxtConfig({
   },
 
   vite: {
-    // include bebug fixed a issue, in mdx, does not provide an export named 'default' (at create-tokenizer.js
+    // include debug fixed a issue, in mdx, does not provide an export named 'default' (at create-tokenizer.js
     optimizeDeps: {
       include: ['debug']
-    },
-    $server: {
-      build: {
-        rollupOptions: {
-          output: {
-            preserveModules: true
-          }
-        }
-      }
     }
+    // Note: vite:vue-jsx shows esbuild deprecation warning until @nuxt/vite-builder updates
+    // Vite 8 auto-converts esbuild→oxc via compatibility layer, so it still works
   },
 
   // nitro: {
