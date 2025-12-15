@@ -1,6 +1,7 @@
 // import { fileURLToPath } from 'node:url'
 import { defineVitestConfig } from '@nuxt/test-utils/config'
 import { config } from 'dotenv'
+import findConfig from 'find-config'
 
 export default defineVitestConfig({
   test: {
@@ -27,7 +28,7 @@ export default defineVitestConfig({
     env: {
       // Add any environment variables you want to set for the tests
 
-      ...config({ path: '.env' }).parsed
+      ...config({ path: findConfig('.env') }).parsed
     }
   }
 })
