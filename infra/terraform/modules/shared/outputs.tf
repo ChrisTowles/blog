@@ -27,3 +27,13 @@ output "session_password_secret_id" {
   description = "Secret Manager secret ID for Nuxt session password"
   value       = data.google_secret_manager_secret.session_password.secret_id
 }
+
+output "aws_access_key_id_secret_id" {
+  description = "Secret Manager secret ID for AWS access key ID"
+  value       = data.google_secret_manager_secret.aws_access_key_id.secret_id
+}
+
+output "aws_secret_access_key_secret_id" {
+  description = "Secret Manager secret ID for AWS secret access key"
+  value       = data.google_secret_manager_secret.aws_secret_access_key.secret_id
+}

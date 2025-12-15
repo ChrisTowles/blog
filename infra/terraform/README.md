@@ -117,6 +117,15 @@ echo "DB_PASSWORD: $DB_PASSWORD"
 echo -n "$DB_PASSWORD" | gcloud secrets create database-password --data-file=- --project=$PROJECT
 ```
 
+#### AWS Bedrock credentials (for RAG embeddings)
+```bash
+# Set PROJECT to staging or production
+export PROJECT=blog-towles-staging  # or blog-towles-production
+
+echo -n "AKIAXXXXXXXX" | gcloud secrets create aws-access-key-id --data-file=- --project=$PROJECT
+echo -n "xxxxxxxxxx" | gcloud secrets create aws-secret-access-key --data-file=- --project=$PROJECT
+```
+
 #### Update secrets
 ```bash
 # Set PROJECT to staging or production
@@ -125,6 +134,8 @@ export PROJECT=blog-towles-staging  # or blog-towles-production
 echo -n "NEW_VALUE" | gcloud secrets versions add anthropic-api-key --data-file=- --project=$PROJECT
 echo -n "NEW_VALUE" | gcloud secrets versions add session-password --data-file=- --project=$PROJECT
 echo -n "NEW_VALUE" | gcloud secrets versions add database-password --data-file=- --project=$PROJECT
+echo -n "NEW_VALUE" | gcloud secrets versions add aws-access-key-id --data-file=- --project=$PROJECT
+echo -n "NEW_VALUE" | gcloud secrets versions add aws-secret-access-key --data-file=- --project=$PROJECT
 ```
 
 #### View secrets
