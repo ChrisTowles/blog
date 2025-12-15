@@ -180,7 +180,13 @@ async function deployContainer() {
   $.verbose = false
   cd(rootDir)
 
+  // Output the public URL
+  const publicUrl = environment === 'staging'
+    ? 'https://stage-chris.towles.dev'
+    : 'https://chris.towles.dev'
+
   console.log(chalk.green(`\n✅ Successfully deployed ${imageWithDateTag} to ${environment}!`))
+  console.log(chalk.cyan(`\n🌐 ${publicUrl}`))
 }
 
 async function main() {
