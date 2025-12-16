@@ -153,6 +153,8 @@ export default defineEventHandler(async (event) => {
           })
 
           let hasToolUse = false
+          let turnThinking = '' // Track thinking for this turn only
+          let turnThinkingSignature = '' // Track signature for this turn's thinking
           const toolResults: { type: 'tool_result', tool_use_id: string, content: string }[] = []
           const toolUses: { id: string, name: string, input: Record<string, unknown> }[] = []
 
@@ -170,7 +172,11 @@ export default defineEventHandler(async (event) => {
             } else if (event.type === 'content_block_delta') {
               if (event.delta.type === 'thinking_delta') {
                 reasoningText += event.delta.thinking
+                turnThinking += event.delta.thinking
                 sendSSE(controller, { type: 'reasoning', text: event.delta.thinking })
+              } else if (event.delta.type === 'signature_delta') {
+                // Capture signature for thinking block (required when passing back to API)
+                turnThinkingSignature += event.delta.signature
               } else if (event.delta.type === 'text_delta') {
                 fullText += event.delta.text
                 sendSSE(controller, { type: 'text', text: event.delta.text })
@@ -229,8 +235,12 @@ export default defineEventHandler(async (event) => {
 
           // If tool was used, continue the conversation
           if (hasToolUse && toolResults.length > 0) {
-            // Add assistant's tool use to messages with CORRECT tool names and inputs
-            const assistantContent: Array<{ type: 'text', text: string } | { type: 'tool_use', id: string, name: string, input: Record<string, unknown> }> = []
+            // Add assistant's response to messages - must include thinking block with signature when extended thinking is enabled
+            const assistantContent: Array<{ type: 'thinking', thinking: string, signature: string } | { type: 'text', text: string } | { type: 'tool_use', id: string, name: string, input: Record<string, unknown> }> = []
+            // Thinking must come first in the content array (with signature for API verification)
+            if (turnThinking && turnThinkingSignature) {
+              assistantContent.push({ type: 'thinking', thinking: turnThinking, signature: turnThinkingSignature })
+            }
             if (fullText) {
               assistantContent.push({ type: 'text', text: fullText })
             }
