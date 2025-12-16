@@ -1,6 +1,10 @@
 import { z } from 'zod'
 
-const envSchema = z.object({
+export const envSchema = z.object({
+  // Build metadata
+  GIT_SHA: z.string().default('dev'),
+  BUILD_TAG: z.string().default('local'),
+
   // Database
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
 
@@ -20,7 +24,7 @@ const envSchema = z.object({
   AWS_SECRET_ACCESS_KEY: z.string().min(1, 'AWS_SECRET_ACCESS_KEY is required')
 })
 
-type EnvConfig = z.infer<typeof envSchema>
+export type EnvConfig = z.infer<typeof envSchema>
 
 const SENSITIVE_KEYS = new Set([
   'DATABASE_URL',
@@ -30,44 +34,16 @@ const SENSITIVE_KEYS = new Set([
   'AWS_SECRET_ACCESS_KEY'
 ])
 
-function maskValue(key: string, value: string): string {
+export function maskValue(key: string, value: string): string {
   if (!SENSITIVE_KEYS.has(key)) return value
   if (value.length >= 6) return `${value.slice(0, 2)}***${value.slice(-4)}`
   return '***'
 }
 
-function logConfig(config: EnvConfig) {
-  console.log('='.repeat(60))
-  console.log('SERVER STARTUP - Validated Environment')
-  console.log('='.repeat(60))
-
+export function getMaskedConfig(config: EnvConfig): Record<string, string> {
+  const masked: Record<string, string> = {}
   for (const [key, value] of Object.entries(config).sort(([a], [b]) => a.localeCompare(b))) {
-    console.log(`${key}=${maskValue(key, String(value))}`)
+    masked[key] = maskValue(key, String(value))
   }
-
-  console.log('='.repeat(60))
+  return masked
 }
-
-export default defineNitroPlugin(() => {
-  const result = envSchema.safeParse(process.env)
-
-  if (!result.success) {
-    console.error('='.repeat(60))
-    console.error('ENV VALIDATION FAILED')
-    console.error('='.repeat(60))
-    for (const issue of result.error.issues) {
-      console.error(`  ${issue.path.join('.')}: ${issue.message}`)
-    }
-    console.error('='.repeat(60))
-    throw new Error('Environment validation failed')
-  } else {
-    console.log('Environment validation succeeded')
-  }
-
-  if (import.meta.dev) {
-    console.log('='.repeat(10) + ' Skipping env logging in dev mode ' + '='.repeat(10))
-    // return
-  }
-
-  logConfig(result.data)
-})

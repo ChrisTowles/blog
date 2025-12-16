@@ -161,18 +161,22 @@ async function deployContainer() {
   const registryHostname = registry.split('/')[0]
   await $`gcloud auth configure-docker ${registryHostname}`
 
-  // Step 3: Build the image with both date tag and latest
+  // Step 3: Get git SHA
+  const gitSha = (await $`git rev-parse --short HEAD`.quiet()).stdout.trim()
+
+  // Step 4: Build the image with both date tag and latest
   const imageWithDateTag = `${registry}/blog:${dateTag}`
   const imageWithLatest = `${registry}/blog:latest`
   console.log(chalk.yellow(`\n🔨 Building Docker image: ${imageWithDateTag}`))
-  await $`docker build -t ${imageWithDateTag} -t ${imageWithLatest} .`
+  console.log(chalk.gray(`   Git SHA: ${gitSha}`))
+  await $`docker build --build-arg GIT_SHA=${gitSha} --build-arg BUILD_TAG=${dateTag} -t ${imageWithDateTag} -t ${imageWithLatest} .`
 
-  // Step 4: Push both tags
+  // Step 5: Push both tags
   console.log(chalk.yellow(`\n📤 Pushing images to registry...`))
   await $`docker push ${imageWithDateTag}`
   await $`docker push ${imageWithLatest}`
 
-  // Step 5: Update Cloud Run with the dated image
+  // Step 6: Update Cloud Run with the dated image
   console.log(chalk.yellow(`\n☁️  Updating Cloud Run with new image...`))
   cd(terraformDir)
   $.verbose = true

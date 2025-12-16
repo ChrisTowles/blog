@@ -89,6 +89,11 @@ export default defineNuxtConfig({
     experimental: {
       openAPI: true
     },
+    esbuild: {
+      options: {
+        target: 'esnext'
+      }
+    },
 
     imports: {
       // Nitro only auto-imports top-level server/utils/ by default.
