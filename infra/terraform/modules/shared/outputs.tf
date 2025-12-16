@@ -37,3 +37,13 @@ output "aws_secret_access_key_secret_id" {
   description = "Secret Manager secret ID for AWS secret access key"
   value       = data.google_secret_manager_secret.aws_secret_access_key.secret_id
 }
+
+output "github_oauth_client_id_secret_id" {
+  description = "Secret Manager secret ID for GitHub OAuth client ID"
+  value       = data.google_secret_manager_secret.github_oauth_client_id.secret_id
+}
+
+output "github_oauth_client_secret_secret_id" {
+  description = "Secret Manager secret ID for GitHub OAuth client secret"
+  value       = data.google_secret_manager_secret.github_oauth_client_secret.secret_id
+}

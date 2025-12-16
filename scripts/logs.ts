@@ -84,29 +84,30 @@ async function getLogs(options = {}) {
   console.log(`  Region: ${config.region}`)
   console.log()
 
+  // Use gcloud logging read instead of gcloud run services logs (which has bugs)
+  const baseFilter = `resource.type="cloud_run_revision" resource.labels.service_name="${config.service}" resource.labels.location="${config.region}"`
+  const fullFilter = options.filter ? `${baseFilter} ${options.filter}` : baseFilter
+
   const args = [
-    'run', 'services', 'logs',
-    options.tail ? 'tail' : 'read',
-    config.service,
-    `--region=${config.region}`,
-    `--project=${config.project}`
+    'logging', 'read',
+    fullFilter,
+    `--project=${config.project}`,
+    `--format=value(timestamp,severity,textPayload)`,
+    `--limit=${options.limit || 150}`
   ]
 
-  if (!options.tail) {
-    args.push(`--limit=${options.limit || 150}`)
+  if (options.tail) {
+    // For tail mode, use gcloud logging tail
+    await $`gcloud logging tail ${fullFilter} --project=${config.project} --format=value(timestamp,severity,textPayload)`
+  } else {
+    await $`gcloud ${args}`
   }
-
-  if (options.filter) {
-    args.push(`--log-filter=${options.filter}`)
-  }
-
-  await $`gcloud ${args}`
 }
 
 // Parse arguments
 let tail = false
 let filter = null
-let limit = 50
+let limit = 150
 
 for (let i = 2; i < process.argv.length; i++) {
   const arg = process.argv[i]
@@ -135,6 +136,10 @@ for (let i = 2; i < process.argv.length; i++) {
     default:
       if (arg.startsWith('--environment=')) {
         process.env.ENVIRONMENT = arg.split('=')[1]
+      } else if (arg.startsWith('--limit=')) {
+        limit = parseInt(arg.split('=')[1])
+      } else if (arg.startsWith('--filter=')) {
+        filter = arg.split('=')[1]
       } else if (arg.startsWith('-')) {
         console.error(`Unknown option: ${arg}`)
         usage()
