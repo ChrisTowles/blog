@@ -54,7 +54,7 @@ function onSubmit() {
 
 const quickChats = [
   {
-    label: 'Tell me a joke about programming.',
+    label: 'What posts do you have about dark matter developer?',
     icon: 'i-heroicons-outline-light-bulb'
   },
   {
