@@ -161,8 +161,7 @@ export default defineEventHandler(async (event) => {
                 currentToolName = event.content_block.name
                 _toolInputJson = ''
                 hasToolUse = true
-                // Notify client that tool is being used
-                sendSSE(controller, { type: 'tool_start', tool: currentToolName })
+                // Will send tool_start after we have full args
               }
             } else if (event.type === 'content_block_delta') {
               if (event.delta.type === 'thinking_delta') {
@@ -193,6 +192,14 @@ export default defineEventHandler(async (event) => {
                   input: toolArgs
                 })
 
+                // Notify client tool is starting with full args
+                sendSSE(controller, {
+                  type: 'tool_start',
+                  tool: currentToolName,
+                  toolCallId: currentToolUseId,
+                  args: toolArgs
+                })
+
                 // Execute the tool
                 const toolResult = await executeTool(currentToolName, toolArgs)
                 toolResults.push({
@@ -202,7 +209,12 @@ export default defineEventHandler(async (event) => {
                 })
 
                 // Notify client of tool result
-                sendSSE(controller, { type: 'tool_end', tool: currentToolName, hasResults: true })
+                sendSSE(controller, {
+                  type: 'tool_end',
+                  tool: currentToolName,
+                  toolCallId: currentToolUseId,
+                  result: toolResult
+                })
 
                 currentToolUseId = null
                 currentToolName = null

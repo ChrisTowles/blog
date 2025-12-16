@@ -77,12 +77,15 @@ export interface SSETitleEvent {
 export interface SSEToolStartEvent {
   type: 'tool_start'
   tool: string
+  toolCallId: string
+  args: Record<string, unknown>
 }
 
 export interface SSEToolEndEvent {
   type: 'tool_end'
   tool: string
-  hasResults: boolean
+  toolCallId: string
+  result: unknown
 }
 
 export type SSEEvent = SSETextEvent | SSEReasoningEvent | SSEDoneEvent | SSEErrorEvent | SSETitleEvent | SSEToolStartEvent | SSEToolEndEvent

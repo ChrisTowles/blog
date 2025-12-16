@@ -1,4 +1,4 @@
-import type { ChatMessage, ChatStatus, MessagePart, SSEEvent } from '~~/shared/chat-types'
+import type { ChatMessage, ChatStatus, MessagePart, SSEEvent, ToolUsePart, ToolResultPart } from '~~/shared/chat-types'
 
 interface UseChatOptions {
   id: string
@@ -6,6 +6,14 @@ interface UseChatOptions {
   model: Ref<string>
   onError?: (error: Error) => void
   onTitleUpdate?: () => void
+}
+
+interface ToolInvocation {
+  toolCallId: string
+  toolName: string
+  args: Record<string, unknown>
+  state: 'pending' | 'complete'
+  result?: unknown
 }
 
 export function useChat(options: UseChatOptions) {
@@ -62,6 +70,7 @@ export function useChat(options: UseChatOptions) {
       let buffer = ''
       let currentTextPart: { type: 'text', text: string } | null = null
       let currentReasoningPart: { type: 'reasoning', text: string, state: 'streaming' | 'done' } | null = null
+      const toolInvocations: ToolInvocation[] = []
 
       while (true) {
         const { done, value } = await reader.read()
@@ -84,7 +93,7 @@ export function useChat(options: UseChatOptions) {
                 currentTextPart.text += event.text
 
                 // Update message parts
-                updateAssistantMessage(assistantMessageId, currentReasoningPart, currentTextPart)
+                updateAssistantMessage(assistantMessageId, currentReasoningPart, currentTextPart, toolInvocations)
               } else if (event.type === 'reasoning') {
                 if (!currentReasoningPart) {
                   currentReasoningPart = { type: 'reasoning', text: '', state: 'streaming' }
@@ -92,14 +101,29 @@ export function useChat(options: UseChatOptions) {
                 currentReasoningPart.text += event.text
 
                 // Update message parts
-                updateAssistantMessage(assistantMessageId, currentReasoningPart, currentTextPart)
+                updateAssistantMessage(assistantMessageId, currentReasoningPart, currentTextPart, toolInvocations)
+              } else if (event.type === 'tool_start') {
+                toolInvocations.push({
+                  toolCallId: event.toolCallId,
+                  toolName: event.tool,
+                  args: event.args,
+                  state: 'pending'
+                })
+                updateAssistantMessage(assistantMessageId, currentReasoningPart, currentTextPart, toolInvocations)
+              } else if (event.type === 'tool_end') {
+                const invocation = toolInvocations.find(t => t.toolCallId === event.toolCallId)
+                if (invocation) {
+                  invocation.state = 'complete'
+                  invocation.result = event.result
+                }
+                updateAssistantMessage(assistantMessageId, currentReasoningPart, currentTextPart, toolInvocations)
               } else if (event.type === 'title') {
                 options.onTitleUpdate?.()
               } else if (event.type === 'done') {
                 if (currentReasoningPart) {
                   currentReasoningPart.state = 'done'
                 }
-                updateAssistantMessage(assistantMessageId, currentReasoningPart, currentTextPart)
+                updateAssistantMessage(assistantMessageId, currentReasoningPart, currentTextPart, toolInvocations)
               } else if (event.type === 'error') {
                 throw new Error(event.error)
               }
@@ -128,10 +152,32 @@ export function useChat(options: UseChatOptions) {
   function updateAssistantMessage(
     messageId: string,
     reasoning: { type: 'reasoning', text: string, state: 'streaming' | 'done' } | null,
-    text: { type: 'text', text: string } | null
+    text: { type: 'text', text: string } | null,
+    tools: ToolInvocation[] = []
   ) {
     const parts: MessagePart[] = []
     if (reasoning) parts.push(reasoning)
+
+    // Add tool use and result parts
+    for (const tool of tools) {
+      const toolUsePart: ToolUsePart = {
+        type: 'tool-use',
+        toolName: tool.toolName,
+        toolCallId: tool.toolCallId,
+        args: tool.args
+      }
+      parts.push(toolUsePart)
+
+      if (tool.state === 'complete' && tool.result !== undefined) {
+        const toolResultPart: ToolResultPart = {
+          type: 'tool-result',
+          toolCallId: tool.toolCallId,
+          result: tool.result
+        }
+        parts.push(toolResultPart)
+      }
+    }
+
     if (text) parts.push(text)
 
     messages.value = messages.value.map((msg) => {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { DefineComponent } from 'vue'
 import { useClipboard } from '@vueuse/core'
-import type { ChatMessage } from '~~/shared/chat-types'
+import type { ChatMessage, ToolUsePart, ToolResultPart } from '~~/shared/chat-types'
 import ProseStreamPre from '../../components/prose/PreStream.vue'
 
 definePageMeta({
@@ -83,6 +83,12 @@ function getPartKey(messageId: string, part: unknown, index: number) {
   return `${messageId}-${part && typeof part === 'object' && 'type' in part ? part.type : 'unknown'}-${index}${hasState ? `-${(part as { state: string }).state}` : ''}`
 }
 
+function getToolResult(message: ChatMessage, toolUse: ToolUsePart): ToolResultPart | undefined {
+  return message.parts.find(
+    (p): p is ToolResultPart => p.type === 'tool-result' && p.toolCallId === toolUse.toolCallId
+  )
+}
+
 onMounted(() => {
   if (data.value?.messages?.length === 1) {
     chat.regenerate()
@@ -119,6 +125,11 @@ onMounted(() => {
                   v-if="part.type === 'reasoning'"
                   :text="part.text"
                   :is-streaming="part.state !== 'done'"
+                />
+                <ToolInvocation
+                  v-else-if="part.type === 'tool-use'"
+                  :tool-use="part"
+                  :tool-result="getToolResult(message, part)"
                 />
                 <MDCCached
                   v-else-if="part.type === 'text'"

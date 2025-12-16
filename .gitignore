@@ -147,3 +147,4 @@ dist
 #playwright
 test-results/
 playwright-report/
+.playwright-mcp/
