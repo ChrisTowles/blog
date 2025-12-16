@@ -31,7 +31,15 @@ const items = computed(() => [
     'icon': 'i-heroicons-chat-bubble-left-right',
     'active': route.path.startsWith('/chat'),
     'data-testid': TEST_IDS.NAVIGATION.CHAT_LINK
-  }])
+  },
+  ...(loggedIn.value
+    ? [{
+        label: 'Admin',
+        to: '/admin',
+        icon: 'i-heroicons-cog-6-tooth',
+        active: route.path.startsWith('/admin')
+      }]
+    : [])])
 </script>
 
 <template>
