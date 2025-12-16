@@ -62,6 +62,10 @@ const quickChats = [
     icon: 'i-lucide-cloud-sun'
   },
   {
+    label: 'Roll 4d6 drop lowest for stats',
+    icon: 'i-lucide-dice-5'
+  },
+  {
     label: 'write a script in python to sort a list.',
     icon: 'i-heroicons-command-line'
   },

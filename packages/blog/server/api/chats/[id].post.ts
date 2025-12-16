@@ -142,10 +142,14 @@ export default defineEventHandler(async (event) => {
 
           const streamResponse = await client.messages.stream({
             model,
-            max_tokens: 4096,
+            max_tokens: 16000,
             system: SYSTEM_PROMPT,
             messages: currentMessages,
-            tools: chatTools
+            tools: chatTools,
+            thinking: {
+              type: 'enabled',
+              budget_tokens: 4096
+            }
           })
 
           let hasToolUse = false

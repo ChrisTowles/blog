@@ -59,6 +59,24 @@ export const chatTools: Anthropic.Tool[] = [
       },
       required: ['location']
     }
+  },
+  {
+    name: 'rollDice',
+    description: 'Roll dice for tabletop gaming (D&D, etc). Use when users want to roll dice. Supports standard notation like "2d6", "1d20+5", "4d6 drop lowest".',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        notation: {
+          type: 'string',
+          description: 'Dice notation (e.g., "2d6", "1d20+5", "4d6kh3" for keep highest 3, "2d20kl1" for keep lowest/disadvantage)'
+        },
+        label: {
+          type: 'string',
+          description: 'Optional label for the roll (e.g., "Attack roll", "Fireball damage")'
+        }
+      },
+      required: ['notation']
+    }
   }
 ]
 
@@ -119,6 +137,14 @@ export async function executeTool(name: string, args?: Record<string, unknown>):
         return { error: 'Location is required' }
       }
       return await fetchWeather(location)
+    }
+    case 'rollDice': {
+      const notation = args?.notation as string
+      const label = args?.label as string | undefined
+      if (!notation) {
+        return { error: 'Dice notation is required' }
+      }
+      return rollDice(notation, label)
     }
     default:
       throw new Error(`Unknown tool: ${name}`)
@@ -219,5 +245,105 @@ async function fetchWeather(location: string): Promise<WeatherResult | { error: 
   } catch (error) {
     console.error('Weather fetch error:', error)
     return { error: 'Failed to fetch weather data' }
+  }
+}
+
+/**
+ * Dice rolling types and functions
+ */
+export interface DiceRoll {
+  sides: number
+  result: number
+  kept: boolean
+}
+
+export interface DiceResult {
+  notation: string
+  label?: string
+  rolls: DiceRoll[]
+  modifier: number
+  total: number
+  breakdown: string
+  isCriticalHit?: boolean
+  isCriticalMiss?: boolean
+}
+
+function rollDice(notation: string, label?: string): DiceResult | { error: string } {
+  try {
+    // Parse notation like "2d6+5", "4d6kh3", "2d20kl1"
+    const match = notation.toLowerCase().match(/^(\d+)d(\d+)(kh\d+|kl\d+)?([+-]\d+)?$/)
+
+    if (!match) {
+      return { error: `Invalid dice notation: "${notation}". Use format like "2d6", "1d20+5", "4d6kh3"` }
+    }
+
+    const [, countStr, sidesStr, keepStr, modifierStr] = match
+    const count = parseInt(countStr!, 10)
+    const sides = parseInt(sidesStr!, 10)
+    const modifier = modifierStr ? parseInt(modifierStr, 10) : 0
+
+    if (count < 1 || count > 100) {
+      return { error: 'Number of dice must be between 1 and 100' }
+    }
+    if (sides < 2 || sides > 100) {
+      return { error: 'Dice sides must be between 2 and 100' }
+    }
+
+    // Roll all dice
+    const rolls: DiceRoll[] = []
+    for (let i = 0; i < count; i++) {
+      rolls.push({
+        sides,
+        result: Math.floor(Math.random() * sides) + 1,
+        kept: true
+      })
+    }
+
+    // Handle keep highest/lowest
+    if (keepStr) {
+      const keepCount = parseInt(keepStr.slice(2), 10)
+      const keepHighest = keepStr.startsWith('kh')
+
+      // Sort by result
+      const sorted = [...rolls].sort((a, b) =>
+        keepHighest ? b.result - a.result : a.result - b.result
+      )
+
+      // Mark which dice to keep
+      rolls.forEach((roll) => {
+        roll.kept = sorted.slice(0, keepCount).includes(roll)
+      })
+    }
+
+    // Calculate total from kept dice
+    const keptRolls = rolls.filter(r => r.kept)
+    const diceTotal = keptRolls.reduce((sum, r) => sum + r.result, 0)
+    const total = diceTotal + modifier
+
+    // Build breakdown string
+    const rollsStr = rolls.map(r =>
+      r.kept ? r.result.toString() : `~~${r.result}~~`
+    ).join(' + ')
+    const breakdown = modifier !== 0
+      ? `(${rollsStr}) ${modifier >= 0 ? '+' : ''}${modifier} = ${total}`
+      : `${rollsStr} = ${total}`
+
+    // Check for crits on d20
+    const isCriticalHit = sides === 20 && keptRolls.some(r => r.result === 20)
+    const isCriticalMiss = sides === 20 && keptRolls.some(r => r.result === 1)
+
+    return {
+      notation,
+      label,
+      rolls,
+      modifier,
+      total,
+      breakdown,
+      isCriticalHit,
+      isCriticalMiss
+    }
+  } catch (error) {
+    console.error('Dice roll error:', error)
+    return { error: 'Failed to roll dice' }
   }
 }

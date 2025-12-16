@@ -131,6 +131,11 @@ onMounted(() => {
                   :tool-use="part"
                   :tool-result="getToolResult(message, part)"
                 />
+                <ToolDice
+                  v-else-if="part.type === 'tool-use' && part.toolName === 'rollDice'"
+                  :tool-use="part"
+                  :tool-result="getToolResult(message, part)"
+                />
                 <ToolInvocation
                   v-else-if="part.type === 'tool-use'"
                   :tool-use="part"
