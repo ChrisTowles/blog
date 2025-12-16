@@ -58,6 +58,10 @@ const quickChats = [
     icon: 'i-heroicons-outline-light-bulb'
   },
   {
+    label: 'What\'s the weather in Cincinnati?',
+    icon: 'i-lucide-cloud-sun'
+  },
+  {
     label: 'write a script in python to sort a list.',
     icon: 'i-heroicons-command-line'
   },
@@ -73,7 +77,6 @@ const quickChats = [
     label: 'Why use Nuxt UI?',
     icon: 'i-logos-nuxt-icon'
   }
-
 ]
 </script>
 

@@ -126,6 +126,11 @@ onMounted(() => {
                   :text="part.text"
                   :is-streaming="part.state !== 'done'"
                 />
+                <ToolWeather
+                  v-else-if="part.type === 'tool-use' && part.toolName === 'getWeather'"
+                  :tool-use="part"
+                  :tool-result="getToolResult(message, part)"
+                />
                 <ToolInvocation
                   v-else-if="part.type === 'tool-use'"
                   :tool-use="part"
