@@ -68,6 +68,7 @@
     "eslint": "^9.39.1",
     "happy-dom": "^20.0.11",
     "nuxt-gtag": "^4.1.0",
+    "nuxt-studio": "1.0.0-beta.0",
     "playwright-core": "^1.57.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.15",

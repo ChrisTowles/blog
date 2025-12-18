@@ -123,6 +123,32 @@ resource "google_cloud_run_v2_service" "main" {
       }
 
       dynamic "env" {
+        for_each = var.studio_github_client_id_secret_id != "" ? [1] : []
+        content {
+          name = "STUDIO_GITHUB_CLIENT_ID"
+          value_source {
+            secret_key_ref {
+              secret  = var.studio_github_client_id_secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
+
+      dynamic "env" {
+        for_each = var.studio_github_client_secret_secret_id != "" ? [1] : []
+        content {
+          name = "STUDIO_GITHUB_CLIENT_SECRET"
+          value_source {
+            secret_key_ref {
+              secret  = var.studio_github_client_secret_secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
+
+      dynamic "env" {
         for_each = var.additional_env_vars
         content {
           name  = env.key
