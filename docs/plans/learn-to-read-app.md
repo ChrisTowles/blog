@@ -8,28 +8,29 @@ Digital tactile slider teaching sound blending. Child drags handle across word, 
 
 ---
 
-## Sprint 1: Core Slider
+## Sprint 1: Core Slider ✅
 
-- [ ] Create `app/layouts/learn.vue` - fullscreen layout, lavender bg, no header/footer
-- [ ] Create `app/components/learn/SoundIndicator.vue` - blue oval (continuous) / red dot (stop)
-- [ ] Create `app/components/learn/WordSlider.vue` - main slider with drag interaction
-- [ ] Create `app/pages/learn/lesson/[id].vue` - lesson page hosting slider
-- [ ] Add touch event handling (horizontal drag detection)
-- [ ] Test with hardcoded word data
+- [x] Create `app/layouts/learn.vue` - fullscreen layout, lavender bg, no header/footer
+- [x] Create `app/components/learn/SoundIndicator.vue` - blue oval (continuous) / red dot (stop)
+- [x] Create `app/components/learn/WordSlider.vue` - main slider with drag interaction
+- [x] Create `app/pages/learn/lesson/[id].vue` - lesson page hosting slider
+- [x] Add touch event handling (horizontal drag detection)
+- [x] Test with hardcoded word data
+- [x] Add unit tests for sound classification and word parsing
 
-## Sprint 2: Progress System
+## Sprint 2: Progress System (Partial)
 
-- [ ] Create `app/composables/useLearnProgress.ts` - localStorage via `@vueuse/core`
-- [ ] Create `app/components/learn/ProgressDots.vue` - word count (3/10)
-- [ ] Create `app/components/learn/NavArrows.vue` - up/down word navigation
-- [ ] Implement word completion flow (slider end → next word)
+- [x] Create `app/composables/useLearnProgress.ts` - localStorage via `@vueuse/core`
+- [x] Progress dots integrated in lesson page
+- [x] Nav arrows (up/down) integrated in lesson page
+- [x] Implement word completion flow (slider end → next word)
 - [ ] Implement lesson completion flow (all words → lesson done)
 
-## Sprint 3: Lesson Map & Navigation
+## Sprint 3: Lesson Map & Navigation (Partial)
 
-- [ ] Create `app/components/learn/LessonMap.vue` - stepping stones visual
-- [ ] Create `app/pages/learn/index.vue` - landing with lesson map
-- [ ] Add locked/unlocked lesson states
+- [x] Create `app/pages/learn/index.vue` - landing with lesson map (simple version)
+- [ ] Create `app/components/learn/LessonMap.vue` - stepping stones visual (fancy)
+- [ ] Add locked/unlocked lesson states (using composable)
 - [ ] Create `app/components/learn/TipsButton.vue` - parent hints modal
 - [ ] Create `app/pages/learn/settings.vue` - parent controls (reset, stats)
 

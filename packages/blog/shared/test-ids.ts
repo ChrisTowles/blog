@@ -52,6 +52,20 @@ export const TEST_IDS = {
     MODEL_SELECT: 'model-select',
     SEARCH_BUTTON: 'search-button',
     LOADING_INDICATOR: 'loading-indicator'
+  },
+  LEARN: {
+    WORD_SLIDER: 'learn-word-slider',
+    SLIDER_TRACK: 'learn-slider-track',
+    SLIDER_HANDLE: 'learn-slider-handle',
+    SOUND_INDICATOR: 'learn-sound-indicator',
+    WORD_DISPLAY: 'learn-word-display',
+    LESSON_MAP: 'learn-lesson-map',
+    LESSON_BUTTON: 'learn-lesson-button',
+    PROGRESS_DOTS: 'learn-progress-dots',
+    NAV_PREV: 'learn-nav-prev',
+    NAV_NEXT: 'learn-nav-next',
+    CLOSE_BUTTON: 'learn-close',
+    TIPS_BUTTON: 'learn-tips'
   }
 } as const
 
