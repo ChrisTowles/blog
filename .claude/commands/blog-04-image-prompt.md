@@ -65,7 +65,8 @@ Save to `.temp/images/{YYYY}-{MM}-{DD}-{HH}{MM}-{blog-title}.md`:
 - **Recommended filename**: `{YYYY}{MM}{DD}-{HH}{MM}-{blog-title}.png`
 - **Aspect ratio**: 16:9 (landscape)
 - **Suggested generators**:
-  - [Google AI Studio](https://aistudio.google.com/prompts/new_image) - use 16:9 aspect ratio
+   - include the probmpt as a URL-encoded parameter for easy copy-paste
+  - [Google AI Studio](https://aistudio.google.com/prompts/new_chat?model=models%2Fgemini-3-pro-image-preview&prompt={PROMPT_ENCODED_FOR_URL}) - use 16:9 aspect ratio
 
 ## Post-Generation Notes
 

@@ -1,19 +1,18 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: ['@nuxt/eslint', '@nuxt/image', '@nuxt/ui', '@nuxt/content', '@vueuse/nuxt', // '@nuxt/fonts',
-    // '@nuxtjs/eslint-module', { /* module options */ }],
-    // 'nuxt-og-image',
-    // '@nuxtjs/robots',
-    // '@nuxtjs/fontaine',
-    // 'nuxt-simple-sitemap',
-    // '@stefanobartoletti/nuxt-social-share',
-
-    // '@nuxtjs/seo',
-    'nuxt-gtag', // '@nuxtjs/sitemap',
-    // '@nuxt/icon',
+  modules: [
+    '@nuxt/eslint',
+    '@nuxt/image',
+    '@nuxt/ui',
+    '@nuxt/content',
+    '@vueuse/nuxt',
+    'nuxt-gtag',
     'nuxt-og-image',
     '@nuxtjs/mdc',
-    'nuxt-auth-utils', '@nuxt/test-utils/module'],
+    'nuxt-auth-utils',
+    'nuxt-studio',
+    '@nuxt/test-utils/module'
+  ],
   ssr: true,
   devtools: {
     enabled: true,
@@ -93,6 +92,13 @@ export default defineNuxtConfig({
       options: {
         target: 'esnext'
       }
+    },
+
+    prerender: {
+      // Pre-render the homepage
+      routes: ['/'],
+      // Then crawl all the links on the page
+      crawlLinks: true
     },
 
     imports: {
@@ -185,6 +191,15 @@ export default defineNuxtConfig({
     serverBundle: {
       collections: ['simple-icons', 'heroicons'] // <!--- this
     }
-  }
+  },
 
+  studio: {
+    route: '/_studio', // default: '/_studio'
+    repository: {
+      provider: 'github',
+      owner: 'christowles',
+      repo: 'blog',
+      branch: 'main'
+    }
+  }
 })

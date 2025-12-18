@@ -47,3 +47,13 @@ output "github_oauth_client_secret_secret_id" {
   description = "Secret Manager secret ID for GitHub OAuth client secret"
   value       = data.google_secret_manager_secret.github_oauth_client_secret.secret_id
 }
+
+output "studio_github_client_id_secret_id" {
+  description = "Secret Manager secret ID for Studio GitHub OAuth client ID"
+  value       = data.google_secret_manager_secret.studio_github_client_id.secret_id
+}
+
+output "studio_github_client_secret_secret_id" {
+  description = "Secret Manager secret ID for Studio GitHub OAuth client secret"
+  value       = data.google_secret_manager_secret.studio_github_client_secret.secret_id
+}

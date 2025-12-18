@@ -89,6 +89,16 @@ data "google_secret_manager_secret" "github_oauth_client_secret" {
   project   = var.project_id
 }
 
+data "google_secret_manager_secret" "studio_github_client_id" {
+  secret_id = "studio-github-client-id"
+  project   = var.project_id
+}
+
+data "google_secret_manager_secret" "studio_github_client_secret" {
+  secret_id = "studio-github-client-secret"
+  project   = var.project_id
+}
+
 # Removed blocks to safely remove resources from state without deleting them
 removed {
   from = google_secret_manager_secret.anthropic_api_key

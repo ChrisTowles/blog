@@ -21,7 +21,12 @@ export const envSchema = z.object({
   // AWS Bedrock
   AWS_REGION: z.string().default('us-east-1'),
   AWS_ACCESS_KEY_ID: z.string().min(1, 'AWS_ACCESS_KEY_ID is required'),
-  AWS_SECRET_ACCESS_KEY: z.string().min(1, 'AWS_SECRET_ACCESS_KEY is required')
+  AWS_SECRET_ACCESS_KEY: z.string().min(1, 'AWS_SECRET_ACCESS_KEY is required'),
+
+  // Nuxt Studio
+  STUDIO_GITHUB_CLIENT_ID: z.string().min(1, 'STUDIO_GITHUB_CLIENT_ID is required'),
+  STUDIO_GITHUB_CLIENT_SECRET: z.string().min(1, 'STUDIO_GITHUB_CLIENT_SECRET is required'),
+  STUDIO_GITHUB_MODERATORS: z.string().optional()
 })
 
 export type EnvConfig = z.infer<typeof envSchema>
@@ -31,7 +36,8 @@ const SENSITIVE_KEYS = new Set([
   'NUXT_SESSION_PASSWORD',
   'ANTHROPIC_API_KEY',
   'NUXT_OAUTH_GITHUB_CLIENT_SECRET',
-  'AWS_SECRET_ACCESS_KEY'
+  'AWS_SECRET_ACCESS_KEY',
+  'STUDIO_GITHUB_CLIENT_SECRET'
 ])
 
 export function maskValue(key: string, value: string): string {
