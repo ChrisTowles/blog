@@ -29,6 +29,13 @@
       "when": 1765509128797,
       "tag": "0003_perfect_hobgoblin",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1766022717094,
+      "tag": "0004_sturdy_hex",
+      "breakpoints": true
     }
   ]
 }

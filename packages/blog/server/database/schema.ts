@@ -103,3 +103,54 @@ export const documentChunksRelations = relations(documentChunks, ({ one }) => ({
     references: [documents.id]
   })
 }))
+
+// Reading App Tables
+export const readingProfiles = pgTable('reading_profiles', {
+  id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: varchar({ length: 100 }).notNull(),
+  avatar: varchar({ length: 20 }), // emoji or avatar ID
+  lastActiveAt: timestamp().defaultNow().notNull(),
+  ...timestamps
+})
+
+export const readingProfilesRelations = relations(readingProfiles, ({ many }) => ({
+  progress: many(readingProgress),
+  sessions: many(readingSessions)
+}))
+
+export const readingProgress = pgTable('reading_progress', {
+  id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  profileId: varchar({ length: 36 }).notNull().references(() => readingProfiles.id, { onDelete: 'cascade' }),
+  wordId: varchar({ length: 50 }).notNull(), // references static word data
+  attempts: integer().default(0).notNull(),
+  successes: integer().default(0).notNull(),
+  lastPracticedAt: timestamp().defaultNow().notNull(),
+  ...timestamps
+}, table => [
+  index('reading_progress_profile_idx').on(table.profileId),
+  uniqueIndex('reading_progress_profile_word_idx').on(table.profileId, table.wordId)
+])
+
+export const readingProgressRelations = relations(readingProgress, ({ one }) => ({
+  profile: one(readingProfiles, {
+    fields: [readingProgress.profileId],
+    references: [readingProfiles.id]
+  })
+}))
+
+export const readingSessions = pgTable('reading_sessions', {
+  id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  profileId: varchar({ length: 36 }).notNull().references(() => readingProfiles.id, { onDelete: 'cascade' }),
+  wordsCompleted: integer().default(0).notNull(),
+  duration: integer(), // seconds
+  ...timestamps
+}, table => [
+  index('reading_sessions_profile_idx').on(table.profileId)
+])
+
+export const readingSessionsRelations = relations(readingSessions, ({ one }) => ({
+  profile: one(readingProfiles, {
+    fields: [readingSessions.profileId],
+    references: [readingProfiles.id]
+  })
+}))
