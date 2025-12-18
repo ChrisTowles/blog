@@ -10,7 +10,7 @@ export default defineNuxtConfig({
     'nuxt-og-image',
     '@nuxtjs/mdc',
     'nuxt-auth-utils',
-    'nuxt-studio',
+    // 'nuxt-studio',
     '@nuxt/test-utils/module'
   ],
   ssr: true,
