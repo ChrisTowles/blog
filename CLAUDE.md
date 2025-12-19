@@ -4,7 +4,7 @@ Guidance for Claude Code when working with this repository.
 
 ## Project Structure
 
-Personal blog/website - Vue/Nuxt monorepo.
+Personal blog/website - Vue/Nuxt monorepo. Also serves as a playground for testing AI features.
 
 ```
 packages/
@@ -42,7 +42,8 @@ pnpm run slides:upgrade   # Start slide server
 
 - **Framework**: Nuxt + Nuxt UI Pro + Nuxt Content
 - **Database**: Drizzle ORM with PostgreSQL (Cloud SQL)
-- **AI**: AI SDK with Anthropic
+- **AI**: Anthropic SDK with tool calling, integrated chatbot
+  - RAG pipeline: semantic search + BM25, followed by reranker
 - **Auth**: GitHub OAuth via nuxt-auth-utils
 - **Monorepo**: pnpm workspaces
 
