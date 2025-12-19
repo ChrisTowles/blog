@@ -10,7 +10,7 @@ export default defineNuxtConfig({
     'nuxt-og-image',
     '@nuxtjs/mdc',
     'nuxt-auth-utils',
-    'nuxt-studio',
+    // 'nuxt-studio', Disabled till i fix some issues, not having correct path to open pr to the file edited, not setting github secret once deployed.
     '@nuxt/test-utils/module'
   ],
   ssr: true,

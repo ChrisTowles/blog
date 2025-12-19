@@ -148,3 +148,8 @@ dist
 test-results/
 playwright-report/
 .playwright-mcp/
+
+
+# GCP zips
+
+*.zip

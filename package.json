@@ -25,6 +25,8 @@
     "gcp:prod:apply": "cd infra/terraform/environments/prod && terraform apply -auto-approve",
     "gcp:prod:deploy": "node --experimental-strip-types scripts/build.ts deploy prod",
     "gcp:staging:logs": "node --experimental-strip-types scripts/logs.ts --environment=staging",
+    "gcp:staging:off": "node --experimental-strip-types scripts/power.ts off",
+    "gcp:staging:on": "node --experimental-strip-types scripts/power.ts on",
     "gcp:prod:logs": "node --experimental-strip-types scripts/logs.ts --environment=production",
     "db:generate": "pnpm --filter @chris-towles/blog run db:generate",
     "db:migrate": "pnpm --filter @chris-towles/blog run db:migrate",

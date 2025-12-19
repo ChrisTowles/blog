@@ -150,7 +150,7 @@ async function deployContainer() {
   } catch {
     console.log(chalk.yellow('⚠️  Could not get registry URL. Initializing infrastructure...'))
     await $`terraform init`
-    await $`terraform apply -target=module.shared -auto-approve`
+    await $`terraform apply -target=module.shared -auto-approve -lock=false` // setting -lock=false to avoid lock issues every single time.
     registry = (await $`terraform output -raw container_image_base`).stdout.trim()
   }
   cd(rootDir)
