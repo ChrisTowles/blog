@@ -39,6 +39,7 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "pnpm --filter @chris-towles/blog run typecheck",
     "test": "pnpm --filter @chris-towles/blog run test",
+    "test:e2e": "pnpm --filter @chris-towles/blog run test:e2e",
     "test:docker": "tsx scripts/test-docker.ts",
     "prepare": "husky",
     "mcp:inspect": "pnpx @modelcontextprotocol/inspector",

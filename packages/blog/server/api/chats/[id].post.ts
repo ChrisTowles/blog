@@ -1,8 +1,9 @@
 import type { MessageParam } from '@anthropic-ai/sdk/resources/messages'
 import { z } from 'zod'
 import type { ChatMessage, MessagePart, SSEEvent } from '~~/shared/chat-types'
-import { chatTools, executeTool } from '../../utils/ai/tools'
+import { executeTool, setKnowledgeBaseFilters } from '../../utils/ai/tools'
 import { getAnthropicClient } from '../../utils/ai/anthropic'
+import { skillRegistry } from '../../utils/skills'
 
 defineRouteMeta({
   openAPI: {
@@ -11,19 +12,7 @@ defineRouteMeta({
   }
 })
 
-const SYSTEM_PROMPT = `You are a knowledgeable and helpful AI assistant on Chris Towles's Blog. Try to be funny but helpful.
-Your goal is to provide clear, accurate, and well-structured responses.
-
-**CRITICAL: USE THE SEARCH TOOL**
-- ALWAYS use the searchBlogContent tool FIRST when users ask about:
-  * AI, Claude, LLMs, context engineering, prompts
-  * Vue, Nuxt, TypeScript, JavaScript
-  * DevOps, Terraform, GCP, AWS, Docker
-  * Best practices, testing, code review
-  * Any technical topic that might be covered in the blog
-- Do NOT answer from memory alone - search the blog first!
-- When citing results, use markdown links: [Post Title](/blog/post-slug)
-
+const BASE_SYSTEM_PROMPT = `
 **FORMATTING RULES (CRITICAL):**
 - ABSOLUTELY NO MARKDOWN HEADINGS: Never use #, ##, ###, ####, #####, or ######
 - NO underline-style headings with === or ---
@@ -63,9 +52,10 @@ export default defineEventHandler(async (event) => {
     id: z.string()
   }).parse)
 
-  const { model, messages } = await readValidatedBody(event, z.object({
+  const { model, messages, personaSlug } = await readValidatedBody(event, z.object({
     model: z.string(),
-    messages: z.array(z.custom<ChatMessage>())
+    messages: z.array(z.custom<ChatMessage>()),
+    personaSlug: z.string().optional()
   }).parse)
 
   const db = useDrizzle()
@@ -80,6 +70,14 @@ export default defineEventHandler(async (event) => {
   if (!chat) {
     throw createError({ statusCode: 404, statusMessage: 'Chat not found' })
   }
+
+  // Load persona and skills
+  const loadedPersona = skillRegistry.loadPersona(personaSlug)
+  const systemPrompt = loadedPersona.systemPrompt + '\n\n' + BASE_SYSTEM_PROMPT
+  const enabledTools = loadedPersona.tools
+
+  // Set knowledge base filters for this request
+  setKnowledgeBaseFilters(loadedPersona.knowledgeBaseFilters)
 
   // Generate title if needed
   let generatedTitle: string | null = null
@@ -143,9 +141,9 @@ export default defineEventHandler(async (event) => {
           const streamResponse = await client.messages.stream({
             model,
             max_tokens: 16000,
-            system: SYSTEM_PROMPT,
+            system: systemPrompt,
             messages: currentMessages,
-            tools: chatTools,
+            tools: enabledTools,
             thinking: {
               type: 'enabled',
               budget_tokens: 4096

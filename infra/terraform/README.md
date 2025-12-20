@@ -130,8 +130,8 @@ echo -n "xxxxxxxxxx" | gcloud secrets create aws-secret-access-key --data-file=-
 Create OAuth apps at https://github.com/settings/developers (one per environment).
 
 Callback URLs:
-- Staging: `https://staging.emmer.dev/api/auth/github`
-- Production: `https://emmer.dev/api/auth/github`
+- Staging: `https://staging-chris.towles.dev/api/auth/github`
+- Production: `https://chris.towles.dev/api/auth/github`
 
 ```bash
 # Set PROJECT to staging or production
@@ -145,7 +145,7 @@ echo -n "YOUR_CLIENT_SECRET" | gcloud secrets create github-oauth-client-secret 
 Create **separate** OAuth apps at https://github.com/settings/developers for Studio (one per environment).
 
 Callback URLs:
-- Staging: `https://staging.emmer.dev/_studio/auth/github/callback`
+- Staging: `https://staging-chris.towles.dev/_studio/auth/github/callback`
 - Production: `https://chris.towles.dev/_studio/auth/github/callback`
 
 ```bash

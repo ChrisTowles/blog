@@ -1,0 +1,60 @@
+import type Anthropic from '@anthropic-ai/sdk'
+
+/**
+ * Skill definition - a package of procedural knowledge
+ */
+export interface Skill {
+  slug: string
+  name: string
+  description: string
+  systemPromptSegment: string // procedural knowledge for Claude
+  tools: string[] // tool names from tools.ts
+  knowledgeBases?: string[] // optional KB slugs for RAG filtering
+  priority: number // ordering in system prompt
+  isBuiltIn: boolean
+}
+
+/**
+ * Persona definition - a combination of skills with a unified identity
+ */
+export interface Persona {
+  slug: string
+  name: string
+  description: string
+  icon: string
+  baseSystemPrompt: string
+  skillSlugs: string[]
+  isDefault: boolean
+  isBuiltIn: boolean
+}
+
+/**
+ * Knowledge base filter criteria for RAG
+ */
+export interface KnowledgeBaseFilter {
+  slugPatterns?: string[]
+  titlePatterns?: string[]
+  excludePatterns?: string[]
+}
+
+/**
+ * Knowledge base definition
+ */
+export interface KnowledgeBase {
+  slug: string
+  name: string
+  description: string
+  filter: KnowledgeBaseFilter
+  isBuiltIn: boolean
+}
+
+/**
+ * Result of loading a persona with all its skills
+ */
+export interface LoadedPersona {
+  persona: Persona
+  skills: Skill[]
+  tools: Anthropic.Tool[]
+  systemPrompt: string
+  knowledgeBaseFilters: KnowledgeBaseFilter[]
+}

@@ -1,5 +1,44 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { retrieveRAG } from '../rag/retrieve'
+import type { KnowledgeBaseFilter } from '../skills/types'
+
+// Context for tool execution (set by chat endpoint)
+let currentKnowledgeBaseFilters: KnowledgeBaseFilter[] = []
+
+/**
+ * Set the knowledge base filters for the current request
+ */
+export function setKnowledgeBaseFilters(filters: KnowledgeBaseFilter[]): void {
+  currentKnowledgeBaseFilters = filters
+}
+
+/**
+ * Clear knowledge base filters
+ */
+export function clearKnowledgeBaseFilters(): void {
+  currentKnowledgeBaseFilters = []
+}
+
+/**
+ * Tool Registry - lookup tools by name for skill-based filtering
+ */
+export const toolRegistry = new Map<string, Anthropic.Tool>()
+
+/**
+ * Get tools by their names (for skill-based tool filtering)
+ */
+export function getToolsByNames(names: string[]): Anthropic.Tool[] {
+  return names
+    .map(name => toolRegistry.get(name))
+    .filter((t): t is Anthropic.Tool => t !== undefined)
+}
+
+/**
+ * Get all available tool names
+ */
+export function getAllToolNames(): string[] {
+  return Array.from(toolRegistry.keys())
+}
 
 /**
  * Tool definitions for Anthropic SDK
@@ -91,7 +130,10 @@ export async function executeTool(name: string, args?: Record<string, unknown>):
       if (!query) {
         return { error: 'Query is required' }
       }
-      const results = await retrieveRAG(query, { topK: 5 })
+      const results = await retrieveRAG(query, {
+        topK: 5,
+        knowledgeBaseFilters: currentKnowledgeBaseFilters
+      })
       return {
         results: results.map(r => ({
           content: r.content,
@@ -115,7 +157,7 @@ export async function executeTool(name: string, args?: Record<string, unknown>):
         name: 'Chris Towles',
         role: 'Software Engineer',
         topics: ['Vue', 'Nuxt', 'TypeScript', 'AI/ML', 'DevOps', 'Cloud Infrastructure'],
-        blogUrl: 'https://emmer.dev',
+        blogUrl: 'https://chris.towles.dev',
         github: 'https://github.com/christowles'
       }
     }
@@ -347,3 +389,6 @@ function rollDice(notation: string, label?: string): DiceResult | { error: strin
     return { error: 'Failed to roll dice' }
   }
 }
+
+// Populate the tool registry
+chatTools.forEach(tool => toolRegistry.set(tool.name, tool))

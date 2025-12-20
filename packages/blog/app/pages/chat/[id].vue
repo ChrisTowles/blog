@@ -16,11 +16,17 @@ const route = useRoute()
 const toast = useToast()
 const clipboard = useClipboard()
 const { model } = useModels()
+const personaSlug = ref<string | undefined>(undefined)
 
 const { data } = await useFetch(`/api/chats/${route.params.id}`, { cache: 'force-cache' })
 
 if (!data.value) {
   throw createError({ statusCode: 404, statusMessage: 'Chat not found', fatal: true })
+}
+
+// Set persona from chat data if available
+if (data.value.personaSlug) {
+  personaSlug.value = data.value.personaSlug
 }
 
 const input = ref('')
@@ -37,6 +43,7 @@ const chat = useChat({
   id: data.value.id,
   initialMessages,
   model,
+  personaSlug,
   onError(error) {
     console.error('Chat error:', error.message)
     toast.add({
@@ -162,7 +169,12 @@ onMounted(() => {
           @submit="handleSubmit"
         >
           <template #footer>
-            <ModelSelect v-model="model" />
+            <div class="flex items-center gap-4 w-full">
+              <div class="flex-1 max-w-48">
+                <PersonaSelect v-model="personaSlug" />
+              </div>
+              <ModelSelect v-model="model" />
+            </div>
             <UChatPromptSubmit
               :status="chat.status.value"
               color="neutral"

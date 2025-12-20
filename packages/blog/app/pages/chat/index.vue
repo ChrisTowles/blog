@@ -12,6 +12,7 @@ const toast = useToast()
 const input = ref('')
 const loading = ref(false)
 const { model } = useModels()
+const selectedPersona = ref<string | undefined>(undefined)
 
 async function setPrompt(prompt: string) {
   input.value = prompt
@@ -30,7 +31,7 @@ async function createChat(prompt: string) {
   try {
     const chat = await $fetch('/api/chats', {
       method: 'POST',
-      body: { input: prompt }
+      body: { input: prompt, personaSlug: selectedPersona.value }
     })
     console.log('chat', chat)
     refreshNuxtData('chats')
@@ -93,8 +94,11 @@ const quickChats = [
     <template #body>
       <UContainer class="flex-1 flex flex-col justify-center gap-4 sm:gap-6 py-8">
         <h1 class="text-3xl sm:text-4xl text-highlighted font-bold">
-          Playground for me to test AI agents and other tooling.
+          My public sandbox for breaking AI things so you don't have to.
         </h1>
+        <p class="text-muted text-sm">
+          Where half-baked ideas meet fully-baked AI agents. Side effects may include learning.
+        </p>
 
         <UChatPrompt
           v-model="input"
@@ -107,7 +111,12 @@ const quickChats = [
           <UChatPromptSubmit color="neutral" :data-testid="TEST_IDS.CHAT.SUBMIT" />
 
           <template #footer>
-            <ModelSelect v-model="model" />
+            <div class="flex items-center gap-4 w-full">
+              <div class="flex-1 max-w-48">
+                <PersonaSelect v-model="selectedPersona" />
+              </div>
+              <ModelSelect v-model="model" />
+            </div>
           </template>
         </UChatPrompt>
 
