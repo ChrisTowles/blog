@@ -1,4 +1,4 @@
-import { skillRegistry } from '../../utils/skills'
+import { capabilityRegistry } from '../../utils/capabilities'
 
 defineRouteMeta({
   openAPI: {
@@ -8,14 +8,14 @@ defineRouteMeta({
 })
 
 export default defineEventHandler(async () => {
-  const personas = skillRegistry.getAllPersonas()
+  const personas = capabilityRegistry.getAllPersonas()
 
   return personas.map(persona => ({
     slug: persona.slug,
     name: persona.name,
     description: persona.description,
     icon: persona.icon,
-    skillSlugs: persona.skillSlugs,
+    capabilitySlugs: persona.capabilitySlugs,
     isDefault: persona.isDefault,
     isBuiltIn: persona.isBuiltIn
   }))

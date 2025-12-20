@@ -3,7 +3,7 @@ import { z } from 'zod'
 import type { ChatMessage, MessagePart, SSEEvent } from '~~/shared/chat-types'
 import { executeTool, setKnowledgeBaseFilters } from '../../utils/ai/tools'
 import { getAnthropicClient } from '../../utils/ai/anthropic'
-import { skillRegistry } from '../../utils/skills'
+import { capabilityRegistry } from '../../utils/capabilities'
 
 defineRouteMeta({
   openAPI: {
@@ -71,8 +71,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Chat not found' })
   }
 
-  // Load persona and skills
-  const loadedPersona = skillRegistry.loadPersona(personaSlug)
+  // Load persona and capabilities
+  const loadedPersona = capabilityRegistry.loadPersona(personaSlug)
   const systemPrompt = loadedPersona.systemPrompt + '\n\n' + BASE_SYSTEM_PROMPT
   const enabledTools = loadedPersona.tools
 

@@ -1,6 +1,6 @@
-import type { Skill } from '../types'
+import type { Capability } from '../types'
 
-export const blogAssistantSkill: Skill = {
+export const blogAssistantCapability: Capability = {
   slug: 'blog-assistant',
   name: 'Blog Assistant',
   description: 'Helps users discover and understand blog content through semantic search and topic exploration',

@@ -10,22 +10,22 @@ export const providerEnum = pgEnum('provider', ['github'])
 export const roleEnum = pgEnum('role', ['user', 'assistant'])
 
 // ============================================
-// Skills & Personas Schema
+// Capabilities & Personas Schema
 // ============================================
 
-export const skills = pgTable('skills', {
+export const capabilities = pgTable('capabilities', {
   id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   slug: varchar({ length: 100 }).notNull().unique(),
   name: varchar({ length: 100 }).notNull(),
   description: text().notNull(),
-  systemPromptSegment: text().notNull(), // procedural knowledge for this skill
+  systemPromptSegment: text().notNull(), // procedural knowledge for this capability
   toolsConfig: json().$type<string[]>().notNull().default([]), // enabled tool names
   isBuiltIn: boolean().notNull().default(false),
   priority: integer().notNull().default(10), // ordering for system prompt composition
   ...timestamps,
   updatedAt: timestamp().defaultNow().notNull()
 }, table => [
-  index('skills_slug_idx').on(table.slug)
+  index('capabilities_slug_idx').on(table.slug)
 ])
 
 export const personas = pgTable('personas', {
@@ -43,16 +43,16 @@ export const personas = pgTable('personas', {
   index('personas_slug_idx').on(table.slug)
 ])
 
-// Junction table for persona -> skills (many-to-many)
-export const personaSkills = pgTable('persona_skills', {
+// Junction table for persona -> capabilities (many-to-many)
+export const personaCapabilities = pgTable('persona_capabilities', {
   id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   personaId: varchar({ length: 36 }).notNull().references(() => personas.id, { onDelete: 'cascade' }),
-  skillId: varchar({ length: 36 }).notNull().references(() => skills.id, { onDelete: 'cascade' }),
+  capabilityId: varchar({ length: 36 }).notNull().references(() => capabilities.id, { onDelete: 'cascade' }),
   priority: integer().notNull().default(0) // ordering within persona
 }, table => [
-  index('persona_skills_persona_id_idx').on(table.personaId),
-  index('persona_skills_skill_id_idx').on(table.skillId),
-  uniqueIndex('persona_skills_unique_idx').on(table.personaId, table.skillId)
+  index('persona_capabilities_persona_id_idx').on(table.personaId),
+  index('persona_capabilities_capability_id_idx').on(table.capabilityId),
+  uniqueIndex('persona_capabilities_unique_idx').on(table.personaId, table.capabilityId)
 ])
 
 export const knowledgeBases = pgTable('knowledge_bases', {
@@ -68,15 +68,15 @@ export const knowledgeBases = pgTable('knowledge_bases', {
   index('knowledge_bases_slug_idx').on(table.slug)
 ])
 
-// Junction table for skill -> knowledge bases (many-to-many)
-export const skillKnowledgeBases = pgTable('skill_knowledge_bases', {
+// Junction table for capability -> knowledge bases (many-to-many)
+export const capabilityKnowledgeBases = pgTable('capability_knowledge_bases', {
   id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
-  skillId: varchar({ length: 36 }).notNull().references(() => skills.id, { onDelete: 'cascade' }),
+  capabilityId: varchar({ length: 36 }).notNull().references(() => capabilities.id, { onDelete: 'cascade' }),
   knowledgeBaseId: varchar({ length: 36 }).notNull().references(() => knowledgeBases.id, { onDelete: 'cascade' })
 }, table => [
-  index('skill_kb_skill_id_idx').on(table.skillId),
-  index('skill_kb_kb_id_idx').on(table.knowledgeBaseId),
-  uniqueIndex('skill_kb_unique_idx').on(table.skillId, table.knowledgeBaseId)
+  index('capability_kb_capability_id_idx').on(table.capabilityId),
+  index('capability_kb_kb_id_idx').on(table.knowledgeBaseId),
+  uniqueIndex('capability_kb_unique_idx').on(table.capabilityId, table.knowledgeBaseId)
 ])
 
 // Type for knowledge base filter criteria
@@ -86,38 +86,38 @@ export interface KnowledgeBaseFilter {
   excludePatterns?: string[]
 }
 
-// Relations for skills system
-export const skillsRelations = relations(skills, ({ many }) => ({
-  personaSkills: many(personaSkills),
-  skillKnowledgeBases: many(skillKnowledgeBases)
+// Relations for capabilities system
+export const capabilitiesRelations = relations(capabilities, ({ many }) => ({
+  personaCapabilities: many(personaCapabilities),
+  capabilityKnowledgeBases: many(capabilityKnowledgeBases)
 }))
 
 export const personasRelations = relations(personas, ({ many }) => ({
-  personaSkills: many(personaSkills)
+  personaCapabilities: many(personaCapabilities)
 }))
 
-export const personaSkillsRelations = relations(personaSkills, ({ one }) => ({
+export const personaCapabilitiesRelations = relations(personaCapabilities, ({ one }) => ({
   persona: one(personas, {
-    fields: [personaSkills.personaId],
+    fields: [personaCapabilities.personaId],
     references: [personas.id]
   }),
-  skill: one(skills, {
-    fields: [personaSkills.skillId],
-    references: [skills.id]
+  capability: one(capabilities, {
+    fields: [personaCapabilities.capabilityId],
+    references: [capabilities.id]
   })
 }))
 
 export const knowledgeBasesRelations = relations(knowledgeBases, ({ many }) => ({
-  skillKnowledgeBases: many(skillKnowledgeBases)
+  capabilityKnowledgeBases: many(capabilityKnowledgeBases)
 }))
 
-export const skillKnowledgeBasesRelations = relations(skillKnowledgeBases, ({ one }) => ({
-  skill: one(skills, {
-    fields: [skillKnowledgeBases.skillId],
-    references: [skills.id]
+export const capabilityKnowledgeBasesRelations = relations(capabilityKnowledgeBases, ({ one }) => ({
+  capability: one(capabilities, {
+    fields: [capabilityKnowledgeBases.capabilityId],
+    references: [capabilities.id]
   }),
   knowledgeBase: one(knowledgeBases, {
-    fields: [skillKnowledgeBases.knowledgeBaseId],
+    fields: [capabilityKnowledgeBases.knowledgeBaseId],
     references: [knowledgeBases.id]
   })
 }))

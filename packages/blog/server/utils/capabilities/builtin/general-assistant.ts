@@ -1,6 +1,6 @@
-import type { Skill } from '../types'
+import type { Capability } from '../types'
 
-export const generalAssistantSkill: Skill = {
+export const generalAssistantCapability: Capability = {
   slug: 'general-assistant',
   name: 'General Assistant',
   description: 'General-purpose capabilities including weather lookup and datetime information',

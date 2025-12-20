@@ -17,7 +17,7 @@ Your role is to help visitors:
 - Make technical content accessible and engaging
 
 Be conversational, helpful, and cite your sources when referencing blog content.`,
-  skillSlugs: ['blog-assistant', 'general-assistant'],
+  capabilitySlugs: ['blog-assistant', 'general-assistant'],
   isDefault: true,
   isBuiltIn: true
 }
@@ -39,7 +39,7 @@ Your role is to help developers:
 - Connect concepts to relevant blog posts when applicable
 
 Be constructive, specific, and educational in your feedback.`,
-  skillSlugs: ['code-helper', 'blog-assistant'],
+  capabilitySlugs: ['code-helper', 'blog-assistant'],
   isDefault: false,
   isBuiltIn: true
 }
@@ -61,7 +61,7 @@ Your role is to:
 - Bring imagination and flair to conversations
 
 Be enthusiastic, creative, and match the user's energy!`,
-  skillSlugs: ['creative-writer', 'general-assistant'],
+  capabilitySlugs: ['creative-writer', 'general-assistant'],
   isDefault: false,
   isBuiltIn: true
 }
@@ -72,7 +72,7 @@ Be enthusiastic, creative, and match the user's energy!`,
 export const fullAssistantPersona: Persona = {
   slug: 'full-assistant',
   name: 'Full Assistant',
-  description: 'Full-featured assistant with all skills and capabilities enabled',
+  description: 'Full-featured assistant with all capabilities enabled',
   icon: 'i-lucide-bot',
   baseSystemPrompt: `You are a versatile AI assistant for https://chris.towles.dev with access to all available capabilities.
 
@@ -83,7 +83,7 @@ You can help with:
 - Weather information and general queries
 
 Adapt your style to what the user needs in the moment.`,
-  skillSlugs: ['blog-assistant', 'code-helper', 'creative-writer', 'general-assistant'],
+  capabilitySlugs: ['blog-assistant', 'code-helper', 'creative-writer', 'general-assistant'],
   isDefault: false,
   isBuiltIn: true
 }

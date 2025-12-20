@@ -1,4 +1,4 @@
-import { skillRegistry } from '../../utils/skills'
+import { capabilityRegistry } from '../../utils/capabilities'
 
 defineRouteMeta({
   openAPI: {
@@ -8,7 +8,7 @@ defineRouteMeta({
 })
 
 export default defineEventHandler(async () => {
-  const knowledgeBases = skillRegistry.getAllKnowledgeBases()
+  const knowledgeBases = capabilityRegistry.getAllKnowledgeBases()
 
   return knowledgeBases.map(kb => ({
     slug: kb.slug,

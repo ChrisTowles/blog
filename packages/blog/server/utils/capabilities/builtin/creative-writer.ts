@@ -1,6 +1,6 @@
-import type { Skill } from '../types'
+import type { Capability } from '../types'
 
-export const creativeWriterSkill: Skill = {
+export const creativeWriterCapability: Capability = {
   slug: 'creative-writer',
   name: 'Creative Writer',
   description: 'Helps with creative writing, storytelling, and playful interactions including D&D dice rolling',

@@ -1,21 +1,21 @@
 import type Anthropic from '@anthropic-ai/sdk'
-import type { Skill, Persona, KnowledgeBase, LoadedPersona, KnowledgeBaseFilter } from './types'
+import type { Capability, Persona, KnowledgeBase, LoadedPersona, KnowledgeBaseFilter } from './types'
 import { getToolsByNames } from '../ai/tools'
-import { builtInSkills } from './builtin'
+import { builtInCapabilities } from './builtin'
 import { defaultPersonas } from './personas'
 import { defaultKnowledgeBases } from './knowledge-bases'
 
 /**
- * Skills Registry - manages skill definitions and loading
+ * Capability Registry - manages capability definitions and loading
  */
-class SkillRegistry {
-  private skills = new Map<string, Skill>()
+class CapabilityRegistry {
+  private capabilities = new Map<string, Capability>()
   private personas = new Map<string, Persona>()
   private knowledgeBases = new Map<string, KnowledgeBase>()
 
   constructor() {
-    // Register built-in skills
-    builtInSkills.forEach(skill => this.registerSkill(skill))
+    // Register built-in capabilities
+    builtInCapabilities.forEach(capability => this.registerCapability(capability))
 
     // Register default personas
     defaultPersonas.forEach(persona => this.registerPersona(persona))
@@ -24,24 +24,24 @@ class SkillRegistry {
     defaultKnowledgeBases.forEach(kb => this.registerKnowledgeBase(kb))
   }
 
-  // === Skills ===
+  // === Capabilities ===
 
-  registerSkill(skill: Skill): void {
-    this.skills.set(skill.slug, skill)
+  registerCapability(capability: Capability): void {
+    this.capabilities.set(capability.slug, capability)
   }
 
-  getSkill(slug: string): Skill | undefined {
-    return this.skills.get(slug)
+  getCapability(slug: string): Capability | undefined {
+    return this.capabilities.get(slug)
   }
 
-  getAllSkills(): Skill[] {
-    return Array.from(this.skills.values())
+  getAllCapabilities(): Capability[] {
+    return Array.from(this.capabilities.values())
   }
 
-  getSkillsBySlug(slugs: string[]): Skill[] {
+  getCapabilitiesBySlug(slugs: string[]): Capability[] {
     return slugs
-      .map(slug => this.skills.get(slug))
-      .filter((s): s is Skill => s !== undefined)
+      .map(slug => this.capabilities.get(slug))
+      .filter((s): s is Capability => s !== undefined)
       .sort((a, b) => a.priority - b.priority)
   }
 
@@ -80,7 +80,7 @@ class SkillRegistry {
   // === Loading ===
 
   /**
-   * Load a persona with all its skills, tools, and system prompt
+   * Load a persona with all its capabilities, tools, and system prompt
    */
   loadPersona(personaSlug?: string): LoadedPersona {
     // Get persona (default if not specified)
@@ -92,25 +92,25 @@ class SkillRegistry {
       throw new Error(`Persona not found: ${personaSlug || 'default'}`)
     }
 
-    // Load skills for this persona
-    const skills = this.getSkillsBySlug(persona.skillSlugs)
+    // Load capabilities for this persona
+    const capabilities = this.getCapabilitiesBySlug(persona.capabilitySlugs)
 
-    // Collect all tool names from skills
+    // Collect all tool names from capabilities
     const toolNames = new Set<string>()
-    skills.forEach((skill) => {
-      skill.tools.forEach(name => toolNames.add(name))
+    capabilities.forEach((capability) => {
+      capability.tools.forEach(name => toolNames.add(name))
     })
 
     // Get tool definitions
     const tools = getToolsByNames(Array.from(toolNames))
 
     // Build combined system prompt
-    const systemPrompt = this.buildSystemPrompt(persona, skills)
+    const systemPrompt = this.buildSystemPrompt(persona, capabilities)
 
     // Collect knowledge base filters
     const knowledgeBaseFilters: KnowledgeBaseFilter[] = []
-    skills.forEach((skill) => {
-      skill.knowledgeBases?.forEach((kbSlug) => {
+    capabilities.forEach((capability) => {
+      capability.knowledgeBases?.forEach((kbSlug) => {
         const kb = this.getKnowledgeBase(kbSlug)
         if (kb) {
           knowledgeBaseFilters.push(kb.filter)
@@ -120,7 +120,7 @@ class SkillRegistry {
 
     return {
       persona,
-      skills,
+      capabilities,
       tools,
       systemPrompt,
       knowledgeBaseFilters
@@ -128,22 +128,22 @@ class SkillRegistry {
   }
 
   /**
-   * Build system prompt from persona and skills
+   * Build system prompt from persona and capabilities
    */
-  buildSystemPrompt(persona: Persona, skills: Skill[]): string {
+  buildSystemPrompt(persona: Persona, capabilities: Capability[]): string {
     const parts: string[] = []
 
     // Persona intro
     parts.push(persona.baseSystemPrompt)
     parts.push('')
 
-    // Skills sections (sorted by priority)
-    if (skills.length > 0) {
+    // Capabilities sections (sorted by priority)
+    if (capabilities.length > 0) {
       parts.push('## Your Capabilities')
       parts.push('')
 
-      skills.forEach((skill) => {
-        parts.push(skill.systemPromptSegment)
+      capabilities.forEach((capability) => {
+        parts.push(capability.systemPromptSegment)
         parts.push('')
       })
     }
@@ -152,14 +152,14 @@ class SkillRegistry {
   }
 
   /**
-   * Get tools for a set of skills
+   * Get tools for a set of capabilities
    */
-  getToolsForSkills(skillSlugs: string[]): Anthropic.Tool[] {
-    const skills = this.getSkillsBySlug(skillSlugs)
+  getToolsForCapabilities(capabilitySlugs: string[]): Anthropic.Tool[] {
+    const capabilities = this.getCapabilitiesBySlug(capabilitySlugs)
     const toolNames = new Set<string>()
 
-    skills.forEach((skill) => {
-      skill.tools.forEach(name => toolNames.add(name))
+    capabilities.forEach((capability) => {
+      capability.tools.forEach(name => toolNames.add(name))
     })
 
     return getToolsByNames(Array.from(toolNames))
@@ -167,7 +167,7 @@ class SkillRegistry {
 }
 
 // Singleton registry instance
-export const skillRegistry = new SkillRegistry()
+export const capabilityRegistry = new CapabilityRegistry()
 
 // Export class for testing
-export { SkillRegistry }
+export { CapabilityRegistry }

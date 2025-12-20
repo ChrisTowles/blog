@@ -7,16 +7,16 @@ const { data: personaDetails } = await useFetch(`/api/personas/${props.personaSl
 </script>
 
 <template>
-  <div v-if="personaDetails?.skills" class="flex flex-wrap gap-1">
+  <div v-if="personaDetails?.capabilities" class="flex flex-wrap gap-1">
     <UBadge
-      v-for="skill in personaDetails.skills"
-      :key="skill.slug"
+      v-for="capability in personaDetails.capabilities"
+      :key="capability.slug"
       size="sm"
       color="neutral"
       variant="subtle"
       class="text-xs"
     >
-      {{ skill.name }}
+      {{ capability.name }}
     </UBadge>
   </div>
 </template>

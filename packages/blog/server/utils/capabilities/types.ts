@@ -1,9 +1,9 @@
 import type Anthropic from '@anthropic-ai/sdk'
 
 /**
- * Skill definition - a package of procedural knowledge
+ * Capability definition - a package of procedural knowledge
  */
-export interface Skill {
+export interface Capability {
   slug: string
   name: string
   description: string
@@ -15,7 +15,7 @@ export interface Skill {
 }
 
 /**
- * Persona definition - a combination of skills with a unified identity
+ * Persona definition - a combination of capabilities with a unified identity
  */
 export interface Persona {
   slug: string
@@ -23,7 +23,7 @@ export interface Persona {
   description: string
   icon: string
   baseSystemPrompt: string
-  skillSlugs: string[]
+  capabilitySlugs: string[]
   isDefault: boolean
   isBuiltIn: boolean
 }
@@ -49,11 +49,11 @@ export interface KnowledgeBase {
 }
 
 /**
- * Result of loading a persona with all its skills
+ * Result of loading a persona with all its capabilities
  */
 export interface LoadedPersona {
   persona: Persona
-  skills: Skill[]
+  capabilities: Capability[]
   tools: Anthropic.Tool[]
   systemPrompt: string
   knowledgeBaseFilters: KnowledgeBaseFilter[]

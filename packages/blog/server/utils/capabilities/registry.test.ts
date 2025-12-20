@@ -1,72 +1,72 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { SkillRegistry } from './registry'
-import { blogAssistantSkill, codeHelperSkill, creativeWriterSkill, generalAssistantSkill } from './builtin'
+import { CapabilityRegistry } from './registry'
+import { blogAssistantCapability, codeHelperCapability, creativeWriterCapability, generalAssistantCapability } from './builtin'
 import { blogGuidePersona, codeReviewerPersona, fullAssistantPersona } from './personas'
 import { allPostsKB, aiPostsKB } from './knowledge-bases'
-import type { Skill, Persona, KnowledgeBase } from './types'
+import type { Capability, Persona, KnowledgeBase } from './types'
 
-describe('SkillRegistry', () => {
-  let registry: SkillRegistry
+describe('CapabilityRegistry', () => {
+  let registry: CapabilityRegistry
 
   beforeEach(() => {
     // Create a fresh registry for each test
-    registry = new SkillRegistry()
+    registry = new CapabilityRegistry()
   })
 
-  describe('skill management', () => {
-    it('has built-in skills registered by default', () => {
-      const skills = registry.getAllSkills()
-      expect(skills.length).toBeGreaterThanOrEqual(4)
+  describe('capability management', () => {
+    it('has built-in capabilities registered by default', () => {
+      const capabilities = registry.getAllCapabilities()
+      expect(capabilities.length).toBeGreaterThanOrEqual(4)
 
-      const slugs = skills.map(s => s.slug)
+      const slugs = capabilities.map(s => s.slug)
       expect(slugs).toContain('blog-assistant')
       expect(slugs).toContain('code-helper')
       expect(slugs).toContain('creative-writer')
       expect(slugs).toContain('general-assistant')
     })
 
-    it('retrieves skill by slug', () => {
-      const skill = registry.getSkill('blog-assistant')
-      expect(skill).toBeDefined()
-      expect(skill?.name).toBe('Blog Assistant')
-      expect(skill?.tools).toContain('searchBlogContent')
+    it('retrieves capability by slug', () => {
+      const capability = registry.getCapability('blog-assistant')
+      expect(capability).toBeDefined()
+      expect(capability?.name).toBe('Blog Assistant')
+      expect(capability?.tools).toContain('searchBlogContent')
     })
 
-    it('returns undefined for non-existent skill', () => {
-      const skill = registry.getSkill('non-existent-skill')
-      expect(skill).toBeUndefined()
+    it('returns undefined for non-existent capability', () => {
+      const capability = registry.getCapability('non-existent-capability')
+      expect(capability).toBeUndefined()
     })
 
-    it('registers custom skill', () => {
-      const customSkill: Skill = {
-        slug: 'custom-skill',
-        name: 'Custom Skill',
-        description: 'A custom test skill',
+    it('registers custom capability', () => {
+      const customCapability: Capability = {
+        slug: 'custom-capability',
+        name: 'Custom Capability',
+        description: 'A custom test capability',
         systemPromptSegment: 'Custom instructions here',
         tools: ['getCurrentDateTime'],
         priority: 100,
         isBuiltIn: false
       }
 
-      registry.registerSkill(customSkill)
-      const retrieved = registry.getSkill('custom-skill')
-      expect(retrieved).toEqual(customSkill)
+      registry.registerCapability(customCapability)
+      const retrieved = registry.getCapability('custom-capability')
+      expect(retrieved).toEqual(customCapability)
     })
 
-    it('getSkillsBySlug returns skills sorted by priority', () => {
-      const skills = registry.getSkillsBySlug(['creative-writer', 'blog-assistant'])
+    it('getCapabilitiesBySlug returns capabilities sorted by priority', () => {
+      const capabilities = registry.getCapabilitiesBySlug(['creative-writer', 'blog-assistant'])
 
-      expect(skills.length).toBe(2)
+      expect(capabilities.length).toBe(2)
       // blog-assistant has priority 10, creative-writer has priority 30
-      expect(skills[0]?.slug).toBe('blog-assistant')
-      expect(skills[1]?.slug).toBe('creative-writer')
+      expect(capabilities[0]?.slug).toBe('blog-assistant')
+      expect(capabilities[1]?.slug).toBe('creative-writer')
     })
 
-    it('getSkillsBySlug filters out non-existent slugs', () => {
-      const skills = registry.getSkillsBySlug(['blog-assistant', 'fake-skill', 'code-helper'])
-      expect(skills.length).toBe(2)
-      expect(skills.map(s => s.slug)).toContain('blog-assistant')
-      expect(skills.map(s => s.slug)).toContain('code-helper')
+    it('getCapabilitiesBySlug filters out non-existent slugs', () => {
+      const capabilities = registry.getCapabilitiesBySlug(['blog-assistant', 'fake-capability', 'code-helper'])
+      expect(capabilities.length).toBe(2)
+      expect(capabilities.map(s => s.slug)).toContain('blog-assistant')
+      expect(capabilities.map(s => s.slug)).toContain('code-helper')
     })
   })
 
@@ -103,7 +103,7 @@ describe('SkillRegistry', () => {
         description: 'A custom test persona',
         icon: 'i-lucide-star',
         baseSystemPrompt: 'You are a custom assistant.',
-        skillSlugs: ['blog-assistant'],
+        capabilitySlugs: ['blog-assistant'],
         isDefault: false,
         isBuiltIn: false
       }
@@ -153,7 +153,7 @@ describe('SkillRegistry', () => {
       const loaded = registry.loadPersona()
 
       expect(loaded.persona.slug).toBe('blog-guide')
-      expect(loaded.skills.length).toBeGreaterThan(0)
+      expect(loaded.capabilities.length).toBeGreaterThan(0)
       expect(loaded.tools.length).toBeGreaterThan(0)
       expect(loaded.systemPrompt).toBeTruthy()
     })
@@ -162,18 +162,18 @@ describe('SkillRegistry', () => {
       const loaded = registry.loadPersona('code-reviewer')
 
       expect(loaded.persona.slug).toBe('code-reviewer')
-      expect(loaded.skills.some(s => s.slug === 'code-helper')).toBe(true)
-      expect(loaded.skills.some(s => s.slug === 'blog-assistant')).toBe(true)
+      expect(loaded.capabilities.some(c => c.slug === 'code-helper')).toBe(true)
+      expect(loaded.capabilities.some(c => c.slug === 'blog-assistant')).toBe(true)
     })
 
     it('throws error for non-existent persona', () => {
       expect(() => registry.loadPersona('fake-persona')).toThrow('Persona not found')
     })
 
-    it('collects tools from all skills', () => {
+    it('collects tools from all capabilities', () => {
       const loaded = registry.loadPersona('full-assistant')
 
-      // full-assistant has all skills, so should have all tools
+      // full-assistant has all capabilities, so should have all tools
       const toolNames = loaded.tools.map(t => t.name)
       expect(toolNames).toContain('searchBlogContent')
       expect(toolNames).toContain('rollDice')
@@ -181,14 +181,14 @@ describe('SkillRegistry', () => {
       expect(toolNames).toContain('getCurrentDateTime')
     })
 
-    it('collects knowledge base filters from skills', () => {
+    it('collects knowledge base filters from capabilities', () => {
       const loaded = registry.loadPersona('blog-guide')
 
       // blog-guide uses blog-assistant which has all-posts KB
       expect(loaded.knowledgeBaseFilters.length).toBeGreaterThanOrEqual(0)
     })
 
-    it('deduplicates tools across skills', () => {
+    it('deduplicates tools across capabilities', () => {
       // code-reviewer has code-helper and blog-assistant, both use searchBlogContent
       const loaded = registry.loadPersona('code-reviewer')
 
@@ -204,23 +204,23 @@ describe('SkillRegistry', () => {
       expect(loaded.systemPrompt).toContain('knowledgeable and friendly guide')
     })
 
-    it('includes skill segments', () => {
+    it('includes capability segments', () => {
       const loaded = registry.loadPersona('creative-companion')
 
       expect(loaded.systemPrompt).toContain('Creative Writer')
       expect(loaded.systemPrompt).toContain('rollDice')
     })
 
-    it('includes capabilities header when skills present', () => {
+    it('includes capabilities header when capabilities present', () => {
       const loaded = registry.loadPersona('blog-guide')
 
       expect(loaded.systemPrompt).toContain('## Your Capabilities')
     })
   })
 
-  describe('getToolsForSkills', () => {
-    it('returns tools for given skill slugs', () => {
-      const tools = registry.getToolsForSkills(['blog-assistant'])
+  describe('getToolsForCapabilities', () => {
+    it('returns tools for given capability slugs', () => {
+      const tools = registry.getToolsForCapabilities(['blog-assistant'])
 
       const toolNames = tools.map(t => t.name)
       expect(toolNames).toContain('searchBlogContent')
@@ -228,60 +228,60 @@ describe('SkillRegistry', () => {
       expect(toolNames).toContain('getAuthorInfo')
     })
 
-    it('deduplicates tools across multiple skills', () => {
-      const tools = registry.getToolsForSkills(['blog-assistant', 'code-helper'])
+    it('deduplicates tools across multiple capabilities', () => {
+      const tools = registry.getToolsForCapabilities(['blog-assistant', 'code-helper'])
 
       const searchTools = tools.filter(t => t.name === 'searchBlogContent')
       expect(searchTools.length).toBe(1)
     })
 
-    it('returns empty array for non-existent skills', () => {
-      const tools = registry.getToolsForSkills(['fake-skill'])
+    it('returns empty array for non-existent capabilities', () => {
+      const tools = registry.getToolsForCapabilities(['fake-capability'])
       expect(tools).toEqual([])
     })
   })
 })
 
-describe('Built-in Skills', () => {
-  it('blogAssistantSkill has valid structure', () => {
-    expect(blogAssistantSkill.slug).toBe('blog-assistant')
-    expect(blogAssistantSkill.tools).toContain('searchBlogContent')
-    expect(blogAssistantSkill.priority).toBeGreaterThan(0)
-    expect(blogAssistantSkill.isBuiltIn).toBe(true)
-    expect(blogAssistantSkill.systemPromptSegment.length).toBeGreaterThan(50)
+describe('Built-in Capabilities', () => {
+  it('blogAssistantCapability has valid structure', () => {
+    expect(blogAssistantCapability.slug).toBe('blog-assistant')
+    expect(blogAssistantCapability.tools).toContain('searchBlogContent')
+    expect(blogAssistantCapability.priority).toBeGreaterThan(0)
+    expect(blogAssistantCapability.isBuiltIn).toBe(true)
+    expect(blogAssistantCapability.systemPromptSegment.length).toBeGreaterThan(50)
   })
 
-  it('codeHelperSkill has valid structure', () => {
-    expect(codeHelperSkill.slug).toBe('code-helper')
-    expect(codeHelperSkill.tools).toContain('searchBlogContent')
-    expect(codeHelperSkill.priority).toBeGreaterThan(0)
-    expect(codeHelperSkill.isBuiltIn).toBe(true)
+  it('codeHelperCapability has valid structure', () => {
+    expect(codeHelperCapability.slug).toBe('code-helper')
+    expect(codeHelperCapability.tools).toContain('searchBlogContent')
+    expect(codeHelperCapability.priority).toBeGreaterThan(0)
+    expect(codeHelperCapability.isBuiltIn).toBe(true)
   })
 
-  it('creativeWriterSkill has valid structure', () => {
-    expect(creativeWriterSkill.slug).toBe('creative-writer')
-    expect(creativeWriterSkill.tools).toContain('rollDice')
-    expect(creativeWriterSkill.priority).toBeGreaterThan(0)
-    expect(creativeWriterSkill.isBuiltIn).toBe(true)
+  it('creativeWriterCapability has valid structure', () => {
+    expect(creativeWriterCapability.slug).toBe('creative-writer')
+    expect(creativeWriterCapability.tools).toContain('rollDice')
+    expect(creativeWriterCapability.priority).toBeGreaterThan(0)
+    expect(creativeWriterCapability.isBuiltIn).toBe(true)
   })
 
-  it('generalAssistantSkill has valid structure', () => {
-    expect(generalAssistantSkill.slug).toBe('general-assistant')
-    expect(generalAssistantSkill.tools).toContain('getWeather')
-    expect(generalAssistantSkill.priority).toBeGreaterThan(0)
-    expect(generalAssistantSkill.isBuiltIn).toBe(true)
+  it('generalAssistantCapability has valid structure', () => {
+    expect(generalAssistantCapability.slug).toBe('general-assistant')
+    expect(generalAssistantCapability.tools).toContain('getWeather')
+    expect(generalAssistantCapability.priority).toBeGreaterThan(0)
+    expect(generalAssistantCapability.isBuiltIn).toBe(true)
   })
 
-  it('all built-in skills have unique slugs', () => {
-    const skills = [blogAssistantSkill, codeHelperSkill, creativeWriterSkill, generalAssistantSkill]
-    const slugs = skills.map(s => s.slug)
+  it('all built-in capabilities have unique slugs', () => {
+    const capabilities = [blogAssistantCapability, codeHelperCapability, creativeWriterCapability, generalAssistantCapability]
+    const slugs = capabilities.map(c => c.slug)
     const uniqueSlugs = new Set(slugs)
     expect(uniqueSlugs.size).toBe(slugs.length)
   })
 
-  it('all built-in skills have unique priorities', () => {
-    const skills = [blogAssistantSkill, codeHelperSkill, creativeWriterSkill, generalAssistantSkill]
-    const priorities = skills.map(s => s.priority)
+  it('all built-in capabilities have unique priorities', () => {
+    const capabilities = [blogAssistantCapability, codeHelperCapability, creativeWriterCapability, generalAssistantCapability]
+    const priorities = capabilities.map(c => c.priority)
     const uniquePriorities = new Set(priorities)
     expect(uniquePriorities.size).toBe(priorities.length)
   })
@@ -292,15 +292,15 @@ describe('Built-in Personas', () => {
     expect(blogGuidePersona.isDefault).toBe(true)
   })
 
-  it('codeReviewerPersona has code-helper skill', () => {
-    expect(codeReviewerPersona.skillSlugs).toContain('code-helper')
+  it('codeReviewerPersona has code-helper capability', () => {
+    expect(codeReviewerPersona.capabilitySlugs).toContain('code-helper')
   })
 
-  it('fullAssistantPersona has all skills', () => {
-    expect(fullAssistantPersona.skillSlugs).toContain('blog-assistant')
-    expect(fullAssistantPersona.skillSlugs).toContain('code-helper')
-    expect(fullAssistantPersona.skillSlugs).toContain('creative-writer')
-    expect(fullAssistantPersona.skillSlugs).toContain('general-assistant')
+  it('fullAssistantPersona has all capabilities', () => {
+    expect(fullAssistantPersona.capabilitySlugs).toContain('blog-assistant')
+    expect(fullAssistantPersona.capabilitySlugs).toContain('code-helper')
+    expect(fullAssistantPersona.capabilitySlugs).toContain('creative-writer')
+    expect(fullAssistantPersona.capabilitySlugs).toContain('general-assistant')
   })
 
   it('all personas have valid icons', () => {

@@ -1,9 +1,9 @@
 import { z } from 'zod'
-import { skillRegistry } from '../../utils/skills'
+import { capabilityRegistry } from '../../utils/capabilities'
 
 defineRouteMeta({
   openAPI: {
-    description: 'Get persona details with loaded skills',
+    description: 'Get persona details with loaded capabilities',
     tags: ['personas']
   }
 })
@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
   }).parse)
 
   try {
-    const loaded = skillRegistry.loadPersona(slug)
+    const loaded = capabilityRegistry.loadPersona(slug)
 
     return {
       persona: {
@@ -25,11 +25,11 @@ export default defineEventHandler(async (event) => {
         isDefault: loaded.persona.isDefault,
         isBuiltIn: loaded.persona.isBuiltIn
       },
-      skills: loaded.skills.map(s => ({
-        slug: s.slug,
-        name: s.name,
-        description: s.description,
-        tools: s.tools
+      capabilities: loaded.capabilities.map(c => ({
+        slug: c.slug,
+        name: c.name,
+        description: c.description,
+        tools: c.tools
       })),
       toolCount: loaded.tools.length
     }

@@ -1,6 +1,6 @@
-import type { Skill } from '../types'
+import type { Capability } from '../types'
 
-export const codeHelperSkill: Skill = {
+export const codeHelperCapability: Capability = {
   slug: 'code-helper',
   name: 'Code Helper',
   description: 'Assists with code review, debugging, best practices, and technical explanations',

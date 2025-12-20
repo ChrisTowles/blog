@@ -1,4 +1,4 @@
-import { skillRegistry } from '../utils/skills'
+import { capabilityRegistry } from '../utils/capabilities'
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
       personaId = dbPersona.id
     } else {
       // Check built-in personas
-      const builtInPersona = skillRegistry.getPersona(personaSlug)
+      const builtInPersona = capabilityRegistry.getPersona(personaSlug)
       if (!builtInPersona) {
         throw createError({ statusCode: 400, statusMessage: `Invalid persona: ${personaSlug}` })
       }
@@ -44,6 +44,6 @@ export default defineEventHandler(async (event) => {
   // Return chat with persona info
   return {
     ...chat,
-    personaSlug: personaSlug || skillRegistry.getDefaultPersona()?.slug
+    personaSlug: personaSlug || capabilityRegistry.getDefaultPersona()?.slug
   }
 })

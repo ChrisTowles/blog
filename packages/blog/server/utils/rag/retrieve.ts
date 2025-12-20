@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm'
 import { embedText, rerankDocuments } from '../ai/bedrock'
-import type { KnowledgeBaseFilter } from '../skills/types'
+import type { KnowledgeBaseFilter } from '../capabilities/types'
 
 export interface RAGResult {
   content: string

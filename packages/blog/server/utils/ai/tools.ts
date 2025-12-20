@@ -1,6 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { retrieveRAG } from '../rag/retrieve'
-import type { KnowledgeBaseFilter } from '../skills/types'
+import type { KnowledgeBaseFilter } from '../capabilities/types'
 
 // Context for tool execution (set by chat endpoint)
 let currentKnowledgeBaseFilters: KnowledgeBaseFilter[] = []
@@ -20,12 +20,12 @@ export function clearKnowledgeBaseFilters(): void {
 }
 
 /**
- * Tool Registry - lookup tools by name for skill-based filtering
+ * Tool Registry - lookup tools by name for capability-based filtering
  */
 export const toolRegistry = new Map<string, Anthropic.Tool>()
 
 /**
- * Get tools by their names (for skill-based tool filtering)
+ * Get tools by their names (for capability-based tool filtering)
  */
 export function getToolsByNames(names: string[]): Anthropic.Tool[] {
   return names
