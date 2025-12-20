@@ -1,9 +1,13 @@
+import { z } from 'zod'
 import { capabilityRegistry } from '../utils/capabilities'
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
 
-  const { input, personaSlug } = await readBody(event)
+  const { input, personaSlug } = await readValidatedBody(event, z.object({
+    input: z.string().min(1, 'Message cannot be empty'),
+    personaSlug: z.string().optional()
+  }).parse)
   const db = useDrizzle()
 
   // Validate persona exists if provided

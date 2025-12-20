@@ -12,7 +12,13 @@ export const toolRegistry = new Map<string, Anthropic.Tool>()
  */
 export function getToolsByNames(names: string[]): Anthropic.Tool[] {
   return names
-    .map(name => toolRegistry.get(name))
+    .map((name) => {
+      const tool = toolRegistry.get(name)
+      if (!tool) {
+        console.warn(`[tools] Tool "${name}" not found in registry. Check capability configuration.`)
+      }
+      return tool
+    })
     .filter((t): t is Anthropic.Tool => t !== undefined)
 }
 

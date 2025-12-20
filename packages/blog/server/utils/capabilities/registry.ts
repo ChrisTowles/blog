@@ -40,7 +40,13 @@ class CapabilityRegistry {
 
   getCapabilitiesBySlug(slugs: string[]): Capability[] {
     return slugs
-      .map(slug => this.capabilities.get(slug))
+      .map((slug) => {
+        const capability = this.capabilities.get(slug)
+        if (!capability) {
+          console.warn(`[registry] Capability "${slug}" not found. Check persona configuration.`)
+        }
+        return capability
+      })
       .filter((s): s is Capability => s !== undefined)
       .sort((a, b) => a.priority - b.priority)
   }
@@ -114,6 +120,8 @@ class CapabilityRegistry {
         const kb = this.getKnowledgeBase(kbSlug)
         if (kb) {
           knowledgeBaseFilters.push(kb.filter)
+        } else {
+          console.warn(`[registry] Knowledge base "${kbSlug}" not found for capability "${capability.slug}"`)
         }
       })
     })
