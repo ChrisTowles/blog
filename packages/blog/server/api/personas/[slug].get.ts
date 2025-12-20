@@ -33,7 +33,11 @@ export default defineEventHandler(async (event) => {
       })),
       toolCount: loaded.tools.length
     }
-  } catch {
-    throw createError({ statusCode: 404, statusMessage: 'Persona not found' })
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('Persona not found')) {
+      throw createError({ statusCode: 404, statusMessage: error.message })
+    }
+    console.error('Unexpected error loading persona:', error)
+    throw error
   }
 })

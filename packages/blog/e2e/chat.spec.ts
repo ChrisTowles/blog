@@ -88,9 +88,12 @@ test.describe('AI Chat', () => {
     // Wait for navigation to chat detail page (will have ID in URL)
     await page.waitForURL(/\/chat\/[a-zA-Z0-9-]+/, { timeout: 15000 })
 
-    // TODO: Improve waiting for response - currently just waits for new message to appear
+    // TODO: Add test ID for message elements and wait for assistant response
+    // Need to implement message test IDs in chat UI component
+    // For now, this test is skipped until proper selectors are added
 
-    // Get the last message (assistant's response)
+    // Get all messages (need proper test ID)
+    const messages = page.getByTestId(TEST_IDS.CHAT.MESSAGE)
     const lastMessage = messages.last()
     const responseText = await lastMessage.textContent()
 

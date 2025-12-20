@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
       if (!builtInPersona) {
         throw createError({ statusCode: 400, statusMessage: `Invalid persona: ${personaSlug}` })
       }
-      // Built-in personas don't have DB IDs, we'll use the slug
+      // Built-in personas exist only in memory; personaId stays null, slug returned in response
     }
   }
 

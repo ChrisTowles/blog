@@ -1,7 +1,7 @@
 import type { MessageParam } from '@anthropic-ai/sdk/resources/messages'
 import { z } from 'zod'
 import type { ChatMessage, MessagePart, SSEEvent } from '~~/shared/chat-types'
-import { executeTool, setKnowledgeBaseFilters } from '../../utils/ai/tools'
+import { executeTool } from '../../utils/ai/tools'
 import { getAnthropicClient } from '../../utils/ai/anthropic'
 import { capabilityRegistry } from '../../utils/capabilities'
 
@@ -72,12 +72,21 @@ export default defineEventHandler(async (event) => {
   }
 
   // Load persona and capabilities
-  const loadedPersona = capabilityRegistry.loadPersona(personaSlug)
+  let loadedPersona
+  try {
+    loadedPersona = capabilityRegistry.loadPersona(personaSlug)
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('Persona not found')) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: `Invalid persona: ${personaSlug}`
+      })
+    }
+    throw error
+  }
   const systemPrompt = loadedPersona.systemPrompt + '\n\n' + BASE_SYSTEM_PROMPT
   const enabledTools = loadedPersona.tools
-
-  // Set knowledge base filters for this request
-  setKnowledgeBaseFilters(loadedPersona.knowledgeBaseFilters)
+  const knowledgeBaseFilters = loadedPersona.knowledgeBaseFilters
 
   // Generate title if needed
   let generatedTitle: string | null = null
@@ -190,7 +199,11 @@ export default defineEventHandler(async (event) => {
                     toolArgs = JSON.parse(_toolInputJson)
                   }
                 } catch {
-                  // Invalid JSON, use empty args
+                  console.error('Failed to parse tool input JSON:', {
+                    toolName: currentToolName,
+                    rawInput: _toolInputJson?.substring(0, 200)
+                  })
+                  // Continue with empty args - tool will return its own error
                 }
 
                 // Track the tool use for message history
@@ -209,7 +222,7 @@ export default defineEventHandler(async (event) => {
                 })
 
                 // Execute the tool
-                const toolResult = await executeTool(currentToolName, toolArgs)
+                const toolResult = await executeTool(currentToolName, toolArgs, knowledgeBaseFilters)
                 toolResults.push({
                   type: 'tool_result',
                   tool_use_id: currentToolUseId,

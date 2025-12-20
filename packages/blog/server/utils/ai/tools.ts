@@ -2,23 +2,6 @@ import type Anthropic from '@anthropic-ai/sdk'
 import { retrieveRAG } from '../rag/retrieve'
 import type { KnowledgeBaseFilter } from '../capabilities/types'
 
-// Context for tool execution (set by chat endpoint)
-let currentKnowledgeBaseFilters: KnowledgeBaseFilter[] = []
-
-/**
- * Set the knowledge base filters for the current request
- */
-export function setKnowledgeBaseFilters(filters: KnowledgeBaseFilter[]): void {
-  currentKnowledgeBaseFilters = filters
-}
-
-/**
- * Clear knowledge base filters
- */
-export function clearKnowledgeBaseFilters(): void {
-  currentKnowledgeBaseFilters = []
-}
-
 /**
  * Tool Registry - lookup tools by name for capability-based filtering
  */
@@ -123,7 +106,11 @@ export const chatTools: Anthropic.Tool[] = [
  * Execute a tool by name
  * Some tools are async (like searchBlogContent)
  */
-export async function executeTool(name: string, args?: Record<string, unknown>): Promise<unknown> {
+export async function executeTool(
+  name: string,
+  args?: Record<string, unknown>,
+  knowledgeBaseFilters?: KnowledgeBaseFilter[]
+): Promise<unknown> {
   switch (name) {
     case 'searchBlogContent': {
       const query = args?.query as string
@@ -132,7 +119,7 @@ export async function executeTool(name: string, args?: Record<string, unknown>):
       }
       const results = await retrieveRAG(query, {
         topK: 5,
-        knowledgeBaseFilters: currentKnowledgeBaseFilters
+        knowledgeBaseFilters: knowledgeBaseFilters || []
       })
       return {
         results: results.map(r => ({
