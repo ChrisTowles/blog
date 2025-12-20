@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { capabilityRegistry } from '../utils/capabilities'
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)

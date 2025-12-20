@@ -1,5 +1,3 @@
-import { eq, useDrizzle, tables } from '../../utils/drizzle'
-
 defineRouteMeta({
   openAPI: {
     description: 'List all active chatbots with persona and theme info',

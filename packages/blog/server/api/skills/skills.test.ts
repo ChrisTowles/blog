@@ -1,6 +1,4 @@
 import { describe, it, expect } from 'vitest'
-import { parseSkillMd, loadSkillFromBuffer, SkillLoaderError } from '../../utils/skills/loader'
-import type { SkillMetadata, LoadedSkill } from '../../utils/skills/types'
 
 describe('Skills API - Integration Tests', () => {
   describe('parseSkillMd - SKILL.md Format Variations', () => {
@@ -53,7 +51,7 @@ description: |
 
 Body content.
 `
-      const { metadata, body } = parseSkillMd(content)
+      const { metadata, body: _body } = parseSkillMd(content)
 
       expect(metadata.name).toBe('multiline-skill')
       expect(metadata.description).toContain('multiline')
@@ -74,7 +72,7 @@ Body
       expect(metadata.name).toBe('special-chars-skill')
       expect(metadata.description).toContain('colons')
       expect(metadata.description).toContain('[brackets]')
-      expect(metadata.description).toContain("'quotes'")
+      expect(metadata.description).toContain('\'quotes\'')
     })
 
     it('parses SKILL.md with code blocks in body', () => {
@@ -98,7 +96,7 @@ echo "Another code block"
       const { body } = parseSkillMd(content)
 
       expect(body).toContain('```javascript')
-      expect(body).toContain("const example = 'code block'")
+      expect(body).toContain('const example = \'code block\'')
       expect(body).toContain('```bash')
       expect(body).toContain('#!/bin/bash')
     })

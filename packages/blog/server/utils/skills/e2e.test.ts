@@ -4,7 +4,7 @@ import archiver from 'archiver'
 import {
   loadSkillFromBuffer,
   SkillLoaderError
-} from './_loader'
+} from './loader'
 
 describe('Skills E2E - ZIP Buffer Loading', () => {
   /**
@@ -193,11 +193,11 @@ Testing format detection.
     })
 
     // Verify it's detected as ZIP
-    const isZip = zipBuffer.length >= 4 &&
-      zipBuffer[0] === 0x50 &&
-      zipBuffer[1] === 0x4b &&
-      zipBuffer[2] === 0x03 &&
-      zipBuffer[3] === 0x04
+    const isZip = zipBuffer.length >= 4
+      && zipBuffer[0] === 0x50
+      && zipBuffer[1] === 0x4b
+      && zipBuffer[2] === 0x03
+      && zipBuffer[3] === 0x04
 
     expect(isZip).toBe(true)
 

@@ -2,7 +2,8 @@
 import { ShikiCachedRenderer } from 'shiki-stream/vue'
 
 const colorMode = useColorMode()
-const highlighter = await useHighlighter()
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- shiki version mismatch between shiki and shiki-stream
+const highlighter = await useHighlighter() as any
 const props = defineProps<{
   code: string
   language: string

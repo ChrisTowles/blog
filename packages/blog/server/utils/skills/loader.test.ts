@@ -8,7 +8,7 @@ import {
   loadSkillFromPath,
   loadSkillFromBuffer,
   SkillLoaderError
-} from './_loader'
+} from './loader'
 
 describe('parseSkillMd', () => {
   it('parses valid SKILL.md with frontmatter', () => {

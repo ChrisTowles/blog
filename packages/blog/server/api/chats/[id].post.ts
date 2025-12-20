@@ -1,10 +1,6 @@
 import type { MessageParam } from '@anthropic-ai/sdk/resources/messages'
 import { z } from 'zod'
 import type { ChatMessage, MessagePart, SSEEvent } from '~~/shared/chat-types'
-import { executeTool, getToolsByNames } from '../../utils/ai/tools'
-import { getAnthropicClient } from '../../utils/ai/anthropic'
-import { capabilityRegistry } from '../../utils/capabilities'
-import { loadChatbotConfig } from '../../utils/chatbots'
 
 defineRouteMeta({
   openAPI: {
@@ -91,7 +87,7 @@ export default defineEventHandler(async (event) => {
 
   // Inject skills and custom system prompt when chatbot context available
   let enabledTools = loadedPersona.tools
-  let knowledgeBaseFilters = loadedPersona.knowledgeBaseFilters
+  const knowledgeBaseFilters = loadedPersona.knowledgeBaseFilters
 
   if (chatbotSlug) {
     try {

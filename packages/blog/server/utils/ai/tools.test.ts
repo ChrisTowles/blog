@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { executeTool, getToolsByNames, toolRegistry, chatTools } from './tools'
 
 // Register tools before tests
 beforeEach(() => {

@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { capabilityRegistry } from '../../utils/capabilities'
 
 defineRouteMeta({
   openAPI: {

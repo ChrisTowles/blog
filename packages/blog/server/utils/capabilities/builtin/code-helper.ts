@@ -1,5 +1,3 @@
-import type { Capability } from '../types'
-
 export const codeHelperCapability: Capability = {
   slug: 'code-helper',
   name: 'Code Helper',

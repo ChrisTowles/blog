@@ -1,5 +1,3 @@
-import type { Capability } from '../types'
-
 export const creativeWriterCapability: Capability = {
   slug: 'creative-writer',
   name: 'Creative Writer',

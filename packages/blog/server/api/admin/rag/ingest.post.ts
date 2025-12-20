@@ -17,9 +17,11 @@ export default defineEventHandler(async (event) => {
 
   // Optional: restrict to specific admin users
   const adminNames = ['ChrisTowles']
-  if (!adminNames.includes(session.user.username)) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- types.d.ts augmentation not picked up in server context
+  const username = (session.user as any)?.username || ''
+  if (!adminNames.includes(username)) {
     console.log(`Forbidden access attempt by user: ${session}`)
-    throw createError({ statusCode: 403, statusMessage: `Forbidden, session user: ${session.user.username}` })
+    throw createError({ statusCode: 403, statusMessage: `Forbidden, session user: ${username}` })
   }
 
   const body = await readBody(event).catch(() => ({}))

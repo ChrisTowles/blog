@@ -1,9 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { CapabilityRegistry } from './registry'
-import { blogAssistantCapability, codeHelperCapability, creativeWriterCapability, generalAssistantCapability } from './builtin'
-import { blogGuidePersona, codeReviewerPersona, fullAssistantPersona } from './personas'
-import { allPostsKB, aiPostsKB } from './knowledge-bases'
-import type { Capability, Persona, KnowledgeBase } from './types'
 
 describe('CapabilityRegistry', () => {
   let registry: CapabilityRegistry

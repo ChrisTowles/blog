@@ -1,5 +1,3 @@
-import { capabilityRegistry } from '../../utils/capabilities'
-
 defineRouteMeta({
   openAPI: {
     description: 'List all available knowledge bases',

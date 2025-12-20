@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { loadChatbotByPath } from '../../utils/chatbots'
 
 defineRouteMeta({
   openAPI: {

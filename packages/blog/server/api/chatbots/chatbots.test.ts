@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest'
-import { capabilityRegistry } from '../../utils/capabilities'
 
 describe('Chatbot API', () => {
   describe('GET /api/chatbots (list)', () => {
