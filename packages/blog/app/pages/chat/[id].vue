@@ -26,6 +26,14 @@ if (!data.value) {
 
 if (data.value.personaSlug) personaSlug.value = data.value.personaSlug
 
+// Fetch persona details for system prompt display
+const { data: personaData } = await useFetch(() => `/api/personas/${personaSlug.value}`, {
+  watch: [personaSlug],
+  immediate: !!personaSlug.value
+})
+
+const showSystemPrompt = ref(false)
+
 const input = ref('')
 
 const initialMessages: ChatMessage[] = (data.value.messages || []).map(msg => ({
@@ -107,13 +115,29 @@ onMounted(() => {
       <!-- https://ui.nuxt.com/docs/components/chat-messages -->
 
       <UContainer>
-        <!-- {{ chat.messages }} -->
+        <!-- System Prompt Display -->
+        <div v-if="personaData?.systemPrompt" class="lg:pt-(--ui-header-height) pt-4">
+          <UButton
+            :icon="showSystemPrompt ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
+            variant="ghost"
+            color="neutral"
+            size="sm"
+            class="mb-2"
+            @click="showSystemPrompt = !showSystemPrompt"
+          >
+            System Prompt ({{ personaData.persona.name }})
+          </UButton>
+          <UCard v-if="showSystemPrompt" class="mb-4" :ui="{ body: 'p-3 sm:p-4' }">
+            <pre class="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap font-mono overflow-auto max-h-96">{{ personaData.systemPrompt }}</pre>
+          </UCard>
+        </div>
+
         <UChatMessages
           should-auto-scroll
           :messages="chat.messages.value"
           :status="chat.status.value"
           :assistant="chat.status.value !== 'streaming' ? { actions: [{ label: 'Copy', icon: copied ? 'i-lucide-copy-check' : 'i-lucide-copy', onClick: copy }] } : { actions: [] }"
-          class="lg:pt-(--ui-header-height) pb-4 sm:pb-6"
+          :class="[personaData?.systemPrompt ? 'pb-4 sm:pb-6' : 'lg:pt-(--ui-header-height) pb-4 sm:pb-6']"
           :spacing-offset="160"
         >
           <template #content="{ message }">

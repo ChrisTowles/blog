@@ -31,7 +31,8 @@ export default defineEventHandler(async (event) => {
         description: c.description,
         tools: c.tools
       })),
-      toolCount: loaded.tools.length
+      toolCount: loaded.tools.length,
+      systemPrompt: loaded.systemPrompt
     }
   } catch (error) {
     if (error instanceof Error && error.message.startsWith('Persona not found')) {
