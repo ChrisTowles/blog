@@ -1,6 +1,3 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { CapabilityRegistry } from './registry'
-
 describe('CapabilityRegistry', () => {
   let registry: CapabilityRegistry
 

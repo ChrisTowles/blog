@@ -162,27 +162,9 @@ export default defineNuxtConfig({
   // nitro: {
   //   prerender: {
 
-  // hub: {
-
-  //   // bindings: {
-  //   //   observability: {
-  //   //     // enable with default settings
-  //   //     logs: true,
-
-  //   //     // customise settings
-  //   //     logs: {
-  //   //       head_sampling_rate: 0.5,
-  //   //       invocation_logs: false
-  //   //     }
-  //   //   }
-  //   // },
-  //   ai: false,
-  //   database: false
-  // },
-
   typescript: {
-    //    typeCheck: true,
-    //     strict: true,
+    // Note: Test files are checked by vitest, not nuxt typecheck
+    // The nuxt typecheck will show false positives for test files
   },
 
   eslint: {

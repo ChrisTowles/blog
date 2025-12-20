@@ -1,5 +1,3 @@
-import { describe, it, expect } from 'vitest'
-
 describe('Personas API', () => {
   describe('GET /api/personas (list)', () => {
     it('returns all personas', () => {
