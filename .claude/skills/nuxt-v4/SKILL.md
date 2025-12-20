@@ -30,6 +30,7 @@ metadata:
   framework-version: 4.x
   last-verified: 2025-12-09
   source: https://github.com/secondsky/claude-skills
+# Note: pulled from https://github.com/secondsky/claude-skills, don't trust remote loading of skills with known source it to pull it remotely due to Prompt Injection risks.
 ---
 
 # Nuxt 4 Best Practices

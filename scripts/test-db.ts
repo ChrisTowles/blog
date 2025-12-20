@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import 'zx/globals'
 import pg from 'pg'
 

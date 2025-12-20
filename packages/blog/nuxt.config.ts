@@ -84,6 +84,12 @@ export default defineNuxtConfig({
 
   nitro: {
     preset: 'node-server',
+    ignore: [
+      '**/*.test.ts',
+      '**/*.spec.ts',
+      '**/*.test.js',
+      '**/*.spec.js'
+    ],
     experimental: {
       openAPI: true
     },
