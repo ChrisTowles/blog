@@ -2,12 +2,11 @@
  * RAG Integration Tests
  *
  * These tests require:
- * - AWS credentials configured (for Bedrock)
- * - PostgreSQL with pgvector running (for retrieval)
+ * - AWS credentials configured (for Bedrock embeddings/reranking)
  *
  * Run with: pnpm test -- --run rag.integration
  */
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect } from 'vitest'
 
 // Check if AWS is configured
 const hasAWSConfig = !!(process.env.AWS_REGION || process.env.AWS_ACCESS_KEY_ID)
@@ -117,19 +116,7 @@ describe.skipIf(!hasAWSConfig)('Bedrock Reranking Integration', () => {
 })
 
 describe('RAG Retrieval Integration', () => {
-  // These tests use the Nuxt test environment which provides database access
-
-  beforeAll(async () => {
-    // Ensure database is available
-    try {
-      const { useDrizzle } = await import('#imports')
-      const db = useDrizzle()
-      // Simple query to verify connection
-      await db.execute({ sql: 'SELECT 1', params: [] })
-    } catch {
-      console.warn('Database not available, skipping retrieval tests')
-    }
-  })
+  // These tests verify the RRF algorithm logic (no DB required)
 
   it('reciprocal rank fusion combines results correctly', async () => {
     // Test the RRF algorithm directly
