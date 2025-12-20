@@ -1,13 +1,13 @@
 import type { Capability } from '../types'
-import { blogAssistantCapability } from './blog-assistant'
-import { codeHelperCapability } from './code-helper'
-import { creativeWriterCapability } from './creative-writer'
-import { generalAssistantCapability } from './general-assistant'
+import { blogAssistantCapability } from './_blog-assistant'
+import { codeHelperCapability } from './_code-helper'
+import { creativeWriterCapability } from './_creative-writer'
+import { generalAssistantCapability } from './_general-assistant'
 
-export { blogAssistantCapability } from './blog-assistant'
-export { codeHelperCapability } from './code-helper'
-export { creativeWriterCapability } from './creative-writer'
-export { generalAssistantCapability } from './general-assistant'
+export { blogAssistantCapability } from './_blog-assistant'
+export { codeHelperCapability } from './_code-helper'
+export { creativeWriterCapability } from './_creative-writer'
+export { generalAssistantCapability } from './_general-assistant'
 
 /**
  * All built-in capabilities

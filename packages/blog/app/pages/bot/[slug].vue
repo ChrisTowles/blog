@@ -19,8 +19,25 @@ useHead({
 const input = ref('')
 const loading = ref(false)
 
-// Theme-aware color
-const themeColor = computed(() => chatbot.value?.chatbot.theme.primaryColor || 'blue')
+// Map theme color to valid UBadge colors
+const badgeColorMap: Record<string, 'error' | 'info' | 'primary' | 'secondary' | 'success' | 'warning' | 'neutral'> = {
+  'red': 'error',
+  'green': 'success',
+  'blue': 'primary',
+  'yellow': 'warning',
+  'purple': 'secondary',
+  'gray': 'neutral',
+  'slate': 'neutral',
+  'stone': 'neutral',
+  'zinc': 'neutral',
+  'white': 'neutral'
+}
+
+const themeColor = computed(() => {
+  const color = chatbot.value?.chatbot.theme.primaryColor
+  if (!color) return 'primary'
+  return badgeColorMap[color] || 'primary'
+})
 
 async function createChat(prompt: string) {
   if (loading.value) return
@@ -53,12 +70,12 @@ function onSubmit() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-default">
+  <div v-if="chatbot" class="min-h-screen bg-default">
     <!-- Header -->
     <header class="border-b border-default">
       <UContainer class="flex items-center justify-between h-16">
         <div class="flex items-center gap-3">
-          <UIcon :name="chatbot.chatbot.icon" class="w-8 h-8" :class="`text-${themeColor}-500`" />
+          <UIcon :name="chatbot.chatbot.theme.icon || 'i-lucide-bot'" class="w-8 h-8" :class="`text-${themeColor}-500`" />
           <div>
             <h1 class="text-lg font-semibold">
               {{ chatbot.chatbot.name }}
@@ -86,7 +103,7 @@ function onSubmit() {
             class="w-20 h-20 rounded-full mx-auto flex items-center justify-center"
             :class="`bg-${themeColor}-100 dark:bg-${themeColor}-900/30`"
           >
-            <UIcon :name="chatbot.chatbot.icon" class="w-10 h-10" :class="`text-${themeColor}-500`" />
+            <UIcon :name="chatbot.chatbot.theme.icon || 'i-lucide-bot'" class="w-10 h-10" :class="`text-${themeColor}-500`" />
           </div>
           <h2 class="text-2xl font-bold">
             {{ chatbot.chatbot.name }}
@@ -121,7 +138,7 @@ function onSubmit() {
 
         <!-- Tool Count -->
         <p class="text-center text-xs text-muted">
-          {{ chatbot.toolCount }} tools available
+          {{ chatbot.tools?.length || 0 }} tools available
         </p>
       </div>
     </UContainer>

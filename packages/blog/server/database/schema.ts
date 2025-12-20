@@ -1,6 +1,19 @@
-import { pgTable, varchar, pgEnum, timestamp, index, uniqueIndex, json, text, integer, boolean } from 'drizzle-orm/pg-core'
+import { pgTable, varchar, pgEnum, timestamp, index, uniqueIndex, json, text, integer, boolean, customType } from 'drizzle-orm/pg-core'
 import { vector } from 'drizzle-orm/pg-core/columns/vector_extension/vector'
 import { relations } from 'drizzle-orm'
+
+// Custom type for PostgreSQL bytea (binary data)
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+    dataType() {
+        return 'bytea'
+    },
+    toDriver(value: Buffer): Buffer {
+        return value
+    },
+    fromDriver(value: Buffer): Buffer {
+        return value
+    }
+})
 
 const timestamps = {
   createdAt: timestamp().defaultNow().notNull()
@@ -50,6 +63,60 @@ export const personas = pgTable('personas', {
 }, table => [
   index('personas_slug_idx').on(table.slug)
 ])
+
+// ============================================
+// Skills Schema
+// ============================================
+
+export const skills = pgTable('skills', {
+  id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  slug: varchar({ length: 100 }).notNull().unique(),
+  name: varchar({ length: 100 }).notNull(),
+  description: text().notNull(),
+  content: text().notNull(), // SKILL.md body content
+  skillZip: bytea(), // optional full .skill archive for bundled resources
+  isBuiltIn: boolean().notNull().default(false),
+  isActive: boolean().notNull().default(true),
+  ...timestamps,
+  updatedAt: timestamp().defaultNow().notNull()
+}, table => [
+  index('skills_slug_idx').on(table.slug)
+])
+
+// Theme configuration for chatbots
+export interface ChatbotTheme {
+  primaryColor: string // Nuxt UI color: 'blue', 'purple', 'pink', 'green', etc.
+  accentColor?: string // Optional accent color
+  backgroundColor?: string // Optional background color
+  icon?: string // Lucide icon name
+}
+
+export const chatbots = pgTable('chatbots', {
+  id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  slug: varchar({ length: 100 }).notNull().unique(),
+  name: varchar({ length: 100 }).notNull(),
+  description: text().notNull(),
+  personaSlug: varchar({ length: 100 }).notNull().references(() => personas.slug),
+  urlPath: varchar({ length: 200 }).notNull().unique(), // e.g., '/chat/coding-buddy'
+  theme: json().$type<ChatbotTheme>().notNull(),
+  customSystemPrompt: text(), // optional additional system prompt
+  skillSlugs: json().$type<string[]>().notNull().default([]), // array of skill slugs
+  isPublic: boolean().notNull().default(false),
+  isActive: boolean().notNull().default(true),
+  ...timestamps,
+  updatedAt: timestamp().defaultNow().notNull()
+}, table => [
+  index('chatbots_slug_idx').on(table.slug),
+  index('chatbots_persona_slug_idx').on(table.personaSlug),
+  index('chatbots_url_path_idx').on(table.urlPath)
+])
+
+export const chatbotsRelations = relations(chatbots, ({ one }) => ({
+  persona: one(personas, {
+    fields: [chatbots.personaSlug],
+    references: [personas.slug]
+  })
+}))
 
 // Junction table for persona -> capabilities (many-to-many)
 export const personaCapabilities = pgTable('persona_capabilities', {
@@ -101,7 +168,8 @@ export const capabilitiesRelations = relations(capabilities, ({ many }) => ({
 }))
 
 export const personasRelations = relations(personas, ({ many }) => ({
-  personaCapabilities: many(personaCapabilities)
+  personaCapabilities: many(personaCapabilities),
+  chatbots: many(chatbots)
 }))
 
 export const personaCapabilitiesRelations = relations(personaCapabilities, ({ one }) => ({
@@ -152,6 +220,8 @@ export const chats = pgTable('chats', {
   title: varchar({ length: 200 }),
   userId: varchar({ length: 36 }).notNull(),
   personaId: varchar({ length: 36 }).references(() => personas.id), // optional persona for this chat
+  personaSlug: text(), // slug for persona (db or built-in)
+  chatbotSlug: text(), // optional chatbot slug for this chat
   ...timestamps
 }, table => [
   index('chats_user_id_idx').on(table.userId),

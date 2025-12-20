@@ -1,9 +1,8 @@
-import { useDrizzle, tables } from '../../utils/drizzle'
-import { capabilityRegistry } from '../../utils/capabilities'
+import { eq, useDrizzle, tables } from '../../utils/drizzle'
 
 defineRouteMeta({
   openAPI: {
-    description: 'List all available chatbot flavors',
+    description: 'List all active chatbots with persona and theme info',
     tags: ['chatbots']
   }
 })
@@ -11,37 +10,31 @@ defineRouteMeta({
 export default defineEventHandler(async () => {
   const db = useDrizzle()
 
-  // Try DB first for custom personas
-  const dbPersonas = await db.select().from(tables.personas)
+  // Get all active chatbots with related personas
+  const chatbots = await db
+    .select({
+      chatbot: tables.chatbots,
+      persona: tables.personas
+    })
+    .from(tables.chatbots)
+    .innerJoin(tables.personas, eq(tables.chatbots.personaSlug, tables.personas.slug))
+    .where(eq(tables.chatbots.isActive, true))
 
-  // Merge with built-in personas (built-ins take precedence for same slug)
-  const builtInPersonas = capabilityRegistry.getAllPersonas()
-  const builtInSlugs = new Set(builtInPersonas.map(p => p.slug))
-
-  // Custom personas from DB (exclude built-ins that are also in DB)
-  const customPersonas = dbPersonas.filter(p => !builtInSlugs.has(p.slug))
-
-  // Combine: built-in first, then custom
-  const allPersonas = [
-    ...builtInPersonas.map(persona => ({
+  return chatbots.map(({ chatbot, persona }) => ({
+    slug: chatbot.slug,
+    name: chatbot.name,
+    description: chatbot.description,
+    urlPath: chatbot.urlPath,
+    theme: chatbot.theme,
+    personaSlug: chatbot.personaSlug,
+    persona: {
       slug: persona.slug,
       name: persona.name,
-      description: persona.description,
       icon: persona.icon,
-      theme: persona.theme || { primaryColor: 'blue', icon: persona.icon },
-      isDefault: persona.isDefault,
-      isBuiltIn: true
-    })),
-    ...customPersonas.map(persona => ({
-      slug: persona.slug,
-      name: persona.name,
-      description: persona.description,
-      icon: persona.icon,
-      theme: persona.theme || { primaryColor: 'blue', icon: persona.icon },
-      isDefault: persona.isDefault,
-      isBuiltIn: false
-    }))
-  ]
-
-  return allPersonas
+      theme: persona.theme
+    },
+    skillSlugs: chatbot.skillSlugs,
+    isPublic: chatbot.isPublic,
+    isActive: chatbot.isActive
+  }))
 })

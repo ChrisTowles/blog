@@ -75,7 +75,9 @@ describe('getMaskedConfig', () => {
       NUXT_OAUTH_GITHUB_CLIENT_SECRET: 'github-secret',
       AWS_REGION: 'us-east-1',
       AWS_ACCESS_KEY_ID: 'AKIAIOSFODNN7EXAMPLE',
-      AWS_SECRET_ACCESS_KEY: 'wJalrXUtnFEMI/K7MDENG'
+      AWS_SECRET_ACCESS_KEY: 'wJalrXUtnFEMI/K7MDENG',
+      STUDIO_GITHUB_CLIENT_ID: 'studio-client-id',
+      STUDIO_GITHUB_CLIENT_SECRET: 'studio-secret'
     }
 
     const masked = getMaskedConfig(config)

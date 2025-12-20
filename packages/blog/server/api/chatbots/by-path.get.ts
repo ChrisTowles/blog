@@ -1,24 +1,24 @@
 import { z } from 'zod'
-import { loadChatbotConfig } from '../../utils/chatbots'
+import { loadChatbotByPath } from '../../utils/chatbots'
 
 defineRouteMeta({
   openAPI: {
-    description: 'Get specific chatbot config by slug with persona, theme, and capabilities',
+    description: 'Get chatbot config by URL path (query: ?path=/chat/coding-buddy)',
     tags: ['chatbots']
   }
 })
 
 export default defineEventHandler(async (event) => {
-  const { slug } = await getValidatedRouterParams(event, z.object({
-    slug: z.string()
+  const { path } = await getValidatedQuery(event, z.object({
+    path: z.string()
   }).parse)
 
   try {
-    const config = await loadChatbotConfig(slug)
+    const config = await loadChatbotByPath(path)
     return config
   } catch (error) {
     if (error instanceof Error && error.message.includes('Chatbot not found')) {
-      throw createError({ statusCode: 404, statusMessage: `Chatbot not found: ${slug}` })
+      throw createError({ statusCode: 404, statusMessage: `Chatbot not found for path: ${path}` })
     }
     if (error instanceof Error && error.message.includes('Persona not found')) {
       throw createError({ statusCode: 500, statusMessage: `Invalid chatbot configuration: persona missing` })

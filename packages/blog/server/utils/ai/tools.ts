@@ -1,3 +1,12 @@
+/**
+ * THREAD SAFETY WARNING: This module handles tool execution in a server context where multiple
+ * requests may be processed concurrently. ALL STATE MUST BE REQUEST-SCOPED, never module-level.
+ *
+ * - Do NOT create module-level mutable state (e.g., currentFilters variables)
+ * - Pass filters and context as parameters through function calls
+ * - See Issue #8 for context on request isolation requirements
+ */
+
 import type Anthropic from '@anthropic-ai/sdk'
 import { retrieveRAG } from '../rag/retrieve'
 import type { KnowledgeBaseFilter } from '../capabilities/types'

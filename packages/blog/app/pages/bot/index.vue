@@ -39,7 +39,7 @@ const { data: chatbots } = await useFetch('/api/chatbots')
               :class="`bg-${bot.theme?.primaryColor || 'blue'}-100 dark:bg-${bot.theme?.primaryColor || 'blue'}-900/30`"
             >
               <UIcon
-                :name="bot.icon"
+                :name="bot.theme?.icon || bot.persona?.icon || 'i-lucide-bot'"
                 class="w-6 h-6"
                 :class="`text-${bot.theme?.primaryColor || 'blue'}-500`"
               />
@@ -50,12 +50,12 @@ const { data: chatbots } = await useFetch('/api/chatbots')
                   {{ bot.name }}
                 </h3>
                 <UBadge
-                  v-if="bot.isDefault"
+                  v-if="bot.isPublic"
                   color="neutral"
                   variant="subtle"
                   size="xs"
                 >
-                  Default
+                  Public
                 </UBadge>
               </div>
               <p class="text-sm text-muted line-clamp-2">

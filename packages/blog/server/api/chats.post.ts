@@ -4,9 +4,10 @@ import { capabilityRegistry } from '../utils/capabilities'
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
 
-  const { input, personaSlug } = await readValidatedBody(event, z.object({
+  const { input, personaSlug, chatbotSlug } = await readValidatedBody(event, z.object({
     input: z.string().min(1, 'Message cannot be empty'),
-    personaSlug: z.string().optional()
+    personaSlug: z.string().optional(),
+    chatbotSlug: z.string().optional()
   }).parse)
   const db = useDrizzle()
 
@@ -33,7 +34,9 @@ export default defineEventHandler(async (event) => {
   const [chat] = await db.insert(tables.chats).values({
     title: '',
     userId: session.user?.id || session.id,
-    personaId: personaId // Will be null for built-in personas
+    personaId: personaId, // Will be null for built-in personas
+    personaSlug: personaSlug || capabilityRegistry.getDefaultPersona()?.slug,
+    chatbotSlug: chatbotSlug
   }).returning()
   if (!chat) {
     throw createError({ statusCode: 500, statusMessage: 'Failed to create chat' })

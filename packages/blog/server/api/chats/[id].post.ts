@@ -1,9 +1,10 @@
 import type { MessageParam } from '@anthropic-ai/sdk/resources/messages'
 import { z } from 'zod'
 import type { ChatMessage, MessagePart, SSEEvent } from '~~/shared/chat-types'
-import { executeTool } from '../../utils/ai/tools'
+import { executeTool, getToolsByNames } from '../../utils/ai/tools'
 import { getAnthropicClient } from '../../utils/ai/anthropic'
 import { capabilityRegistry } from '../../utils/capabilities'
+import { loadChatbotConfig } from '../../utils/chatbots'
 
 defineRouteMeta({
   openAPI: {
@@ -52,10 +53,11 @@ export default defineEventHandler(async (event) => {
     id: z.string()
   }).parse)
 
-  const { model, messages, personaSlug } = await readValidatedBody(event, z.object({
+  const { model, messages, personaSlug, chatbotSlug } = await readValidatedBody(event, z.object({
     model: z.string(),
     messages: z.array(z.custom<ChatMessage>()),
-    personaSlug: z.string().optional()
+    personaSlug: z.string().optional(),
+    chatbotSlug: z.string().optional()
   }).parse)
 
   const db = useDrizzle()
@@ -84,9 +86,39 @@ export default defineEventHandler(async (event) => {
     }
     throw error
   }
-  const systemPrompt = loadedPersona.systemPrompt + '\n\n' + BASE_SYSTEM_PROMPT
-  const enabledTools = loadedPersona.tools
-  const knowledgeBaseFilters = loadedPersona.knowledgeBaseFilters
+
+  let systemPrompt = loadedPersona.systemPrompt + '\n\n' + BASE_SYSTEM_PROMPT
+
+  // Inject skills and custom system prompt when chatbot context available
+  let enabledTools = loadedPersona.tools
+  let knowledgeBaseFilters = loadedPersona.knowledgeBaseFilters
+
+  if (chatbotSlug) {
+    try {
+      const chatbotConfig = await loadChatbotConfig(chatbotSlug)
+
+      // Append skills to system prompt after capabilities
+      if (chatbotConfig.skills.length > 0) {
+        systemPrompt += '\n\n## Skills\n\n'
+        for (const skill of chatbotConfig.skills) {
+          systemPrompt += `### ${skill.name}\n${skill.content}\n\n`
+        }
+      }
+
+      // Append custom system prompt if present
+      if (chatbotConfig.customSystemPrompt) {
+        systemPrompt += '\n\n' + chatbotConfig.customSystemPrompt
+      }
+
+      // Use tools from chatbot config if available
+      if (chatbotConfig.tools.length > 0) {
+        enabledTools = getToolsByNames(chatbotConfig.tools)
+      }
+    } catch (error) {
+      console.warn(`Failed to load chatbot config for "${chatbotSlug}":`, error instanceof Error ? error.message : String(error))
+      // Continue with default persona tools if chatbot config fails to load
+    }
+  }
 
   // Generate title if needed
   let generatedTitle: string | null = null
@@ -198,12 +230,22 @@ export default defineEventHandler(async (event) => {
                   if (_toolInputJson) {
                     toolArgs = JSON.parse(_toolInputJson)
                   }
-                } catch {
+                } catch (parseError) {
                   console.error('Failed to parse tool input JSON:', {
                     toolName: currentToolName,
-                    rawInput: _toolInputJson?.substring(0, 200)
+                    toolUseId: currentToolUseId,
+                    rawInput: _toolInputJson?.substring(0, 200),
+                    error: parseError
                   })
-                  // Continue with empty args - tool will return its own error
+                  toolResults.push({
+                    type: 'tool_result',
+                    tool_use_id: currentToolUseId!,
+                    content: `Error: Failed to parse tool arguments`
+                  })
+                  currentToolUseId = null
+                  currentToolName = null
+                  _toolInputJson = ''
+                  continue
                 }
 
                 // Track the tool use for message history

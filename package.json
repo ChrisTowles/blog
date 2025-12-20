@@ -49,7 +49,9 @@
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.2",
     "@changesets/cli": "^2.29.8",
+    "@types/archiver": "^7.0.0",
     "@types/node": "^25.0.1",
+    "@types/yauzl": "^2.10.3",
     "dotenv": "^17.2.3",
     "eslint": "^9.39.1",
     "husky": "^9.1.7",
@@ -92,6 +94,8 @@
     "*.{js,ts,vue}": "eslint --fix"
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.948.0"
+    "@aws-sdk/client-bedrock-runtime": "^3.948.0",
+    "gray-matter": "^4.0.3",
+    "yauzl": "^3.2.0"
   }
 }
