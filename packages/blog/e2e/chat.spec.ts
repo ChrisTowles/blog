@@ -88,14 +88,99 @@ test.describe('AI Chat', () => {
     // Wait for navigation to chat detail page (will have ID in URL)
     await page.waitForURL(/\/chat\/[a-zA-Z0-9-]+/, { timeout: 15000 })
 
-    // TODO: Improve waiting for response - currently just waits for new message to appear
+    // TODO: Add test ID for message elements and wait for assistant response
+    // Need to implement message test IDs in chat UI component
+    // For now, this test is skipped until proper selectors are added
 
-    // Get the last message (assistant's response)
+    // Get all messages (need proper test ID)
+    const messages = page.getByTestId(TEST_IDS.CHAT.MESSAGE)
     const lastMessage = messages.last()
     const responseText = await lastMessage.textContent()
 
     // Verify the response contains "14"
     expect(responseText).toContain('14')
+  })
+})
+
+test.describe('Persona Selection', () => {
+  test('persona selector is visible on chat page', async ({ page }) => {
+    await page.goto('/chat', { waitUntil: 'networkidle' })
+
+    const personaSelect = page.getByTestId(TEST_IDS.CHAT.PERSONA_SELECT)
+    await expect(personaSelect).toBeVisible({ timeout: 10000 })
+  })
+
+  test('persona selector has a default value', async ({ page }) => {
+    await page.goto('/chat', { waitUntil: 'networkidle' })
+
+    const personaSelect = page.getByTestId(TEST_IDS.CHAT.PERSONA_SELECT)
+    await expect(personaSelect).toBeVisible({ timeout: 10000 })
+
+    // USelectMenu renders as button
+    const selectTrigger = personaSelect.getByRole('button')
+    const text = await selectTrigger.textContent()
+    expect(text).toContain('Blog Guide')
+  })
+
+  test('can open persona dropdown', async ({ page }) => {
+    await page.goto('/chat', { waitUntil: 'networkidle' })
+
+    const personaSelect = page.getByTestId(TEST_IDS.CHAT.PERSONA_SELECT)
+    const selectTrigger = personaSelect.getByRole('button')
+    await selectTrigger.click()
+
+    // Wait for dropdown animation to complete
+    await page.waitForTimeout(200)
+
+    // Check that listbox with options is visible
+    const listbox = page.getByRole('listbox')
+    await expect(listbox).toBeVisible({ timeout: 5000 })
+  })
+
+  test('dropdown shows multiple persona options', async ({ page }) => {
+    await page.goto('/chat', { waitUntil: 'networkidle' })
+
+    const personaSelect = page.getByTestId(TEST_IDS.CHAT.PERSONA_SELECT)
+    const selectTrigger = personaSelect.getByRole('button')
+    await selectTrigger.click()
+
+    // Wait for dropdown to open and animation to complete
+    await page.waitForTimeout(200)
+    const listbox = page.getByRole('listbox')
+    await expect(listbox).toBeVisible({ timeout: 5000 })
+
+    // Check that all persona options exist
+    await expect(page.getByRole('option', { name: 'Blog Guide' })).toBeVisible()
+    await expect(page.getByRole('option', { name: 'Code Reviewer' })).toBeVisible()
+    await expect(page.getByRole('option', { name: 'Creative Companion' })).toBeVisible()
+    await expect(page.getByRole('option', { name: 'Full Assistant' })).toBeVisible()
+  })
+
+  test('can interact with persona dropdown', async ({ page }) => {
+    await page.goto('/chat', { waitUntil: 'networkidle' })
+
+    const personaSelect = page.getByTestId(TEST_IDS.CHAT.PERSONA_SELECT)
+    const selectTrigger = personaSelect.getByRole('button')
+
+    // Get initial text - should be "Blog Guide" (default name)
+    const initialText = await selectTrigger.textContent()
+    expect(initialText).toContain('Blog Guide')
+
+    // Open dropdown
+    await selectTrigger.click()
+
+    // Wait for dropdown to open
+    await page.waitForTimeout(200)
+    const listbox = page.getByRole('listbox')
+    await expect(listbox).toBeVisible({ timeout: 5000 })
+
+    // Select Code Reviewer option
+    await page.getByRole('option', { name: 'Code Reviewer' }).click()
+    await page.waitForTimeout(200)
+
+    // Verify selection changed
+    const finalText = await selectTrigger.textContent()
+    expect(finalText).toContain('Code Reviewer')
   })
 })
 

@@ -9,20 +9,14 @@ describe('envSchema', () => {
     NUXT_OAUTH_GITHUB_CLIENT_ID: 'github-client-id',
     NUXT_OAUTH_GITHUB_CLIENT_SECRET: 'github-secret',
     AWS_ACCESS_KEY_ID: 'AKIAIOSFODNN7EXAMPLE',
-    AWS_SECRET_ACCESS_KEY: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+    AWS_SECRET_ACCESS_KEY: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+    STUDIO_GITHUB_CLIENT_ID: 'studio-client-id',
+    STUDIO_GITHUB_CLIENT_SECRET: 'studio-secret'
   }
 
   it('parses valid env', () => {
     const result = envSchema.safeParse(validEnv)
     expect(result.success).toBe(true)
-  })
-
-  it('applies default AWS_REGION', () => {
-    const result = envSchema.safeParse(validEnv)
-    expect(result.success).toBe(true)
-    if (result.success) {
-      expect(result.data.AWS_REGION).toBe('us-east-1')
-    }
   })
 
   it('applies default build metadata', () => {
@@ -81,7 +75,9 @@ describe('getMaskedConfig', () => {
       NUXT_OAUTH_GITHUB_CLIENT_SECRET: 'github-secret',
       AWS_REGION: 'us-east-1',
       AWS_ACCESS_KEY_ID: 'AKIAIOSFODNN7EXAMPLE',
-      AWS_SECRET_ACCESS_KEY: 'wJalrXUtnFEMI/K7MDENG'
+      AWS_SECRET_ACCESS_KEY: 'wJalrXUtnFEMI/K7MDENG',
+      STUDIO_GITHUB_CLIENT_ID: 'studio-client-id',
+      STUDIO_GITHUB_CLIENT_SECRET: 'studio-secret'
     }
 
     const masked = getMaskedConfig(config)

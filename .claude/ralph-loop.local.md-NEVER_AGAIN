@@ -1,0 +1,9 @@
+---
+active: true
+iteration: 504
+max_iterations: 0
+completion_promise: null
+started_at: "2025-12-20T06:28:09Z"
+---
+
+research using Claude Code Skills. I think it requires a zip of the skills, continue till that is added as a way to include skills. like the docx skill from Anthropic. Once that is done, create tests to ensure its useable, this may all require using antrhipoic agent sdk. After that work to add a way to include mulitple flavors of Chat bots, that route to different URLS, different chat persons, system prompt and color of page. make it DB driven

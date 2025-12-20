@@ -151,5 +151,7 @@ playwright-report/
 
 
 # GCP zips
-
 *.zip
+
+# Local files
+*.local.md

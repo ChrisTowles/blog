@@ -11,7 +11,7 @@
     "build": "pnpm --filter @chris-towles/blog run build",
     "build:container": "node --experimental-strip-types scripts/build.ts test staging",
     "build:container:keep": "node --experimental-strip-types scripts/build.ts test staging --keep",
-    "dev": "pnpm --filter @chris-towles/blog run dev",
+    "dev": "pnpm run docker:up && pnpm run db:migrate && pnpm --filter @chris-towles/blog run dev",
     "deploy": "pnpm --filter @chris-towles/blog run deploy:nuxthub",
     "changeset": "changeset",
     "version": "changeset version",
@@ -39,6 +39,7 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "pnpm --filter @chris-towles/blog run typecheck",
     "test": "pnpm --filter @chris-towles/blog run test",
+    "test:e2e": "pnpm --filter @chris-towles/blog run test:e2e",
     "test:docker": "tsx scripts/test-docker.ts",
     "prepare": "husky",
     "mcp:inspect": "pnpx @modelcontextprotocol/inspector",
@@ -48,7 +49,9 @@
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.2",
     "@changesets/cli": "^2.29.8",
+    "@types/archiver": "^7.0.0",
     "@types/node": "^25.0.1",
+    "@types/yauzl": "^2.10.3",
     "dotenv": "^17.2.3",
     "eslint": "^9.39.1",
     "husky": "^9.1.7",
@@ -91,6 +94,8 @@
     "*.{js,ts,vue}": "eslint --fix"
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.948.0"
+    "@aws-sdk/client-bedrock-runtime": "^3.948.0",
+    "gray-matter": "^4.0.3",
+    "yauzl": "^3.2.0"
   }
 }

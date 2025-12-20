@@ -60,8 +60,7 @@ export default defineNuxtConfig({
   },
 
   experimental: {
-    viewTransition: true,
-    rolldown: true
+    viewTransition: true
   },
 
   // app: {
@@ -103,8 +102,15 @@ export default defineNuxtConfig({
 
     imports: {
       // Nitro only auto-imports top-level server/utils/ by default.
-      // This enables auto-import from nested dirs (ai/, rag/, etc.)
-      dirs: ['./server/utils/**']
+      // Explicitly list dirs to auto-import, excluding internal files (prefixed with _)
+      // dirs: [
+      //   // './server/utils',
+      //   // './server/utils/ai',
+      //   // './server/utils/rag',
+      //   // './server/utils/capabilities',
+      //   // './server/utils/skills'
+      //   // Note: builtin/ is excluded - use capabilities/index.ts barrel
+      // ]
     },
     hooks: {
       async compiled(nitro) {
@@ -191,15 +197,15 @@ export default defineNuxtConfig({
     serverBundle: {
       collections: ['simple-icons', 'heroicons'] // <!--- this
     }
-  },
-
-  studio: {
-    route: '/_studio', // default: '/_studio'
-    repository: {
-      provider: 'github',
-      owner: 'christowles',
-      repo: 'blog',
-      branch: 'main'
-    }
   }
+
+  // studio: {
+  //   route: '/_studio', // default: '/_studio'
+  //   repository: {
+  //     provider: 'github',
+  //     owner: 'christowles',
+  //     repo: 'blog',
+  //     branch: 'main'
+  //   }
+  // }
 })

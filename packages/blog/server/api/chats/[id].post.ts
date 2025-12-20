@@ -1,8 +1,6 @@
 import type { MessageParam } from '@anthropic-ai/sdk/resources/messages'
 import { z } from 'zod'
 import type { ChatMessage, MessagePart, SSEEvent } from '~~/shared/chat-types'
-import { chatTools, executeTool } from '../../utils/ai/tools'
-import { getAnthropicClient } from '../../utils/ai/anthropic'
 
 defineRouteMeta({
   openAPI: {
@@ -11,19 +9,7 @@ defineRouteMeta({
   }
 })
 
-const SYSTEM_PROMPT = `You are a knowledgeable and helpful AI assistant on Chris Towles's Blog. Try to be funny but helpful.
-Your goal is to provide clear, accurate, and well-structured responses.
-
-**CRITICAL: USE THE SEARCH TOOL**
-- ALWAYS use the searchBlogContent tool FIRST when users ask about:
-  * AI, Claude, LLMs, context engineering, prompts
-  * Vue, Nuxt, TypeScript, JavaScript
-  * DevOps, Terraform, GCP, AWS, Docker
-  * Best practices, testing, code review
-  * Any technical topic that might be covered in the blog
-- Do NOT answer from memory alone - search the blog first!
-- When citing results, use markdown links: [Post Title](/blog/post-slug)
-
+const BASE_SYSTEM_PROMPT = `
 **FORMATTING RULES (CRITICAL):**
 - ABSOLUTELY NO MARKDOWN HEADINGS: Never use #, ##, ###, ####, #####, or ######
 - NO underline-style headings with === or ---
@@ -63,9 +49,11 @@ export default defineEventHandler(async (event) => {
     id: z.string()
   }).parse)
 
-  const { model, messages } = await readValidatedBody(event, z.object({
+  const { model, messages, personaSlug, chatbotSlug } = await readValidatedBody(event, z.object({
     model: z.string(),
-    messages: z.array(z.custom<ChatMessage>())
+    messages: z.array(z.custom<ChatMessage>()),
+    personaSlug: z.string().optional(),
+    chatbotSlug: z.string().optional()
   }).parse)
 
   const db = useDrizzle()
@@ -79,6 +67,53 @@ export default defineEventHandler(async (event) => {
 
   if (!chat) {
     throw createError({ statusCode: 404, statusMessage: 'Chat not found' })
+  }
+
+  // Load persona and capabilities
+  let loadedPersona
+  try {
+    loadedPersona = capabilityRegistry.loadPersona(personaSlug)
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('Persona not found')) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: `Invalid persona: ${personaSlug}`
+      })
+    }
+    throw error
+  }
+
+  let systemPrompt = loadedPersona.systemPrompt + '\n\n' + BASE_SYSTEM_PROMPT
+
+  // Inject skills and custom system prompt when chatbot context available
+  let enabledTools = loadedPersona.tools
+  const knowledgeBaseFilters = loadedPersona.knowledgeBaseFilters
+
+  if (chatbotSlug) {
+    try {
+      const chatbotConfig = await loadChatbotConfig(chatbotSlug)
+
+      // Append skills to system prompt after capabilities
+      if (chatbotConfig.skills.length > 0) {
+        systemPrompt += '\n\n## Skills\n\n'
+        for (const skill of chatbotConfig.skills) {
+          systemPrompt += `### ${skill.name}\n${skill.content}\n\n`
+        }
+      }
+
+      // Append custom system prompt if present
+      if (chatbotConfig.customSystemPrompt) {
+        systemPrompt += '\n\n' + chatbotConfig.customSystemPrompt
+      }
+
+      // Use tools from chatbot config if available
+      if (chatbotConfig.tools.length > 0) {
+        enabledTools = getToolsByNames(chatbotConfig.tools)
+      }
+    } catch (error) {
+      console.warn(`Failed to load chatbot config for "${chatbotSlug}":`, error instanceof Error ? error.message : String(error))
+      // Continue with default persona tools if chatbot config fails to load
+    }
   }
 
   // Generate title if needed
@@ -143,9 +178,9 @@ export default defineEventHandler(async (event) => {
           const streamResponse = await client.messages.stream({
             model,
             max_tokens: 16000,
-            system: SYSTEM_PROMPT,
+            system: systemPrompt,
             messages: currentMessages,
-            tools: chatTools,
+            tools: enabledTools,
             thinking: {
               type: 'enabled',
               budget_tokens: 4096
@@ -191,8 +226,22 @@ export default defineEventHandler(async (event) => {
                   if (_toolInputJson) {
                     toolArgs = JSON.parse(_toolInputJson)
                   }
-                } catch {
-                  // Invalid JSON, use empty args
+                } catch (parseError) {
+                  console.error('Failed to parse tool input JSON:', {
+                    toolName: currentToolName,
+                    toolUseId: currentToolUseId,
+                    rawInput: _toolInputJson?.substring(0, 200),
+                    error: parseError
+                  })
+                  toolResults.push({
+                    type: 'tool_result',
+                    tool_use_id: currentToolUseId!,
+                    content: `Error: Failed to parse tool arguments`
+                  })
+                  currentToolUseId = null
+                  currentToolName = null
+                  _toolInputJson = ''
+                  continue
                 }
 
                 // Track the tool use for message history
@@ -211,7 +260,7 @@ export default defineEventHandler(async (event) => {
                 })
 
                 // Execute the tool
-                const toolResult = await executeTool(currentToolName, toolArgs)
+                const toolResult = await executeTool(currentToolName, toolArgs, knowledgeBaseFilters)
                 toolResults.push({
                   type: 'tool_result',
                   tool_use_id: currentToolUseId,

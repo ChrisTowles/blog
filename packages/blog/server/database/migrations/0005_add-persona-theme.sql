@@ -1,0 +1,1 @@
+ALTER TABLE "personas" ADD COLUMN "theme" json;

@@ -1,6 +1,19 @@
-import { pgTable, varchar, pgEnum, timestamp, index, uniqueIndex, json, text, integer } from 'drizzle-orm/pg-core'
+import { pgTable, varchar, pgEnum, timestamp, index, uniqueIndex, json, text, integer, boolean, customType } from 'drizzle-orm/pg-core'
 import { vector } from 'drizzle-orm/pg-core/columns/vector_extension/vector'
 import { relations } from 'drizzle-orm'
+
+// Custom type for PostgreSQL bytea (binary data)
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+    dataType() {
+        return 'bytea'
+    },
+    toDriver(value: Buffer): Buffer {
+        return value
+    },
+    fromDriver(value: Buffer): Buffer {
+        return value
+    }
+})
 
 const timestamps = {
   createdAt: timestamp().defaultNow().notNull()
@@ -8,6 +21,182 @@ const timestamps = {
 
 export const providerEnum = pgEnum('provider', ['github'])
 export const roleEnum = pgEnum('role', ['user', 'assistant'])
+
+// ============================================
+// Capabilities & Personas Schema
+// ============================================
+
+export const capabilities = pgTable('capabilities', {
+  id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  slug: varchar({ length: 100 }).notNull().unique(),
+  name: varchar({ length: 100 }).notNull(),
+  description: text().notNull(),
+  systemPromptSegment: text().notNull(), // procedural knowledge for this capability
+  toolsConfig: json().$type<string[]>().notNull().default([]), // enabled tool names
+  isBuiltIn: boolean().notNull().default(false),
+  priority: integer().notNull().default(10), // ordering for system prompt composition
+  ...timestamps,
+  updatedAt: timestamp().defaultNow().notNull()
+}, table => [
+  index('capabilities_slug_idx').on(table.slug)
+])
+
+// Theme configuration for chatbot UI
+export interface PersonaTheme {
+  primaryColor: string // Nuxt UI color: 'blue', 'purple', 'pink', 'green', etc.
+  accentColor?: string // Optional accent color
+  icon: string // Lucide icon name
+}
+
+export const personas = pgTable('personas', {
+  id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  slug: varchar({ length: 100 }).notNull().unique(),
+  name: varchar({ length: 100 }).notNull(),
+  description: text().notNull(),
+  icon: varchar({ length: 100 }).notNull().default('i-lucide-user'), // Lucide icon name
+  baseSystemPrompt: text().notNull(), // persona-specific intro
+  theme: json().$type<PersonaTheme>(), // UI theme configuration
+  isDefault: boolean().notNull().default(false),
+  isBuiltIn: boolean().notNull().default(false),
+  ...timestamps,
+  updatedAt: timestamp().defaultNow().notNull()
+}, table => [
+  index('personas_slug_idx').on(table.slug)
+])
+
+// ============================================
+// Skills Schema
+// ============================================
+
+export const skills = pgTable('skills', {
+  id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  slug: varchar({ length: 100 }).notNull().unique(),
+  name: varchar({ length: 100 }).notNull(),
+  description: text().notNull(),
+  content: text().notNull(), // SKILL.md body content
+  skillZip: bytea(), // optional full .skill archive for bundled resources
+  isBuiltIn: boolean().notNull().default(false),
+  isActive: boolean().notNull().default(true),
+  ...timestamps,
+  updatedAt: timestamp().defaultNow().notNull()
+}, table => [
+  index('skills_slug_idx').on(table.slug)
+])
+
+// Theme configuration for chatbots
+export interface ChatbotTheme {
+  primaryColor: string // Nuxt UI color: 'blue', 'purple', 'pink', 'green', etc.
+  accentColor?: string // Optional accent color
+  backgroundColor?: string // Optional background color
+  icon?: string // Lucide icon name
+}
+
+export const chatbots = pgTable('chatbots', {
+  id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  slug: varchar({ length: 100 }).notNull().unique(),
+  name: varchar({ length: 100 }).notNull(),
+  description: text().notNull(),
+  personaSlug: varchar({ length: 100 }).notNull().references(() => personas.slug),
+  urlPath: varchar({ length: 200 }).notNull().unique(), // e.g., '/chat/coding-buddy'
+  theme: json().$type<ChatbotTheme>().notNull(),
+  customSystemPrompt: text(), // optional additional system prompt
+  skillSlugs: json().$type<string[]>().notNull().default([]), // array of skill slugs
+  isPublic: boolean().notNull().default(false),
+  isActive: boolean().notNull().default(true),
+  ...timestamps,
+  updatedAt: timestamp().defaultNow().notNull()
+}, table => [
+  index('chatbots_slug_idx').on(table.slug),
+  index('chatbots_persona_slug_idx').on(table.personaSlug),
+  index('chatbots_url_path_idx').on(table.urlPath)
+])
+
+export const chatbotsRelations = relations(chatbots, ({ one }) => ({
+  persona: one(personas, {
+    fields: [chatbots.personaSlug],
+    references: [personas.slug]
+  })
+}))
+
+// Junction table for persona -> capabilities (many-to-many)
+export const personaCapabilities = pgTable('persona_capabilities', {
+  id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  personaId: varchar({ length: 36 }).notNull().references(() => personas.id, { onDelete: 'cascade' }),
+  capabilityId: varchar({ length: 36 }).notNull().references(() => capabilities.id, { onDelete: 'cascade' }),
+  priority: integer().notNull().default(0) // ordering within persona
+}, table => [
+  index('persona_capabilities_persona_id_idx').on(table.personaId),
+  index('persona_capabilities_capability_id_idx').on(table.capabilityId),
+  uniqueIndex('persona_capabilities_unique_idx').on(table.personaId, table.capabilityId)
+])
+
+export const knowledgeBases = pgTable('knowledge_bases', {
+  id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  slug: varchar({ length: 100 }).notNull().unique(),
+  name: varchar({ length: 100 }).notNull(),
+  description: text().notNull(),
+  filterCriteria: json().$type<KnowledgeBaseFilter>().notNull().default({}), // document filtering rules
+  isBuiltIn: boolean().notNull().default(false),
+  ...timestamps,
+  updatedAt: timestamp().defaultNow().notNull()
+}, table => [
+  index('knowledge_bases_slug_idx').on(table.slug)
+])
+
+// Junction table for capability -> knowledge bases (many-to-many)
+export const capabilityKnowledgeBases = pgTable('capability_knowledge_bases', {
+  id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  capabilityId: varchar({ length: 36 }).notNull().references(() => capabilities.id, { onDelete: 'cascade' }),
+  knowledgeBaseId: varchar({ length: 36 }).notNull().references(() => knowledgeBases.id, { onDelete: 'cascade' })
+}, table => [
+  index('capability_kb_capability_id_idx').on(table.capabilityId),
+  index('capability_kb_kb_id_idx').on(table.knowledgeBaseId),
+  uniqueIndex('capability_kb_unique_idx').on(table.capabilityId, table.knowledgeBaseId)
+])
+
+// Type for knowledge base filter criteria
+export interface KnowledgeBaseFilter {
+  slugPatterns?: string[] // e.g., ['ai-*', 'claude-*']
+  titlePatterns?: string[]
+  excludePatterns?: string[]
+}
+
+// Relations for capabilities system
+export const capabilitiesRelations = relations(capabilities, ({ many }) => ({
+  personaCapabilities: many(personaCapabilities),
+  capabilityKnowledgeBases: many(capabilityKnowledgeBases)
+}))
+
+export const personasRelations = relations(personas, ({ many }) => ({
+  personaCapabilities: many(personaCapabilities),
+  chatbots: many(chatbots)
+}))
+
+export const personaCapabilitiesRelations = relations(personaCapabilities, ({ one }) => ({
+  persona: one(personas, {
+    fields: [personaCapabilities.personaId],
+    references: [personas.id]
+  }),
+  capability: one(capabilities, {
+    fields: [personaCapabilities.capabilityId],
+    references: [capabilities.id]
+  })
+}))
+
+export const knowledgeBasesRelations = relations(knowledgeBases, ({ many }) => ({
+  capabilityKnowledgeBases: many(capabilityKnowledgeBases)
+}))
+
+export const capabilityKnowledgeBasesRelations = relations(capabilityKnowledgeBases, ({ one }) => ({
+  capability: one(capabilities, {
+    fields: [capabilityKnowledgeBases.capabilityId],
+    references: [capabilities.id]
+  }),
+  knowledgeBase: one(knowledgeBases, {
+    fields: [capabilityKnowledgeBases.knowledgeBaseId],
+    references: [knowledgeBases.id]
+  })
+}))
 
 export const users = pgTable('users', {
   id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -30,15 +219,23 @@ export const chats = pgTable('chats', {
   id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   title: varchar({ length: 200 }),
   userId: varchar({ length: 36 }).notNull(),
+  personaId: varchar({ length: 36 }).references(() => personas.id), // optional persona for this chat
+  personaSlug: text(), // slug for persona (db or built-in)
+  chatbotSlug: text(), // optional chatbot slug for this chat
   ...timestamps
 }, table => [
-  index('chats_user_id_idx').on(table.userId)
+  index('chats_user_id_idx').on(table.userId),
+  index('chats_persona_id_idx').on(table.personaId)
 ])
 
 export const chatsRelations = relations(chats, ({ one, many }) => ({
   user: one(users, {
     fields: [chats.userId],
     references: [users.id]
+  }),
+  persona: one(personas, {
+    fields: [chats.personaId],
+    references: [personas.id]
   }),
   messages: many(messages)
 }))

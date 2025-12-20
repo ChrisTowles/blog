@@ -1,5 +1,42 @@
+/**
+ * THREAD SAFETY WARNING: This module handles tool execution in a server context where multiple
+ * requests may be processed concurrently. ALL STATE MUST BE REQUEST-SCOPED, never module-level.
+ *
+ * - Do NOT create module-level mutable state (e.g., currentFilters variables)
+ * - Pass filters and context as parameters through function calls
+ * - See Issue #8 for context on request isolation requirements
+ */
+
 import type Anthropic from '@anthropic-ai/sdk'
 import { retrieveRAG } from '../rag/retrieve'
+import type { KnowledgeBaseFilter } from '../capabilities/types'
+
+/**
+ * Tool Registry - lookup tools by name for capability-based filtering
+ */
+export const toolRegistry = new Map<string, Anthropic.Tool>()
+
+/**
+ * Get tools by their names (for capability-based tool filtering)
+ */
+export function getToolsByNames(names: string[]): Anthropic.Tool[] {
+  return names
+    .map((name) => {
+      const tool = toolRegistry.get(name)
+      if (!tool) {
+        console.warn(`[tools] Tool "${name}" not found in registry. Check capability configuration.`)
+      }
+      return tool
+    })
+    .filter((t): t is Anthropic.Tool => t !== undefined)
+}
+
+/**
+ * Get all available tool names
+ */
+export function getAllToolNames(): string[] {
+  return Array.from(toolRegistry.keys())
+}
 
 /**
  * Tool definitions for Anthropic SDK
@@ -84,14 +121,21 @@ export const chatTools: Anthropic.Tool[] = [
  * Execute a tool by name
  * Some tools are async (like searchBlogContent)
  */
-export async function executeTool(name: string, args?: Record<string, unknown>): Promise<unknown> {
+export async function executeTool(
+  name: string,
+  args?: Record<string, unknown>,
+  knowledgeBaseFilters?: KnowledgeBaseFilter[]
+): Promise<unknown> {
   switch (name) {
     case 'searchBlogContent': {
       const query = args?.query as string
       if (!query) {
         return { error: 'Query is required' }
       }
-      const results = await retrieveRAG(query, { topK: 5 })
+      const results = await retrieveRAG(query, {
+        topK: 5,
+        knowledgeBaseFilters: knowledgeBaseFilters || []
+      })
       return {
         results: results.map(r => ({
           content: r.content,
@@ -115,7 +159,7 @@ export async function executeTool(name: string, args?: Record<string, unknown>):
         name: 'Chris Towles',
         role: 'Software Engineer',
         topics: ['Vue', 'Nuxt', 'TypeScript', 'AI/ML', 'DevOps', 'Cloud Infrastructure'],
-        blogUrl: 'https://emmer.dev',
+        blogUrl: 'https://chris.towles.dev',
         github: 'https://github.com/christowles'
       }
     }
@@ -347,3 +391,6 @@ function rollDice(notation: string, label?: string): DiceResult | { error: strin
     return { error: 'Failed to roll dice' }
   }
 }
+
+// Populate the tool registry
+chatTools.forEach(tool => toolRegistry.set(tool.name, tool))

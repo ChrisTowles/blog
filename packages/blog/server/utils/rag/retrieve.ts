@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm'
 import { embedText, rerankDocuments } from '../ai/bedrock'
+import type { KnowledgeBaseFilter } from '../capabilities/types'
 
 export interface RAGResult {
   content: string
@@ -17,14 +18,52 @@ export interface RetrieveOptions {
   bm25Weight?: number // Weight for BM25 search in RRF (default 0.3)
   candidateMultiplier?: number // How many candidates to retrieve before reranking
   skipRerank?: boolean // Skip reranking step (faster but less accurate)
+  knowledgeBaseFilters?: KnowledgeBaseFilter[] // Optional KB filters
 }
 
-const DEFAULT_OPTIONS: Required<RetrieveOptions> = {
+const DEFAULT_OPTIONS: Required<Omit<RetrieveOptions, 'knowledgeBaseFilters'>> & { knowledgeBaseFilters: KnowledgeBaseFilter[] } = {
   topK: 5,
   semanticWeight: 0.7,
   bm25Weight: 0.3,
   candidateMultiplier: 10,
-  skipRerank: false
+  skipRerank: false,
+  knowledgeBaseFilters: []
+}
+
+/**
+ * Build SQL LIKE patterns from KB filter patterns
+ */
+function buildSlugFilter(filters: KnowledgeBaseFilter[]): { include: string[], exclude: string[] } {
+  const include: string[] = []
+  const exclude: string[] = []
+
+  for (const filter of filters) {
+    if (filter.slugPatterns) {
+      // Convert glob patterns to SQL LIKE patterns
+      include.push(...filter.slugPatterns.map(p => p.replace(/\*/g, '%')))
+    }
+    if (filter.titlePatterns) {
+      // Title patterns are included in the same filter
+      include.push(...filter.titlePatterns.map(p => `%${p}%`))
+    }
+    if (filter.excludePatterns) {
+      exclude.push(...filter.excludePatterns.map(p => p.replace(/\*/g, '%')))
+    }
+  }
+
+  return { include, exclude }
+}
+
+/**
+ * Check if any filters are active (non-empty include or exclude patterns)
+ */
+function hasActiveFilters(filters: KnowledgeBaseFilter[]): boolean {
+  return filters.some((f) => {
+    const hasSlug = f.slugPatterns && f.slugPatterns.length > 0
+    const hasTitle = f.titlePatterns && f.titlePatterns.length > 0
+    const hasExclude = f.excludePatterns && f.excludePatterns.length > 0
+    return hasSlug || hasTitle || hasExclude
+  })
 }
 
 interface ChunkCandidate {
@@ -144,6 +183,48 @@ export function reciprocalRankFusion(
 }
 
 /**
+ * Apply knowledge base filters to results
+ */
+function applyKnowledgeBaseFilters(
+  results: Array<ChunkCandidate & { score: number }>,
+  filters: KnowledgeBaseFilter[]
+): Array<ChunkCandidate & { score: number }> {
+  if (!hasActiveFilters(filters)) {
+    return results
+  }
+
+  const { include, exclude } = buildSlugFilter(filters)
+
+  return results.filter((result) => {
+    const slug = result.documentSlug.toLowerCase()
+    const title = result.documentTitle.toLowerCase()
+
+    // Check excludes first
+    for (const pattern of exclude) {
+      const regex = new RegExp(`^${pattern.toLowerCase().replace(/%/g, '.*')}$`)
+      if (regex.test(slug)) {
+        return false
+      }
+    }
+
+    // If no includes, accept all non-excluded
+    if (include.length === 0) {
+      return true
+    }
+
+    // Check if matches any include pattern (slug or title)
+    for (const pattern of include) {
+      const regex = new RegExp(`^${pattern.toLowerCase().replace(/%/g, '.*')}$`)
+      if (regex.test(slug) || regex.test(title)) {
+        return true
+      }
+    }
+
+    return false
+  })
+}
+
+/**
  * Main retrieval function: hybrid search with optional reranking
  */
 export async function retrieveRAG(query: string, options: RetrieveOptions = {}): Promise<RAGResult[]> {
@@ -160,12 +241,17 @@ export async function retrieveRAG(query: string, options: RetrieveOptions = {}):
   ])
 
   // Step 3: Reciprocal Rank Fusion
-  const fusedResults = reciprocalRankFusion(
+  let fusedResults = reciprocalRankFusion(
     semanticResults,
     bm25Results,
     opts.semanticWeight,
     opts.bm25Weight
   )
+
+  // Step 3.5: Apply knowledge base filters
+  if (opts.knowledgeBaseFilters && opts.knowledgeBaseFilters.length > 0) {
+    fusedResults = applyKnowledgeBaseFilters(fusedResults, opts.knowledgeBaseFilters)
+  }
 
   // If no results, return empty
   if (fusedResults.length === 0) {

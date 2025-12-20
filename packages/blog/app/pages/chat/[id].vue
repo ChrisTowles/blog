@@ -16,6 +16,7 @@ const route = useRoute()
 const toast = useToast()
 const clipboard = useClipboard()
 const { model } = useModels()
+const personaSlug = ref<string | undefined>(undefined)
 
 const { data } = await useFetch(`/api/chats/${route.params.id}`, { cache: 'force-cache' })
 
@@ -23,9 +24,18 @@ if (!data.value) {
   throw createError({ statusCode: 404, statusMessage: 'Chat not found', fatal: true })
 }
 
+if (data.value.personaSlug) personaSlug.value = data.value.personaSlug
+
+// Fetch persona details for system prompt display
+const { data: personaData } = await useFetch(() => `/api/personas/${personaSlug.value}`, {
+  watch: [personaSlug],
+  immediate: !!personaSlug.value
+})
+
+const showSystemPrompt = ref(false)
+
 const input = ref('')
 
-// Convert API messages to ChatMessage format (dates are serialized)
 const initialMessages: ChatMessage[] = (data.value.messages || []).map(msg => ({
   id: msg.id,
   role: msg.role as 'user' | 'assistant',
@@ -37,6 +47,7 @@ const chat = useChat({
   id: data.value.id,
   initialMessages,
   model,
+  personaSlug,
   onError(error) {
     console.error('Chat error:', error.message)
     toast.add({
@@ -54,7 +65,6 @@ const chat = useChat({
 function handleSubmit(e: Event) {
   e.preventDefault()
   if (input.value.trim()) {
-    console.log('Sending message:', input.value)
     chat.sendMessage(input.value)
     input.value = ''
   }
@@ -62,25 +72,24 @@ function handleSubmit(e: Event) {
 
 const copied = ref(false)
 
-function getTextFromMessage(message: ChatMessage): string {
-  return message.parts
+function copy(e: MouseEvent, message: ChatMessage) {
+  const text = message.parts
     .filter(p => p.type === 'text')
     .map(p => 'text' in p ? p.text : '')
     .join('\n')
-}
 
-function copy(e: MouseEvent, message: ChatMessage) {
-  clipboard.copy(getTextFromMessage(message))
+  clipboard.copy(text)
   copied.value = true
-
-  setTimeout(() => {
-    copied.value = false
-  }, 2000)
+  setTimeout(() => copied.value = false, 2000)
 }
 
 function getPartKey(messageId: string, part: unknown, index: number) {
-  const hasState = part && typeof part === 'object' && 'state' in part
-  return `${messageId}-${part && typeof part === 'object' && 'type' in part ? part.type : 'unknown'}-${index}${hasState ? `-${(part as { state: string }).state}` : ''}`
+  if (!part || typeof part !== 'object') return `${messageId}-unknown-${index}`
+
+  const type = 'type' in part ? part.type : 'unknown'
+  const state = 'state' in part ? `-${(part as { state: string }).state}` : ''
+
+  return `${messageId}-${type}-${index}${state}`
 }
 
 function getToolResult(message: ChatMessage, toolUse: ToolUsePart): ToolResultPart | undefined {
@@ -106,13 +115,29 @@ onMounted(() => {
       <!-- https://ui.nuxt.com/docs/components/chat-messages -->
 
       <UContainer>
-        <!-- {{ chat.messages }} -->
+        <!-- System Prompt Display -->
+        <div v-if="personaData?.systemPrompt" class="lg:pt-(--ui-header-height) pt-4">
+          <UButton
+            :icon="showSystemPrompt ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
+            variant="ghost"
+            color="neutral"
+            size="sm"
+            class="mb-2"
+            @click="showSystemPrompt = !showSystemPrompt"
+          >
+            System Prompt ({{ personaData.persona.name }})
+          </UButton>
+          <UCard v-if="showSystemPrompt" class="mb-4" :ui="{ body: 'p-3 sm:p-4' }">
+            <pre class="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap font-mono overflow-auto max-h-96">{{ personaData.systemPrompt }}</pre>
+          </UCard>
+        </div>
+
         <UChatMessages
           should-auto-scroll
           :messages="chat.messages.value"
           :status="chat.status.value"
           :assistant="chat.status.value !== 'streaming' ? { actions: [{ label: 'Copy', icon: copied ? 'i-lucide-copy-check' : 'i-lucide-copy', onClick: copy }] } : { actions: [] }"
-          class="lg:pt-(--ui-header-height) pb-4 sm:pb-6"
+          :class="[personaData?.systemPrompt ? 'pb-4 sm:pb-6' : 'lg:pt-(--ui-header-height) pb-4 sm:pb-6']"
           :spacing-offset="160"
         >
           <template #content="{ message }">
@@ -162,7 +187,12 @@ onMounted(() => {
           @submit="handleSubmit"
         >
           <template #footer>
-            <ModelSelect v-model="model" />
+            <div class="flex items-center gap-4 w-full">
+              <div class="flex-1 max-w-48">
+                <PersonaSelect v-model="personaSlug" />
+              </div>
+              <ModelSelect v-model="model" />
+            </div>
             <UChatPromptSubmit
               :status="chat.status.value"
               color="neutral"

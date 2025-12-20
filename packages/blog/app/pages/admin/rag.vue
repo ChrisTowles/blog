@@ -118,7 +118,7 @@ async function runSearch() {
 
 // Document Actions
 const selectedDoc = ref<string | null>(null)
-const docDetails = ref<{ document: Document, chunks: Array<{ id: string, index: number, content: string, contextualContent: string, hasEmbedding: boolean }>, summary: { totalChunks: number, allEmbedded: boolean } } | null>(null)
+const docDetails = ref<{ document: Document, chunks: Array<{ id: string, index: number, content: string, contentPreview: string, contextualContent: string, hasEmbedding: boolean }>, summary: { totalChunks: number, totalContentLength: number, totalContextLength: number, allEmbedded: boolean } } | null>(null)
 const loadingDoc = ref(false)
 
 async function viewDocument(id: string) {

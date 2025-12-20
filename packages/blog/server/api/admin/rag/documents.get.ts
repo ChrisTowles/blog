@@ -36,7 +36,8 @@ export default defineEventHandler(async (event) => {
   `)
 
   return {
-    documents: documents.rows.map(doc => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- raw SQL query result
+    documents: documents.rows.map((doc: any) => ({
       id: doc.id,
       slug: doc.slug,
       title: doc.title,
