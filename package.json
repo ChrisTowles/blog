@@ -7,44 +7,49 @@
     "Chris Towles<Chris.Towles@gmail.com>"
   ],
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "build": "pnpm --filter @chris-towles/blog run build",
-    "build:container": "node --experimental-strip-types scripts/build.ts test staging",
-    "build:container:keep": "node --experimental-strip-types scripts/build.ts test staging --keep",
-    "dev": "pnpm run docker:up && pnpm run db:migrate && pnpm --filter @chris-towles/blog run dev",
-    "deploy": "pnpm --filter @chris-towles/blog run deploy:nuxthub",
+    "build": "bun run --cwd packages/blog build",
+    "build:container": "bun scripts/build.ts test staging",
+    "build:container:keep": "bun scripts/build.ts test staging --keep",
+    "dev": "bun run docker:up && bun run db:migrate && bun run --cwd packages/blog dev",
+    "dev:no-remote": "bun run docker:up && bun run db:migrate && bun run --cwd packages/blog dev:no-remote",
+    "deploy": "bun run --cwd packages/blog deploy:nuxthub",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "changeset tag",
     "gcp:staging:init": "cd infra/terraform/environments/staging && terraform init",
     "gcp:staging:plan": "cd infra/terraform/environments/staging && terraform plan",
     "gcp:staging:apply": "cd infra/terraform/environments/staging && terraform apply -auto-approve",
-    "gcp:staging:deploy": "node --experimental-strip-types scripts/build.ts deploy staging",
+    "gcp:staging:deploy": "bun scripts/build.ts deploy staging",
     "gcp:staging:destroy": "cd infra/terraform/environments/staging && terraform destroy",
     "gcp:prod:init": "cd infra/terraform/environments/prod && terraform init",
     "gcp:prod:apply": "cd infra/terraform/environments/prod && terraform apply -auto-approve",
-    "gcp:prod:deploy": "node --experimental-strip-types scripts/build.ts deploy prod",
-    "gcp:staging:logs": "node --experimental-strip-types scripts/logs.ts --environment=staging",
-    "gcp:staging:off": "node --experimental-strip-types scripts/power.ts off",
-    "gcp:staging:on": "node --experimental-strip-types scripts/power.ts on",
-    "gcp:prod:logs": "node --experimental-strip-types scripts/logs.ts --environment=production",
-    "db:generate": "pnpm --filter @chris-towles/blog run db:generate",
-    "db:migrate": "pnpm --filter @chris-towles/blog run db:migrate",
+    "gcp:prod:deploy": "bun scripts/build.ts deploy prod",
+    "gcp:staging:logs": "bun scripts/logs.ts --environment=staging",
+    "gcp:staging:off": "bun scripts/power.ts off",
+    "gcp:staging:on": "bun scripts/power.ts on",
+    "gcp:prod:logs": "bun scripts/logs.ts --environment=production",
+    "db:generate": "bun run --cwd packages/blog db:generate",
+    "db:migrate": "bun run --cwd packages/blog db:migrate",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
-    "slides": "pnpm --filter @chris-towles/slides run dev",
-    "slides:export": "pnpm --filter @chris-towles/slides run export",
-    "slides:no-brainer": "pnpm --filter @chris-towles/slides run dev no-brainer-upgrade.slides.md",
+    "slides": "bun run --cwd packages/slides dev",
+    "slides:export": "bun run --cwd packages/slides export",
+    "slides:upgrade": "bun run --cwd packages/slides slides:upgrade",
+    "slides:no-brainer": "bun run --cwd packages/slides dev no-brainer-upgrade.slides.md",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "pnpm --filter @chris-towles/blog run typecheck",
-    "test": "pnpm --filter @chris-towles/blog run test",
-    "test:e2e": "pnpm --filter @chris-towles/blog run test:e2e",
-    "test:docker": "tsx scripts/test-docker.ts",
+    "typecheck": "bun run --cwd packages/blog typecheck",
+    "test": "bun run --cwd packages/blog test",
+    "test:e2e": "bun run --cwd packages/blog test:e2e",
+    "test:docker": "bun scripts/test-docker.ts",
     "prepare": "husky",
-    "mcp:inspect": "pnpx @modelcontextprotocol/inspector",
-    "deps:update": "pnpx taze --interactive --recursive",
-    "clean": "rm -rf node_modules packages/*/node_modules .nuxt .output .nitro dist packages/*/.nuxt packages/*/.output"
+    "mcp:inspect": "bunx @modelcontextprotocol/inspector",
+    "deps:update": "bunx taze --interactive --recursive",
+    "clean": "rm -rf node_modules packages/*/node_modules .nuxt .output .nitro dist packages/*/.nuxt packages/*/.output bun.lock"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.2",
@@ -62,35 +67,23 @@
     "typescript": "^5.9.3",
     "zx": "^8.8.5"
   },
-  "resolutions": {
+  "trustedDependencies": [
+    "@parcel/watcher",
+    "better-sqlite3",
+    "esbuild",
+    "sharp",
+    "vue-demi"
+  ],
+  "overrides": {
+    "vite": "8.0.0-beta.2",
+    "@nuxt/vite-builder": "https://pkg.pr.new/@nuxt/vite-builder@33682",
+    "vue": "3.5.25",
+    "@vue/runtime-core": "3.5.25",
+    "@vue/server-renderer": "3.5.25",
     "unimport": "4.1.1"
   },
-  "pnpm": {
-    "overrides": {
-      "vite": "8.0.0-beta.2",
-      "@nuxt/vite-builder": "https://pkg.pr.new/@nuxt/vite-builder@33682",
-      "vue": "3.5.25",
-      "@vue/runtime-core": "3.5.25",
-      "@vue/server-renderer": "3.5.25"
-    },
-    "ignoredBuiltDependencies": [
-      "workerd"
-    ],
-    "onlyBuiltDependencies": [
-      "@parcel/watcher",
-      "better-sqlite3",
-      "esbuild",
-      "sharp",
-      "vue-demi",
-      "workerd"
-    ]
-  },
-  "packageManager": "pnpm@10.25.0",
-  "engines": {
-    "node": ">=24.0.0"
-  },
   "lint-staged": {
-    "*.png": "node --experimental-strip-types scripts/compress-images.ts",
+    "*.png": "bun scripts/compress-images.ts",
     "*.{js,ts,vue}": "eslint --fix"
   },
   "dependencies": {

@@ -1,5 +1,3 @@
-import { describe, it, expect } from 'vitest'
-
 describe('Skills API - Integration Tests', () => {
   describe('parseSkillMd - SKILL.md Format Variations', () => {
     it('parses minimal SKILL.md with required fields only', () => {

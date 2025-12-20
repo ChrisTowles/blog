@@ -1,4 +1,4 @@
-#!/usr/bin/env zx
+#!/usr/bin/env bun
 
 import { question, $, fs } from 'zx'
 import path from 'node:path'

@@ -3,11 +3,14 @@
     "allow": [
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "mcp__brave-search__brave_web_search",
-      "mcp__server-sequential-thinking__sequentialthinking",
-      "Bash(pnpm lint:*)",
+      "Bash(bun:*)",
       "WebFetch(domain:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(ls:*)",
+
+      "Bash(timeout:*)"
+      
+
     ],
     "deny": [],
     "additionalDirectories": [

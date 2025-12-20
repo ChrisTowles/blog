@@ -1,5 +1,3 @@
-import { describe, it, expect } from 'vitest'
-
 describe('Chatbot API', () => {
   describe('GET /api/chatbots (list)', () => {
     it('returns all personas as chatbot flavors', () => {

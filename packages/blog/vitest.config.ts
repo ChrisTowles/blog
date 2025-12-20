@@ -1,34 +1,32 @@
-// import { fileURLToPath } from 'node:url'
-import { defineVitestConfig } from '@nuxt/test-utils/config'
+import { defineConfig } from 'vitest/config'
+import { defineVitestProject } from '@nuxt/test-utils/config'
 import { config } from 'dotenv'
 import findConfig from 'find-config'
 
-export default defineVitestConfig({
+export default defineConfig({
   test: {
-    testTimeout: 60_000, // 60 seconds
-    exclude: ['**/node_modules/**', '**/e2e/**'],
-    // https://vitest.dev/config/
-    environment: 'nuxt', // nuxt testing - https://nuxt.com/docs/getting-started/testing
-    // you can optionally set Nuxt-specific environment options
-    environmentOptions: {
-      nuxt: {
-        // rootDir: fileURLToPath(new URL('./playground', import.meta.url)),
-        domEnvironment: 'happy-dom', // 'happy-dom' (default) or 'jsdom'
-        overrides: {
-          // https://nuxt.com/docs/api/configuration/nuxt-config#overrides
-          hub: {
-            remote: 'production', // set to true for remote storage
-            ai: true,
-            database: true
+    projects: [
+      await defineVitestProject({
+        test: {
+          name: 'nuxt',
+          testTimeout: 60_000,
+          globals: true,
+          // Setup file provides Nitro server auto-imports as globals
+          setupFiles: ['./vitest.setup.ts'],
+          include: ['**/*.{test,spec}.ts'],
+          exclude: ['**/node_modules/**', '**/e2e/**'],
+          environment: 'nuxt',
+          environmentOptions: {
+            nuxt: {
+              domEnvironment: 'happy-dom',
+              overrides: {}
+            }
+          },
+          env: {
+            ...config({ path: findConfig('.env') }).parsed
           }
-          // other Nuxt config you want to pass
         }
-      }
-    },
-    env: {
-      // Add any environment variables you want to set for the tests
-
-      ...config({ path: findConfig('.env') }).parsed
-    }
+      })
+    ]
   }
 })
