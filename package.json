@@ -11,7 +11,7 @@
     "build": "pnpm --filter @chris-towles/blog run build",
     "build:container": "node --experimental-strip-types scripts/build.ts test staging",
     "build:container:keep": "node --experimental-strip-types scripts/build.ts test staging --keep",
-    "dev": "pnpm --filter @chris-towles/blog run dev",
+    "dev": "pnpm run docker:up && pnpm run db:migrate && pnpm --filter @chris-towles/blog run dev",
     "deploy": "pnpm --filter @chris-towles/blog run deploy:nuxthub",
     "changeset": "changeset",
     "version": "changeset version",

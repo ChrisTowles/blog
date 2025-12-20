@@ -24,14 +24,10 @@ if (!data.value) {
   throw createError({ statusCode: 404, statusMessage: 'Chat not found', fatal: true })
 }
 
-// Set persona from chat data if available
-if (data.value.personaSlug) {
-  personaSlug.value = data.value.personaSlug
-}
+if (data.value.personaSlug) personaSlug.value = data.value.personaSlug
 
 const input = ref('')
 
-// Convert API messages to ChatMessage format (dates are serialized)
 const initialMessages: ChatMessage[] = (data.value.messages || []).map(msg => ({
   id: msg.id,
   role: msg.role as 'user' | 'assistant',
@@ -61,7 +57,6 @@ const chat = useChat({
 function handleSubmit(e: Event) {
   e.preventDefault()
   if (input.value.trim()) {
-    console.log('Sending message:', input.value)
     chat.sendMessage(input.value)
     input.value = ''
   }
@@ -69,25 +64,24 @@ function handleSubmit(e: Event) {
 
 const copied = ref(false)
 
-function getTextFromMessage(message: ChatMessage): string {
-  return message.parts
+function copy(e: MouseEvent, message: ChatMessage) {
+  const text = message.parts
     .filter(p => p.type === 'text')
     .map(p => 'text' in p ? p.text : '')
     .join('\n')
-}
 
-function copy(e: MouseEvent, message: ChatMessage) {
-  clipboard.copy(getTextFromMessage(message))
+  clipboard.copy(text)
   copied.value = true
-
-  setTimeout(() => {
-    copied.value = false
-  }, 2000)
+  setTimeout(() => copied.value = false, 2000)
 }
 
 function getPartKey(messageId: string, part: unknown, index: number) {
-  const hasState = part && typeof part === 'object' && 'state' in part
-  return `${messageId}-${part && typeof part === 'object' && 'type' in part ? part.type : 'unknown'}-${index}${hasState ? `-${(part as { state: string }).state}` : ''}`
+  if (!part || typeof part !== 'object') return `${messageId}-unknown-${index}`
+
+  const type = 'type' in part ? part.type : 'unknown'
+  const state = 'state' in part ? `-${(part as { state: string }).state}` : ''
+
+  return `${messageId}-${type}-${index}${state}`
 }
 
 function getToolResult(message: ChatMessage, toolUse: ToolUsePart): ToolResultPart | undefined {
