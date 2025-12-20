@@ -28,6 +28,13 @@ export const capabilities = pgTable('capabilities', {
   index('capabilities_slug_idx').on(table.slug)
 ])
 
+// Theme configuration for chatbot UI
+export interface PersonaTheme {
+  primaryColor: string // Nuxt UI color: 'blue', 'purple', 'pink', 'green', etc.
+  accentColor?: string // Optional accent color
+  icon: string // Lucide icon name
+}
+
 export const personas = pgTable('personas', {
   id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   slug: varchar({ length: 100 }).notNull().unique(),
@@ -35,6 +42,7 @@ export const personas = pgTable('personas', {
   description: text().notNull(),
   icon: varchar({ length: 100 }).notNull().default('i-lucide-user'), // Lucide icon name
   baseSystemPrompt: text().notNull(), // persona-specific intro
+  theme: json().$type<PersonaTheme>(), // UI theme configuration
   isDefault: boolean().notNull().default(false),
   isBuiltIn: boolean().notNull().default(false),
   ...timestamps,

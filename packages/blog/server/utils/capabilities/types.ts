@@ -15,6 +15,15 @@ export interface Capability {
 }
 
 /**
+ * Theme configuration for chatbot UI
+ */
+export interface ChatbotTheme {
+  primaryColor: string // Nuxt UI color name: 'blue', 'purple', 'green', etc.
+  accentColor?: string // optional accent color
+  icon: string // Lucide icon name
+}
+
+/**
  * Persona definition - a combination of capabilities with a unified identity
  */
 export interface Persona {
@@ -26,6 +35,7 @@ export interface Persona {
   capabilitySlugs: string[]
   isDefault: boolean
   isBuiltIn: boolean
+  theme?: ChatbotTheme // optional theme for chatbot UI
 }
 
 /**

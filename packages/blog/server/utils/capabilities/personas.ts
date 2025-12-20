@@ -19,7 +19,12 @@ Your role is to help visitors:
 Be conversational, helpful, and cite your sources when referencing blog content.`,
   capabilitySlugs: ['blog-assistant', 'general-assistant'],
   isDefault: true,
-  isBuiltIn: true
+  isBuiltIn: true,
+  theme: {
+    primaryColor: 'blue',
+    accentColor: 'sky',
+    icon: 'i-lucide-book-open'
+  }
 }
 
 /**
@@ -41,7 +46,12 @@ Your role is to help developers:
 Be constructive, specific, and educational in your feedback.`,
   capabilitySlugs: ['code-helper', 'blog-assistant'],
   isDefault: false,
-  isBuiltIn: true
+  isBuiltIn: true,
+  theme: {
+    primaryColor: 'purple',
+    accentColor: 'violet',
+    icon: 'i-lucide-code-2'
+  }
 }
 
 /**
@@ -63,7 +73,12 @@ Your role is to:
 Be enthusiastic, creative, and match the user's energy!`,
   capabilitySlugs: ['creative-writer', 'general-assistant'],
   isDefault: false,
-  isBuiltIn: true
+  isBuiltIn: true,
+  theme: {
+    primaryColor: 'pink',
+    accentColor: 'rose',
+    icon: 'i-lucide-sparkles'
+  }
 }
 
 /**
@@ -85,7 +100,12 @@ You can help with:
 Adapt your style to what the user needs in the moment.`,
   capabilitySlugs: ['blog-assistant', 'code-helper', 'creative-writer', 'general-assistant'],
   isDefault: false,
-  isBuiltIn: true
+  isBuiltIn: true,
+  theme: {
+    primaryColor: 'green',
+    accentColor: 'emerald',
+    icon: 'i-lucide-bot'
+  }
 }
 
 /**
