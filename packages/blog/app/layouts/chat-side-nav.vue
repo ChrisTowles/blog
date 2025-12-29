@@ -6,6 +6,7 @@ import { TEST_IDS } from '~~/shared/test-ids'
 const route = useRoute()
 const toast = useToast()
 const overlay = useOverlay()
+const appConfig = useAppConfig()
 const { loggedIn, openInPopup } = useUserSession()
 
 const open = ref(false)
@@ -178,11 +179,9 @@ defineShortcuts({
         <USeparator v-if="!collapsed" class="pt-8" />
 
         <UContainer v-if="!collapsed">
-          This entire Chat app is from <ULink to="https://github.com/nuxt-ui-pro/chat">Nuxt UI Pro Chat</ULink>.
-
-          Its the amazing work of <ULink to="https://github.com/benjamincanac" target="_blank">
-            <UAvatar src="https://github.com/benjamincanac.png" alt="Benjamin Canac" />Benjamin Canac</ULink> and <ULink to="https://github.com/Atinux" target="_blank">
-            <UAvatar src="https://github.com/atinux.png" alt="Sébastien Chopin" />Sébastien Chopin</ULink>.
+          Built with <ULink to="https://ui.nuxt.com" target="_blank">Nuxt UI</ULink> and <ULink to="https://nuxt.com" target="_blank">Nuxt</ULink> by <ULink :to="appConfig.author.github" target="_blank">
+            <UAvatar :src="`${appConfig.author.github}.png`" :alt="appConfig.author.name" class="mr-1" />{{ appConfig.author.name }}</ULink>.
+          Thanks to the <ULink to="https://github.com/nuxt-ui-pro/chat" target="_blank">Nuxt UI Pro Chat</ULink> template for the inspiration.
         </UContainer>
       </template>
 
