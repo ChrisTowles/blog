@@ -1,0 +1,1 @@
+ALTER TABLE "chats" ADD COLUMN "agentSessionId" varchar(100);

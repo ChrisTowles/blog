@@ -206,3 +206,76 @@ test.describe('Chat History', () => {
     expect(count).toBeGreaterThanOrEqual(0)
   })
 })
+
+test.describe('Agent SDK Integration', () => {
+  test('chat input accepts text for Agent SDK processing', async ({ page }) => {
+    await page.goto('/chat', { waitUntil: 'networkidle' })
+
+    const chatInput = page.getByTestId(TEST_IDS.CHAT.INPUT)
+    await chatInput.waitFor({ state: 'visible', timeout: 10000 })
+
+    // Type a message that would trigger skill lookup
+    await chatInput.fill('How do I create a presentation with slidev?')
+    await expect(chatInput).toHaveValue('How do I create a presentation with slidev?')
+  })
+
+  test('submit button is enabled when input has text', async ({ page }) => {
+    await page.goto('/chat', { waitUntil: 'networkidle' })
+
+    const chatInput = page.getByTestId(TEST_IDS.CHAT.INPUT)
+    await chatInput.waitFor({ state: 'visible', timeout: 10000 })
+
+    // Type something
+    await chatInput.fill('Test message')
+
+    // Check submit button is clickable
+    const submitButton = page.getByTestId(TEST_IDS.CHAT.SUBMIT)
+    const isDisabled = await submitButton.isDisabled()
+
+    // Submit button should be enabled when there's text
+    expect(isDisabled).toBe(false)
+  })
+
+  test.skip('Agent SDK responds to tool-triggering queries', async ({ page }) => {
+    // This test is skipped because it requires:
+    // 1. Authentication
+    // 2. Real API calls to Agent SDK
+    // 3. Waiting for potentially slow responses
+
+    await page.goto('/chat', { waitUntil: 'networkidle' })
+
+    const chatInput = page.getByTestId(TEST_IDS.CHAT.INPUT)
+    await chatInput.fill('What is the weather in London?')
+
+    const submitButton = page.getByTestId(TEST_IDS.CHAT.SUBMIT)
+    await submitButton.click()
+
+    // Wait for navigation to chat detail
+    await page.waitForURL(/\/chat\/[a-zA-Z0-9-]+/, { timeout: 15000 })
+
+    // Wait for tool_start event (weather tool)
+    // This would require checking for tool invocation UI elements
+    const toolIndicator = page.locator('[data-tool-name="getWeather"]')
+    await expect(toolIndicator).toBeVisible({ timeout: 30000 })
+  })
+
+  test.skip('Agent SDK invokes skills for matching queries', async ({ page }) => {
+    // This test is skipped because it requires authentication and real API calls
+
+    await page.goto('/chat', { waitUntil: 'networkidle' })
+
+    const chatInput = page.getByTestId(TEST_IDS.CHAT.INPUT)
+    // Query that should match the slidev skill
+    await chatInput.fill('Help me create a presentation about Vue.js')
+
+    const submitButton = page.getByTestId(TEST_IDS.CHAT.SUBMIT)
+    await submitButton.click()
+
+    await page.waitForURL(/\/chat\/[a-zA-Z0-9-]+/, { timeout: 15000 })
+
+    // Agent SDK should have loaded the slidev skill
+    // Check for skill-related content in response
+    const response = page.getByTestId(TEST_IDS.CHAT.MESSAGE_LIST)
+    await expect(response).toContainText(/slidev|presentation|slides/i, { timeout: 60000 })
+  })
+})

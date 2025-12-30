@@ -78,6 +78,15 @@ File naming: `YYYYMMDD.post-title.md`
 
 Use the blog-content-architect agent for creating focused, concise posts (800-1500 words).
 
+## AI Agent Design Principles
+
+From [Building Effective Agents](https://www.anthropic.com/engineering/building-effective-agents):
+
+- **Simplicity** - Start straightforward, add complexity only when it demonstrably improves outcomes
+- **Transparency** - Explicitly show planning steps
+- **Strong interfaces** - Thorough tool documentation and testing
+- **Sandbox first** - Extensive testing in isolated environments with guardrails
+
 ## Great Examples of Nuxt UI Pro
 
 - <https://github.com/nuxt-ui-pro/saas>
