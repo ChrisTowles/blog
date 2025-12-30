@@ -105,8 +105,11 @@ dist
 # vuepress build output
 .vuepress/dist
 
-# vuepress v2.x temp and cache directory
-.temp
+#
+# Temporary folder, named as such so it sorts to the top
+._temp 
+
+
 .cache
 
 # Docusaurus cache and generated files

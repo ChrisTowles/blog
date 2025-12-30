@@ -48,7 +48,7 @@ Generate a compelling, detailed prompt for AI image generation that captures the
 
 ## Output Format
 
-Save to `.temp/images/{YYYY}-{MM}-{DD}-{HH}{MM}-{blog-title}.md`:
+Save to `._temp/images/{YYYY}-{MM}-{DD}-{HH}{MM}-{blog-title}.md`:
 
 ```markdown
 # Image Prompt: {Blog Post Title}
