@@ -1,3 +1,7 @@
+
+
+*.local.*
+
 .output/
 
 # Logs1
