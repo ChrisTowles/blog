@@ -23,7 +23,7 @@ Ask any questions needed to clarify idea? **use `AskUserQuestion` tool** to prov
 
 ### 3. Save & Output
 
-Save enhanced prompt to `.temp/prompts/YYYY-MM-DD-blog-title.md` and present:
+Save enhanced prompt to `._tmp/prompts/YYYY-MM-DD-blog-title.md` and present:
 
 1. **Blog Post Prompt**: [Detailed prompt]
-2. **Print usage**: `/blog-02-write-post @.temp/prompts/YYYY-MM-DD-blog-title.md`
+2. **Print usage**: `/blog-02-write-post @._tmp/prompts/YYYY-MM-DD-blog-title.md`

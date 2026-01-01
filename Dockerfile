@@ -23,8 +23,7 @@ COPY packages/blog ./packages/blog
 WORKDIR /app/packages/blog
 ENV NUXT_CONTENT_DATABASE=false
 ENV NITRO_PRESET=node-server
-# Remove routeRules prerender for Docker build
-RUN sed -i '/routeRules:/,/},/s/^/\/\/ /' nuxt.config.ts
+
 # Use bun to run nuxt build
 RUN cd /app && bun run nuxt build packages/blog
 

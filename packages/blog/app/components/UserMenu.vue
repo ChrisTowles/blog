@@ -92,6 +92,10 @@ const items = computed<DropdownMenuItem[][]>(() => ([[{
     }
   }]
 }], [{
+  label: 'Admin',
+  icon: 'i-lucide-settings',
+  to: '/admin'
+}], [{
   label: 'Log out',
   icon: 'i-lucide-log-out',
   onSelect() {

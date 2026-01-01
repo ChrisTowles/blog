@@ -1,17 +1,19 @@
 <script setup lang="ts">
+const appConfig = useAppConfig()
+
 const columns = [{
   label: 'Social',
   children: [{
     label: 'GitHub',
-    to: 'https://github.com/ChrisTowles'
+    to: appConfig.author.github
   },
   {
     label: 'X / Twitter',
-    to: 'https://x.com/Chris_Towles'
+    to: appConfig.author.twitter
   },
   {
     label: 'Bluesky',
-    to: 'https://bsky.app/profile/chris-towles.bsky.social'
+    to: appConfig.author.bluesky
   }]
 }]
 
@@ -78,7 +80,7 @@ const columns = [{
       <UColorModeButton />
 
       <UButton
-        to="https://github.com/ChrisTowles/blog"
+        :to="`${appConfig.author.github}/blog`"
         target="_blank"
         icon="i-simple-icons-github"
         aria-label="GitHub"

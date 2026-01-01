@@ -29,6 +29,7 @@
     "docker:reset": "docker compose down -v"
   },
   "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.1.76",
     "@anthropic-ai/sdk": "^0.52.0",
     "@iconify-json/logos": "^1.2.10",
     "@iconify-json/lucide": "^1.2.77",

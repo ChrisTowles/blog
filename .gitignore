@@ -1,3 +1,7 @@
+
+
+*.local.*
+
 .output/
 
 # Logs1
@@ -105,8 +109,12 @@ dist
 # vuepress build output
 .vuepress/dist
 
-# vuepress v2.x temp and cache directory
-.temp
+#
+# Temporary folders
+._tmp/ # so it sorts to the top
+.tmp/
+
+
 .cache
 
 # Docusaurus cache and generated files
@@ -155,3 +163,7 @@ playwright-report/
 
 # Local files
 *.local.md
+
+
+# temp
+.temp/

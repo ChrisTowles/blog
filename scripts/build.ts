@@ -114,6 +114,20 @@ async function testContainer() {
   }
 }
 
+async function ensureSqlRunning(projectId: string, instanceName: string) {
+  console.log(chalk.yellow(`\n🔍 Checking Cloud SQL instance state...`))
+  const state = (await $`gcloud sql instances describe ${instanceName} --project=${projectId} --format='value(state)'`.quiet()).stdout.trim()
+
+  if (state === 'RUNNABLE') {
+    console.log(chalk.green(`   ✓ SQL instance is running`))
+    return
+  }
+
+  console.log(chalk.yellow(`   SQL instance is ${state}, starting...`))
+  await $`gcloud sql instances patch ${instanceName} --activation-policy=ALWAYS --project=${projectId}`
+  console.log(chalk.green(`   ✓ SQL instance started`))
+}
+
 async function deployContainer() {
   if (!['staging', 'prod'].includes(environment)) {
     console.error(chalk.red('❌ Invalid environment. Use "staging" or "prod"'))
@@ -176,7 +190,13 @@ async function deployContainer() {
   await $`docker push ${imageWithDateTag}`
   await $`docker push ${imageWithLatest}`
 
-  // Step 6: Update Cloud Run with the dated image
+  // Step 6: Ensure Cloud SQL is running before terraform apply
+  const projectId = environment === 'staging' ? 'blog-towles-staging' : 'blog-towles-production'
+  const envSuffix = environment === 'prod' ? 'production' : environment
+  const instanceName = `blog-towles-${envSuffix}-db`
+  await ensureSqlRunning(projectId, instanceName)
+
+  // Step 7: Update Cloud Run with the dated image
   console.log(chalk.yellow(`\n☁️  Updating Cloud Run with new image...`))
   cd(terraformDir)
   $.verbose = true
