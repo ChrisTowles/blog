@@ -114,6 +114,10 @@ Full terraform docs: [infra/terraform/README.md](infra/terraform/README.md)
 - const/let appropriately, destructuring, template literals
 - ES6+ features preferred
 
+## Claude Code Docs
+
+Reference: https://code.claude.com/docs/en/claude_code_docs_map.md
+
 ## Agent Usage
 
 **Always use subagents for everything.** When exploring code, researching, planning, or doing multi-step work - spawn a Task agent. This keeps context clean, enables parallelism, and matches the workflow documented in #100.

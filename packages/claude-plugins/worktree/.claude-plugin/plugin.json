@@ -1,0 +1,8 @@
+{
+    "name": "worktree",
+    "description": "Git worktree management with slot-based environment configuration",
+    "version": "1.0.0",
+    "author": {
+        "name": "Chris Towles"
+    }
+}
