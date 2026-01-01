@@ -1,0 +1,13 @@
+{
+  "name": "towles-tool",
+  "owner": {
+    "name": "Chris Towles"
+  },
+  "plugins": [
+    {
+      "name": "towles-tools",
+      "source": "./packages/claude-plugins/tt-core",
+      "description": "useful daily commands like generate git messages and note taking"
+    }
+  ]
+}
