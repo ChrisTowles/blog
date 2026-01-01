@@ -15,6 +15,33 @@ This is just my personal blog at <https://Chris.Towles.dev>
   - `223452314076`
   - `aws configure sso`
 - 
+## Claude Code Plugin Marketplace
+
+This repo is also a [Claude Code](https://docs.anthropic.com/en/docs/claude-code) plugin marketplace.
+
+> These plugins used to live in a separate repo ([towles-tool](https://github.com/ChrisTowles/towles-tool)), but I got tired of updating two repos. Monorepo it is.
+
+### Available Plugins
+
+| Plugin | Commands/Hooks | Description |
+|--------|---------------|-------------|
+| `tt-core` | `/tt:commit`, `/tt:refine` | Git commit generator, text refinement |
+| `notifications` | Stop hook | Audio notification when Claude stops |
+
+### Plugin Structure
+
+```
+.claude-plugin/
+└── marketplace.json          # Marketplace config
+packages/claude-plugins/
+├── tt-core/
+│   ├── .claude-plugin/plugin.json
+│   └── commands/             # Skill definitions
+└── notifications/
+    ├── .claude-plugin/plugin.json
+    └── hooks/                # Hook scripts
+```
+
 ## Blog Tech Stack
 
 - [Nuxt](https://nuxtjs.org/)

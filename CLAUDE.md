@@ -7,13 +7,25 @@ Guidance for Claude Code when working with this repository.
 Personal blog/website - Vue/Nuxt monorepo. Also serves as a playground for testing AI features.
 
 ```
+.claude-plugin/     # Claude Code plugin marketplace config
 packages/
 ├── blog/           # Main Nuxt application
 │   ├── content/    # Markdown blog posts (Nuxt Content)
 │   └── server/database/schema.ts  # Drizzle ORM schema
-└── slides/         # Slidev presentations
+├── slides/         # Slidev presentations
+└── claude-plugins/ # Claude Code plugins
+    ├── tt-core/    # /tt:commit, /tt:refine commands
+    └── notifications/  # Audio notification on Stop hook
 infra/terraform/    # GCP infrastructure
 ```
+
+## Claude Code Plugin Marketplace
+
+This repo is a Claude Code plugin marketplace. Plugins live in `packages/claude-plugins/`.
+
+**Available plugins:**
+- `tt-core` - `/tt:commit` (git commits), `/tt:refine` (text refinement)
+- `notifications` - Audio notification when Claude stops after Write/Edit
 
 ## Essential Commands
 
