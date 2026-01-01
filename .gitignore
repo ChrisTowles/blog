@@ -111,7 +111,7 @@ dist
 
 #
 # Temporary folders
-._temp
+._tmp/ # so it sorts to the top
 .tmp/
 
 
@@ -163,3 +163,7 @@ playwright-report/
 
 # Local files
 *.local.md
+
+
+# temp
+.temp/
