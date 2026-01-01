@@ -192,7 +192,8 @@ async function deployContainer() {
 
   // Step 6: Ensure Cloud SQL is running before terraform apply
   const projectId = environment === 'staging' ? 'blog-towles-staging' : 'blog-towles-production'
-  const instanceName = `blog-towles-${environment}-db`
+  const envSuffix = environment === 'prod' ? 'production' : environment
+  const instanceName = `blog-towles-${envSuffix}-db`
   await ensureSqlRunning(projectId, instanceName)
 
   // Step 7: Update Cloud Run with the dated image
