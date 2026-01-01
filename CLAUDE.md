@@ -19,14 +19,14 @@ infra/terraform/    # GCP infrastructure
 
 ```bash
 # Development
-bun dev              # Dev server with remote storage
-bun dev:no-remote    # Dev server without remote storage
+pnpm dev              # Dev server with remote storage
+pnpm dev:no-remote    # Dev server without remote storage
 
 # Build & Test
-bun run build        # Build all packages
-bun run lint         # ESLint
-bun run typecheck    # TypeScript checks
-bun run test         # Vitest
+pnpm build            # Build all packages
+pnpm lint             # ESLint (or oxlint)
+pnpm typecheck        # TypeScript checks
+pnpm test             # Vitest
 
 # Single package (from packages/blog/)
 nuxt dev --remote --envName development
@@ -35,7 +35,7 @@ vitest
 nuxt typecheck
 
 # Slides
-bun run slides:upgrade   # Start slide server
+pnpm slides           # Start slide server
 ```
 
 ## Tech Stack
@@ -45,7 +45,7 @@ bun run slides:upgrade   # Start slide server
 - **AI**: Anthropic SDK with tool calling, integrated chatbot
   - RAG pipeline: semantic search + BM25, followed by reranker
 - **Auth**: GitHub OAuth via nuxt-auth-utils
-- **Monorepo**: Bun workspaces
+- **Monorepo**: pnpm workspaces
 
 ## Hosting & Deployment
 

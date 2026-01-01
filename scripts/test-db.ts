@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S pnpmx tsx
 import 'zx/globals'
 import pg from 'pg'
 
