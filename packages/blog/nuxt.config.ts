@@ -52,7 +52,11 @@ export default defineNuxtConfig({
   ],
 
   routeRules: {
-    '/': { prerender: true }
+    '/': { prerender: true },
+    // Chat pages don't need SSR (no SEO benefit, authenticated feature)
+    // Disabling SSR fixes hydration issues where clicks don't register until hydration completes
+    '/chat': { ssr: false },
+    '/chat/**': { ssr: false }
   },
 
   future: {

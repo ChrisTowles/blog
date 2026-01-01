@@ -20,4 +20,5 @@
         "ollama",
         "Sideload"
     ],
+    "browse-lite.startUrl": "http://localhost:3000",
 }

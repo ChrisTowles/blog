@@ -110,8 +110,9 @@ dist
 .vuepress/dist
 
 #
-# Temporary folder, named as such so it sorts to the top
-._temp 
+# Temporary folders
+._temp
+.tmp/
 
 
 .cache
