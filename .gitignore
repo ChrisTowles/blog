@@ -110,9 +110,11 @@ dist
 .vuepress/dist
 
 #
-# Temporary folders
-._tmp/ # so it sorts to the top
+# Temporary folders (_tmp is to sort to the top)
+._tmp/
+.temp/
 .tmp/
+
 
 
 .cache
@@ -164,6 +166,3 @@ playwright-report/
 # Local files
 *.local.md
 
-
-# temp
-.temp/
