@@ -1,20 +1,21 @@
-# Build stage - use Bun for faster dependency installation
-FROM oven/bun:1.2 AS builder
+# Build stage - use Node with pnpm for dependency installation
+FROM node:24-slim AS builder
 
-# Install build dependencies for native modules
-RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
+# Install pnpm and build dependencies for native modules
+RUN corepack enable pnpm && \
+    apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
 
 # Copy workspace configuration
-COPY package.json bun.lock ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Copy package files for all workspaces
 COPY packages/blog/package.json ./packages/blog/
 
 # Install dependencies
-RUN bun install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 # Copy source code
 COPY packages/blog ./packages/blog
@@ -24,8 +25,8 @@ WORKDIR /app/packages/blog
 ENV NUXT_CONTENT_DATABASE=false
 ENV NITRO_PRESET=node-server
 
-# Use bun to run nuxt build
-RUN cd /app && bun run nuxt build packages/blog
+# Build the Nuxt application
+RUN cd /app && pnpm --filter @chris-towles/blog exec nuxt build
 
 # Production stage - use Node for runtime stability
 FROM node:24-slim AS runner
