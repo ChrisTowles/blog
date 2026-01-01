@@ -1,26 +1,37 @@
 ---
 title: research
-description: "Research a topic then use findings to interview and build a plan"
+description: "Gather information before planning"
+
+# Created based on https://www.anthropic.com/engineering/claude-code-best-practices and keeping it simple.
 ---
 
-use $ARGUMENTS  as the Topic of research.
+Ask the user for their topic/goal.
 
-If empty, ask the user the Problem or Topic they want to research.
+## Codebase Research
+Use Task agents (subagent_type=Explore) to:
+- Find relevant files, patterns, conventions
+- Understand existing architecture
+- Identify dependencies and conflicts
 
-First, gather context silently:
-1. WebSearch for how thought leaders approach this topic
-2. Explore agent to find how this repo currently handles similar patterns
+## External Research
+Use WebSearch to find:
+- How thought leaders/experts approach this problem
+- Best practices from top practitioners
+- Common pitfalls and lessons learned
+- Recent developments or preferred patterns
 
-Research and explore for relevant information:
-- Patterns/tradeoffs you discovered from thought leaders
-- Gaps or opportunities you found in the codebase
-- Technical decisions that matter based on real examples
+Loop: if findings raise new questions, search again until you have a clear picture of the ideal approach.
 
+## Output
 
-write the research to file `docs/tasks/{YYYY-MM-DD}-{topic}/research.md`
+DO NOT write code yet.
 
-Tell me to run the `plan` command next to interview me based on your research and build a plan.
+Write findings to `docs/tasks/{YYYY-MM-DD}-{topic}/research.md` with:
+1. Codebase context
+2. Expert recommendations
+   1. include citations/links
+3. Recommended approach based on research
 
-```bash
-/plan "docs/tasks/{YYYY-MM-DD}-{topic}/research.md"
-```
+Then update `.current-plan` in repo root with the task folder path.
+
+Use AskUserQuestion before moving to planning (02_plan).s

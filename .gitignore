@@ -165,4 +165,5 @@ playwright-report/
 
 # Local files
 *.local.md
+.current-plan
 
