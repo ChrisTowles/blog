@@ -1,7 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
-    '@nuxt/eslint',
     '@nuxt/image',
     '@nuxt/ui',
     '@nuxt/content',
@@ -177,14 +176,6 @@ export default defineNuxtConfig({
     // The nuxt typecheck will show false positives for test files
   },
 
-  eslint: {
-    config: {
-      stylistic: {
-        commaDangle: 'never',
-        braceStyle: '1tbs'
-      }
-    }
-  },
   icon: {
     serverBundle: {
       collections: ['simple-icons', 'heroicons'] // <!--- this

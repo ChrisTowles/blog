@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S pnpx tsx
 import 'zx/globals'
 
 const files = process.argv.slice(2)

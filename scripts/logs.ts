@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S pnpx tsx
 
 import { question, $, fs } from 'zx'
 import path from 'node:path'

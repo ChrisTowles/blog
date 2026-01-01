@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import type { ChatMessage, MessagePart } from '~~/shared/chat-types'
 
 // Test the helper functions extracted from the endpoint

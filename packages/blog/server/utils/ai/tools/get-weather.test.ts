@@ -1,41 +1,12 @@
 /**
  * Unit tests for getWeather tool
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 
 
 import { getWeather } from './get-weather'
 
 describe('getWeather', () => {
-    const mockGeoResponse = {
-        results: [{
-            latitude: 51.5074,
-            longitude: -0.1278,
-            name: 'London',
-            country: 'United Kingdom'
-        }]
-    }
-
-
-
-    const mockWeatherResponse = {
-        current: {
-            temperature_2m: 18.5,
-            relative_humidity_2m: 65,
-            weather_code: 2,
-            wind_speed_10m: 12.3
-        },
-        daily: {
-            time: ['2024-01-15', '2024-01-16', '2024-01-17', '2024-01-18', '2024-01-19'],
-            weather_code: [2, 3, 61, 0, 1],
-            temperature_2m_max: [20.5, 18.2, 15.8, 22.1, 21.0],
-            temperature_2m_min: [12.3, 10.1, 8.5, 14.2, 13.8]
-        }
-    }
-
-    beforeEach(() => {
-        vi.clearAllMocks()
-    })
 
     it('should return formatted weather data for valid location', async () => {
      
