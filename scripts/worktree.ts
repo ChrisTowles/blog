@@ -209,43 +209,43 @@ async function cmdInit(): Promise<void> {
     fs.mkdirSync(configDir, { recursive: true })
 
     // Create default slots config with 5 slots
+    // Main repo uses DB_PORT=5432, worktrees start at 5433
     const defaultConfig: SlotsConfig = {
         slots: {
-            'slot-1': { PORT: 3001, DB_PORT: 5431 },
-            'slot-2': { PORT: 3002, DB_PORT: 5432 },
-            'slot-3': { PORT: 3003, DB_PORT: 5433 },
-            'slot-4': { PORT: 3004, DB_PORT: 5434 },
-            'slot-5': { PORT: 3005, DB_PORT: 5435 }
+            'slot-1': { COMPOSE_PROJECT_NAME: 'blog-slot-1', DB_PORT: 5433 },
+            'slot-2': { COMPOSE_PROJECT_NAME: 'blog-slot-2', DB_PORT: 5434 },
+            'slot-3': { COMPOSE_PROJECT_NAME: 'blog-slot-3', DB_PORT: 5435 },
+            'slot-4': { COMPOSE_PROJECT_NAME: 'blog-slot-4', DB_PORT: 5436 },
+            'slot-5': { COMPOSE_PROJECT_NAME: 'blog-slot-5', DB_PORT: 5437 }
         },
         copyFromRootRepo: ['.env', '.env.local']
     }
 
     const configContent = `// Worktree Slots Configuration
 // Each slot defines unique values for resources that can't be shared
-// (ports, OAuth apps, database connections, etc.)
+// Main repo uses COMPOSE_PROJECT_NAME=blog and DB_PORT=5432
 {
     "slots": {
-        // Slot 1 - adjust ports and add OAuth credentials as needed
+        // Each slot gets isolated docker containers and database port
         "slot-1": {
-            "PORT": 3001,
-            "DB_PORT": 5431
-            // "OAUTH_CLIENT_ID": "your-oauth-app-1-client-id"
-        },
-        "slot-2": {
-            "PORT": 3002,
-            "DB_PORT": 5432
-        },
-        "slot-3": {
-            "PORT": 3003,
+            "COMPOSE_PROJECT_NAME": "blog-slot-1",
             "DB_PORT": 5433
         },
-        "slot-4": {
-            "PORT": 3004,
+        "slot-2": {
+            "COMPOSE_PROJECT_NAME": "blog-slot-2",
             "DB_PORT": 5434
         },
-        "slot-5": {
-            "PORT": 3005,
+        "slot-3": {
+            "COMPOSE_PROJECT_NAME": "blog-slot-3",
             "DB_PORT": 5435
+        },
+        "slot-4": {
+            "COMPOSE_PROJECT_NAME": "blog-slot-4",
+            "DB_PORT": 5436
+        },
+        "slot-5": {
+            "COMPOSE_PROJECT_NAME": "blog-slot-5",
+            "DB_PORT": 5437
         }
     },
     // Files in root repo to copy {{COPY:VAR}} values from (shared secrets)
@@ -254,12 +254,21 @@ async function cmdInit(): Promise<void> {
 `
 
     const envTemplate = `# Auto-generated from .env.template
-# Slot-specific values (from slots.config.jsonc)
-PORT={{PORT}}
+# Docker Compose isolation (worktree-specific)
+COMPOSE_PROJECT_NAME={{COMPOSE_PROJECT_NAME}}
 DB_PORT={{DB_PORT}}
 
+# PostgreSQL Connection (uses slot-specific port)
+DATABASE_URL=postgresql://postgres:postgres@localhost:{{DB_PORT}}/postgres
+
 # Shared secrets (copied from root repo)
-# ANTHROPIC_API_KEY={{COPY:ANTHROPIC_API_KEY}}
+ANTHROPIC_API_KEY={{COPY:ANTHROPIC_API_KEY}}
+NUXT_SESSION_PASSWORD={{COPY:NUXT_SESSION_PASSWORD}}
+NUXT_OAUTH_GITHUB_CLIENT_ID={{COPY:NUXT_OAUTH_GITHUB_CLIENT_ID}}
+NUXT_OAUTH_GITHUB_CLIENT_SECRET={{COPY:NUXT_OAUTH_GITHUB_CLIENT_SECRET}}
+AWS_REGION={{COPY:AWS_REGION}}
+AWS_ACCESS_KEY_ID={{COPY:AWS_ACCESS_KEY_ID}}
+AWS_SECRET_ACCESS_KEY={{COPY:AWS_SECRET_ACCESS_KEY}}
 `
 
     fs.writeFileSync(getSlotsConfigPath(), configContent)

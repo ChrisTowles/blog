@@ -32,7 +32,7 @@ RUN cd /app && pnpm --filter @chris-towles/blog exec nuxt build
 FROM node:24-slim AS runner
 
 # Define build-time arguments for ports
-ARG UI_PORT=3000
+ARG UI_PORT
 
 # Build metadata args, passed in during build time
 ARG GIT_SHA=unknown
