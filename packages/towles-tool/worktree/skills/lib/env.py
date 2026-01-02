@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 
 def get_template_files(config_dir: Path) -> list[Path]:
@@ -46,11 +46,12 @@ def read_env_file(path: Path) -> dict[str, str]:
 
 def process_template(
     template_content: str,
-    slot_config: Any,  # SlotConfig
+    slot_config: Optional[Any],  # SlotConfig or None
     main_env_vars: dict[str, str],
 ) -> tuple[str, list[str]]:
     """Process template, replacing {{VAR}} and {{COPY:VAR}}.
 
+    If slot_config is None, slot variables are left as-is with warnings.
     Returns (processed_content, warnings).
     """
     warnings = []
@@ -61,9 +62,12 @@ def process_template(
         var_name = match.group(1)
         if var_name.startswith("COPY:"):
             return match.group(0)
+        if slot_config is None:
+            warnings.append(f"Template has {{{{{var_name}}}}} but no slot config available")
+            return match.group(0)
         value = slot_config.get(var_name)
         if value is None:
-            warnings.append(f"Template has {{{{{var_name}}}}} but not defined in slots.toml")
+            warnings.append(f"Template has {{{{{var_name}}}}} but not defined in slots.config.json")
             return match.group(0)
         return str(value)
 

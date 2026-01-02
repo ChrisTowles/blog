@@ -7,10 +7,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from .constants import REGISTRY_FILE, SLOT_PREFIX
+
 
 @dataclass
 class SlotAssignment:
-    slot: int
+    slot: str  # Slot name like "slot-1"
     issue: Optional[int] = None
     branch: Optional[str] = None
     worktree: Optional[str] = None
@@ -28,7 +30,7 @@ class SlotAssignment:
     @classmethod
     def from_dict(cls, data: dict) -> SlotAssignment:
         return cls(
-            slot=data["slot"],
+            slot=str(data["slot"]),  # Ensure string for backwards compat
             issue=data.get("issue"),
             branch=data.get("branch"),
             worktree=data.get("worktree"),
@@ -59,7 +61,7 @@ class WorktreeRegistry:
 
 
 def get_registry_path(worktrees_dir: Path) -> Path:
-    return worktrees_dir / ".worktree-registry.json"
+    return worktrees_dir / REGISTRY_FILE
 
 
 def registry_exists(worktrees_dir: Path) -> bool:
@@ -80,7 +82,7 @@ def write_registry(worktrees_dir: Path, registry: WorktreeRegistry) -> None:
 
 
 def create_empty_registry(repo_name: str, slot_count: int) -> WorktreeRegistry:
-    assignments = [SlotAssignment(slot=i) for i in range(1, slot_count + 1)]
+    assignments = [SlotAssignment(slot=f"{SLOT_PREFIX}{i}") for i in range(1, slot_count + 1)]
     return WorktreeRegistry(repo_name=repo_name, slot_count=slot_count, assignments=assignments)
 
 
@@ -112,18 +114,25 @@ def find_slot_by_worktree(registry: WorktreeRegistry, worktree: str) -> Optional
     return None
 
 
+def find_slot_by_name(registry: WorktreeRegistry, slot_name: str) -> Optional[SlotAssignment]:
+    for a in registry.assignments:
+        if a.slot == slot_name:
+            return a
+    return None
+
+
 def allocate_slot(
     registry: WorktreeRegistry,
-    slot_number: int,
+    slot_name: str,
     issue: Optional[int],
     branch: str,
     worktree_name: str,
 ) -> None:
-    slot = next((a for a in registry.assignments if a.slot == slot_number), None)
+    slot = next((a for a in registry.assignments if a.slot == slot_name), None)
     if slot is None:
-        raise ValueError(f"Slot {slot_number} not found")
+        raise ValueError(f"Slot {slot_name} not found")
     if slot.worktree is not None:
-        raise ValueError(f"Slot {slot_number} already in use")
+        raise ValueError(f"Slot {slot_name} already in use")
 
     slot.issue = issue
     slot.branch = branch
@@ -131,10 +140,21 @@ def allocate_slot(
     slot.created_at = datetime.now().isoformat()
 
 
-def free_slot(registry: WorktreeRegistry, slot_number: int) -> None:
-    slot = next((a for a in registry.assignments if a.slot == slot_number), None)
+def add_slot(registry: WorktreeRegistry, slot_name: str) -> SlotAssignment:
+    """Add a new slot to the registry."""
+    existing = find_slot_by_name(registry, slot_name)
+    if existing:
+        raise ValueError(f"Slot {slot_name} already exists")
+    new_slot = SlotAssignment(slot=slot_name)
+    registry.assignments.append(new_slot)
+    registry.slot_count = len(registry.assignments)
+    return new_slot
+
+
+def free_slot(registry: WorktreeRegistry, slot_name: str) -> None:
+    slot = next((a for a in registry.assignments if a.slot == slot_name), None)
     if slot is None:
-        raise ValueError(f"Slot {slot_number} not found")
+        raise ValueError(f"Slot {slot_name} not found")
 
     slot.issue = None
     slot.branch = None

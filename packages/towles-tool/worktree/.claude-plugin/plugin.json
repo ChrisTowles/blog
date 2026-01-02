@@ -1,7 +1,7 @@
 {
     "name": "worktree",
     "description": "Git worktree management with slot-based environment configuration",
-    "version": "1.0.3",
+    "version": "1.1.0",
     "author": {
         "name": "Chris Towles"
     },
@@ -12,9 +12,6 @@
         "./commands/list.md"
     ],
     "skills": [
-        "./skills/create.md",
-        "./skills/delete.md",
-        "./skills/init.md",
-        "./skills/list.md"
+        "./skills/worktree-skill.md"
     ]
 }

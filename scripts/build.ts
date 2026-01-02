@@ -8,7 +8,7 @@ const environment = args[1] || 'staging'
 // Configuration
 const IMAGE_NAME = 'blog-test'
 const CONTAINER_NAME = 'blog-test-container'
-const PORT = process.env.TEST_PORT || '3001'
+const TEST_UI_PORT = parseInt(process.env.UI_PORT!) + 50 // Use a different port to avoid conflicts
 const MAX_WAIT = 60
 
 function printUsage() {
@@ -55,7 +55,7 @@ async function waitForHealthy(): Promise<boolean> {
 
     // Try to fetch homepage
     try {
-      const response = await fetch(`http://localhost:${PORT}`, {
+      const response = await fetch(`http://localhost:${TEST_UI_PORT}`, {
         signal: AbortSignal.timeout(2000)
       })
 
@@ -91,9 +91,9 @@ async function testContainer() {
     console.log(chalk.yellow('\n🧹 Cleaning up any existing container...'))
     await $`docker rm -f ${CONTAINER_NAME}`.quiet().nothrow()
 
-    console.log(chalk.yellow(`\n🚀 Starting container on port ${PORT}...`))
-    console.log(chalk.gray(`> docker run -d --name ${CONTAINER_NAME} -p ${PORT}:3000 ${IMAGE_NAME}`))
-    await $`docker run -d --name ${CONTAINER_NAME} -p ${PORT}:3000 ${IMAGE_NAME}`
+    console.log(chalk.yellow(`\n🚀 Starting container on port ${TEST_UI_PORT}...`))
+    console.log(chalk.gray(`> docker run -d --name ${CONTAINER_NAME} -p ${TEST_UI_PORT}:3000 ${IMAGE_NAME}`))
+    await $`docker run -d --name ${CONTAINER_NAME} -p ${TEST_UI_PORT}:3000 ${IMAGE_NAME}`
 
     const success = await waitForHealthy()
 

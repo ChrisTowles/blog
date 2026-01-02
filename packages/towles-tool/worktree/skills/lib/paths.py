@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from .constants import CONFIG_DIR
+
 
 def get_worktrees_dir(main_repo_dir: Path) -> Path:
     """Get the worktrees sibling directory."""
@@ -11,7 +13,7 @@ def get_worktrees_dir(main_repo_dir: Path) -> Path:
 
 
 def get_config_dir(worktrees_dir: Path) -> Path:
-    return worktrees_dir / "config"
+    return worktrees_dir / CONFIG_DIR
 
 
 def get_worktree_path(worktrees_dir: Path, worktree_name: str) -> Path:

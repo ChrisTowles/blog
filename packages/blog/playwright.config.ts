@@ -11,7 +11,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:3001',
+    baseURL: `http://localhost:` + process.env.UI_PORT,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure'
   },
@@ -24,8 +24,8 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'PORT=3001 bun run dev',
-    url: 'http://localhost:3001',
+    command: `UI_PORT=${process.env.UI_PORT} bun run dev`,
+    url: `http://localhost:` + process.env.UI_PORT,
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000
   }
