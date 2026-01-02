@@ -167,3 +167,21 @@ playwright-report/
 *.local.md
 .current-plan
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+.uv/
+uv.lock
+*.egg-info/
+.eggs/
+*.egg
+.mypy_cache/
+.ruff_cache/
+.pyright/
+

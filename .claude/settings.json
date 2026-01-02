@@ -7,14 +7,12 @@
       "WebFetch(domain:*)",
       "Bash(mkdir:*)",
       "Bash(ls:*)",
-
       "Bash(timeout:*)"
-      
-
     ],
     "deny": [],
     "additionalDirectories": [
       "/home/ctowles/code/f"
     ]
-  }
+  },
+  "enabledPlugins": {}
 }
