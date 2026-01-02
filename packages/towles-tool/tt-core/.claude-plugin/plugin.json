@@ -7,6 +7,9 @@
     },
     "commands": [
         "./commands/commit.md",
-        "./commands/refine.md"
+        "./commands/refine_text.md",
+        "./commands/01_research.md",
+        "./commands/02_plan.md",
+        "./commands/03_implement.md"
     ]
 }

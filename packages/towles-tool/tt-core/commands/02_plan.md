@@ -20,3 +20,13 @@ Interview me in detail using `AskUserQuestion` about:
 Ask non-obvious questions. Continue interviewing until complete.
 
 Write the Plan to implement with TODOS and if large phases to `{task-path}/plan.md`.
+
+
+Lastl ask the user if they want to create a GitHub issue from the plan.If yes, create issue in relevant repo with title and body from plan.
+
+if they create issue, recommend they push up the plan and create a new git worktree for the issue number with:
+
+```bash
+nr worktree create {GITHUB_ISSUE_NUMBER}
+``` 
+

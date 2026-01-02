@@ -13,13 +13,7 @@
     {
       "name": "notifications",
       "source": "./packages/towles-tool/notifications",
-      "description": "Adds audio notification when Claude Stops",  
-      "strict": false
-    },
-    {
-      "name": "worktree",
-      "source": "./packages/towles-tool/worktree",
-      "description": "Git worktree management with slot-based environment configuration",  
+      "description": "Adds audio notification when Claude Stops",
       "strict": false
     }
   ]
