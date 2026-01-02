@@ -1,7 +1,7 @@
+import dotenv from 'dotenv'
 import { defineConfig } from 'vitest/config'
 import { defineVitestProject } from '@nuxt/test-utils/config'
-import { config } from 'dotenv'
-import findConfig from 'find-config'
+import { findUpSync } from 'find-up'
 
 export default defineConfig({
   test: {
@@ -23,7 +23,7 @@ export default defineConfig({
             }
           },
           env: {
-            ...config({ path: findConfig('.env') }).parsed
+            ...dotenv.config({ path: findUpSync('.env') }).parsed
           }
         }
       })

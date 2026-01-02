@@ -3,6 +3,6 @@
     "version": "1.0.0",
     "main": "index.js",
     "dependencies": {
-        "googleapis": "^140.0.0"
+        "googleapis": "^140.0.1"
     }
 }

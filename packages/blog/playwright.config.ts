@@ -1,8 +1,9 @@
+import dotenv from 'dotenv'
 import { defineConfig, devices } from '@playwright/test'
+import { findUpSync } from 'find-up'
 
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
+dotenv.config({ path: findUpSync('.env')! })
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,

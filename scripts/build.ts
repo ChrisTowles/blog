@@ -1,5 +1,9 @@
 #!/usr/bin/env -S pnpx tsx
+import dotenv from 'dotenv'
+import { findUpSync } from 'find-up'
 import 'zx/globals'
+
+dotenv.config({ path: findUpSync('.env')! })
 
 const args = process.argv.slice(2)
 const command = args[0]

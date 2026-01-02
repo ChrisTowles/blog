@@ -139,7 +139,7 @@ export default defineNuxtConfig({
         const bundle = await rollup({
           input: join(rootDir, 'scripts/migrate.ts'),
           plugins: [resolve(), typescript({ tsconfig: join(rootDir, 'tsconfig.json') })],
-          external: ['pg', /^node:/]
+          external: ['pg', 'dotenv', 'find-up', /^node:/]
         })
         await bundle.write({
           file: join(outputDir, 'database/migrate.mjs'),

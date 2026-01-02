@@ -1,9 +1,14 @@
+import dotenv from 'dotenv'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { migrate } from 'drizzle-orm/node-postgres/migrator'
+import { findUp } from 'find-up'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 async function runMigrations() {
+  dotenv.config({ path: await findUp('.env', {
+  }) })
+
   const connectionString = process.env.DATABASE_URL
   if (!connectionString) {
     console.error('DATABASE_URL is not set')

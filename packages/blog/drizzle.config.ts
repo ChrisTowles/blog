@@ -1,4 +1,8 @@
+import dotenv from 'dotenv'
 import { defineConfig } from 'drizzle-kit'
+import { findUpSync } from 'find-up'
+
+dotenv.config({ path: findUpSync('.env')! })
 
 export default defineConfig({
   dialect: 'postgresql',
