@@ -50,17 +50,8 @@ nuxt typecheck
 pnpm slides           # Start slide server
 
 # Docker (local PostgreSQL)
-pnpm docker:up        # Start postgres (requires .env with COMPOSE_PROJECT_NAME, DB_PORT)
+pnpm docker:up        # Start postgres
 pnpm docker:down      # Stop postgres
-```
-
-## Local Development Setup
-
-Main repo requires `.env` with:
-```env
-COMPOSE_PROJECT_NAME=blog
-DB_PORT=5432
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres
 ```
 
 ## Worktree Development
@@ -73,7 +64,7 @@ Use `scripts/worktree.ts` for isolated feature development:
 ./scripts/worktree.ts delete 142      # Clean up
 ```
 
-Each worktree gets isolated docker containers via `COMPOSE_PROJECT_NAME` and unique `DB_PORT`.
+Each worktree gets isolated docker containers via unique ports and environment variables.
 
 ## Tech Stack
 

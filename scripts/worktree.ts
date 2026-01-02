@@ -173,7 +173,7 @@ function processEnvTemplate(
     let content = fs.readFileSync(templatePath, 'utf-8')
 
     // Replace {{VAR}} with slot values
-    content = content.replace(/\{\{([A-Z_][A-Z0-9_]*)\}\}/g, (_, varName) => {
+    content = content.replace(/\{\{([A-Z_][A-Z0-9_]*)\}\}/g, (_, varName: string) => {
         if (varName in slotVars) {
             return String(slotVars[varName])
         }
@@ -182,7 +182,7 @@ function processEnvTemplate(
     })
 
     // Replace {{COPY:VAR}} with values from root repo
-    content = content.replace(/\{\{COPY:([A-Z_][A-Z0-9_]*)\}\}/g, (_, varName) => {
+    content = content.replace(/\{\{COPY:([A-Z_][A-Z0-9_]*)\}\}/g, (_, varName: string) => {
         if (varName in copyVars) {
             return copyVars[varName]
         }
@@ -212,40 +212,44 @@ async function cmdInit(): Promise<void> {
     // Main repo uses DB_PORT=5432, worktrees start at 5433
     const defaultConfig: SlotsConfig = {
         slots: {
-            'slot-1': { COMPOSE_PROJECT_NAME: 'blog-slot-1', DB_PORT: 5433 },
-            'slot-2': { COMPOSE_PROJECT_NAME: 'blog-slot-2', DB_PORT: 5434 },
-            'slot-3': { COMPOSE_PROJECT_NAME: 'blog-slot-3', DB_PORT: 5435 },
-            'slot-4': { COMPOSE_PROJECT_NAME: 'blog-slot-4', DB_PORT: 5436 },
-            'slot-5': { COMPOSE_PROJECT_NAME: 'blog-slot-5', DB_PORT: 5437 }
+            'slot-1': { UI_PORT: 3001, DB_PORT: 5433 },
+            'slot-2': { UI_PORT: 3002, DB_PORT: 5434 },
+            'slot-3': { UI_PORT: 3003, DB_PORT: 5435 },
+            'slot-4': { UI_PORT: 3004, DB_PORT: 5436 },
+            'slot-5': { UI_PORT: 3005, DB_PORT: 5437 }
         },
         copyFromRootRepo: ['.env', '.env.local']
     }
 
     const configContent = `// Worktree Slots Configuration
 // Each slot defines unique values for resources that can't be shared
-// Main repo uses COMPOSE_PROJECT_NAME=blog and DB_PORT=5432
 {
     "slots": {
         // Each slot gets isolated docker containers and database port
         "slot-1": {
-            "COMPOSE_PROJECT_NAME": "blog-slot-1",
-            "DB_PORT": 5433
+            "UI_PORT": 3001,
+            "DB_PORT": 5441,
+            "DATABASE_URL": "postgresql://postgres:postgres@localhost:5441/postgres",
         },
         "slot-2": {
-            "COMPOSE_PROJECT_NAME": "blog-slot-2",
-            "DB_PORT": 5434
+            "UI_PORT": 3002,
+            "DB_PORT": 5442,
+            "DATABASE_URL": "postgresql://postgres:postgres@localhost:5442/postgres",
         },
         "slot-3": {
-            "COMPOSE_PROJECT_NAME": "blog-slot-3",
-            "DB_PORT": 5435
+            "UI_PORT": 3003,
+            "DB_PORT": 5443,
+            "DATABASE_URL": "postgresql://postgres:postgres@localhost:5443/postgres",
         },
         "slot-4": {
-            "COMPOSE_PROJECT_NAME": "blog-slot-4",
-            "DB_PORT": 5436
+            "UI_PORT": 3004,
+            "DB_PORT": 5444,
+            "DATABASE_URL": "postgresql://postgres:postgres@localhost:5444/postgres",
         },
         "slot-5": {
-            "COMPOSE_PROJECT_NAME": "blog-slot-5",
-            "DB_PORT": 5437
+            "UI_PORT": 3005,
+            "DB_PORT": 5445,
+            "DATABASE_URL": "postgresql://postgres:postgres@localhost:5445/postgres",
         }
     },
     // Files in root repo to copy {{COPY:VAR}} values from (shared secrets)
@@ -255,11 +259,13 @@ async function cmdInit(): Promise<void> {
 
     const envTemplate = `# Auto-generated from .env.template
 # Docker Compose isolation (worktree-specific)
-COMPOSE_PROJECT_NAME={{COMPOSE_PROJECT_NAME}}
+
+UI_PORT={{UI_PORT}}
 DB_PORT={{DB_PORT}}
 
+
 # PostgreSQL Connection (uses slot-specific port)
-DATABASE_URL=postgresql://postgres:postgres@localhost:{{DB_PORT}}/postgres
+DATABASE_URL={{DATABASE_URL}}
 
 # Shared secrets (copied from root repo)
 ANTHROPIC_API_KEY={{COPY:ANTHROPIC_API_KEY}}
@@ -339,9 +345,38 @@ async function cmdCreate(target: string): Promise<void> {
     const remoteBranchExists = (await $`git branch -r --list origin/${branchName}`.nothrow()).stdout.trim() !== ''
 
     if (branchExists || remoteBranchExists) {
-        await $`git worktree add ${worktreePath} ${branchName}`
+        // Check if branch is behind origin/main
+        await $`git fetch origin main`.nothrow()
+        const branchRef = branchExists ? branchName : `origin/${branchName}`
+        const behindCount = (await $`git rev-list --count ${branchRef}..origin/main`.nothrow()).stdout.trim()
+
+        if (behindCount && parseInt(behindCount) > 0) {
+            console.log(chalk.yellow(`\n⚠️  Branch is ${behindCount} commit(s) behind origin/main`))
+
+            const readline = await import('node:readline')
+            const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+            const answer = await new Promise<string>(resolve =>
+                rl.question(chalk.cyan('Rebase onto origin/main? [Y/n] '), resolve)
+            )
+            rl.close()
+
+            if (answer.toLowerCase() !== 'n') {
+                await $`git worktree add ${worktreePath} ${branchName}`
+                console.log(chalk.gray('  Rebasing...'))
+                const rebaseResult = await $`git -C ${worktreePath} rebase origin/main`.nothrow()
+                if (rebaseResult.exitCode !== 0) {
+                    console.log(chalk.red('  Rebase failed - resolve conflicts manually'))
+                } else {
+                    console.log(chalk.green('  Rebased successfully'))
+                }
+            } else {
+                await $`git worktree add ${worktreePath} ${branchName}`
+            }
+        } else {
+            await $`git worktree add ${worktreePath} ${branchName}`
+        }
     } else {
-        await $`git worktree add -b ${branchName} ${worktreePath}`
+        await $`git worktree add -b ${branchName} ${worktreePath} origin/main`
     }
 
     // Process env templates
@@ -367,6 +402,12 @@ async function cmdCreate(target: string): Promise<void> {
         }
     }
 
+    // Install dependencies
+    console.log(chalk.gray('  Running pnpm install...'))
+    $.verbose = true
+    await $`pnpm install --dir ${worktreePath}`
+    $.verbose = false
+
     // Update registry
     registry.assignments.push({
         slot,
@@ -377,11 +418,10 @@ async function cmdCreate(target: string): Promise<void> {
     })
     writeRegistry(registry)
 
-    console.log(chalk.green(`\n✅ Worktree created!`))
+    console.log(chalk.green(`\n✅ Worktree ready!`))
     console.log(chalk.yellow(`\nNext steps:`))
     console.log(chalk.cyan(`  cd ${worktreePath}`))
     console.log(chalk.cyan(`  code .`))
-    console.log(chalk.cyan(`  pnpm install`))
     console.log(chalk.cyan(`  pnpm dev`))
 }
 
