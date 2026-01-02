@@ -43,6 +43,13 @@
       "when": 1766212807160,
       "tag": "0005_add-persona-theme",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1767371471413,
+      "tag": "0006_overconfident_ma_gnuci",
+      "breakpoints": true
     }
   ]
 }

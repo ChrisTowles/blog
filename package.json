@@ -33,6 +33,7 @@
     "db:migrate": "pnpm --filter @chris-towles/blog db:migrate",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
+    "docker:reset": "docker compose down -v",
     "slides": "pnpm --filter @chris-towles/slides dev",
     "slides:export": "pnpm --filter @chris-towles/slides export",
     "slides:upgrade": "pnpm --filter @chris-towles/slides slides:upgrade",
@@ -46,21 +47,24 @@
     "prepare": "husky",
     "mcp:inspect": "pnpm dlx @modelcontextprotocol/inspector",
     "deps:update": "pnpm dlx taze --interactive --recursive",
-    "clean": "rm -rf node_modules packages/*/node_modules .nuxt .output .nitro dist packages/*/.nuxt packages/*/.output pnpm-lock.yaml"
+    "clean": "rm -rf node_modules packages/*/node_modules .nuxt .output .nitro dist packages/*/.nuxt packages/*/.output pnpm-lock.yaml",
+    "worktree": "pnpm tsx scripts/worktree.ts"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.2",
     "@changesets/cli": "^2.29.8",
     "@types/archiver": "^7.0.0",
-    "@types/find-config": "^1.0.4",
-    "@types/node": "^25.0.1",
+    "@types/node": "^25.0.3",
     "@types/yauzl": "^2.10.3",
+    "cli-table3": "^0.6.5",
     "dotenv": "^17.2.3",
+    "find-up": "^8.0.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "nuxthub": "^0.9.4",
     "oxlint": "^1.36.0",
     "playwright-chromium": "^1.57.0",
+    "strip-json-comments": "^5.0.3",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "zx": "^8.8.5"
@@ -77,19 +81,20 @@
     ]
   },
   "overrides": {
-    "vite": "8.0.0-beta.2",
     "@nuxt/vite-builder": "https://pkg.pr.new/@nuxt/vite-builder@33682",
-    "vue": "3.5.25",
     "@vue/runtime-core": "3.5.25",
     "@vue/server-renderer": "3.5.25",
-    "unimport": "4.1.1"
+    "estree-walker": "^2.0.2",
+    "unimport": "4.1.1",
+    "vite": "8.0.0-beta.2",
+    "vue": "3.5.25"
   },
   "lint-staged": {
     "*.png": "pnpm tsx scripts/compress-images.ts",
     "*.{js,ts,vue}": "oxlint --fix"
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.948.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.958.0",
     "gray-matter": "^4.0.3",
     "yauzl": "^3.2.0"
   }

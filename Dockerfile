@@ -31,9 +31,13 @@ RUN cd /app && pnpm --filter @chris-towles/blog exec nuxt build
 # Production stage - use Node for runtime stability
 FROM node:24-slim AS runner
 
+# Define build-time arguments for ports
+ARG UI_PORT
+
 # Build metadata args, passed in during build time
 ARG GIT_SHA=unknown
 ARG BUILD_TAG=unknown
+
 
 WORKDIR /app
 
@@ -53,12 +57,12 @@ RUN chmod +x /app/docker-entrypoint.sh
 # Set environment variables
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
-ENV PORT=3000
+ENV UI_PORT=$UI_PORT
 ENV GIT_SHA=$GIT_SHA
 ENV BUILD_TAG=$BUILD_TAG
 
 # Expose port
-EXPOSE 3000
+EXPOSE $UI_PORT
 
 # Start the application
 ENTRYPOINT ["/app/docker-entrypoint.sh"]

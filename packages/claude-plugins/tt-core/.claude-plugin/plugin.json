@@ -1,8 +1,0 @@
-{
-    "name": "tt",
-    "description": "Useful personal commands: AI assistant, commit messages, text refinement",
-    "version": "1.0.2",
-    "author": {
-        "name": "Chris Towles"
-    }
-}

@@ -2,13 +2,14 @@ services:
   postgres:
     # pgvector image includes the vector extension for RAG embeddings
     image: pgvector/pgvector:pg17
-    container_name: blog-postgres
+
+    container_name: "blog-postgres_${DB_PORT}"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

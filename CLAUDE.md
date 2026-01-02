@@ -48,7 +48,32 @@ nuxt typecheck
 
 # Slides
 pnpm slides           # Start slide server
+
+# Docker (local PostgreSQL)
+pnpm docker:up        # Start postgres (requires .env with COMPOSE_PROJECT_NAME, DB_PORT)
+pnpm docker:down      # Stop postgres
 ```
+
+## Local Development Setup
+
+Main repo requires `.env` with:
+```env
+COMPOSE_PROJECT_NAME=blog
+DB_PORT=5432
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres
+```
+
+## Worktree Development
+
+Use `scripts/worktree.ts` for isolated feature development:
+```bash
+./scripts/worktree.ts init            # One-time setup
+./scripts/worktree.ts create 142      # Create worktree for issue #142
+./scripts/worktree.ts list            # Show slots and status
+./scripts/worktree.ts delete 142      # Clean up
+```
+
+Each worktree gets isolated docker containers via `COMPOSE_PROJECT_NAME` and unique `DB_PORT`.
 
 ## Tech Stack
 
@@ -113,6 +138,10 @@ Full terraform docs: [infra/terraform/README.md](infra/terraform/README.md)
 - Arrow functions for callbacks
 - const/let appropriately, destructuring, template literals
 - ES6+ features preferred
+
+## Claude Code Docs
+
+Reference: https://code.claude.com/docs/en/claude_code_docs_map.md
 
 ## Agent Usage
 

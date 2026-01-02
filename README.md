@@ -14,6 +14,8 @@ This is just my personal blog at <https://Chris.Towles.dev>
 - [AWS Console](https://ctowles.awsapps.com/start/#/?tab=accounts)
   - `223452314076`
   - `aws configure sso`
+ - [Claude Code Docs](https://code.claude.com/docs/en/claude_code_docs_map.md)
+
 - 
 ## Claude Code Plugin Marketplace
 

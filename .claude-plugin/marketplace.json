@@ -5,9 +5,16 @@
   },
   "plugins": [
     {
-      "name": "towles-tools",
-      "source": "./packages/claude-plugins/tt-core",
-      "description": "useful daily commands like generate git messages and note taking"
+      "name": "tt",
+      "source": "./packages/towles-tool/tt-core",
+      "description": "useful daily commands like generate git messages and note taking",  
+      "strict": false
+    },
+    {
+      "name": "notifications",
+      "source": "./packages/towles-tool/notifications",
+      "description": "Adds audio notification when Claude Stops",
+      "strict": false
     }
   ]
 }

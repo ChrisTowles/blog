@@ -1,0 +1,15 @@
+{
+    "name": "tt",
+    "description": "Useful personal commands: AI assistant, commit messages, text refinement",
+    "version": "1.0.3",
+    "author": {
+        "name": "Chris Towles"
+    },
+    "commands": [
+        "./commands/commit.md",
+        "./commands/refine_text.md",
+        "./commands/01_research.md",
+        "./commands/02_plan.md",
+        "./commands/03_implement.md"
+    ]
+}
