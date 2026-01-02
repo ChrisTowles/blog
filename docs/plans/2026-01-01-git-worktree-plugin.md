@@ -58,7 +58,7 @@
 | Config location | Sibling folder only | Secrets stay out of repo, each dev sets up |
 | Non-GitHub repos | Manual branch name | Prompt for branch name if no GitHub |
 | Env drift | `/worktree sync` command | Update all worktrees' COPY vars at once |
-| Script language | TypeScript + tsx | Type-safe, auto-install prompt if tsx missing |
+| Script language | Python 3.11+ | Zero deps (stdlib tomllib), universal availability |
 | Slot reuse | Any free slot | First available, no preference tracking |
 | Auto-detect services | No | Fully manual slot var setup |
 | Port validation | Warn only | Check ports, warn if in use, don't block |

@@ -31,7 +31,7 @@ Some resources can't be dynamically allocated (OAuth callback URLs, pre-register
 my-project/                    # Main repo
 my-project-worktrees/          # Sibling folder (auto-named)
 ├── config/
-│   ├── slots.yaml             # Pool of slot values
+│   ├── slots.toml             # Pool of slot values
 │   ├── .env.template          # Template with {{SLOT_VAR}} placeholders
 │   └── .env.local.template    # Additional templates
 ├── .worktree-registry.json    # Slot assignments
@@ -42,22 +42,22 @@ my-project-worktrees/          # Sibling folder (auto-named)
 
 | Syntax | Source | Example |
 |--------|--------|---------|
-| `{{VAR}}` | From `slots.yaml` | `{{PORT}}` → `3001` |
+| `{{VAR}}` | From `slots.toml` | `{{PORT}}` → `3001` |
 | `{{COPY:VAR}}` | From main repo's `.env` | `{{COPY:API_KEY}}` → `sk-xxx` |
 | Static | Kept as-is | `NODE_ENV=development` |
 
-## Example slots.yaml
+## Example slots.toml
 
-```yaml
-slots:
-  - slot: 1
-    PORT: 3001
-    PG_PORT: 5433
-    OAUTH_CLIENT_ID: "Ov23li_slot1..."
-  - slot: 2
-    PORT: 3002
-    PG_PORT: 5434
-    OAUTH_CLIENT_ID: "Ov23li_slot2..."
+```toml
+[slots.1]
+PORT = 3001
+PG_PORT = 5433
+OAUTH_CLIENT_ID = "Ov23li_slot1..."
+
+[slots.2]
+PORT = 3002
+PG_PORT = 5434
+OAUTH_CLIENT_ID = "Ov23li_slot2..."
 ```
 
 ## Example .env.template
@@ -72,5 +72,5 @@ NODE_ENV=development
 
 ## Requirements
 
-- `tsx` - TypeScript execution (prompted to install if missing)
+- Python 3.11+ (uses stdlib `tomllib`, no external deps)
 - `gh` - GitHub CLI (for issue title fetching)
