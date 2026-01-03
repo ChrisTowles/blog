@@ -2,8 +2,9 @@ import dotenv from 'dotenv'
 import { defineConfig } from 'drizzle-kit'
 import { findUpSync } from 'find-up'
 
-dotenv.config({ path: findUpSync('.env', {allowSymlinks: true} )!, 
-  override: true
+dotenv.config({ 
+  path: findUpSync('.env', {allowSymlinks: true} )!, 
+  quiet: true
  })
 
 export default defineConfig({

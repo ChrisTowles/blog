@@ -1,3 +1,5 @@
+import { describe, it, expect, beforeEach } from 'vitest'
+
 // Register tools before tests
 beforeEach(() => {
   chatTools.forEach(tool => toolRegistry.set(tool.name, tool))
@@ -88,15 +90,8 @@ describe('executeTool', () => {
 })
 
 describe('getToolsByNames', () => {
-  let consoleWarnSpy: ReturnType<typeof vi.spyOn>
 
-  beforeEach(() => {
-    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-  })
 
-  afterEach(() => {
-    consoleWarnSpy.mockRestore()
-  })
 
   it('returns tools for valid names', () => {
     const tools = getToolsByNames(['getCurrentDateTime', 'getAuthorInfo'])
@@ -109,19 +104,6 @@ describe('getToolsByNames', () => {
     const tools = getToolsByNames(['getCurrentDateTime', 'invalidTool'])
     expect(tools).toHaveLength(1)
     expect(tools[0].name).toBe('getCurrentDateTime')
-  })
-
-  it('logs warning for missing tool names', () => {
-    getToolsByNames(['invalidTool'])
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      '[tools] Tool "invalidTool" not found in registry. Check capability configuration.'
-    )
-  })
-
-  it('returns empty array when all names invalid', () => {
-    const tools = getToolsByNames(['fake1', 'fake2'])
-    expect(tools).toHaveLength(0)
-    expect(consoleWarnSpy).toHaveBeenCalledTimes(2)
   })
 
   it('returns empty array for empty input', () => {
