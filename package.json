@@ -51,20 +51,14 @@
     "worktree": "pnpm tsx scripts/worktree.ts"
   },
   "devDependencies": {
-    "@changesets/changelog-github": "^0.5.2",
-    "@changesets/cli": "^2.29.8",
-    "@types/archiver": "^7.0.0",
     "@types/node": "^25.0.3",
-    "@types/yauzl": "^2.10.3",
     "cli-table3": "^0.6.5",
     "dotenv": "^17.2.3",
     "find-up": "^8.0.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
-    "nuxthub": "^0.9.4",
     "oxlint": "^1.36.0",
     "playwright-chromium": "^1.57.0",
-    "strip-json-comments": "^5.0.3",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "zx": "^8.8.5"
@@ -85,8 +79,6 @@
     "*.{js,ts,vue}": "oxlint --fix"
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.958.0",
-    "gray-matter": "^4.0.3",
-    "yauzl": "^3.2.0"
+    "@aws-sdk/client-bedrock-runtime": "^3.958.0"
   }
 }

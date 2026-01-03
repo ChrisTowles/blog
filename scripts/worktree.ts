@@ -241,7 +241,7 @@ AWS_ACCESS_KEY_ID={{COPY:AWS_ACCESS_KEY_ID}}
 AWS_SECRET_ACCESS_KEY={{COPY:AWS_SECRET_ACCESS_KEY}}
 `
 
-    fs.writeFileSync(getSlotsConfigPath(), JSON.stringify(defaultConfig, null, 4).
+    fs.writeFileSync(getSlotsConfigPath(), JSON.stringify(defaultConfig, null, 4))
     fs.writeFileSync(path.join(configDir, '.env.template'), envTemplate)
     writeRegistry({ repoName: getRepoName(), assignments: [] })
     

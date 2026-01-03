@@ -93,4 +93,60 @@ describe('rollDice', () => {
 
         expect(data.breakdown).toMatch(/\d+ \+ \d+.*\+3 = \d+/)
     })
+
+    // Natural language tests
+    describe('natural language notation', () => {
+        it('should handle "4d6 drop lowest"', async () => {
+            const result = await rollDice.handler({ notation: '4d6 drop lowest' }, undefined ) as { content: Array<{ text: string }> }
+            const data = JSON.parse(result.content[0].text)
+
+            expect(data.rolls).toHaveLength(4)
+            const keptRolls = data.rolls.filter((r: { kept: boolean }) => r.kept)
+            expect(keptRolls).toHaveLength(3)
+        })
+
+        it('should handle "4d6 drop the lowest"', async () => {
+            const result = await rollDice.handler({ notation: '4d6 drop the lowest' }, undefined ) as { content: Array<{ text: string }> }
+            const data = JSON.parse(result.content[0].text)
+
+            expect(data.rolls).toHaveLength(4)
+            const keptRolls = data.rolls.filter((r: { kept: boolean }) => r.kept)
+            expect(keptRolls).toHaveLength(3)
+        })
+
+        it('should handle "2d20 advantage"', async () => {
+            const result = await rollDice.handler({ notation: '2d20 advantage' }, undefined ) as { content: Array<{ text: string }> }
+            const data = JSON.parse(result.content[0].text)
+
+            expect(data.rolls).toHaveLength(2)
+            const keptRolls = data.rolls.filter((r: { kept: boolean }) => r.kept)
+            expect(keptRolls).toHaveLength(1)
+        })
+
+        it('should handle "2d20 disadvantage"', async () => {
+            const result = await rollDice.handler({ notation: '2d20 disadvantage' }, undefined ) as { content: Array<{ text: string }> }
+            const data = JSON.parse(result.content[0].text)
+
+            expect(data.rolls).toHaveLength(2)
+            const keptRolls = data.rolls.filter((r: { kept: boolean }) => r.kept)
+            expect(keptRolls).toHaveLength(1)
+        })
+
+        it('should handle "4d6 keep highest 3"', async () => {
+            const result = await rollDice.handler({ notation: '4d6 keep highest 3' }, undefined ) as { content: Array<{ text: string }> }
+            const data = JSON.parse(result.content[0].text)
+
+            expect(data.rolls).toHaveLength(4)
+            const keptRolls = data.rolls.filter((r: { kept: boolean }) => r.kept)
+            expect(keptRolls).toHaveLength(3)
+        })
+
+        it('should handle "1d20 + 5" with spaces', async () => {
+            const result = await rollDice.handler({ notation: '1d20 + 5' }, undefined ) as { content: Array<{ text: string }> }
+            const data = JSON.parse(result.content[0].text)
+
+            expect(data.modifier).toBe(5)
+            expect(data.total).toBeGreaterThanOrEqual(6)
+        })
+    })
 })

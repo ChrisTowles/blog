@@ -6,8 +6,10 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 async function runMigrations() {
-  dotenv.config({ path: await findUp('.env', {
-  }) })
+  dotenv.config({ 
+    path: await findUp('.env'),
+    quiet: true
+  })
 
   const connectionString = process.env.DATABASE_URL
   if (!connectionString) {

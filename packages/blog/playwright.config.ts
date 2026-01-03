@@ -2,7 +2,10 @@ import dotenv from 'dotenv'
 import { defineConfig, devices } from '@playwright/test'
 import { findUpSync } from 'find-up'
 
-dotenv.config({ path: findUpSync('.env')! })
+dotenv.config({ 
+  path: findUpSync('.env')!, 
+  override: true
+})
 
 export default defineConfig({
   testDir: './e2e',
