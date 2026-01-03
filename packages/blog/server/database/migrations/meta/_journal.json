@@ -5,50 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1762554391307,
-      "tag": "0000_light_bug",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1764652910146,
-      "tag": "0001_peaceful_pete_wisdom",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1764738080720,
-      "tag": "0002_calm_xorn",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1765509128797,
-      "tag": "0003_perfect_hobgoblin",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1766208789570,
-      "tag": "0004_salty_hiroim",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1766212807160,
-      "tag": "0005_add-persona-theme",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1767371471413,
-      "tag": "0006_overconfident_ma_gnuci",
+      "when": 1767419808786,
+      "tag": "0000_secret_supernaut",
       "breakpoints": true
     }
   ]

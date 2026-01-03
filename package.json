@@ -31,6 +31,7 @@
     "gcp:prod:logs": "pnpm tsx scripts/logs.ts --environment=production",
     "db:generate": "pnpm --filter @chris-towles/blog db:generate",
     "db:migrate": "pnpm --filter @chris-towles/blog db:migrate",
+    "db:studio": "pnpm --filter @chris-towles/blog db:studio",
     "docker:up": "docker compose up -d --wait",
     "docker:down": "docker compose down",
     "docker:reset": "docker compose down --volumes --remove-orphans",

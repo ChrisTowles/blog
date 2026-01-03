@@ -99,9 +99,10 @@ async function testContainer() {
     await $`docker rm -f ${CONTAINER_NAME}`.quiet().nothrow()
 
     console.log(chalk.yellow(`\n🚀 Starting container on port ${TEST_UI_PORT}...`))
-    console.log(chalk.gray(`> docker run -d --name ${CONTAINER_NAME} -p ${TEST_UI_PORT}:3000 ${IMAGE_NAME}`))
-    await $`docker run -d --name ${CONTAINER_NAME} -p ${TEST_UI_PORT}:3000 ${IMAGE_NAME}`
-
+    $.verbose = true
+    // --network="host" used so when it hits localdb it'll 
+    await $`docker run -d --network="host" --name ${CONTAINER_NAME} --env-file .env -p ${TEST_UI_PORT}:3000 ${IMAGE_NAME}`
+    $.verbose = false
     const success = await waitForHealthy()
 
     if (!argv.keep) {
