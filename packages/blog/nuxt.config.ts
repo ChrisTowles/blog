@@ -1,4 +1,12 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import dotenv from 'dotenv'
+import { fileURLToPath } from 'url'
+import { dirname, resolve } from 'path'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+dotenv.config({ path: resolve(__dirname, '../../.env') })
+
 export default defineNuxtConfig({
   modules: [
     '@nuxt/image',
@@ -12,13 +20,19 @@ export default defineNuxtConfig({
     // 'nuxt-studio', Disabled till i fix some issues, not having correct path to open pr to the file edited, not setting github secret once deployed.
     '@nuxt/test-utils/module'
   ],
+
   ssr: true,
+  
   devtools: {
     enabled: true,
 
     timeline: {
       enabled: true
     }
+  },
+  devServer: {
+    port: parseInt(process.env.UI_PORT! ),
+    url: 'http://localhost:' + (process.env.UI_PORT!)
   },
 
   css: ['~/assets/css/main.css'],

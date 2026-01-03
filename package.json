@@ -33,7 +33,7 @@
     "db:migrate": "pnpm --filter @chris-towles/blog db:migrate",
     "docker:up": "docker compose up -d --wait",
     "docker:down": "docker compose down",
-    "docker:reset": "docker compose down -v",
+    "docker:reset": "docker compose down --volumes --remove-orphans",
     "slides": "pnpm --filter @chris-towles/slides dev",
     "slides:export": "pnpm --filter @chris-towles/slides export",
     "slides:upgrade": "pnpm --filter @chris-towles/slides slides:upgrade",

@@ -402,11 +402,6 @@ async function cmdCreate(target: string): Promise<void> {
         }
     }
 
-    // Install dependencies
-    console.log(chalk.gray('  Running pnpm install...'))
-    $.verbose = true
-    await $`pnpm install --dir ${worktreePath}`
-    $.verbose = false
 
     // Update registry
     registry.assignments.push({
@@ -419,6 +414,18 @@ async function cmdCreate(target: string): Promise<void> {
     writeRegistry(registry)
 
     console.log(chalk.green(`\n✅ Worktree ready!`))
+    console.log(chalk.green(`\n✅ install dependencies!`))
+    // Install dependencies
+    console.log(chalk.gray('  Running pnpm install...'))
+    $.verbose = true
+    await $`pnpm install --dir ${worktreePath}`
+    await $`cd ${worktreePath} && pnpm docker:reset`
+    
+    // await $`cd ${worktreePath} && pnpm dev`
+    $.verbose = false
+
+
+
     console.log(chalk.yellow(`\nNext steps:`))
     console.log(chalk.cyan(`  cd ${worktreePath}`))
     console.log(chalk.cyan(`  code .`))
@@ -550,6 +557,7 @@ async function cmdDelete(target: string, options: { force?: boolean; stash?: boo
     // Remove worktree
     console.log(chalk.yellow(`🗑️  Removing worktree: ${chalk.white(assignment.worktree)}`))
     await $`git worktree remove ${worktreePath} --force`.nothrow()
+    await $`git worktree prune`
 
     // Update registry
     registry.assignments = registry.assignments.filter(a => a.slot !== assignment!.slot)
