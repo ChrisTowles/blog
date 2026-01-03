@@ -29,6 +29,7 @@
     "gcp:staging:off": "pnpm tsx scripts/power.ts off",
     "gcp:staging:on": "pnpm tsx scripts/power.ts on",
     "gcp:prod:logs": "pnpm tsx scripts/logs.ts --environment=production",
+    "db:proxy": "pnpm tsx scripts/start-db-proxy.ts",
     "db:generate": "pnpm --filter @chris-towles/blog db:generate",
     "db:migrate": "pnpm --filter @chris-towles/blog db:migrate",
     "db:studio": "pnpm --filter @chris-towles/blog db:studio",
