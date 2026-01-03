@@ -4,7 +4,6 @@ interface UseChatOptions {
   id: string
   initialMessages?: ChatMessage[]
   model: Ref<string>
-  personaSlug?: Ref<string | undefined>
   onError?: (error: Error) => void
   onTitleUpdate?: () => void
 }
@@ -55,8 +54,7 @@ export function useChat(options: UseChatOptions) {
         },
         body: JSON.stringify({
           model: options.model.value,
-          messages: messages.value.slice(0, -1), // Don't send the placeholder
-          personaSlug: options.personaSlug?.value
+          messages: messages.value.slice(0, -1) // Don't send the placeholder
         }),
         signal: abortController.value.signal
       })

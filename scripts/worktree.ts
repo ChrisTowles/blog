@@ -212,50 +212,14 @@ async function cmdInit(): Promise<void> {
     // Main repo uses DB_PORT=5432, worktrees start at 5433
     const defaultConfig: SlotsConfig = {
         slots: {
-            'slot-1': { UI_PORT: 3001, DB_PORT: 5433 },
-            'slot-2': { UI_PORT: 3002, DB_PORT: 5434 },
-            'slot-3': { UI_PORT: 3003, DB_PORT: 5435 },
-            'slot-4': { UI_PORT: 3004, DB_PORT: 5436 },
-            'slot-5': { UI_PORT: 3005, DB_PORT: 5437 }
+            'slot-1': { UI_PORT: 3001, DB_PORT: 5401, DATABASE_URL: 'replace-me' },
+            'slot-2': { UI_PORT: 3002, DB_PORT: 5402, DATABASE_URL: 'replace-me' },
+            'slot-3': { UI_PORT: 3003, DB_PORT: 5403, DATABASE_URL: 'replace-me' },
+            'slot-4': { UI_PORT: 3004, DB_PORT: 5404, DATABASE_URL: 'replace-me' },
+            'slot-5': { UI_PORT: 3005, DB_PORT: 5405, DATABASE_URL: 'replace-me' }
         },
         copyFromRootRepo: ['.env', '.env.local']
     }
-
-    const configContent = `// Worktree Slots Configuration
-// Each slot defines unique values for resources that can't be shared
-{
-    "slots": {
-        // Each slot gets isolated docker containers and database port
-        "slot-1": {
-            "UI_PORT": 3001,
-            "DB_PORT": 5441,
-            "DATABASE_URL": "postgresql://postgres:postgres@localhost:5441/postgres",
-        },
-        "slot-2": {
-            "UI_PORT": 3002,
-            "DB_PORT": 5442,
-            "DATABASE_URL": "postgresql://postgres:postgres@localhost:5442/postgres",
-        },
-        "slot-3": {
-            "UI_PORT": 3003,
-            "DB_PORT": 5443,
-            "DATABASE_URL": "postgresql://postgres:postgres@localhost:5443/postgres",
-        },
-        "slot-4": {
-            "UI_PORT": 3004,
-            "DB_PORT": 5444,
-            "DATABASE_URL": "postgresql://postgres:postgres@localhost:5444/postgres",
-        },
-        "slot-5": {
-            "UI_PORT": 3005,
-            "DB_PORT": 5445,
-            "DATABASE_URL": "postgresql://postgres:postgres@localhost:5445/postgres",
-        }
-    },
-    // Files in root repo to copy {{COPY:VAR}} values from (shared secrets)
-    "copyFromRootRepo": [".env", ".env.local"]
-}
-`
 
     const envTemplate = `# Auto-generated from .env.template
 # Docker Compose isolation (worktree-specific)
@@ -277,12 +241,13 @@ AWS_ACCESS_KEY_ID={{COPY:AWS_ACCESS_KEY_ID}}
 AWS_SECRET_ACCESS_KEY={{COPY:AWS_SECRET_ACCESS_KEY}}
 `
 
-    fs.writeFileSync(getSlotsConfigPath(), configContent)
+    fs.writeFileSync(getSlotsConfigPath(), JSON.stringify(defaultConfig, null, 4).
     fs.writeFileSync(path.join(configDir, '.env.template'), envTemplate)
     writeRegistry({ repoName: getRepoName(), assignments: [] })
-
+    
     console.log(`Initialized worktree config at: ${worktreesDir}`)
     console.log(`\nNext steps:`)
+    
     console.log(`  1. Edit ${getSlotsConfigPath()} with your slot values`)
     console.log(`  2. Edit ${path.join(configDir, '.env.template')} with your env template`)
     console.log(`  3. Run: worktree.ts create <issue-number>`)
@@ -291,7 +256,6 @@ AWS_SECRET_ACCESS_KEY={{COPY:AWS_SECRET_ACCESS_KEY}}
 async function cmdCreate(target: string): Promise<void> {
     const config = readSlotsConfig()
     const registry = readRegistry()
-
     // Determine if target is issue number or branch name
     let issueNumber: number | null = null
     let branchName: string

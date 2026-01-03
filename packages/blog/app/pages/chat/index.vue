@@ -12,7 +12,6 @@ const toast = useToast()
 const input = ref('')
 const loading = ref(false)
 const { model } = useModels()
-const selectedPersona = ref<string | undefined>(undefined)
 
 async function setPrompt(prompt: string) {
   input.value = prompt
@@ -21,21 +20,17 @@ async function setPrompt(prompt: string) {
 async function createChat(prompt: string) {
   input.value = prompt
 
-  // if (loading.value) {
-  //   console.log('loading already so canceling')
-  //   return
-  // }
-
   loading.value = true
 
   try {
     const chat = await $fetch('/api/chats', {
       method: 'POST',
-      body: { input: prompt, personaSlug: selectedPersona.value }
+      body: { input: prompt }
     })
     console.log('chat', chat)
     refreshNuxtData('chats')
-    navigateTo(`/chat/${chat.id}`)
+    // Using external:true to force full page reload, avoiding Vite debug module ESM client-side nav issue
+    await navigateTo(`/chat/${chat.id}`, { external: true })
     // no loading state to reset, because we are navigating away.
   } catch (error) {
     console.error('error', error)
@@ -112,9 +107,6 @@ const quickChats = [
 
           <template #footer>
             <div class="flex items-center gap-4 w-full">
-              <div class="flex-1 max-w-48">
-                <PersonaSelect v-model="selectedPersona" />
-              </div>
               <ModelSelect v-model="model" />
             </div>
           </template>

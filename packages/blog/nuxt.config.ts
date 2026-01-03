@@ -67,7 +67,7 @@ export default defineNuxtConfig({
   routeRules: {
     '/': { prerender: true },
     // Chat pages don't need SSR (no SEO benefit, authenticated feature)
-    // Disabling SSR fixes hydration issues where clicks don't register until hydration completes
+    // Note: There's a pre-existing Vite 8 beta + debug ESM issue affecting chat pages
     '/chat': { ssr: false },
     '/chat/**': { ssr: false }
   },
@@ -174,12 +174,21 @@ export default defineNuxtConfig({
   },
 
   vite: {
-    // include debug fixed a issue, in mdx, does not provide an export named 'default' (at create-tokenizer.js
+    // Fix ESM interop for CJS packages that don't provide default exports
+    // Use browser-compatible shims that provide proper ESM default exports
+    resolve: {
+      alias: {
+        'extend': resolve(__dirname, './shims/extend.js'),
+        'debug': resolve(__dirname, './shims/debug.js')
+      }
+    },
     optimizeDeps: {
-      include: ['debug']
+      include: ['unified', 'micromark', 'micromark-util-chunked', 'micromark-util-resolve-all', 'micromark-util-character', 'micromark-util-symbol', '@nuxtjs/mdc']
+    },
+    ssr: {
+      // Bundle these during SSR to handle CJS->ESM interop
+      noExternal: ['@nuxtjs/mdc', 'unified', 'micromark', /micromark-.*/]
     }
-    // Note: vite:vue-jsx shows esbuild deprecation warning until @nuxt/vite-builder updates
-    // Vite 8 auto-converts esbuild→oxc via compatibility layer, so it still works
   },
 
   // nitro: {

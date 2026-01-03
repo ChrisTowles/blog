@@ -9,7 +9,10 @@ defineRouteMeta({
   }
 })
 
-const BASE_SYSTEM_PROMPT = `
+const SYSTEM_PROMPT = `You are a helpful AI assistant on Chris Towles's blog. You can help with questions about the blog content, programming, AI/ML, Vue/Nuxt, DevOps, and general topics.
+
+You have access to tools that let you search the blog for relevant content. Use these when the user asks about topics that might be covered in blog posts.
+
 **FORMATTING RULES (CRITICAL):**
 - ABSOLUTELY NO MARKDOWN HEADINGS: Never use #, ##, ###, ####, #####, or ######
 - NO underline-style headings with === or ---
@@ -49,11 +52,9 @@ export default defineEventHandler(async (event) => {
     id: z.string()
   }).parse)
 
-  const { model, messages, personaSlug, chatbotSlug } = await readValidatedBody(event, z.object({
+  const { model, messages } = await readValidatedBody(event, z.object({
     model: z.string(),
-    messages: z.array(z.custom<ChatMessage>()),
-    personaSlug: z.string().optional(),
-    chatbotSlug: z.string().optional()
+    messages: z.array(z.custom<ChatMessage>())
   }).parse)
 
   const db = useDrizzle()
@@ -67,53 +68,6 @@ export default defineEventHandler(async (event) => {
 
   if (!chat) {
     throw createError({ statusCode: 404, statusMessage: 'Chat not found' })
-  }
-
-  // Load persona and capabilities
-  let loadedPersona
-  try {
-    loadedPersona = capabilityRegistry.loadPersona(personaSlug)
-  } catch (error) {
-    if (error instanceof Error && error.message.startsWith('Persona not found')) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: `Invalid persona: ${personaSlug}`
-      })
-    }
-    throw error
-  }
-
-  let systemPrompt = loadedPersona.systemPrompt + '\n\n' + BASE_SYSTEM_PROMPT
-
-  // Inject skills and custom system prompt when chatbot context available
-  let enabledTools = loadedPersona.tools
-  const knowledgeBaseFilters = loadedPersona.knowledgeBaseFilters
-
-  if (chatbotSlug) {
-    try {
-      const chatbotConfig = await loadChatbotConfig(chatbotSlug)
-
-      // Append skills to system prompt after capabilities
-      if (chatbotConfig.skills.length > 0) {
-        systemPrompt += '\n\n## Skills\n\n'
-        for (const skill of chatbotConfig.skills) {
-          systemPrompt += `### ${skill.name}\n${skill.content}\n\n`
-        }
-      }
-
-      // Append custom system prompt if present
-      if (chatbotConfig.customSystemPrompt) {
-        systemPrompt += '\n\n' + chatbotConfig.customSystemPrompt
-      }
-
-      // Use tools from chatbot config if available
-      if (chatbotConfig.tools.length > 0) {
-        enabledTools = getToolsByNames(chatbotConfig.tools)
-      }
-    } catch (error) {
-      console.warn(`Failed to load chatbot config for "${chatbotSlug}":`, error instanceof Error ? error.message : String(error))
-      // Continue with default persona tools if chatbot config fails to load
-    }
   }
 
   // Generate title if needed
@@ -178,9 +132,9 @@ export default defineEventHandler(async (event) => {
           const streamResponse = await client.messages.stream({
             model,
             max_tokens: 16000,
-            system: systemPrompt,
+            system: SYSTEM_PROMPT,
             messages: currentMessages,
-            tools: enabledTools,
+            tools: chatTools,
             thinking: {
               type: 'enabled',
               budget_tokens: 4096
@@ -260,7 +214,7 @@ export default defineEventHandler(async (event) => {
                 })
 
                 // Execute the tool
-                const toolResult = await executeTool(currentToolName, toolArgs, knowledgeBaseFilters)
+                const toolResult = await executeTool(currentToolName, toolArgs)
                 toolResults.push({
                   type: 'tool_result',
                   tool_use_id: currentToolUseId,

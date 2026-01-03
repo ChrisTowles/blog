@@ -23,8 +23,7 @@ export const TEST_IDS = {
     DELETE_ALL_BUTTON: 'delete-all-chats-button',
     STOP_BUTTON: 'stop-generation',
     RELOAD_BUTTON: 'reload-message',
-    COPY_BUTTON: 'copy-message',
-    PERSONA_SELECT: 'persona-select'
+    COPY_BUTTON: 'copy-message'
   },
   BLOG: {
     POST_LIST: 'blog-post-list',

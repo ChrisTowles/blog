@@ -9,7 +9,6 @@
 
 import type Anthropic from '@anthropic-ai/sdk'
 import { retrieveRAG } from '../rag/retrieve'
-import type { KnowledgeBaseFilter } from '../capabilities/types'
 
 /**
  * Tool Registry - lookup tools by name for capability-based filtering
@@ -123,8 +122,7 @@ export const chatTools: Anthropic.Tool[] = [
  */
 export async function executeTool(
   name: string,
-  args?: Record<string, unknown>,
-  knowledgeBaseFilters?: KnowledgeBaseFilter[]
+  args?: Record<string, unknown>
 ): Promise<unknown> {
   switch (name) {
     case 'searchBlogContent': {
@@ -133,8 +131,7 @@ export async function executeTool(
         return { error: 'Query is required' }
       }
       const results = await retrieveRAG(query, {
-        topK: 5,
-        knowledgeBaseFilters: knowledgeBaseFilters || []
+        topK: 5
       })
       return {
         results: results.map(r => ({
