@@ -61,6 +61,7 @@
     "lint-staged": "^16.2.7",
     "oxlint": "^1.36.0",
     "playwright-chromium": "^1.57.0",
+    "strip-json-comments": "^5.0.3",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "zx": "^8.8.5"

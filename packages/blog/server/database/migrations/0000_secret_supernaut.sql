@@ -1,3 +1,4 @@
+CREATE EXTENSION IF NOT EXISTS vector;--> statement-breakpoint
 CREATE TYPE "public"."provider" AS ENUM('github');--> statement-breakpoint
 CREATE TYPE "public"."role" AS ENUM('user', 'assistant');--> statement-breakpoint
 CREATE TABLE "chats" (
