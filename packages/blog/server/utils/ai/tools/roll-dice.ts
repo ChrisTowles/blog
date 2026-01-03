@@ -9,19 +9,91 @@ interface DiceRoll {
 }
 
 /**
+ * Normalize natural language dice notation to formal notation
+ * "4d6 drop lowest" → "4d6kh3", "2d20 advantage" → "2d20kh1"
+ */
+function normalizeNotation(input: string): string {
+    let notation = input.toLowerCase().trim()
+
+    // Extract base dice pattern
+    const baseMatch = notation.match(/^(\d+)d(\d+)/)
+    if (!baseMatch) return notation
+
+    const count = parseInt(baseMatch[1]!, 10)
+
+    // Handle "drop lowest [n]" → keep highest (count - n)
+    const dropLowestMatch = notation.match(/drop\s+(?:the\s+)?lowest(?:\s+(\d+))?/)
+    if (dropLowestMatch) {
+        const dropCount = dropLowestMatch[1] ? parseInt(dropLowestMatch[1], 10) : 1
+        const keepCount = count - dropCount
+        if (keepCount > 0) {
+            notation = `${baseMatch[0]}kh${keepCount}`
+        }
+    }
+
+    // Handle "drop highest [n]" → keep lowest (count - n)
+    const dropHighestMatch = notation.match(/drop\s+(?:the\s+)?highest(?:\s+(\d+))?/)
+    if (dropHighestMatch) {
+        const dropCount = dropHighestMatch[1] ? parseInt(dropHighestMatch[1], 10) : 1
+        const keepCount = count - dropCount
+        if (keepCount > 0) {
+            notation = `${baseMatch[0]}kl${keepCount}`
+        }
+    }
+
+    // Handle "advantage" → keep highest 1 (for 2d20)
+    if (/\b(advantage|adv)\b/.test(notation) && !notation.includes('kh')) {
+        notation = `${baseMatch[0]}kh1`
+    }
+
+    // Handle "disadvantage" → keep lowest 1 (for 2d20)
+    if (/\b(disadvantage|disadv|dis)\b/.test(notation) && !notation.includes('kl')) {
+        notation = `${baseMatch[0]}kl1`
+    }
+
+    // Handle "keep highest [n]" that's not already kh format
+    const keepHighestMatch = notation.match(/keep\s+(?:the\s+)?highest(?:\s+(\d+))?/)
+    if (keepHighestMatch && !notation.includes('kh')) {
+        const keepCount = keepHighestMatch[1] ? parseInt(keepHighestMatch[1], 10) : 1
+        notation = `${baseMatch[0]}kh${keepCount}`
+    }
+
+    // Handle "keep lowest [n]" that's not already kl format
+    const keepLowestMatch = notation.match(/keep\s+(?:the\s+)?lowest(?:\s+(\d+))?/)
+    if (keepLowestMatch && !notation.includes('kl')) {
+        const keepCount = keepLowestMatch[1] ? parseInt(keepLowestMatch[1], 10) : 1
+        notation = `${baseMatch[0]}kl${keepCount}`
+    }
+
+    // Extract modifier if present (e.g., "+5", "- 3")
+    const modMatch = input.match(/([+-])\s*(\d+)\s*$/)
+    if (modMatch) {
+        // Remove any existing modifier pattern from notation first
+        notation = notation.replace(/\s*[+-]\s*\d+\s*$/, '')
+        notation += `${modMatch[1]}${modMatch[2]}`
+    }
+
+    return notation
+}
+
+/**
  * Roll dice for tabletop gaming
  * Supports standard notation: "2d6", "1d20+5", "4d6kh3" (keep highest), "2d20kl1" (keep lowest)
+ * Also supports natural language: "4d6 drop lowest", "2d20 advantage"
  */
 export const rollDice = tool(
     'rollDice',
-    'Roll dice for tabletop gaming (D&D, etc). Use when users want to roll dice. Supports standard notation like "2d6", "1d20+5", "4d6 drop lowest".',
+    'Roll dice for tabletop gaming (D&D, etc). Use when users want to roll dice. Supports notation like "2d6", "1d20+5", "4d6kh3", "4d6 drop lowest", "2d20 advantage".',
     {
-        notation: z.string().describe('Dice notation (e.g., "2d6", "1d20+5", "4d6kh3" for keep highest 3, "2d20kl1" for keep lowest/disadvantage)'),
+        notation: z.string().describe('Dice notation (e.g., "2d6", "1d20+5", "4d6kh3", "4d6 drop lowest", "2d20 advantage")'),
         label: z.string().optional().describe('Optional label for the roll (e.g., "Attack roll", "Fireball damage")')
     },
     async (args) => {
+        // Normalize natural language to formal notation
+        const normalized = normalizeNotation(args.notation)
+
         // Parse notation like "2d6+5", "4d6kh3", "2d20kl1"
-        const match = args.notation.toLowerCase().match(/^(\d+)d(\d+)(kh\d+|kl\d+)?([+-]\d+)?$/)
+        const match = normalized.match(/^(\d+)d(\d+)(kh\d+|kl\d+)?([+-]\d+)?$/)
 
         if (!match) {
             return toolError(`Invalid dice notation: "${args.notation}". Use format like "2d6", "1d20+5", "4d6kh3"`)

@@ -32,9 +32,7 @@ export default defineNuxtConfig({
   },
   devServer: {
     port: parseInt(process.env.UI_PORT! ),
-    url: 'http://localhost:' + (process.env.UI_PORT!)
   },
-
   css: ['~/assets/css/main.css'],
 
   colorMode: {
@@ -80,24 +78,7 @@ export default defineNuxtConfig({
     viewTransition: true
   },
 
-  // app: {
-  //     head: {
-  //         charset: 'utf-16',
-  //         viewport: 'width=device-width,initial-scale=1',
-  //         title: 'Chris\'s Towles Blog',
-  //         titleTemplate: '%s - Software, Development and Technology Architecture',
-  //         meta: [{ name: 'description', content: 'Chris Towles Blog' }],
-  //     },
-  //     pageTransition: { name: 'page', mode: 'out-in' },
-  //     layoutTransition: { name: 'layout', mode: 'out-in' },
-  // },
-
-  // site: {
-  //     url: 'https://chris.towles.dev',
-
-  // },
-
-  compatibilityDate: '2025-10-13',
+  compatibilityDate: '2026-01-02',
 
   nitro: {
     preset: 'node-server',
@@ -124,19 +105,11 @@ export default defineNuxtConfig({
     },
 
     imports: {
-      // Nitro only auto-imports top-level server/utils/ by default.
-      // Explicitly list dirs to auto-import, excluding internal files (prefixed with _)
-      // dirs: [
-      //   // './server/utils',
-      //   // './server/utils/ai',
-      //   // './server/utils/rag',
-      //   // './server/utils/capabilities',
-      //   // './server/utils/skills'
-      //   // Note: builtin/ is excluded - use capabilities/index.ts barrel
-      // ]
+      
     },
     hooks: {
       async compiled(nitro) {
+        
         const { rollup } = await import('rollup')
         const { default: typescript } = await import('@rollup/plugin-typescript')
         const { default: resolve } = await import('@rollup/plugin-node-resolve')
@@ -174,21 +147,7 @@ export default defineNuxtConfig({
   },
 
   vite: {
-    // Fix ESM interop for CJS packages that don't provide default exports
-    // Use browser-compatible shims that provide proper ESM default exports
-    resolve: {
-      alias: {
-        'extend': resolve(__dirname, './shims/extend.js'),
-        'debug': resolve(__dirname, './shims/debug.js')
-      }
-    },
-    optimizeDeps: {
-      include: ['unified', 'micromark', 'micromark-util-chunked', 'micromark-util-resolve-all', 'micromark-util-character', 'micromark-util-symbol', '@nuxtjs/mdc']
-    },
-    ssr: {
-      // Bundle these during SSR to handle CJS->ESM interop
-      noExternal: ['@nuxtjs/mdc', 'unified', 'micromark', /micromark-.*/]
-    }
+
   },
 
   // nitro: {
