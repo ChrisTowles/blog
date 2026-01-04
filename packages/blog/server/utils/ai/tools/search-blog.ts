@@ -14,6 +14,14 @@ export const searchBlogContent = tool(
     },
     async (args) => {
         const results = await retrieveRAG(args.query, { topK: 5 })
+
+        if (!results || results.length === 0) {
+            return toolResult({
+                results: [],
+                hint: 'No blog content found for this query. The database may be empty or no content matches the search terms.'
+            })
+        }
+
         return toolResult({
             results: results.map(r => ({
                 content: r.content,

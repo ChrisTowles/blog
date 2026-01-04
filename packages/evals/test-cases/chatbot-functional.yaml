@@ -1,0 +1,131 @@
+# Functional Behavior Tests for Blog Chatbot
+# Tests tool calling accuracy, format validation, and response quality
+
+# Tool Calling Accuracy Tests
+- description: "Must call searchBlogContent for blog content queries"
+  vars:
+    query: "What has Chris written about Claude?"
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.tool_calls && data.tool_calls.some(c => c.name === 'mcp__blog-tools__searchBlogContent');
+      metric: CallsSearchBlogContent
+
+- description: "Must call getCurrentDateTime for time queries"
+  vars:
+    query: "What time is it?"
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.tool_calls && data.tool_calls.some(c => c.name === 'mcp__blog-tools__getCurrentDateTime');
+      metric: CallsGetCurrentDateTime
+
+- description: "Must call getAuthorInfo for author queries"
+  vars:
+    query: "Tell me about the author"
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.tool_calls && data.tool_calls.some(c => c.name === 'mcp__blog-tools__getAuthorInfo');
+      metric: CallsGetAuthorInfo
+
+- description: "Must call getWeather for weather queries"
+  vars:
+    query: "What's the weather in London?"
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.tool_calls && data.tool_calls.some(c => c.name === 'mcp__blog-tools__getWeather');
+      metric: CallsGetWeather
+
+- description: "Must call getBlogTopics for topic queries"
+  vars:
+    query: "What topics does Chris write about?"
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.tool_calls && data.tool_calls.some(c => c.name === 'mcp__blog-tools__getBlogTopics');
+      metric: CallsGetBlogTopics
+
+- description: "Must call rollDice for dice rolling"
+  vars:
+    query: "Roll 2d6 for me"
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.tool_calls && data.tool_calls.some(c => c.name === 'mcp__blog-tools__rollDice');
+      metric: CallsRollDice
+
+# Format Validation Tests
+- description: "Must not use markdown # headings"
+  vars:
+    query: "Explain Vue 3 composition API"
+  assert:
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return !data.text.includes('\n#');
+      metric: NoHashHeadings
+
+- description: "Must use **bold** for emphasis instead of headings"
+  vars:
+    query: "Tell me about Nuxt features"
+  assert:
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.text.includes('**');
+      metric: UsesBoldEmphasis
+
+# Response Quality Tests (LLM-as-judge)
+- description: "Response should be relevant and coherent"
+  vars:
+    query: "What are Chris's thoughts on AI engineering?"
+  assert:
+    - type: llm-rubric
+      value: "The response is relevant to the question about AI engineering and coherent"
+      metric: Relevance
+
+- description: "Response should interpret tool results correctly"
+  vars:
+    query: "What blog posts are available about TypeScript?"
+  assert:
+    - type: llm-rubric
+      value: "The response correctly interprets and presents the search results about TypeScript"
+      metric: ToolResultInterpretation
+
+# Edge Cases
+- description: "Should handle vague queries appropriately"
+  vars:
+    query: "Tell me something interesting"
+  assert:
+    - type: is-json
+      metric: ValidJSON
+
+- description: "Should handle off-topic queries professionally"
+  vars:
+    query: "What's the capital of France?"
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: llm-rubric
+      value: "The response politely handles the off-topic query"
+      metric: OffTopicHandling

@@ -7,6 +7,10 @@ export { sql, eq, and, or, desc } from 'drizzle-orm'
 export const tables = schema
 
 export function useDrizzle() {
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL environment variable is not set')
+  }
+
   return drizzle({
     connection: {
       connectionString: process.env.DATABASE_URL

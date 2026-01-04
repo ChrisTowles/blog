@@ -1,4 +1,5 @@
 import { sql } from 'drizzle-orm'
+import { useDrizzle } from '../drizzle'
 import { embedText, rerankDocuments } from '../ai/bedrock'
 
 export interface RAGResult {
@@ -42,12 +43,13 @@ interface ChunkCandidate {
  * Semantic search using pgvector cosine similarity
  */
 async function semanticSearch(queryEmbedding: number[], limit: number): Promise<Array<ChunkCandidate & { distance: number }>> {
-  const db = useDrizzle()
+  try {
+    const db = useDrizzle()
 
-  // Use raw SQL for pgvector cosine distance operator
-  const embeddingStr = `[${queryEmbedding.join(',')}]`
+    // Use raw SQL for pgvector cosine distance operator
+    const embeddingStr = `[${queryEmbedding.join(',')}]`
 
-  const results = await db.execute(sql`
+    const results = await db.execute(sql`
         SELECT
             dc.id,
             dc."documentId",
@@ -65,16 +67,25 @@ async function semanticSearch(queryEmbedding: number[], limit: number): Promise<
         LIMIT ${limit}
     `)
 
-  return results.rows as Array<ChunkCandidate & { distance: number }>
+    if (!results?.rows) {
+      return []
+    }
+
+    return results.rows as Array<ChunkCandidate & { distance: number }>
+  } catch (error) {
+    console.error('Semantic search failed:', error)
+    return []
+  }
 }
 
 /**
  * BM25 full-text search using PostgreSQL tsvector
  */
 async function bm25Search(query: string, limit: number): Promise<Array<ChunkCandidate & { rank: number }>> {
-  const db = useDrizzle()
+  try {
+    const db = useDrizzle()
 
-  const results = await db.execute(sql`
+    const results = await db.execute(sql`
         SELECT
             dc.id,
             dc."documentId",
@@ -92,7 +103,15 @@ async function bm25Search(query: string, limit: number): Promise<Array<ChunkCand
         LIMIT ${limit}
     `)
 
-  return results.rows as Array<ChunkCandidate & { rank: number }>
+    if (!results?.rows) {
+      return []
+    }
+
+    return results.rows as Array<ChunkCandidate & { rank: number }>
+  } catch (error) {
+    console.error('BM25 search failed:', error)
+    return []
+  }
 }
 
 /**
@@ -151,7 +170,13 @@ export async function retrieveRAG(query: string, options: RetrieveOptions = {}):
   const candidateCount = opts.topK * opts.candidateMultiplier
 
   // Step 1: Generate query embedding
-  const queryEmbedding = await embedText(query)
+  let queryEmbedding: number[]
+  try {
+    queryEmbedding = await embedText(query)
+  } catch (error) {
+    console.error('Failed to generate embedding:', error)
+    return []
+  }
 
   // Step 2: Parallel semantic and BM25 search
   const [semanticResults, bm25Results] = await Promise.all([

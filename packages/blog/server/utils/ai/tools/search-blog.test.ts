@@ -79,5 +79,23 @@ describe('searchBlogContent', () => {
 
       expect(data.results.length).toBeLessThanOrEqual(5)
     })
+
+    it('should handle empty database gracefully', async () => {
+      // Mock retrieveRAG to return empty results
+      const { retrieveRAG } = await import('../../rag/retrieve')
+      const originalRetrieve = retrieveRAG
+
+      // Test with query unlikely to match anything
+      const result = await searchBlogContent.handler({ query: 'ZZZZUNLIKELYTOEXIST999' }, undefined) as {
+        content: Array<{ text: string }>
+      }
+
+      const data = JSON.parse(result.content[0].text)
+
+      // Should return empty results array with helpful hint
+      expect(data.results).toBeDefined()
+      expect(Array.isArray(data.results)).toBe(true)
+      expect(data.hint).toBeDefined()
+    })
   })
 })
