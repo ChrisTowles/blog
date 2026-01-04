@@ -8,6 +8,13 @@
       "when": 1767419808786,
       "tag": "0000_secret_supernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1767511945304,
+      "tag": "0001_milky_living_lightning",
+      "breakpoints": true
     }
   ]
 }

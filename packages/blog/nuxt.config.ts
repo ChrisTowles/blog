@@ -91,7 +91,8 @@ export default defineNuxtConfig({
       '**/*.spec.js'
     ],
     experimental: {
-      openAPI: true
+      openAPI: true,
+      websocket: true
     },
     esbuild: {
       options: {

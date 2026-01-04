@@ -48,6 +48,9 @@ export const messages = pgTable('messages', {
   chatId: varchar({ length: 36 }).notNull().references(() => chats.id, { onDelete: 'cascade' }),
   role: roleEnum().notNull(),
   parts: json(),
+  // Multi-agent routing metadata
+  agentType: varchar({ length: 50 }), // 'orchestrator', 'blog_search', 'general', 'weather'
+  routingDecision: json(), // { targetAgent, reason, confidence, routingMethod, matchedKeywords }
   ...timestamps
 }, table => [
   index('messages_chat_id_idx').on(table.chatId)

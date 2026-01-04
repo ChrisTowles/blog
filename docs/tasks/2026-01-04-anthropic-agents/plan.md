@@ -37,15 +37,15 @@ Replace the current SSE-based chat implementation with a multi-agent system usin
 ## Phase 1: WebSocket Infrastructure
 
 ### TODO 1.1: Set up Nitro WebSocket support
-- [ ] Configure `nuxt.config.ts` for experimental WebSocket support
-- [ ] Create `/server/routes/_ws.ts` WebSocket handler
+- [x] Configure `nuxt.config.ts` for experimental WebSocket support
+- [x] Create `/server/routes/_ws.ts` WebSocket handler
 - [ ] Implement connection authentication (token query param)
-- [ ] Add connection lifecycle management (connect/disconnect/error)
+- [x] Add connection lifecycle management (connect/disconnect/error)
 
 ### TODO 1.2: Create WebSocket message protocol
-- [ ] Define message types: `chunk`, `done`, `error`, `thinking`, `tool_use`, `tool_result`
-- [ ] Create TypeScript interfaces for all message types
-- [ ] Implement message serialization/deserialization helpers
+- [x] Define message types: `chunk`, `done`, `error`, `thinking`, `tool_use`, `tool_result`
+- [x] Create TypeScript interfaces for all message types
+- [x] Implement message serialization/deserialization helpers
 
 ### TODO 1.3: Frontend WebSocket composable
 - [ ] Create `useAgentChat()` composable using Nuxt's `useWebSocket`
@@ -59,45 +59,45 @@ Replace the current SSE-based chat implementation with a multi-agent system usin
 ## Phase 2: Agent SDK Integration
 
 ### TODO 2.1: Install and configure Agent SDK
-- [ ] Add `@anthropic-ai/agent-sdk` dependency
-- [ ] Create agent configuration types
-- [ ] Set up Anthropic client with runtime config
+- [x] Add `@anthropic-ai/agent-sdk` dependency (already present)
+- [x] Create agent configuration types
+- [x] Set up Anthropic client with runtime config
 
 ### TODO 2.2: Create orchestrator agent
-- [ ] Define orchestrator system prompt (routing logic)
-- [ ] Implement hybrid routing:
+- [x] Define orchestrator system prompt (routing logic)
+- [x] Implement hybrid routing:
   - Keyword detection for obvious cases (blog, weather)
   - Handle greetings/simple queries directly
   - Classify ambiguous queries with LLM
-- [ ] Configure Haiku 4.5 model
-- [ ] Enable extended thinking
+- [x] Configure Haiku 4.5 model
+- [x] Enable extended thinking
 
 ### TODO 2.3: Create Blog Search subagent
-- [ ] Define system prompt for technical blog queries
-- [ ] Attach tools: `searchBlogContent`, `getBlogTopics`
-- [ ] Configure to receive raw RAG chunks
-- [ ] Enable extended thinking
+- [x] Define system prompt for technical blog queries
+- [x] Attach tools: `searchBlogContent`, `getBlogTopics`
+- [x] Configure to receive raw RAG chunks
+- [x] Enable extended thinking
 
 ### TODO 2.4: Create General Assistant subagent
-- [ ] Define system prompt for general conversation
-- [ ] Attach tools: `getAuthorInfo`, `getCurrentDateTime`, `rollDice`
-- [ ] Configure as default fallback
-- [ ] Enable extended thinking
+- [x] Define system prompt for general conversation
+- [x] Attach tools: `getAuthorInfo`, `getCurrentDateTime`, `rollDice`
+- [x] Configure as default fallback
+- [x] Enable extended thinking
 
 ### TODO 2.5: Create Weather subagent
-- [ ] Define system prompt for weather queries
-- [ ] Attach tool: `getWeather`
-- [ ] Enable extended thinking
+- [x] Define system prompt for weather queries
+- [x] Attach tool: `getWeather`
+- [x] Enable extended thinking
 
 ---
 
 ## Phase 3: Message Handling & Streaming
 
 ### TODO 3.1: Implement agent-to-WebSocket bridge
-- [ ] Create streaming handler for Agent SDK `query()` output
-- [ ] Map agent events to WebSocket message types
-- [ ] Handle multi-turn tool calling
-- [ ] Stream thinking tokens when available
+- [x] Create streaming handler for Agent SDK `query()` output
+- [x] Map agent events to WebSocket message types
+- [x] Handle multi-turn tool calling
+- [x] Stream thinking tokens when available
 
 ### TODO 3.2: Conversation context management
 - [ ] Load chat history from database on connect
@@ -114,9 +114,9 @@ Replace the current SSE-based chat implementation with a multi-agent system usin
 ## Phase 4: Database & Persistence
 
 ### TODO 4.1: Schema migration
-- [ ] Add `agent_type` column to messages table (nullable string)
-- [ ] Add `routing_decision` column to messages table (nullable JSON)
-- [ ] Create and run Drizzle migration
+- [x] Add `agent_type` column to messages table (nullable string)
+- [x] Add `routing_decision` column to messages table (nullable JSON)
+- [x] Create and run Drizzle migration
 
 ### TODO 4.2: Message persistence
 - [ ] Save messages with agent_type metadata
@@ -147,9 +147,13 @@ Replace the current SSE-based chat implementation with a multi-agent system usin
 ## Phase 6: Testing & Validation
 
 ### TODO 6.1: Unit tests
-- [ ] Test routing keyword detection
-- [ ] Test message type serialization
-- [ ] Test agent configuration loading
+- [x] Test routing keyword detection (15 tests)
+- [x] Test message type serialization (12 tests)
+- [x] Test agent configuration loading (18 tests)
+- [x] Test orchestrator routing (8 tests)
+- [x] Test agent-to-WS bridge (8 tests)
+- [x] Test WS handler (6 tests)
+- [x] Test agent types (9 tests)
 
 ### TODO 6.2: Integration tests
 - [ ] Test WebSocket connection lifecycle
