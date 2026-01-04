@@ -107,15 +107,3 @@ variable "github_oauth_client_secret_secret_id" {
   type        = string
   default     = ""
 }
-
-variable "studio_github_client_id_secret_id" {
-  description = "Secret Manager secret ID for Studio GitHub OAuth client ID"
-  type        = string
-  default     = ""
-}
-
-variable "studio_github_client_secret_secret_id" {
-  description = "Secret Manager secret ID for Studio GitHub OAuth client secret"
-  type        = string
-  default     = ""
-}

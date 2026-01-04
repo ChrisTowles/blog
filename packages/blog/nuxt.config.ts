@@ -20,7 +20,6 @@ export default defineNuxtConfig({
     'nuxt-og-image',
     '@nuxtjs/mdc',
     'nuxt-auth-utils',
-    // 'nuxt-studio', Disabled till i fix some issues, not having correct path to open pr to the file edited, not setting github secret once deployed.
     '@nuxt/test-utils/module'
   ],
 
@@ -166,14 +165,4 @@ export default defineNuxtConfig({
       collections: ['simple-icons', 'heroicons'] // <!--- this
     }
   }
-
-  // studio: {
-  //   route: '/_studio', // default: '/_studio'
-  //   repository: {
-  //     provider: 'github',
-  //     owner: 'christowles',
-  //     repo: 'blog',
-  //     branch: 'main'
-  //   }
-  // }
 })
