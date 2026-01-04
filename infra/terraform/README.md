@@ -141,21 +141,6 @@ echo -n "YOUR_CLIENT_ID" | gcloud secrets create github-oauth-client-id --data-f
 echo -n "YOUR_CLIENT_SECRET" | gcloud secrets create github-oauth-client-secret --data-file=- --project=$PROJECT
 ```
 
-#### Nuxt Studio OAuth credentials (WYSIWYG editor)
-Create **separate** OAuth apps at https://github.com/settings/developers for Studio (one per environment).
-
-Callback URLs:
-- Staging: `https://staging-chris.towles.dev/_studio/auth/github/callback`
-- Production: `https://chris.towles.dev/_studio/auth/github/callback`
-
-```bash
-# Set PROJECT to staging or production
-export PROJECT=blog-towles-staging  # or blog-towles-production
-
-echo -n "YOUR_STUDIO_CLIENT_ID" | gcloud secrets create studio-github-client-id --data-file=- --project=$PROJECT
-echo -n "YOUR_STUDIO_CLIENT_SECRET" | gcloud secrets create studio-github-client-secret --data-file=- --project=$PROJECT
-```
-
 #### Update secrets
 ```bash
 # Set PROJECT to staging or production
@@ -168,8 +153,6 @@ echo -n "NEW_VALUE" | gcloud secrets versions add aws-access-key-id --data-file=
 echo -n "NEW_VALUE" | gcloud secrets versions add aws-secret-access-key --data-file=- --project=$PROJECT
 echo -n "NEW_VALUE" | gcloud secrets versions add github-oauth-client-id --data-file=- --project=$PROJECT
 echo -n "NEW_VALUE" | gcloud secrets versions add github-oauth-client-secret --data-file=- --project=$PROJECT
-echo -n "NEW_VALUE" | gcloud secrets versions add studio-github-client-id --data-file=- --project=$PROJECT
-echo -n "NEW_VALUE" | gcloud secrets versions add studio-github-client-secret --data-file=- --project=$PROJECT
 ```
 
 #### View secrets
@@ -182,8 +165,6 @@ gcloud secrets versions access latest --secret=session-password --project=$PROJE
 gcloud secrets versions access latest --secret=database-password --project=$PROJECT
 gcloud secrets versions access latest --secret=github-oauth-client-id --project=$PROJECT
 gcloud secrets versions access latest --secret=github-oauth-client-secret --project=$PROJECT
-gcloud secrets versions access latest --secret=studio-github-client-id --project=$PROJECT
-gcloud secrets versions access latest --secret=studio-github-client-secret --project=$PROJECT
 ```
 
 ### 4. Configure environment
