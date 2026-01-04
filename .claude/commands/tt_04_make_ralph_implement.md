@@ -12,9 +12,13 @@ The plan in a plan is in a directy specified in `.current-plan` called `plan.md`
 
 Output a single command using the  file path variable `<Plan file>` to refer to the plan file.
 
-```
+- make Red-green tests required, no mocking.
+- use Claude in Chrome for frontend testing
+- All tasks must complete before FINISHED is output
 
- /ralph-wiggum:ralph-loop "Read the <Plan file> and work to complete the tasks in it, Make red green tests. Never mock anything. mark Tasks done before moving on.  Output <promise>FIXED</promise> when all tests pass." --completion-promise "FIXED" --max-iterations 10 
+```bash
+
+ /ralph-wiggum:ralph-loop "Read the <Plan file> and work to complete the tasks in it, Make red green tests. Never mock anything. mark Tasks done once featue complete. Output <promise>FINISHED</promise> when all tasks are complete" --completion-promise "FINISHED" --max-iterations 15 
  
 ```
 
