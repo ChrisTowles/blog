@@ -28,9 +28,12 @@ cd packages/blog
 pnpm add braintrust
 ```
 
-**Verify version:** Should install latest stable (likely `0.x.x`)
 
 #### 1.2 Update Environment Schema
+
+
+The `.env` and `.env.example` files already updated with valid `BRAINTRUST_API_KEY`..
+
 **File:** `packages/blog/server/utils/env-config.ts`
 
 Add to `envSchema`:
@@ -38,23 +41,6 @@ Add to `envSchema`:
 BRAINTRUST_API_KEY: z.string().min(1),
 ```
 
-Add to `SENSITIVE_KEYS`:
-```typescript
-'BRAINTRUST_API_KEY'
-```
-
-#### 1.3 Update Environment Files
-**Files:** `.env`, `.env.example`
-
-Add:
-```bash
-BRAINTRUST_API_KEY=your_key_here
-```
-
-For `.env.example`, use placeholder:
-```bash
-BRAINTRUST_API_KEY=bt-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-```
 
 #### 1.4 Update Terraform Secrets (Production)
 **Files:** `infra/terraform/environments/{staging,prod}/terraform.tfvars`
@@ -320,137 +306,15 @@ Add section:
 
 ---
 
-## Rollback Plan
-
-**If integration causes issues:**
-
-### 6.4 Immediate Rollback (Code)
-**File:** `packages/blog/server/utils/ai/anthropic.ts`
-
-Revert to original:
-```typescript
-export function getAnthropicClient(): Anthropic {
-  if (!_client) {
-    const result = envSchema.parse(process.env)
-    _client = new Anthropic({
-      apiKey: result.ANTHROPIC_API_KEY
-    })
-  }
-  return _client
-}
-```
-
-**Steps:**
-1. Remove `wrapAnthropic()` wrapper
-2. Remove `initLogger()` calls
-3. Redeploy: `nr gcp:{env}:deploy`
-
-### 6.5 Environment Variable Cleanup
-- Remove `BRAINTRUST_API_KEY` from `.env`, Secret Manager
-- Keep package in `package.json` (harmless if not imported)
-- Revert `env-config.ts` changes if desired
-
----
 
 ## Success Metrics
 
 **Quantitative:**
 - [ ] 100% of Anthropic API calls logged to Braintrust
-- [ ] <50ms latency overhead from wrapper
-- [ ] Token usage matches Anthropic billing (verify accuracy)
 - [ ] Zero Braintrust SDK errors in logs
 
 **Qualitative:**
-- [ ] Dashboard provides actionable insights (cost trends, latency p99)
 - [ ] Can filter traces by environment, model, tool use
 - [ ] Can trace multi-turn conversations end-to-end
 - [ ] Eval runs distinguishable from prod traffic
 
----
-
-## Future Enhancements (Post-Implementation)
-
-**Phase 7+: Advanced Features (Not in Scope)**
-1. **Cost Alerts:** Daily spend > $X → email/Slack
-2. **Quality Metrics:** User thumbs up/down → logged to Braintrust
-3. **Latency Alerts:** p99 > Xms → notify
-4. **RAG Quality:** Track `searchBlogContent` tool call success rates
-5. **Eval Pipeline:** Production traces → eval datasets via Braintrust UI
-6. **A/B Testing:** Tag traces with model variants, compare in dashboard
-7. **OpenTelemetry Export:** Send traces to Datadog/Honeycomb alongside Braintrust
-
----
-
-## Risk Assessment
-
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Braintrust SDK breaks streaming | **High** | Test thoroughly locally; rollback plan ready |
-| Agent SDK not auto-captured | **Medium** | Phase 4 fallback (manual tracing) |
-| API key leak | **High** | Use Secret Manager, mark sensitive in env schema |
-| Free tier exceeded (>1M spans/mo) | **Low** | Monitor usage in Braintrust dashboard; unlikely for personal blog |
-| Performance degradation | **Medium** | Benchmark before/after; wrapper should be <50ms overhead |
-| Braintrust service outage | **Low** | Observability lost, but app continues (non-blocking) |
-
----
-
-## Open Questions / Assumptions
-
-**Assumptions:**
-1. Braintrust `wrapAnthropic()` supports `@anthropic-ai/sdk` v0.52.0 (verify in Phase 3)
-2. Wrapper handles streaming, tool use, prompt caching transparently (verify in tests)
-3. Agent SDK calls routed through singleton → auto-captured (verify in Test 3)
-4. Free tier 1M spans/month sufficient for blog traffic (monitor post-deployment)
-
-**Questions for User (Post-Implementation):**
-1. Want custom dashboard views in Braintrust UI? (e.g., cost by endpoint, latency by model)
-2. Should we export traces to other tools (Datadog, etc.) via OpenTelemetry?
-3. Set up scheduled reports (weekly usage summary)?
-
----
-
-## Timeline Estimate
-
-**Phase 1:** Dependencies & Config → 15 minutes
-**Phase 2:** Singleton Wrapper → 10 minutes
-**Phase 3:** Testing & Validation → 30-60 minutes (thorough testing)
-**Phase 4:** Agent SDK Fallback → 0-30 minutes (only if needed)
-**Phase 5:** Tagging & Metadata → 15 minutes
-**Phase 6:** Documentation & Rollout → 30 minutes (staging) + 30 minutes (prod)
-
-**Total:** ~2-3 hours (including testing, deployment, verification)
-
----
-
-## Files Modified
-
-| File | Change |
-|------|--------|
-| `packages/blog/package.json` | Add `braintrust` dependency |
-| `packages/blog/server/utils/env-config.ts` | Add `BRAINTRUST_API_KEY` to schema |
-| `packages/blog/server/utils/ai/anthropic.ts` | Wrap singleton with `wrapAnthropic()` |
-| `.env` | Add `BRAINTRUST_API_KEY` |
-| `.env.example` | Add `BRAINTRUST_API_KEY` placeholder |
-| `CLAUDE.md` | Document observability setup |
-| `infra/terraform/environments/{staging,prod}/terraform.tfvars` | Add secret reference |
-| *(Optional)* `server/utils/ai/agent.ts` | Manual tracing (only if Phase 4 needed) |
-
-**Files NOT Modified:**
-- `server/api/chats/[id].post.ts` (auto-instrumented)
-- `server/utils/rag/ingest.ts` (auto-instrumented)
-- `packages/evals/provider-anthropic.ts` (auto-instrumented)
-- `server/utils/ai/tools.ts` (no changes needed)
-
----
-
-## Next Steps
-
-**Ready to implement?**
-1. User approval of plan
-2. Create feature branch: `git checkout -b feat/braintrust-integration`
-3. Execute Phase 1-6
-4. Open PR with test results, screenshots from Braintrust dashboard
-5. Deploy to staging → verify → deploy to prod
-
-**OR:**
-Ask user for clarifications, adjustments before proceeding.
