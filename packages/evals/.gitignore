@@ -1,0 +1,15 @@
+# Promptfoo outputs
+outputs/
+*.json
+*.csv
+*.html
+
+# Test results
+results/
+
+# Node modules (already in root, but adding for clarity)
+node_modules/
+
+# Environment
+.env
+.env.local
