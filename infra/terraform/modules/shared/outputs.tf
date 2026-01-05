@@ -47,3 +47,8 @@ output "github_oauth_client_secret_secret_id" {
   description = "Secret Manager secret ID for GitHub OAuth client secret"
   value       = data.google_secret_manager_secret.github_oauth_client_secret.secret_id
 }
+
+output "braintrust_api_key_secret_id" {
+  description = "Secret Manager secret ID for Braintrust API key"
+  value       = data.google_secret_manager_secret.braintrust_api_key.secret_id
+}

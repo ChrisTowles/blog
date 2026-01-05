@@ -89,6 +89,11 @@ data "google_secret_manager_secret" "github_oauth_client_secret" {
   project   = var.project_id
 }
 
+data "google_secret_manager_secret" "braintrust_api_key" {
+  secret_id = "braintrust-api-key"
+  project   = var.project_id
+}
+
 # Removed blocks to safely remove resources from state without deleting them
 removed {
   from = google_secret_manager_secret.anthropic_api_key

@@ -81,29 +81,34 @@ variable "session_password_secret_id" {
 variable "cloud_sql_connection_name" {
   description = "Cloud SQL instance connection name (project:region:instance)"
   type        = string
-  default     = ""
 }
 
 variable "aws_access_key_id_secret_id" {
   description = "Secret Manager secret ID for AWS access key ID"
   type        = string
-  default     = ""
 }
 
 variable "aws_secret_access_key_secret_id" {
   description = "Secret Manager secret ID for AWS secret access key"
   type        = string
-  default     = ""
 }
 
 variable "github_oauth_client_id_secret_id" {
   description = "Secret Manager secret ID for GitHub OAuth client ID"
   type        = string
-  default     = ""
 }
 
 variable "github_oauth_client_secret_secret_id" {
   description = "Secret Manager secret ID for GitHub OAuth client secret"
   type        = string
-  default     = ""
+}
+
+variable "braintrust_api_key_secret_id" {
+  description = "Secret Manager secret ID for Braintrust API key"
+  type        = string
+}
+
+variable "braintrust_project_name" {
+  description = "Braintrust project name"
+  type        = string
 }
