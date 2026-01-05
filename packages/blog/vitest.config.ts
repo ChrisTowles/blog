@@ -23,8 +23,8 @@ export default defineConfig({
             }
           },
           env: {
-            ...dotenv.config({ 
-              path: findUpSync('.env') , 
+            ...dotenv.config({
+              path: findUpSync('.env') ,
              quiet: true }).parsed
           }
         }
