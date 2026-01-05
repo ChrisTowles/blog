@@ -14,6 +14,8 @@ Interview me in detail using `AskUserQuestion` about:
 - Concerns and tradeoffs
 - Edge cases
 
+Any questions about current codebase or architecture use `Explore` subagent to research.
+
 Ask non-obvious questions. Continue interviewing until complete.
 
 ## Explore
@@ -37,6 +39,7 @@ Write the Plan to implement with TODOS and if large phases to `docs/tasks/{YYYY-
 2. Expert recommendations
    1. include citations/links
 3. Recommended approach based on research
+4. Mermaid diagram of architecture
 
 Then update `.current-plan` in repo root with the task folder path.
 
