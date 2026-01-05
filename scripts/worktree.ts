@@ -540,23 +540,63 @@ function usage(): void {
 Usage: worktree.ts <command> [options]
 
 Commands:
-  init                    Initialize worktree config for this repo
-  create <issue|branch>   Create worktree with auto slot allocation
-  list                    Show all slots and their status
-  delete <issue|branch>   Delete worktree and free slot
+  init                          Initialize worktree config for this repo
+  create|add|c <issue|branch>   Create worktree with auto slot allocation
+  list|ls                       Show all slots and their status
+  delete|rm|d <issue|branch>    Delete worktree and free slot
 
 Options for delete:
-  --force                 Discard uncommitted changes
-  --stash                 Stash uncommitted changes before delete
+  --force                       Discard uncommitted changes
+  --stash                       Stash uncommitted changes before delete
 
 Examples:
   worktree.ts init
-  worktree.ts create 142
+  worktree.ts c 142
   worktree.ts create feature/my-branch
-  worktree.ts list
-  worktree.ts delete 142 --stash
+  worktree.ts ls
+  worktree.ts d 142 --stash
 `)
     process.exit(1)
+}
+
+interface CommandOptions {
+    force?: boolean
+    stash?: boolean
+}
+
+async function runCommand(command: string, target?: string, options: CommandOptions = {}): Promise<boolean> {
+    switch (command) {
+        case 'init':
+            await cmdInit()
+            return true
+        case 'create':
+        case 'add':
+        case 'c':
+            if (!target) {
+                console.error('Error: create requires issue number or branch name')
+                return false
+            }
+            await cmdCreate(target)
+            return true
+        case 'list':
+        case 'ls':
+            await cmdList()
+            return true
+        case 'delete':
+        case 'rm':
+        case 'd':
+            if (!target) {
+                console.error('Error: delete requires issue number or branch name')
+                return false
+            }
+            await cmdDelete(target, options)
+            return true
+        case 'q':
+        case '':
+            return true
+        default:
+            return false
+    }
 }
 
 async function cmdInteractive(): Promise<void> {
@@ -677,33 +717,13 @@ async function cmdInteractive(): Promise<void> {
     rl.close()
 
     const parts = answer.trim().split(/\s+/)
-    const action = parts[0]?.toLowerCase()
+    const action = parts[0]?.toLowerCase() || ''
     const target = parts.slice(1).join(' ')
 
-    switch (action) {
-        case 'c':
-        case 'create':
-            if (!target) {
-                console.error('Usage: c <issue-number or branch-name>')
-                process.exit(1)
-            }
-            await cmdCreate(target)
-            break
-        case 'd':
-        case 'delete':
-        case 'rm':
-            if (!target) {
-                console.error('Usage: d <issue-number or branch-name>')
-                process.exit(1)
-            }
-            await cmdDelete(target, {})
-            break
-        case 'q':
-        case '':
-            break
-        default:
-            console.error(`Unknown action: ${action}`)
-            process.exit(1)
+    const handled = await runCommand(action, target || undefined)
+    if (!handled) {
+        console.error(`Unknown action: ${action}`)
+        process.exit(1)
     }
 }
 
@@ -725,6 +745,8 @@ async function main(): Promise<void> {
             await cmdInit()
             break
         case 'create':
+        case 'add':
+        case 'c':
             if (!args[1]) {
                 console.error('Error: create requires issue number or branch name')
                 usage()
@@ -735,8 +757,10 @@ async function main(): Promise<void> {
         case 'ls':
             await cmdList()
             break
+            
         case 'delete':
         case 'rm':
+        case 'd':
             if (!args[1]) {
                 console.error('Error: delete requires issue number or branch name')
                 usage()
