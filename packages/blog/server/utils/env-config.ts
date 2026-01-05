@@ -16,6 +16,7 @@ export const envSchema = z.object({
 
   // Braintrust
   BRAINTRUST_API_KEY: z.string().min(1, 'BRAINTRUST_API_KEY is required'),
+  BRAINTRUST_PROJECT_NAME: z.string().min(1, 'BRAINTRUST_PROJECT_NAME is required'),
 
   // GitHub OAuth
   NUXT_OAUTH_GITHUB_CLIENT_ID: z.string().min(1, 'NUXT_OAUTH_GITHUB_CLIENT_ID is required'),
