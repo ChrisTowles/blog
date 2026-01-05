@@ -196,11 +196,11 @@ interface WSServerMessage {
 - `server/utils/ws/types.ts` - Message type definitions
 
 **Tasks:**
-- [ ] Create Nitro WebSocket handler at `/_ws/chat`
-- [ ] Implement cookie-based auth in WS upgrade handler
-- [ ] Create SessionManager class (Map<chatId, Session>)
-- [ ] Implement ping/pong for connection health
-- [ ] Add connection logging
+- [x] Create Nitro WebSocket handler at `/_ws/chat`
+- [x] Implement cookie-based auth in WS upgrade handler
+- [x] Create SessionManager class (Map<chatId, Session>)
+- [x] Implement ping/pong for connection health
+- [x] Add connection logging
 
 **Reference:** `/home/ctowles/code/f/claude-agent-sdk-demos/email-agent/ccsdk/websocket-handler.ts`
 
@@ -211,12 +211,12 @@ interface WSServerMessage {
 - `server/utils/ws/session.ts` - Single session class
 
 **Tasks:**
-- [ ] Create AIClient class wrapping Agent SDK `query()`
-- [ ] Configure: Haiku 4.5, extended thinking (4096), max 10 turns
-- [ ] Enable project skills via `settingSources: ['project']`
-- [ ] Register MCP server with all 6 tools
-- [ ] Create Session class with message queue
-- [ ] Implement SDK session_id capture for multi-turn resume
+- [x] Create AIClient class wrapping Agent SDK `query()`
+- [x] Configure: Haiku 4.5, extended thinking (4096), max 10 turns
+- [x] Enable project skills via `settingSources: ['project']`
+- [x] Register MCP server with all 6 tools
+- [x] Create Session class with message queue
+- [x] Implement SDK session_id capture for multi-turn resume
 - [ ] Add 30s timeout wrapper for tool execution
 - [ ] Integrate Braintrust logging
 
@@ -225,13 +225,13 @@ interface WSServerMessage {
 ### Phase 3: Message Streaming Bridge
 
 **Tasks:**
-- [ ] Map Agent SDK message types to WS server messages
-- [ ] Stream text deltas as they arrive
-- [ ] Stream reasoning deltas (extended thinking)
-- [ ] Send tool_use events with name, id, input
-- [ ] Send tool_result events after execution
+- [x] Map Agent SDK message types to WS server messages
+- [x] Stream text deltas as they arrive
+- [x] Stream reasoning deltas (extended thinking)
+- [x] Send tool_use events with name, id, input
+- [x] Send tool_result events after execution
 - [ ] Extract suggested title from agent response
-- [ ] Send done event with final message
+- [x] Send done event with final message
 
 **Message type mapping:**
 ```typescript
@@ -245,12 +245,12 @@ interface WSServerMessage {
 ### Phase 4: Database Persistence
 
 **Tasks:**
-- [ ] Add `sdk_session_id`, `connection_status`, `last_activity_at` columns
-- [ ] Create migration file
+- [x] Add `sdk_session_id`, `connection_status`, `last_activity_at` columns
+- [x] Create migration file
 - [ ] Save SDK session_id after first response
 - [ ] Update connection_status on connect/disconnect
 - [ ] Persist messages to DB after each exchange
-- [ ] Implement session cleanup for stale connections (60s timeout)
+- [x] Implement session cleanup for stale connections (60s timeout)
 
 ### Phase 5: Frontend Migration
 
@@ -262,23 +262,23 @@ interface WSServerMessage {
 - `app/pages/chat/index.vue` - Create chat via WS
 
 **Tasks:**
-- [ ] Create useAgentChat composable using Nuxt useWebSocket
-- [ ] Implement auto-reconnect with SDK session resume
-- [ ] Add message state management (streaming → complete)
-- [ ] Implement tool visibility toggle (user setting)
-- [ ] Block input during streaming (isStreaming ref)
+- [x] Create useAgentChat composable using Nuxt useWebSocket
+- [x] Implement auto-reconnect with SDK session resume
+- [x] Add message state management (streaming → complete)
+- [x] Implement tool visibility toggle (user setting)
+- [x] Block input during streaming (isStreaming ref)
 - [ ] Handle suggested title from agent
-- [ ] Connect on route enter, disconnect on leave
-- [ ] Update chat pages to use new composable
+- [x] Connect on route enter, disconnect on leave
+- [x] Update chat pages to use new composable
 
 **Reference:** `/home/ctowles/code/f/claude-agent-sdk-demos/email-agent/client/hooks/useWebSocket.ts`
 
 ### Phase 6: Skills Integration
 
 **Tasks:**
-- [ ] Ensure `Skill` tool in allowedTools
-- [ ] Configure `settingSources: ['project']`
-- [ ] Update agent system prompt to reference available skills
+- [x] Ensure `Skill` tool in allowedTools
+- [x] Configure `settingSources: ['project']`
+- [x] Update agent system prompt to reference available skills
 - [ ] Test skill invocation (blog-helper, nuxt-v4)
 
 **Available project skills:**
