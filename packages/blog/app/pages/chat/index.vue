@@ -29,8 +29,7 @@ async function createChat(prompt: string) {
     })
     console.log('chat', chat)
     refreshNuxtData('chats')
-    // Using external:true to force full page reload, avoiding Vite debug module ESM client-side nav issue
-    await navigateTo(`/chat/${chat.id}`, { external: true })
+    await navigateTo(`/chat/${chat.id}`)
     // no loading state to reset, because we are navigating away.
   } catch (error) {
     console.error('error', error)
