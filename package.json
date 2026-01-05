@@ -35,7 +35,7 @@
     "db:studio": "pnpm --filter @chris-towles/blog db:studio",
     "docker:up": "docker compose up -d --wait",
     "docker:down": "docker compose down",
-    "docker:reset": "docker compose down --volumes --remove-orphans",
+    "docker:reset": "docker compose down --volumes --remove-orphans && pnpm clean",
     "slides": "pnpm --filter @chris-towles/slides dev",
     "slides:export": "pnpm --filter @chris-towles/slides export",
     "slides:upgrade": "pnpm --filter @chris-towles/slides slides:upgrade",
@@ -72,12 +72,15 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@parcel/watcher",
+      "@playwright/browser-chromium",
+      "@swc/core",
       "better-sqlite3",
       "esbuild",
+      "playwright-chromium",
+      "protobufjs",
       "sharp",
-      "vue-demi",
       "unrs-resolver",
-      "playwright-chromium"
+      "vue-demi"
     ]
   },
   "lint-staged": {
