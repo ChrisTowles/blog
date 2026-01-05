@@ -8,8 +8,10 @@
     "commands": [
         "./commands/commit.md",
         "./commands/refine_text.md",
-        "./commands/01_research.md",
-        "./commands/02_plan.md",
-        "./commands/03_implement.md"
+        "./commands/set_current_plan.md",
+        "./commands/plan.md",
+        "./commands/implement.md",
+        "./commands/create_ralph_implement_command.md"
     ]
 }
+
