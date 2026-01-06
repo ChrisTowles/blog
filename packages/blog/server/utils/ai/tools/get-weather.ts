@@ -1,6 +1,7 @@
 import { tool } from '@anthropic-ai/claude-agent-sdk'
 import { z } from 'zod'
 import { toolResult, toolError } from './helpers'
+import { fetchWithTimeout, isTimeoutError, API_TIMEOUT_MS } from './timeout'
 
 /**
  * Weather condition codes to icons and text (Open-Meteo WMO codes)
@@ -41,18 +42,21 @@ function getDayName(dateStr: string, index: number): string {
 
 /**
  * Get weather for a location using Open-Meteo API
+ * Includes timeout protection for external API calls.
  */
 export const getWeather = tool(
     'getWeather',
-    'Get current weather and forecast for a location. Use when the user asks about weather conditions.',
+    `Get current weather and forecast for a location. Use when the user asks about weather conditions. (${API_TIMEOUT_MS / 1000}s timeout)`,
     {
         location: z.string().describe('City name (e.g., "London", "New York", "Tokyo")')
     },
     async (args) => {
         try {
-            // Geocode location
-            const geoRes = await fetch(
-                `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(args.location)}&count=1`
+            // Geocode location with timeout
+            const geoRes = await fetchWithTimeout(
+                `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(args.location)}&count=1`,
+                {},
+                API_TIMEOUT_MS
             )
             if (!geoRes.ok) {
                 return toolError('Failed to geocode location')
@@ -65,9 +69,11 @@ export const getWeather = tool(
 
             const { latitude, longitude, name, country } = geoData.results[0]
 
-            // Fetch weather
-            const weatherRes = await fetch(
-                `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5`
+            // Fetch weather with timeout
+            const weatherRes = await fetchWithTimeout(
+                `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5`,
+                {},
+                API_TIMEOUT_MS
             )
             if (!weatherRes.ok) {
                 return toolError('Failed to fetch weather data')
@@ -94,6 +100,9 @@ export const getWeather = tool(
             })
         } catch (error) {
             console.error('Weather fetch error:', error)
+            if (isTimeoutError(error)) {
+                return toolError('Weather service timed out. Please try again.')
+            }
             return toolError('Failed to fetch weather data')
         }
     }

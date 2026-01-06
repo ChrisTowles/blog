@@ -11,7 +11,6 @@ const toast = useToast()
 
 const input = ref('')
 const loading = ref(false)
-const { model } = useModels()
 
 async function setPrompt(prompt: string) {
   input.value = prompt
@@ -29,7 +28,7 @@ async function createChat(prompt: string) {
     })
     console.log('chat', chat)
     refreshNuxtData('chats')
-    await navigateTo(`/chat/${chat.id}`)
+    await navigateTo(`/chat/${chat.id}?prompt=${encodeURIComponent(prompt)}`)
     // no loading state to reset, because we are navigating away.
   } catch (error) {
     console.error('error', error)
@@ -104,11 +103,6 @@ const quickChats = [
         >
           <UChatPromptSubmit color="neutral" :data-testid="TEST_IDS.CHAT.SUBMIT" />
 
-          <template #footer>
-            <div class="flex items-center gap-4 w-full">
-              <ModelSelect v-model="model" />
-            </div>
-          </template>
         </UChatPrompt>
 
         <div class="flex flex-wrap gap-2" :data-testid="TEST_IDS.CHAT.QUICK_ACTIONS">

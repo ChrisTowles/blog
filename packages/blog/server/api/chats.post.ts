@@ -1,26 +1,33 @@
-import { z } from 'zod'
-
+/**
+ * Create a new chat record.
+ *
+ * POST /api/chats
+ * Body: { input?: string } - optional, for future use
+ *
+ * Creates the chat in database, then client navigates to /chat/[id]
+ * where WebSocket takes over for actual AI conversation.
+ */
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+    const session = await getUserSession(event)
+    const db = useDrizzle()
 
-  const { input } = await readValidatedBody(event, z.object({
-    input: z.string().min(1, 'Message cannot be empty')
-  }).parse)
-  const db = useDrizzle()
+    // Get user ID (authenticated or anonymous session)
+    const userId = session.user?.id || session.id
+    if (!userId) {
+        throw createError({
+            statusCode: 401,
+            message: 'Unauthorized'
+        })
+    }
 
-  const [chat] = await db.insert(tables.chats).values({
-    title: '',
-    userId: session.user?.id || session.id
-  }).returning()
-  if (!chat) {
-    throw createError({ statusCode: 500, statusMessage: 'Failed to create chat' })
-  }
+    // Create chat record (no initial message - that's sent via WebSocket)
+    const [chat] = await db.insert(tables.chats).values({
+        userId
+    }).returning({ id: tables.chats.id })
 
-  await db.insert(tables.messages).values({
-    chatId: chat.id,
-    role: 'user',
-    parts: [{ type: 'text', text: input }]
-  })
+    if (!chat) {
+        throw createError({ statusCode: 500, statusMessage: 'Failed to create chat' })
+    }
 
-  return chat
+    return { id: chat.id }
 })

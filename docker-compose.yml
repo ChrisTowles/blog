@@ -1,7 +1,7 @@
 services:
   postgres:
     # pgvector image includes the vector extension for RAG embeddings
-    image: pgvector/pgvector:pg17
+    image: pgvector/pgvector:pg18
 
     container_name: "blog-postgres_${DB_PORT}"
     environment:
@@ -11,7 +11,7 @@ services:
     ports:
       - "${DB_PORT}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/18/docker
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s

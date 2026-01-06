@@ -15,7 +15,6 @@ const components = {
 const route = useRoute()
 const toast = useToast()
 const clipboard = useClipboard()
-const { model } = useModels()
 
 const { data } = await useFetch(`/api/chats/${route.params.id}`, { cache: 'force-cache' })
 
@@ -24,6 +23,7 @@ if (!data.value) {
 }
 
 const input = ref('')
+const showToolInvocations = ref(true)
 
 const initialMessages: ChatMessage[] = (data.value.messages || []).map(msg => ({
   id: msg.id,
@@ -32,10 +32,14 @@ const initialMessages: ChatMessage[] = (data.value.messages || []).map(msg => ({
   createdAt: msg.createdAt ? new Date(msg.createdAt) : undefined
 }))
 
-const chat = useChat({
+// Get initial prompt from query param (passed from index page when creating new chat)
+const initialPrompt = route.query.prompt as string | undefined
+
+const chat = useAgentChat({
   id: data.value.id,
   initialMessages,
-  model,
+  initialPrompt: initialMessages.length === 0 ? initialPrompt : undefined,
+  showToolInvocations,
   onError(error) {
     console.error('Chat error:', error.message)
     toast.add({
@@ -45,7 +49,7 @@ const chat = useChat({
       duration: 0
     })
   },
-  onTitleUpdate() {
+  onTitleUpdate(_title) {
     refreshNuxtData('chats')
   }
 })
@@ -86,9 +90,10 @@ function getToolResult(message: ChatMessage, toolUse: ToolUsePart): ToolResultPa
   )
 }
 
+// Clean up query param after initial navigation to avoid re-sending on refresh
 onMounted(() => {
-  if (data.value?.messages?.length === 1) {
-    chat.regenerate()
+  if (initialPrompt) {
+    navigateTo(`/chat/${route.params.id}`, { replace: true })
   }
 })
 </script>
@@ -159,7 +164,7 @@ onMounted(() => {
         >
           <template #footer>
             <div class="flex items-center gap-4 w-full">
-              <ModelSelect v-model="model" />
+              <UCheckbox v-model="showToolInvocations" label="Show tools" />
             </div>
             <UChatPromptSubmit
               :status="chat.status.value"

@@ -30,6 +30,10 @@ export const chats = pgTable('chats', {
   id: varchar({ length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   title: varchar({ length: 200 }),
   userId: varchar({ length: 36 }).notNull(),
+  // WebSocket session fields
+  sdkSessionId: text('sdk_session_id'), // For multi-turn resume with Agent SDK
+  connectionStatus: text('connection_status'), // 'connected' | 'disconnected' | null
+  lastActivityAt: timestamp('last_activity_at'),
   ...timestamps
 }, table => [
   index('chats_user_id_idx').on(table.userId)

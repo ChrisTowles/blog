@@ -19,6 +19,8 @@ export default defineNuxtConfig({
     'nuxt-gtag',
     'nuxt-og-image',
     '@nuxtjs/mdc',
+    // Must be before nuxt-auth-utils to fix WS upgrade session errors
+    '~/modules/ws-session-fix',
     'nuxt-auth-utils',
     '@nuxt/test-utils/module'
   ],
@@ -91,7 +93,8 @@ export default defineNuxtConfig({
       '**/*.spec.js'
     ],
     experimental: {
-      openAPI: true
+      openAPI: true,
+      websocket: true
     },
     esbuild: {
       options: {
