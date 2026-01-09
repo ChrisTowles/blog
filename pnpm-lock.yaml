@@ -51,6 +51,9 @@ importers:
       vitest:
         specifier: ^4.0.16
         version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(happy-dom@20.1.0)(jiti@2.6.1)(jsdom@26.1.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)
+      zod:
+        specifier: ^4.3.5
+        version: 4.3.5
       zx:
         specifier: ^8.8.5
         version: 8.8.5
@@ -15111,7 +15114,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 24.10.4
+      '@types/node': 25.0.3
 
   '@typescript/ata@0.9.8(typescript@5.9.3)':
     dependencies:

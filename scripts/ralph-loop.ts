@@ -24,8 +24,10 @@
  */
 
 import 'zx/globals'
+import type { WriteStream } from 'node:fs'
 import { spawn } from 'child_process'
 import { defineCommand, runMain } from 'citty'
+import { z } from 'zod'
 
 // ============================================================================
 // Types
@@ -66,8 +68,52 @@ export interface RalphState {
 export const DEFAULT_MAX_ITERATIONS = 10
 export const DEFAULT_STATE_FILE = 'ralph-state.json'
 export const DEFAULT_LOG_FILE = 'ralph-log.md'
+export const DEFAULT_PROGRESS_FILE = 'ralph-progress.md'
 export const DEFAULT_COMPLETION_MARKER = 'RALPH_DONE'
 export const CLAUDE_DEFAULT_ARGS = ['--print', '--output-format', 'stream-json', '--include-partial-messages', '--dangerously-skip-permissions']
+
+// ============================================================================
+// Arg Validation Schema
+// ============================================================================
+
+export const ArgsSchema = z.object({
+    taskId: z.string().optional()
+        .refine((val: string | undefined) => !val || /^\d+$/.test(val), 'taskId must be a positive integer'),
+    addTask: z.string().optional()
+        .refine((val: string | undefined) => !val || val.trim().length >= 3, 'Task description must be at least 3 characters'),
+    listTasks: z.boolean().default(false),
+    clear: z.boolean().default(false),
+    noCommit: z.boolean().default(false),
+    maxIterations: z.string().default(String(DEFAULT_MAX_ITERATIONS))
+        .refine((val: string) => /^\d+$/.test(val) && parseInt(val, 10) > 0, 'maxIterations must be a positive integer'),
+    dryRun: z.boolean().default(false),
+    claudeArgs: z.string().optional(),
+    stateFile: z.string().default(DEFAULT_STATE_FILE)
+        .refine((val: string) => val.endsWith('.json'), 'stateFile must be a .json file'),
+    logFile: z.string().default(DEFAULT_LOG_FILE),
+    completionMarker: z.string().default(DEFAULT_COMPLETION_MARKER)
+        .refine((val: string) => val.length >= 3, 'completionMarker must be at least 3 characters'),
+}).strict()
+
+// citty internal keys to filter out before validation
+const CITTY_INTERNAL_KEYS = ['_', 't', 'a', 'l', 'c', 'm', 'n']
+
+export function validateArgs(args: unknown): RalphArgs {
+    // Filter out citty internal keys (aliases and positionals)
+    const filtered = Object.fromEntries(
+        Object.entries(args as Record<string, unknown>)
+            .filter(([k]) => !CITTY_INTERNAL_KEYS.includes(k))
+    )
+    const result = ArgsSchema.safeParse(filtered)
+    if (!result.success) {
+        const errors = result.error.issues.map(i => `  - ${i.path.join('.')}: ${i.message}`).join('\n')
+        console.error(chalk.red('Invalid arguments:\n' + errors))
+        process.exit(2)
+    }
+    return result.data
+}
+
+export type RalphArgs = z.infer<typeof ArgsSchema>
 
 // ============================================================================
 // State Management
@@ -150,31 +196,41 @@ ${lines.join('\n')}`
 // Prompt Building
 // ============================================================================
 
-export function buildIterationPrompt(completionMarker: string, focusedTaskId: number | null): string {
+export interface BuildPromptOptions {
+    completionMarker: string
+    stateFile: string
+    progressFile: string
+    focusedTaskId: number | null
+    skipCommit?: boolean
+}
+
+export function buildIterationPrompt({ completionMarker, stateFile, progressFile, focusedTaskId, skipCommit = false }: BuildPromptOptions): string {
     // prompt inspired by https://www.aihero.dev/tips-for-ai-coding-with-ralph-wiggum#2-start-with-hitl-then-go-afk
 
-    const taskInstruction = focusedTaskId
-        ? `1. **Work on Task #${focusedTaskId}** (you've been asked to focus on this one).`
-        : `1. **Choose** which pending task to work on next based on YOUR judgment of priority/dependencies.`
+    let step = 1
 
-    return `@ralph-state.json
+    return `
+Review the state and progress files. 
 
-@ralph-progress.md
+state_file: @${stateFile}
+progress_file: @${progressFile}
+
+Then:
 
 
-Review the state and progress files. Then:
 
-${taskInstruction}
-2. Mark it "in_progress" in ralph-state.json.
-3. Work on that single task.
-4. Run type checks and tests.
-5. Mark the task "done" in ralph-state.json (update status field).
-6. Update ralph-progress.md with what you did.
-7. Make a git commit.
+${step++}. ${focusedTaskId
+        ? `**Work on Task #${focusedTaskId}** (you've been asked to focus on this one).`
+        : `**Choose** which pending task to work on next based on YOUR judgment of priority/dependencies.`}
+${step++}. Work on that single task.
+${step++}. Run type checks and tests.
+${step++}. Mark the task "done" in @${stateFile} (update status field).
+${step++}. Update @${progressFile} with what you did.
+${skipCommit ? '' : `${step++}. Make a git commit.`}
 
 **ONE TASK PER ITERATION**
 
-When ALL tasks are done, output: ${completionMarker}
+When ALL tasks are done, Output: <promise>${completionMarker}</promise>
 `
 }
 
@@ -252,7 +308,7 @@ function parseStreamLine(line: string): string | null {
 export async function runIteration(
     prompt: string,
     claudeArgs: string[],
-    logStream?: fs.WriteStream,
+    logStream?: WriteStream,
 ): Promise<{ output: string, exitCode: number }> {
     const allArgs = [...CLAUDE_DEFAULT_ARGS, ...claudeArgs, prompt]
 
@@ -337,6 +393,17 @@ const main = defineCommand({
             default: false,
             description: 'List all tasks in the state file',
         },
+        clear: {
+            type: 'boolean',
+            alias: 'c',
+            default: false,
+            description: 'Clear all ralph files (state, log, progress)',
+        },
+        noCommit: {
+            type: 'boolean',
+            default: false,
+            description: 'Skip git commit after each task',
+        },
         maxIterations: {
             type: 'string',
             alias: 'm',
@@ -370,12 +437,32 @@ const main = defineCommand({
         },
     },
     async run({ args }) {
-        const maxIterations = parseInt(args.maxIterations, 10)
-        const extraClaudeArgs = args.claudeArgs?.split(' ').filter(Boolean) || []
+        const validatedArgs = validateArgs(args)
+        const maxIterations = parseInt(validatedArgs.maxIterations, 10)
+        const extraClaudeArgs = validatedArgs.claudeArgs?.split(' ').filter(Boolean) || []
+
+        // Handle --clear: remove all ralph files
+        if (validatedArgs.clear) {
+            const files = [validatedArgs.stateFile, validatedArgs.logFile, DEFAULT_PROGRESS_FILE]
+            let deleted = 0
+
+            for (const file of files) {
+                if (fs.existsSync(file)) {
+                    fs.unlinkSync(file)
+                    console.log(chalk.green(`✓ Deleted ${file}`))
+                    deleted++
+                } else {
+                    console.log(chalk.dim(`  Skipped ${file} (not found)`))
+                }
+            }
+
+            console.log(chalk.dim(`\nCleared ${deleted} file(s)`))
+            process.exit(0)
+        }
 
         // Handle --addTask: add a task to state file
-        if (args.addTask !== undefined) {
-            const description = String(args.addTask).trim()
+        if (validatedArgs.addTask !== undefined) {
+            const description = String(validatedArgs.addTask).trim()
 
             if (!description || description.length < 3) {
                 console.error(chalk.red('Error: Task description too short (min 3 chars)'))
@@ -383,27 +470,27 @@ const main = defineCommand({
                 process.exit(2)
             }
 
-            let state = loadState(args.stateFile)
+            let state = loadState(validatedArgs.stateFile)
 
             if (!state) {
                 state = createInitialState(maxIterations)
             }
 
             const newTask = addTaskToState(state, description)
-            saveState(state, args.stateFile)
+            saveState(state, validatedArgs.stateFile)
 
             console.log(chalk.green(`✓ Added task #${newTask.id}: ${newTask.description}`))
-            console.log(chalk.dim(`State saved to: ${args.stateFile}`))
+            console.log(chalk.dim(`State saved to: ${validatedArgs.stateFile}`))
             console.log(chalk.dim(`Total tasks: ${state.tasks.length}`))
             process.exit(0)
         }
 
         // Handle --listTasks: show all tasks
-        if (args.listTasks) {
-            const state = loadState(args.stateFile)
+        if (validatedArgs.listTasks) {
+            const state = loadState(validatedArgs.stateFile)
 
             if (!state) {
-                console.log(chalk.yellow(`No state file found at: ${args.stateFile}`))
+                console.log(chalk.yellow(`No state file found at: ${validatedArgs.stateFile}`))
                 process.exit(0)
             }
 
@@ -428,14 +515,14 @@ const main = defineCommand({
         }
 
         // Parse taskId if provided
-        const focusedTaskId = args.taskId ? parseInt(args.taskId, 10) : null
+        const focusedTaskId = validatedArgs.taskId ? parseInt(validatedArgs.taskId, 10) : null
 
         // Load existing state
-        let state = loadState(args.stateFile)
+        let state = loadState(validatedArgs.stateFile)
 
         // Validate state and tasks exist
         if (!state) {
-            console.error(chalk.red(`Error: No state file found at: ${args.stateFile}`))
+            console.error(chalk.red(`Error: No state file found at: ${validatedArgs.stateFile}`))
             console.error(chalk.dim('Use --addTask "description" to add tasks first.'))
             process.exit(2)
         }
@@ -461,14 +548,15 @@ const main = defineCommand({
         }
 
         // Dry run mode
-        if (args.dryRun) {
+        if (validatedArgs.dryRun) {
             console.log(chalk.bold('\n=== DRY RUN ===\n'))
             console.log(chalk.cyan('Config:'))
             console.log(`  Focus: ${focusedTaskId ? `Task #${focusedTaskId}` : 'Ralph picks'}`)
             console.log(`  Max iterations: ${maxIterations}`)
-            console.log(`  State file: ${args.stateFile}`)
-            console.log(`  Log file: ${args.logFile}`)
-            console.log(`  Completion marker: ${args.completionMarker}`)
+            console.log(`  State file: ${validatedArgs.stateFile}`)
+            console.log(`  Log file: ${validatedArgs.logFile}`)
+            console.log(`  Completion marker: ${validatedArgs.completionMarker}`)
+            console.log(`  No commit: ${validatedArgs.noCommit}`)
             console.log(`  Claude args: ${[...CLAUDE_DEFAULT_ARGS, ...extraClaudeArgs].join(' ')}`)
             console.log(`  Pending tasks: ${pendingTasks.length}`)
 
@@ -495,7 +583,7 @@ const main = defineCommand({
         state.status = 'running'
 
         // Create log stream (append mode)
-        const logStream = fs.createWriteStream(args.logFile, { flags: 'a' })
+        const logStream = fs.createWriteStream(validatedArgs.logFile, { flags: 'a' })
         const _logLine = (msg: string) => {
             console.log(msg)
             logStream.write(msg + '\n')
@@ -511,7 +599,8 @@ const main = defineCommand({
         console.log(chalk.bold.blue('\n🔄 Ralph Loop Starting\n'))
         console.log(chalk.dim(`Focus: ${focusedTaskId ? `Task #${focusedTaskId}` : 'Ralph picks'}`))
         console.log(chalk.dim(`Max iterations: ${maxIterations}`))
-        console.log(chalk.dim(`Log file: ${args.logFile}`))
+        console.log(chalk.dim(`Log file: ${validatedArgs.logFile}`))
+        console.log(chalk.dim(`No commit: ${validatedArgs.noCommit}`))
         console.log(chalk.dim(`Tasks: ${state.tasks.length} (${done} done, ${pending} pending)`))
         console.log()
 
@@ -531,7 +620,7 @@ const main = defineCommand({
             console.log(chalk.yellow(msg))
             logStream.write(msg)
             state.status = 'error'
-            saveState(state, args.stateFile)
+            saveState(state, validatedArgs.stateFile)
         })
 
         // Main loop
@@ -543,12 +632,21 @@ const main = defineCommand({
             logStream.write(iterHeader)
 
             const iterationStart = new Date().toISOString()
-            const prompt = buildIterationPrompt(args.completionMarker, focusedTaskId)
+            const prompt = buildIterationPrompt({
+                completionMarker: validatedArgs.completionMarker,
+                stateFile: validatedArgs.stateFile,
+                progressFile: DEFAULT_PROGRESS_FILE,
+                focusedTaskId,
+                skipCommit: validatedArgs.noCommit,
+            })
+
+            // Log the prompt
+            logStream.write(`\n--- Prompt ---\n${prompt}\n--- End Prompt ---\n\n`)
 
             const { output } = await runIteration(prompt, extraClaudeArgs, logStream)
 
             const iterationEnd = new Date().toISOString()
-            const markerFound = detectCompletionMarker(output, args.completionMarker)
+            const markerFound = detectCompletionMarker(output, validatedArgs.completionMarker)
 
             // Record history
             state.history.push({
@@ -560,7 +658,7 @@ const main = defineCommand({
             })
 
             // Save state after each iteration
-            saveState(state, args.stateFile)
+            saveState(state, validatedArgs.stateFile)
 
             // Log iteration summary
             const summaryMsg = `\n━━━ Iteration ${state.iteration} Summary ━━━\nMarker found: ${markerFound ? 'yes' : 'no'}\n`
@@ -571,7 +669,7 @@ const main = defineCommand({
             // Check completion
             if (markerFound) {
                 state.status = 'completed'
-                saveState(state, args.stateFile)
+                saveState(state, validatedArgs.stateFile)
                 const doneMsg = `\n✅ Task completed after ${state.iteration} iteration(s)\n`
                 console.log(chalk.bold.green(doneMsg))
                 logStream.write(doneMsg)
@@ -583,10 +681,10 @@ const main = defineCommand({
         // Max iterations reached
         if (!interrupted) {
             state.status = 'max_iterations_reached'
-            saveState(state, args.stateFile)
+            saveState(state, validatedArgs.stateFile)
             const maxMsg = `\n⚠️  Max iterations (${maxIterations}) reached without completion\n`
             console.log(chalk.bold.yellow(maxMsg))
-            console.log(chalk.dim(`State saved to: ${args.stateFile}`))
+            console.log(chalk.dim(`State saved to: ${validatedArgs.stateFile}`))
             logStream.write(maxMsg)
             logStream.end()
             process.exit(1)

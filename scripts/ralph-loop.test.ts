@@ -14,6 +14,7 @@ import {
     buildIterationPrompt,
     extractOutputSummary,
     detectCompletionMarker,
+    ArgsSchema,
     DEFAULT_MAX_ITERATIONS,
     DEFAULT_STATE_FILE,
     DEFAULT_COMPLETION_MARKER,
@@ -93,35 +94,42 @@ describe('ralph-loop', () => {
     })
 
     describe('buildIterationPrompt', () => {
+        const defaultOpts = {
+            completionMarker: 'RALPH_DONE',
+            stateFile: 'ralph-state.json',
+            progressFile: 'ralph-progress.md',
+            focusedTaskId: null as number | null,
+        }
+
         it('should include completion marker', () => {
-            const prompt = buildIterationPrompt('RALPH_DONE', null)
+            const prompt = buildIterationPrompt(defaultOpts)
             expect(prompt).toContain('RALPH_DONE')
         })
 
         it('should include state file reference', () => {
-            const prompt = buildIterationPrompt('RALPH_DONE', null)
+            const prompt = buildIterationPrompt(defaultOpts)
             expect(prompt).toContain('@ralph-state.json')
         })
 
         it('should include progress file reference', () => {
-            const prompt = buildIterationPrompt('RALPH_DONE', null)
+            const prompt = buildIterationPrompt(defaultOpts)
             expect(prompt).toContain('@ralph-progress.md')
         })
 
         it('should default to choosing task when no focusedTaskId', () => {
-            const prompt = buildIterationPrompt('RALPH_DONE', null)
+            const prompt = buildIterationPrompt(defaultOpts)
             expect(prompt).toContain('**Choose** which pending task')
         })
 
         it('should focus on specific task when focusedTaskId provided', () => {
-            const prompt = buildIterationPrompt('RALPH_DONE', 3)
+            const prompt = buildIterationPrompt({ ...defaultOpts, focusedTaskId: 3 })
             expect(prompt).toContain('**Work on Task #3**')
             expect(prompt).not.toContain('**Choose** which pending task')
         })
 
         it('should include custom completion marker', () => {
-            const prompt = buildIterationPrompt('CUSTOM_MARKER', null)
-            expect(prompt).toContain('output: CUSTOM_MARKER')
+            const prompt = buildIterationPrompt({ ...defaultOpts, completionMarker: 'CUSTOM_MARKER' })
+            expect(prompt).toContain('CUSTOM_MARKER')
         })
     })
 
@@ -342,6 +350,68 @@ describe('ralph-loop', () => {
 
             expect(loaded).not.toBeNull()
             expect(loaded?.tasks).toEqual([])
+        })
+    })
+
+    describe('ArgsSchema validation', () => {
+        it('should accept valid args with defaults', () => {
+            const result = ArgsSchema.safeParse({})
+            expect(result.success).toBe(true)
+            if (result.success) {
+                expect(result.data.maxIterations).toBe('10')
+                expect(result.data.stateFile).toBe('ralph-state.json')
+                expect(result.data.completionMarker).toBe('RALPH_DONE')
+            }
+        })
+
+        it('should accept valid taskId', () => {
+            const result = ArgsSchema.safeParse({ taskId: '5' })
+            expect(result.success).toBe(true)
+        })
+
+        it('should reject non-numeric taskId', () => {
+            const result = ArgsSchema.safeParse({ taskId: 'abc' })
+            expect(result.success).toBe(false)
+        })
+
+        it('should reject short addTask', () => {
+            const result = ArgsSchema.safeParse({ addTask: 'ab' })
+            expect(result.success).toBe(false)
+        })
+
+        it('should accept valid addTask', () => {
+            const result = ArgsSchema.safeParse({ addTask: 'implement feature' })
+            expect(result.success).toBe(true)
+        })
+
+        it('should reject non-positive maxIterations', () => {
+            const result = ArgsSchema.safeParse({ maxIterations: '0' })
+            expect(result.success).toBe(false)
+        })
+
+        it('should reject non-numeric maxIterations', () => {
+            const result = ArgsSchema.safeParse({ maxIterations: 'abc' })
+            expect(result.success).toBe(false)
+        })
+
+        it('should reject stateFile without .json extension', () => {
+            const result = ArgsSchema.safeParse({ stateFile: 'state.txt' })
+            expect(result.success).toBe(false)
+        })
+
+        it('should accept stateFile with .json extension', () => {
+            const result = ArgsSchema.safeParse({ stateFile: 'custom-state.json' })
+            expect(result.success).toBe(true)
+        })
+
+        it('should reject short completionMarker', () => {
+            const result = ArgsSchema.safeParse({ completionMarker: 'ab' })
+            expect(result.success).toBe(false)
+        })
+
+        it('should reject unknown keys in strict mode', () => {
+            const result = ArgsSchema.safeParse({ unknownKey: 'value' })
+            expect(result.success).toBe(false)
         })
     })
 })
