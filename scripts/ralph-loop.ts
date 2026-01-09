@@ -1,5 +1,28 @@
 #!/usr/bin/env -S pnpx tsx
 
+/**
+ * Ralph Loop - Iterative Claude Code execution for autonomous task completion
+ *
+ * Runs claude CLI in a loop, with each iteration working on one task from
+ * ralph-state.json until all tasks are complete or max iterations reached.
+ *
+ * Usage:
+ *   ./scripts/ralph-loop.ts --addTask "implement feature X"
+ *   ./scripts/ralph-loop.ts --addTask "write tests for feature X"
+ *   ./scripts/ralph-loop.ts                    # run loop (ralph picks tasks)
+ *   ./scripts/ralph-loop.ts --taskId 3         # focus on specific task
+ *
+ * See also: /tt:ralph-plan command for interactive task planning
+ *
+ * FUTURE IMPROVEMENTS:
+ * - Investigate all tasks upfront in a "planning" iteration, save that
+ *   conversation/session ID, then use --resume with that session ID for
+ *   all subsequent task iterations. This would give ralph persistent context
+ *   about the full task list and codebase understanding across iterations.
+ * - Add --resume flag to continue from a previous session
+ * - Parse claude output to auto-detect which task was completed
+ */
+
 import 'zx/globals'
 import { spawn } from 'child_process'
 import { defineCommand, runMain } from 'citty'

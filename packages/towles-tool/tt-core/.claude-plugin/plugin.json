@@ -1,7 +1,7 @@
 {
     "name": "tt",
     "description": "Useful personal commands: AI assistant, commit messages, text refinement",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "author": {
         "name": "Chris Towles"
     },
@@ -11,7 +11,8 @@
         "./commands/set_current_plan.md",
         "./commands/plan.md",
         "./commands/implement.md",
-        "./commands/create_ralph_implement_command.md"
+        "./commands/create_ralph_implement_command.md",
+        "./commands/ralph_plan.md"
     ]
 }
 
