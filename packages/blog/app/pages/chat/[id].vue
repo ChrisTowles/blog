@@ -32,7 +32,7 @@ const initialMessages: ChatMessage[] = (data.value.messages || []).map(msg => ({
   createdAt: msg.createdAt ? new Date(msg.createdAt) : undefined
 }))
 
-const chat = useChat({
+const chat = useWebSocketChat({
   id: data.value.id,
   initialMessages,
   model,
@@ -161,9 +161,8 @@ onMounted(() => {
             <div class="flex items-center gap-4 w-full">
               <ModelSelect v-model="model" />
               <QueueStatus
-                v-if="'queueStatus' in chat"
-                :running-task-id="(chat as any).queueStatus.value?.runningTaskId ?? null"
-                :queued-task-ids="(chat as any).queueStatus.value?.queuedTaskIds ?? []"
+                :running-task-id="chat.queueStatus.value.runningTaskId"
+                :queued-task-ids="chat.queueStatus.value.queuedTaskIds"
               />
             </div>
             <UChatPromptSubmit
