@@ -30,6 +30,34 @@ This repo is also a [Claude Code](https://docs.anthropic.com/en/docs/claude-code
 | `tt-core` | `/tt:commit`, `/tt:refine` | Git commit generator, text refinement |
 | `notifications` | Stop hook | Audio notification when Claude stops |
 
+### Adding a Marketplace
+
+```bash
+# From GitHub repo
+claude plugin marketplace add ChrisTowles/blog
+
+# From local directory
+claude plugin marketplace add ./
+
+# List marketplaces
+claude plugin marketplace list
+
+# Update
+claude plugin marketplace update towles-tool
+
+
+```
+
+### Adding a Plugin
+
+```bash
+
+# Example
+claude plugin install tt@towles-tool --scope user
+```
+
+Scopes: `user` (~/.claude/), `project` (.claude/), `local` (current dir)
+
 ### Plugin Structure
 
 ```
