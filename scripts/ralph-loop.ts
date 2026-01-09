@@ -142,14 +142,16 @@ export function buildIterationPrompt(completionMarker: string, focusedTaskId: nu
 Review the state and progress files. Then:
 
 ${taskInstruction}
-2. Work on that single task.
-3. Run type checks and tests.
-4. Update ralph-progress.md with what you did.
-5. Make a git commit.
+2. Mark it "in_progress" in ralph-state.json.
+3. Work on that single task.
+4. Run type checks and tests.
+5. Mark the task "done" in ralph-state.json (update status field).
+6. Update ralph-progress.md with what you did.
+7. Make a git commit.
 
 **ONE TASK PER ITERATION**
 
-When ALL work is complete, output: ${completionMarker}
+When ALL tasks are done, output: ${completionMarker}
 `
 }
 
@@ -208,6 +210,10 @@ function parseStreamLine(line: string): string | null {
         // Extract text from streaming deltas
         if (data.type === 'stream_event' && data.event?.type === 'content_block_delta') {
             return data.event.delta?.text || null
+        }
+        // Add newline after content block ends
+        if (data.type === 'stream_event' && data.event?.type === 'content_block_stop') {
+            return '\n'
         }
         // Also capture final result
         if (data.type === 'result' && data.result) {
