@@ -184,7 +184,7 @@ When ALL tasks are done, output: ${completionMarker}
 // Output Summary
 // ============================================================================
 
-export function extractOutputSummary(output: string, maxLength: number = 200): string {
+export function extractOutputSummary(output: string, maxLength: number = 2000): string {
     const lines = output.split('\n').filter(l => l.trim()).slice(-5)
     let summary = lines.join(' ').trim()
 
