@@ -32,7 +32,7 @@ const initialMessages: ChatMessage[] = (data.value.messages || []).map(msg => ({
   createdAt: msg.createdAt ? new Date(msg.createdAt) : undefined
 }))
 
-const chat = useWebSocketChat({
+const chat = useChat({
   id: data.value.id,
   initialMessages,
   model,
