@@ -160,6 +160,11 @@ onMounted(() => {
           <template #footer>
             <div class="flex items-center gap-4 w-full">
               <ModelSelect v-model="model" />
+              <QueueStatus
+                v-if="'queueStatus' in chat"
+                :running-task-id="(chat as any).queueStatus.value?.runningTaskId ?? null"
+                :queued-task-ids="(chat as any).queueStatus.value?.queuedTaskIds ?? []"
+              />
             </div>
             <UChatPromptSubmit
               :status="chat.status.value"

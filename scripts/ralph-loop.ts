@@ -37,8 +37,11 @@ export interface IterationHistory {
     iteration: number
     startedAt: string
     completedAt: string
+    durationMs: number
+    durationHuman: string
     outputSummary: string
     markerFound: boolean
+    contextUsedPercent?: number
 }
 
 export type TaskStatus = 'pending' | 'in_progress' | 'done'
@@ -237,6 +240,26 @@ When ALL tasks are done, Output: <promise>${completionMarker}</promise>
 
 
 // ============================================================================
+// Duration Formatting
+// ============================================================================
+
+export function formatDuration(ms: number): string {
+    const seconds = Math.floor(ms / 1000)
+    const minutes = Math.floor(seconds / 60)
+    const hours = Math.floor(minutes / 60)
+
+    if (hours > 0) {
+        const remainingMins = minutes % 60
+        return `${hours}h ${remainingMins}m`
+    }
+    if (minutes > 0) {
+        const remainingSecs = seconds % 60
+        return `${minutes}m ${remainingSecs}s`
+    }
+    return `${seconds}s`
+}
+
+// ============================================================================
 // Output Summary
 // ============================================================================
 
@@ -280,40 +303,73 @@ interface StreamEvent {
         delta?: { text?: string }
     }
     result?: string
+    total_cost_usd?: number
+    num_turns?: number
+    session_id?: string
+    usage?: {
+        input_tokens?: number
+        output_tokens?: number
+        cache_read_input_tokens?: number
+        cache_creation_input_tokens?: number
+    }
 }
 
-function parseStreamLine(line: string): string | null {
-    if (!line.trim()) return null
+// Claude model context windows (tokens)
+const MODEL_CONTEXT_WINDOWS: Record<string, number> = {
+    'claude-sonnet-4-20250514': 200000,
+    'claude-opus-4-20250514': 200000,
+    'claude-3-5-sonnet-20241022': 200000,
+    'claude-3-opus-20240229': 200000,
+    'default': 200000,
+}
+
+export interface IterationResult {
+    output: string
+    exitCode: number
+    contextUsedPercent?: number
+}
+
+interface ParsedLine {
+    text: string | null
+    usage?: StreamEvent['usage']
+}
+
+function parseStreamLine(line: string): ParsedLine {
+    if (!line.trim()) return { text: null }
     try {
         const data = JSON.parse(line) as StreamEvent
         // Extract text from streaming deltas
         if (data.type === 'stream_event' && data.event?.type === 'content_block_delta') {
-            return data.event.delta?.text || null
+            return { text: data.event.delta?.text || null }
         }
         // Add newline after content block ends
         if (data.type === 'stream_event' && data.event?.type === 'content_block_stop') {
-            return '\n'
+            return { text: '\n' }
         }
-        // Also capture final result
-        if (data.type === 'result' && data.result) {
-            return `\n[Result: ${data.result.substring(0, 100)}${data.result.length > 100 ? '...' : ''}]\n`
+        // Capture final result with usage
+        if (data.type === 'result') {
+            const resultText = data.result
+                ? `\n[Result: ${data.result.substring(0, 100)}${data.result.length > 100 ? '...' : ''}]\n`
+                : null
+            return { text: resultText, usage: data.usage }
         }
     } catch {
         // Not JSON, return raw
-        return line
+        return { text: line }
     }
-    return null
+    return { text: null }
 }
 
 export async function runIteration(
     prompt: string,
     claudeArgs: string[],
     logStream?: WriteStream,
-): Promise<{ output: string, exitCode: number }> {
+): Promise<IterationResult> {
     const allArgs = [...CLAUDE_DEFAULT_ARGS, ...claudeArgs, prompt]
 
     let output = ''
     let lineBuffer = ''
+    let finalUsage: StreamEvent['usage'] | undefined
 
     return new Promise((resolve) => {
         const proc = spawn('claude', allArgs, {
@@ -329,7 +385,8 @@ export async function runIteration(
             lineBuffer = lines.pop() || '' // Keep incomplete line in buffer
 
             for (const line of lines) {
-                const parsed = parseStreamLine(line)
+                const { text: parsed, usage } = parseStreamLine(line)
+                if (usage) finalUsage = usage
                 if (parsed) {
                     process.stdout.write(parsed)
                     logStream?.write(parsed)
@@ -348,14 +405,27 @@ export async function runIteration(
         proc.on('close', (code: number | null) => {
             // Process any remaining buffer
             if (lineBuffer) {
-                const parsed = parseStreamLine(lineBuffer)
+                const { text: parsed, usage } = parseStreamLine(lineBuffer)
+                if (usage) finalUsage = usage
                 if (parsed) {
                     process.stdout.write(parsed)
                     logStream?.write(parsed)
                     output += parsed
                 }
             }
-            resolve({ output, exitCode: code ?? 0 })
+
+            // Calculate context usage percent
+            let contextUsedPercent: number | undefined
+            if (finalUsage) {
+                const totalTokens = (finalUsage.input_tokens || 0)
+                    + (finalUsage.output_tokens || 0)
+                    + (finalUsage.cache_read_input_tokens || 0)
+                    + (finalUsage.cache_creation_input_tokens || 0)
+                const maxContext = MODEL_CONTEXT_WINDOWS.default
+                contextUsedPercent = Math.round((totalTokens / maxContext) * 100)
+            }
+
+            resolve({ output, exitCode: code ?? 0, contextUsedPercent })
         })
 
         proc.on('error', (err: Error) => {
@@ -643,26 +713,37 @@ const main = defineCommand({
             // Log the prompt
             logStream.write(`\n--- Prompt ---\n${prompt}\n--- End Prompt ---\n\n`)
 
-            const { output } = await runIteration(prompt, extraClaudeArgs, logStream)
+            const { output, contextUsedPercent } = await runIteration(prompt, extraClaudeArgs, logStream)
 
             const iterationEnd = new Date().toISOString()
             const markerFound = detectCompletionMarker(output, validatedArgs.completionMarker)
+
+            // Calculate duration
+            const startTime = new Date(iterationStart).getTime()
+            const endTime = new Date(iterationEnd).getTime()
+            const durationMs = endTime - startTime
+            const durationHuman = formatDuration(durationMs)
 
             // Record history
             state.history.push({
                 iteration: state.iteration,
                 startedAt: iterationStart,
                 completedAt: iterationEnd,
+                durationMs,
+                durationHuman,
                 outputSummary: extractOutputSummary(output),
                 markerFound,
+                contextUsedPercent,
             })
 
             // Save state after each iteration
             saveState(state, validatedArgs.stateFile)
 
             // Log iteration summary
-            const summaryMsg = `\n━━━ Iteration ${state.iteration} Summary ━━━\nMarker found: ${markerFound ? 'yes' : 'no'}\n`
+            const contextInfo = contextUsedPercent !== undefined ? ` | Context: ${contextUsedPercent}%` : ''
+            const summaryMsg = `\n━━━ Iteration ${state.iteration} Summary ━━━\nDuration: ${durationHuman}${contextInfo}\nMarker found: ${markerFound ? 'yes' : 'no'}\n`
             console.log(chalk.dim(`\n━━━ Iteration ${state.iteration} Summary ━━━`))
+            console.log(chalk.dim(`Duration: ${durationHuman}${contextInfo}`))
             console.log(chalk.dim(`Marker found: ${markerFound ? chalk.green('yes') : chalk.yellow('no')}`))
             logStream.write(summaryMsg)
 
