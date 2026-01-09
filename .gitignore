@@ -185,3 +185,9 @@ uv.lock
 .ruff_cache/
 .pyright/
 
+
+
+## Ignore Ralph state and progress files
+ralph-state.json
+ralph-progress.md
+ralph-log.log

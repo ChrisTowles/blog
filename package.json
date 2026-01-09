@@ -53,10 +53,12 @@
     "mcp:inspect": "pnpm dlx @modelcontextprotocol/inspector",
     "deps:update": "pnpm dlx taze --interactive --recursive",
     "clean": "rm -rf node_modules packages/*/node_modules .nuxt .output .nitro dist packages/*/.nuxt packages/*/.output pnpm-lock.yaml",
-    "worktree": "pnpm tsx scripts/worktree.ts"
+    "worktree": "pnpm tsx scripts/worktree.ts",
+    "ralph": "pnpm tsx scripts/ralph-loop.ts"
   },
   "devDependencies": {
     "@types/node": "^25.0.3",
+    "citty": "^0.1.6",
     "cli-table3": "^0.6.5",
     "dotenv": "^17.2.3",
     "find-up": "^8.0.0",
@@ -67,6 +69,7 @@
     "strip-json-comments": "^5.0.3",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
+    "vitest": "^4.0.16",
     "zx": "^8.8.5"
   },
   "pnpm": {
