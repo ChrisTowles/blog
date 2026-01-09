@@ -36,7 +36,7 @@ describe('ralph-loop', () => {
             expect(DEFAULT_MAX_ITERATIONS).toBe(10)
             expect(DEFAULT_STATE_FILE).toBe('ralph-state.json')
             expect(DEFAULT_COMPLETION_MARKER).toBe('RALPH_DONE')
-            expect(CLAUDE_DEFAULT_ARGS).toEqual(['--print', '--dangerously-skip-permissions'])
+            expect(CLAUDE_DEFAULT_ARGS).toEqual(['--print', '--output-format', 'stream-json', '--include-partial-messages', '--dangerously-skip-permissions'])
         })
     })
 

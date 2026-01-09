@@ -42,9 +42,9 @@ export interface RalphState {
 
 export const DEFAULT_MAX_ITERATIONS = 10
 export const DEFAULT_STATE_FILE = 'ralph-state.json'
-export const DEFAULT_LOG_FILE = 'ralph-log.log'
+export const DEFAULT_LOG_FILE = 'ralph-log.md'
 export const DEFAULT_COMPLETION_MARKER = 'RALPH_DONE'
-export const CLAUDE_DEFAULT_ARGS = ['--print', '--output-format', 'stream-json', '--dangerously-skip-permissions']
+export const CLAUDE_DEFAULT_ARGS = ['--print', '--output-format', 'stream-json', '--include-partial-messages', '--dangerously-skip-permissions']
 
 // ============================================================================
 // State Management
@@ -192,6 +192,34 @@ export async function checkClaudeCli(): Promise<boolean> {
     }
 }
 
+interface StreamEvent {
+    type: string
+    event?: {
+        type: string
+        delta?: { text?: string }
+    }
+    result?: string
+}
+
+function parseStreamLine(line: string): string | null {
+    if (!line.trim()) return null
+    try {
+        const data = JSON.parse(line) as StreamEvent
+        // Extract text from streaming deltas
+        if (data.type === 'stream_event' && data.event?.type === 'content_block_delta') {
+            return data.event.delta?.text || null
+        }
+        // Also capture final result
+        if (data.type === 'result' && data.result) {
+            return `\n[Result: ${data.result.substring(0, 100)}${data.result.length > 100 ? '...' : ''}]\n`
+        }
+    } catch {
+        // Not JSON, return raw
+        return line
+    }
+    return null
+}
+
 export async function runIteration(
     prompt: string,
     claudeArgs: string[],
@@ -200,6 +228,7 @@ export async function runIteration(
     const allArgs = [...CLAUDE_DEFAULT_ARGS, ...claudeArgs, prompt]
 
     let output = ''
+    let lineBuffer = ''
 
     return new Promise((resolve) => {
         const proc = spawn('claude', allArgs, {
@@ -208,9 +237,20 @@ export async function runIteration(
 
         proc.stdout.on('data', (chunk: Buffer) => {
             const text = chunk.toString()
-            process.stdout.write(text)
-            logStream?.write(text)
-            output += text
+            lineBuffer += text
+
+            // Process complete lines
+            const lines = lineBuffer.split('\n')
+            lineBuffer = lines.pop() || '' // Keep incomplete line in buffer
+
+            for (const line of lines) {
+                const parsed = parseStreamLine(line)
+                if (parsed) {
+                    process.stdout.write(parsed)
+                    logStream?.write(parsed)
+                    output += parsed
+                }
+            }
         })
 
         proc.stderr.on('data', (chunk: Buffer) => {
@@ -221,6 +261,15 @@ export async function runIteration(
         })
 
         proc.on('close', (code: number | null) => {
+            // Process any remaining buffer
+            if (lineBuffer) {
+                const parsed = parseStreamLine(lineBuffer)
+                if (parsed) {
+                    process.stdout.write(parsed)
+                    logStream?.write(parsed)
+                    output += parsed
+                }
+            }
             resolve({ output, exitCode: code ?? 0 })
         })
 

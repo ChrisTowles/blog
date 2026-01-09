@@ -47,9 +47,18 @@ From `scripts/worktree.ts` and other scripts:
 
 Per [Claude Code CLI documentation](https://docs.anthropic.com/en/docs/claude-code):
 - `--print` flag outputs to stdout without interactive mode
+- `--output-format stream-json` outputs newline-delimited JSON events
+- `--include-partial-messages` includes streaming text deltas
 - `--dangerously-skip-permissions` bypasses permission prompts for automation
 - Exit codes: 0 = success, non-zero = error
 - No built-in "done" signaling - requires output pattern matching
+
+### Stream JSON Parsing
+
+The script parses streaming JSON events to extract readable text:
+- `content_block_delta` events contain incremental text in `event.delta.text`
+- `result` events contain the final output summary
+- Non-JSON lines are passed through as-is
 
 ### Subprocess Best Practices
 
@@ -86,7 +95,7 @@ For iteration loops with state:
 ├─────────────────────────────────────────────────────────────┤
 │  Execution Loop                                             │
 │  ├── Build prompt with state context                        │
-│  ├── Spawn: claude --print --dangerously-skip-permissions   │
+│  ├── Spawn: claude --print --output-format stream-json ...  │
 │  ├── Stream output to console + capture                     │
 │  ├── Parse for RALPH_DONE marker                            │
 │  └── Log iteration summary                                  │
