@@ -2,8 +2,6 @@
 
 Personal blog/website - Vue/Nuxt monorepo + AI playground.
 
-
-
 ## Project Structure
 
 ```

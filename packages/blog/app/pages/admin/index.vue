@@ -1,18 +1,18 @@
 <script setup lang="ts">
 definePageMeta({
-  middleware: 'auth'
-})
+  middleware: 'auth',
+});
 
-const { data: configData, status } = await useFetch('/api/admin/config')
+const { data: configData, status } = await useFetch('/api/admin/config');
 
 const adminPages = [
   {
     title: 'RAG Admin',
     description: 'Contextual Hybrid Search System - manage documents, test search, run ingestion',
     to: '/admin/rag',
-    icon: 'i-heroicons-cpu-chip'
-  }
-]
+    icon: 'i-heroicons-cpu-chip',
+  },
+];
 </script>
 
 <template>
@@ -21,12 +21,8 @@ const adminPages = [
       <div class="flex items-center gap-3">
         <UIcon name="i-heroicons-cog-6-tooth" class="w-8 h-8 text-primary" />
         <div>
-          <h1 class="text-2xl font-bold">
-            Admin
-          </h1>
-          <p class="text-sm text-muted">
-            Site administration tools
-          </p>
+          <h1 class="text-2xl font-bold">Admin</h1>
+          <p class="text-sm text-muted">Site administration tools</p>
         </div>
       </div>
 
@@ -36,11 +32,7 @@ const adminPages = [
           <div class="flex items-center gap-2">
             <UIcon name="i-heroicons-server" class="w-5 h-5" />
             <span class="font-semibold">Server Configuration</span>
-            <UBadge
-              v-if="configData"
-              :color="configData.valid ? 'success' : 'error'"
-              size="xs"
-            >
+            <UBadge v-if="configData" :color="configData.valid ? 'success' : 'error'" size="xs">
               {{ configData.valid ? 'Valid' : 'Invalid' }}
             </UBadge>
           </div>
@@ -51,21 +43,13 @@ const adminPages = [
         </div>
 
         <div v-else-if="configData?.errors?.length" class="space-y-2 mb-4">
-          <div
-            v-for="err in configData.errors"
-            :key="err.path"
-            class="text-error text-sm"
-          >
+          <div v-for="err in configData.errors" :key="err.path" class="text-error text-sm">
             {{ err.path }}: {{ err.message }}
           </div>
         </div>
 
         <div v-if="configData?.config" class="font-mono text-sm space-y-1">
-          <div
-            v-for="(value, key) in configData.config"
-            :key="key"
-            class="flex gap-2"
-          >
+          <div v-for="(value, key) in configData.config" :key="key" class="flex gap-2">
             <span class="text-muted min-w-64">{{ key }}</span>
             <span class="text-primary">{{ value }}</span>
           </div>

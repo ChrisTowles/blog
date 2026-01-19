@@ -16,6 +16,7 @@ Use the `blog-content-architect` agent to create high-quality technical blog con
 ### 2. Plan & Question
 
 Create a blog outline, then ask 3-5 focused questions (one at a time):
+
 - User's experience with the topic
 - Specific examples or use cases to include
 - Preferred content structure (tutorial, guide, case study)
@@ -29,6 +30,7 @@ Show the outline to user and confirm direction before writing.
 ### 4. Write Post
 
 Focus on:
+
 - **Educational value**: Explain WHY, not just HOW
 - **Technical accuracy**: Include working code examples
 - **Authentic voice**: Share real experience and lessons learned
@@ -40,30 +42,27 @@ Save to `packages/blog/content/2.blog/YYYYMMDD.your-post-title.md`
 
 ```yaml
 ---
-title: "Your Blog Post Title"
-description: "Brief description explaining value and key takeaways"
-date: "2025-01-26"
+title: 'Your Blog Post Title'
+description: 'Brief description explaining value and key takeaways'
+date: '2025-01-26'
 image:
-  src: "/images/todo-place-holder-image.png"
-  alt: "Descriptive alt text"
+  src: '/images/todo-place-holder-image.png'
+  alt: 'Descriptive alt text'
 authors:
   - name: Chris Towles
     to: https://twitter.com/Chris_Towles
     avatar:
       src: /images/ctowles-profile-512x512.png
 badge:
-  label: "Development" # AI Tools, DevOps, Tutorial, Architecture
+  label: 'Development' # AI Tools, DevOps, Tutorial, Architecture
 ---
-
 ##
-
-
 ```
-
 
 ## Final Reminder
 
 A great blog post:
+
 - Teaches ONE thing really well
 - Feels like a conversation with a knowledgeable peer who's still learning
 - Shows vulnerability and authentic experience

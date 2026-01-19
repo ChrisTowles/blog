@@ -20,6 +20,7 @@ Convert the worktree plugin from TOML-based config to JSON with a new slot-first
 ```
 
 **Key decisions:**
+
 - Slot-first structure (named slots as keys, not variable arrays)
 - Named slots (default: `slot-1`, `slot-2`, etc.)
 - Default 3 slots on init
@@ -33,12 +34,14 @@ Convert the worktree plugin from TOML-based config to JSON with a new slot-first
 ## Phase 1: Update Data Models
 
 ### TODO: Update `slots.py` parser
+
 - [ ] Replace `tomllib` with `json`
 - [ ] Update `SlotsConfig` to handle new structure
 - [ ] Parse slot names as keys, not indices
 - [ ] Remove slot_count field (infer from len(slots))
 
 ### TODO: Update `SlotConfig` dataclass
+
 - [ ] Add `name: str` field
 - [ ] Variables now flat dict per slot, not aggregated
 
@@ -47,12 +50,14 @@ Convert the worktree plugin from TOML-based config to JSON with a new slot-first
 ## Phase 2: Update Init Skill
 
 ### TODO: Update `worktree_init.py`
+
 - [ ] Generate `slots.config.json` instead of `slots.toml`
 - [ ] Generate `slots.schema.json` alongside
 - [ ] Default to 3 slots: `slot-1`, `slot-2`, `slot-3`
 - [ ] Default PORT values: 3001, 3002, 3003
 
 ### TODO: Create JSON Schema template
+
 ```json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -76,6 +81,7 @@ Convert the worktree plugin from TOML-based config to JSON with a new slot-first
 ## Phase 3: Update Worktree Create Logic
 
 ### TODO: Update slot allocation
+
 - [ ] Find first available named slot
 - [ ] If all named slots occupied, generate `slot-N` (N = next available int)
 - [ ] Update registry with slot name
@@ -85,6 +91,7 @@ Convert the worktree plugin from TOML-based config to JSON with a new slot-first
 ## Phase 4: Update Documentation
 
 ### TODO: Update markdown docs
+
 - [ ] `skills/init.md` - new JSON structure examples
 - [ ] `skills/create.md` - slot naming behavior
 - [ ] `commands/init.md` - JSON output
@@ -95,6 +102,7 @@ Convert the worktree plugin from TOML-based config to JSON with a new slot-first
 ## Phase 5: Cleanup
 
 ### TODO: Remove TOML artifacts
+
 - [ ] Delete `slots.toml` from `blog-worktrees/config/`
 - [ ] Remove any `tomllib` imports
 
@@ -102,24 +110,24 @@ Convert the worktree plugin from TOML-based config to JSON with a new slot-first
 
 ## Files to Modify
 
-| File | Change |
-|------|--------|
-| `skills/lib/slots.py` | TOML→JSON, new structure |
-| `skills/worktree_init.py` | Generate JSON + schema |
-| `skills/worktree_create.py` | Slot naming logic |
-| `skills/init.md` | Update docs |
-| `skills/create.md` | Update docs |
-| `commands/init.md` | Update docs |
-| `README.md` | Update docs |
+| File                        | Change                   |
+| --------------------------- | ------------------------ |
+| `skills/lib/slots.py`       | TOML→JSON, new structure |
+| `skills/worktree_init.py`   | Generate JSON + schema   |
+| `skills/worktree_create.py` | Slot naming logic        |
+| `skills/init.md`            | Update docs              |
+| `skills/create.md`          | Update docs              |
+| `commands/init.md`          | Update docs              |
+| `README.md`                 | Update docs              |
 
 ## Files to Create
 
-| File | Purpose |
-|------|---------|
+| File                                   | Purpose              |
+| -------------------------------------- | -------------------- |
 | `slots.schema.json` (template in init) | IDE validation hints |
 
 ## Files to Delete
 
-| File | Reason |
-|------|--------|
+| File                               | Reason           |
+| ---------------------------------- | ---------------- |
 | `blog-worktrees/config/slots.toml` | Replaced by JSON |

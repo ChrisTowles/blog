@@ -1,11 +1,11 @@
-import dotenv from 'dotenv'
-import { defineConfig, devices } from '@playwright/test'
-import { findUpSync } from 'find-up'
+import dotenv from 'dotenv';
+import { defineConfig, devices } from '@playwright/test';
+import { findUpSync } from 'find-up';
 
-dotenv.config({ 
-  path: findUpSync('.env')!, 
-  override: true
-})
+dotenv.config({
+  path: findUpSync('.env')!,
+  override: true,
+});
 
 export default defineConfig({
   testDir: './e2e',
@@ -17,20 +17,20 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:` + process.env.UI_PORT,
     trace: 'on-first-retry',
-    screenshot: 'only-on-failure'
+    screenshot: 'only-on-failure',
   },
 
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] }
-    }
+      use: { ...devices['Desktop Chrome'] },
+    },
   ],
 
   webServer: {
     command: `UI_PORT=${process.env.UI_PORT} bun run dev`,
     url: `http://localhost:` + process.env.UI_PORT,
     reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000
-  }
-})
+    timeout: 120 * 1000,
+  },
+});

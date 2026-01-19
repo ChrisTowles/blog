@@ -6,13 +6,7 @@
     <template #right>
       <UColorModeButton />
 
-      <UButton
-        color="neutral"
-        variant="ghost"
-        icon="i-lucide-plus"
-        to="/"
-        class="lg:hidden"
-      />
+      <UButton color="neutral" variant="ghost" icon="i-lucide-plus" to="/" class="lg:hidden" />
     </template>
   </UDashboardNavbar>
 </template>

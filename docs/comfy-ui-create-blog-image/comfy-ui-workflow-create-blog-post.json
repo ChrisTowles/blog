@@ -7,14 +7,8 @@
     {
       "id": 28,
       "type": "Prompt With Style V2",
-      "pos": [
-        322.7421569824219,
-        -176.560302734375
-      ],
-      "size": [
-        400,
-        382
-      ],
+      "pos": [322.7421569824219, -176.560302734375],
+      "size": [400, 382],
       "flags": {},
       "order": 3,
       "mode": 0,
@@ -34,51 +28,37 @@
         {
           "name": "samples",
           "type": "LATENT",
-          "links": [
-            105
-          ]
+          "links": [105]
         },
         {
           "name": "base_pos_cond",
           "type": "CONDITIONING",
-          "links": [
-            99
-          ]
+          "links": [99]
         },
         {
           "name": "base_neg_cond",
           "type": "CONDITIONING",
-          "links": [
-            100
-          ]
+          "links": [100]
         },
         {
           "name": "refiner_pos_cond",
           "type": "CONDITIONING",
-          "links": [
-            101
-          ]
+          "links": [101]
         },
         {
           "name": "refiner_neg_cond",
           "type": "CONDITIONING",
-          "links": [
-            102
-          ]
+          "links": [102]
         },
         {
           "name": "positive_prompt",
           "type": "STRING",
-          "links": [
-            103
-          ]
+          "links": [103]
         },
         {
           "name": "negative_prompt",
           "type": "STRING",
-          "links": [
-            104
-          ]
+          "links": [104]
         }
       ],
       "properties": {
@@ -99,14 +79,8 @@
     {
       "id": 27,
       "type": "Note",
-      "pos": [
-        -597.2962036132812,
-        -176.560302734375
-      ],
-      "size": [
-        490,
-        510
-      ],
+      "pos": [-597.2962036132812, -176.560302734375],
+      "size": [490, 510],
       "flags": {},
       "order": 0,
       "mode": 0,
@@ -124,14 +98,8 @@
     {
       "id": 13,
       "type": "Save Image With Prompt Data",
-      "pos": [
-        1213.1495361328125,
-        -176.560302734375
-      ],
-      "size": [
-        950,
-        1000
-      ],
+      "pos": [1213.1495361328125, -176.560302734375],
+      "size": [950, 1000],
       "flags": {
         "collapsed": false,
         "pinned": false
@@ -167,26 +135,15 @@
         "ver": "1.0.4",
         "Node name for S&R": "Save Image With Prompt Data"
       },
-      "widgets_values": [
-        "Positive Prompt",
-        "Negative Prompt",
-        "",
-        ""
-      ],
+      "widgets_values": ["Positive Prompt", "Negative Prompt", "", ""],
       "color": "#243642",
       "bgcolor": "#365063"
     },
     {
       "id": 12,
       "type": "VAEDecode",
-      "pos": [
-        1217.124267578125,
-        -266.6103820800781
-      ],
-      "size": [
-        140,
-        46
-      ],
+      "pos": [1217.124267578125, -266.6103820800781],
+      "size": [140, 46],
       "flags": {
         "pinned": false
       },
@@ -209,9 +166,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "slot_index": 0,
-          "links": [
-            40
-          ]
+          "links": [40]
         }
       ],
       "properties": {
@@ -226,14 +181,8 @@
     {
       "id": 25,
       "type": "Mikey Sampler",
-      "pos": [
-        690.0527954101562,
-        -178.1402130126953
-      ],
-      "size": [
-        520,
-        1000
-      ],
+      "pos": [690.0527954101562, -178.1402130126953],
+      "size": [520, 1000],
       "flags": {},
       "order": 4,
       "mode": 0,
@@ -284,9 +233,7 @@
           "name": "LATENT",
           "type": "LATENT",
           "slot_index": 0,
-          "links": [
-            89
-          ]
+          "links": [89]
         }
       ],
       "properties": {
@@ -294,27 +241,15 @@
         "ver": "1.0.4",
         "Node name for S&R": "Mikey Sampler"
       },
-      "widgets_values": [
-        "lollypop.pth",
-        1069204538739927,
-        "randomize",
-        1,
-        1
-      ],
+      "widgets_values": ["lollypop.pth", 1069204538739927, "randomize", 1, 1],
       "color": "#244235",
       "bgcolor": "#366350"
     },
     {
       "id": 3,
       "type": "CheckpointLoaderSimple",
-      "pos": [
-        351.767333984375,
-        421.9062194824219
-      ],
-      "size": [
-        320,
-        100
-      ],
+      "pos": [351.767333984375, 421.9062194824219],
+      "size": [320, 100],
       "flags": {
         "pinned": false
       },
@@ -326,25 +261,19 @@
           "name": "MODEL",
           "type": "MODEL",
           "slot_index": 0,
-          "links": [
-            82
-          ]
+          "links": [82]
         },
         {
           "name": "CLIP",
           "type": "CLIP",
           "slot_index": 1,
-          "links": [
-            108
-          ]
+          "links": [108]
         },
         {
           "name": "VAE",
           "type": "VAE",
           "slot_index": 2,
-          "links": [
-            39
-          ]
+          "links": [39]
         }
       ],
       "title": "Refiner Checkpoint",
@@ -353,23 +282,15 @@
         "ver": "0.3.43",
         "Node name for S&R": "CheckpointLoaderSimple"
       },
-      "widgets_values": [
-        "SDXL/sd_xl_refiner_1.0_0.9vae.safetensors"
-      ],
+      "widgets_values": ["SDXL/sd_xl_refiner_1.0_0.9vae.safetensors"],
       "color": "#42243e",
       "bgcolor": "#63365d"
     },
     {
       "id": 2,
       "type": "CheckpointLoaderSimple",
-      "pos": [
-        358.0415344238281,
-        249.73915100097656
-      ],
-      "size": [
-        320,
-        100
-      ],
+      "pos": [358.0415344238281, 249.73915100097656],
+      "size": [320, 100],
       "flags": {
         "pinned": false
       },
@@ -381,25 +302,19 @@
           "name": "MODEL",
           "type": "MODEL",
           "slot_index": 0,
-          "links": [
-            106
-          ]
+          "links": [106]
         },
         {
           "name": "CLIP",
           "type": "CLIP",
           "slot_index": 1,
-          "links": [
-            107
-          ]
+          "links": [107]
         },
         {
           "name": "VAE",
           "type": "VAE",
           "slot_index": 2,
-          "links": [
-            84
-          ]
+          "links": [84]
         }
       ],
       "title": "Base Checkpoint",
@@ -408,144 +323,34 @@
         "ver": "0.3.43",
         "Node name for S&R": "CheckpointLoaderSimple"
       },
-      "widgets_values": [
-        "SDXL/sd_xl_base_1.0_0.9vae.safetensors"
-      ],
+      "widgets_values": ["SDXL/sd_xl_base_1.0_0.9vae.safetensors"],
       "color": "#2c2442",
       "bgcolor": "#433663"
     }
   ],
   "links": [
-    [
-      39,
-      3,
-      2,
-      12,
-      1,
-      "VAE"
-    ],
-    [
-      40,
-      12,
-      0,
-      13,
-      0,
-      "IMAGE"
-    ],
-    [
-      82,
-      3,
-      0,
-      25,
-      1,
-      "MODEL"
-    ],
-    [
-      84,
-      2,
-      2,
-      25,
-      3,
-      "VAE"
-    ],
-    [
-      89,
-      25,
-      0,
-      12,
-      0,
-      "LATENT"
-    ],
-    [
-      99,
-      28,
-      1,
-      25,
-      4,
-      "CONDITIONING"
-    ],
-    [
-      100,
-      28,
-      2,
-      25,
-      5,
-      "CONDITIONING"
-    ],
-    [
-      101,
-      28,
-      3,
-      25,
-      6,
-      "CONDITIONING"
-    ],
-    [
-      102,
-      28,
-      4,
-      25,
-      7,
-      "CONDITIONING"
-    ],
-    [
-      103,
-      28,
-      5,
-      13,
-      1,
-      "STRING"
-    ],
-    [
-      104,
-      28,
-      6,
-      13,
-      2,
-      "STRING"
-    ],
-    [
-      105,
-      28,
-      0,
-      25,
-      2,
-      "LATENT"
-    ],
-    [
-      106,
-      2,
-      0,
-      25,
-      0,
-      "MODEL"
-    ],
-    [
-      107,
-      2,
-      1,
-      28,
-      0,
-      "CLIP"
-    ],
-    [
-      108,
-      3,
-      1,
-      28,
-      1,
-      "CLIP"
-    ]
+    [39, 3, 2, 12, 1, "VAE"],
+    [40, 12, 0, 13, 0, "IMAGE"],
+    [82, 3, 0, 25, 1, "MODEL"],
+    [84, 2, 2, 25, 3, "VAE"],
+    [89, 25, 0, 12, 0, "LATENT"],
+    [99, 28, 1, 25, 4, "CONDITIONING"],
+    [100, 28, 2, 25, 5, "CONDITIONING"],
+    [101, 28, 3, 25, 6, "CONDITIONING"],
+    [102, 28, 4, 25, 7, "CONDITIONING"],
+    [103, 28, 5, 13, 1, "STRING"],
+    [104, 28, 6, 13, 2, "STRING"],
+    [105, 28, 0, 25, 2, "LATENT"],
+    [106, 2, 0, 25, 0, "MODEL"],
+    [107, 2, 1, 28, 0, "CLIP"],
+    [108, 3, 1, 28, 1, "CLIP"]
   ],
   "groups": [],
   "config": {},
   "extra": {
     "ds": {
       "scale": 1.1326917971358488,
-      "offset": [
-        -43.02490291503864,
-        316.9747497169319
-      ]
+      "offset": [-43.02490291503864, 316.9747497169319]
     },
     "frontendVersion": "1.23.4"
   },

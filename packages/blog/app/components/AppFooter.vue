@@ -1,21 +1,25 @@
 <script setup lang="ts">
-const appConfig = useAppConfig()
+const appConfig = useAppConfig();
 
-const columns = [{
-  label: 'Social',
-  children: [{
-    label: 'GitHub',
-    to: appConfig.author.github
-  },
+const columns = [
   {
-    label: 'X / Twitter',
-    to: appConfig.author.twitter
+    label: 'Social',
+    children: [
+      {
+        label: 'GitHub',
+        to: appConfig.author.github,
+      },
+      {
+        label: 'X / Twitter',
+        to: appConfig.author.twitter,
+      },
+      {
+        label: 'Bluesky',
+        to: appConfig.author.bluesky,
+      },
+    ],
   },
-  {
-    label: 'Bluesky',
-    to: appConfig.author.bluesky
-  }]
-}]
+];
 
 // const toast = useToast()
 
@@ -33,10 +37,7 @@ const columns = [{
 </script>
 
 <template>
-  <USeparator
-    icon="i-simple-icons-nuxtdotjs"
-    class="h-px"
-  />
+  <USeparator icon="i-simple-icons-nuxtdotjs" class="h-px" />
   <UFooter :ui="{ top: 'border-b border-[var(--ui-border)]' }">
     <template #top>
       <UContainer>

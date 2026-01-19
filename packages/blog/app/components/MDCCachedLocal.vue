@@ -19,43 +19,43 @@
 </template>
 
 <script setup lang="ts">
-import { useAsyncData } from 'nuxt/app'
-import { watch, computed, type PropType, type DefineComponent } from 'vue'
-import type { MDCParseOptions, MDCParserResult } from '@nuxtjs/mdc'
-import { createCachedParser } from '@nuxtjs/mdc/runtime'
+import { useAsyncData } from 'nuxt/app';
+import { watch, computed, type PropType, type DefineComponent } from 'vue';
+import type { MDCParseOptions, MDCParserResult } from '@nuxtjs/mdc';
+import { createCachedParser } from '@nuxtjs/mdc/runtime';
 
 const props = defineProps({
   tag: {
     type: [String, Boolean],
-    default: 'div'
+    default: 'div',
   },
   /**
    * Raw markdown string or parsed markdown object from `parseMarkdown`
    */
   value: {
     type: [String, Object],
-    required: true
+    required: true,
   },
   /**
    * Render only the excerpt
    */
   excerpt: {
     type: Boolean,
-    default: false
+    default: false,
   },
   /**
    * Options for `parseMarkdown`
    */
   parserOptions: {
     type: Object as PropType<MDCParseOptions>,
-    default: () => ({})
+    default: () => ({}),
   },
   /**
    * Class to be applied to the root element
    */
   class: {
     type: [String, Array, Object],
-    default: ''
+    default: '',
   },
   /**
    * Tags to unwrap separated by spaces
@@ -63,7 +63,7 @@ const props = defineProps({
    */
   unwrap: {
     type: [Boolean, String],
-    default: false
+    default: false,
   },
   /**
    * Async Data Unique Key
@@ -71,58 +71,61 @@ const props = defineProps({
    */
   cacheKey: {
     type: String,
-    default: undefined
+    default: undefined,
   },
   /**
    * Partial parsing (if partial is `true`, title and toc generation will not be generated)
    */
   partial: {
     type: Boolean,
-    default: true
+    default: true,
   },
   /**
    * The map of custom components to use for rendering.
    */
   components: {
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     type: Object as PropType<Record<string, string | DefineComponent<any, any, any>>>,
-    default: () => ({})
-  }
-})
+    default: () => ({}),
+  },
+});
 
-const key = computed(() => props.cacheKey ?? hashString(props.value))
+const key = computed(() => props.cacheKey ?? hashString(props.value));
 
 const parse = createCachedParser({
   ...props.parserOptions,
   toc: props.partial ? false : props.parserOptions?.toc,
-  contentHeading: props.partial ? false : props.parserOptions?.contentHeading
-})
+  contentHeading: props.partial ? false : props.parserOptions?.contentHeading,
+});
 
 const { data, refresh, error } = await useAsyncData(key.value, async () => {
   if (typeof props.value !== 'string') {
-    return props.value as MDCParserResult
+    return props.value as MDCParserResult;
   }
-  return await parse(props.value)
-})
+  return await parse(props.value);
+});
 
-const body = computed(() => props.excerpt ? data.value?.excerpt : data.value?.body)
+const body = computed(() => (props.excerpt ? data.value?.excerpt : data.value?.body));
 
-watch(() => props.value, () => {
-  refresh()
-}, { immediate: true })
+watch(
+  () => props.value,
+  () => {
+    refresh();
+  },
+  { immediate: true },
+);
 
 // Simple string hashing function
 function hashString(str: string | object) {
   if (typeof str !== 'string') {
-    str = JSON.stringify(str || '')
+    str = JSON.stringify(str || '');
   }
-  let hash = 0
+  let hash = 0;
   for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i)
-    hash = ((hash << 6) - hash) + char
-    hash = hash & hash // Convert to 64bit integer
+    const char = str.charCodeAt(i);
+    hash = (hash << 6) - hash + char;
+    hash = hash & hash; // Convert to 64bit integer
   }
-  return `mdc-${hash === 0 ? '0000' : hash.toString(36)}-key`
+  return `mdc-${hash === 0 ? '0000' : hash.toString(36)}-key`;
 }
 </script>

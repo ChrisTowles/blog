@@ -10,9 +10,7 @@
       "Bash(timeout:*)"
     ],
     "deny": [],
-    "additionalDirectories": [
-      "/home/ctowles/code/f"
-    ]
+    "additionalDirectories": ["/home/ctowles/code/f"]
   },
   "enabledPlugins": {}
 }

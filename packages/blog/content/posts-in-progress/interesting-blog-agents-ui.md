@@ -12,5 +12,3 @@ Has a really good `claude.md` file that I should look at for inspiration.
 1
 
 https://github.com/tuanemuy/cc-jsonl and its MIT license.
-
-

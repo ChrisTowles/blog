@@ -41,13 +41,13 @@ Production-ready patterns for building modern Nuxt 4 applications with SSR, comp
 
 ### Version Requirements
 
-| Package | Minimum | Recommended |
-|---------|---------|-------------|
-| nuxt | 4.0.0 | 4.2.x |
-| vue | 3.5.0 | 3.5.x |
-| nitro | 2.10.0 | 2.10.x |
-| vite | 6.0.0 | 6.0.x |
-| typescript | 5.0.0 | 5.x |
+| Package    | Minimum | Recommended |
+| ---------- | ------- | ----------- |
+| nuxt       | 4.0.0   | 4.2.x       |
+| vue        | 3.5.0   | 3.5.x       |
+| nitro      | 2.10.0  | 2.10.x      |
+| vite       | 6.0.0   | 6.0.x       |
+| typescript | 5.0.0   | 5.x         |
 
 ### Key Commands
 
@@ -120,6 +120,7 @@ my-nuxt-app/
 This skill includes detailed reference files for deep-dive topics. Load these when you need comprehensive guidance beyond the quick-start examples below.
 
 **Load `references/composables.md` when:**
+
 - Writing custom composables with `useState`, `useFetch`, or `useAsyncData`
 - Debugging state management issues or memory leaks in composables
 - Implementing SSR-safe patterns with browser APIs (localStorage, window, etc.)
@@ -127,6 +128,7 @@ This skill includes detailed reference files for deep-dive topics. Load these wh
 - Understanding singleton pattern vs per-call composables
 
 **Load `references/data-fetching.md` when:**
+
 - Implementing API data fetching with reactive parameters
 - Troubleshooting shallow vs deep reactivity issues
 - Debugging data not refreshing when params change
@@ -135,6 +137,7 @@ This skill includes detailed reference files for deep-dive topics. Load these wh
 - Understanding transform functions, caching, or error handling patterns
 
 **Load `references/server.md` when:**
+
 - Creating or debugging Nitro server API routes
 - Integrating databases (D1 + Drizzle, PostgreSQL, etc.)
 - Handling server middleware, authentication, or sessions
@@ -143,6 +146,7 @@ This skill includes detailed reference files for deep-dive topics. Load these wh
 - Implementing file uploads, streaming, or complex server logic
 
 **Load `references/hydration.md` when:**
+
 - Debugging "Hydration node mismatch" errors
 - Implementing `ClientOnly` components correctly
 - Checking for non-deterministic values (Math.random(), Date.now(), etc.)
@@ -150,6 +154,7 @@ This skill includes detailed reference files for deep-dive topics. Load these wh
 - Fixing hydration mismatches from browser APIs or third-party scripts
 
 **Load `references/performance.md` when:**
+
 - Optimizing bundle size or Core Web Vitals scores
 - Implementing lazy loading, code splitting, or dynamic imports
 - Configuring lazy hydration for heavy components
@@ -158,6 +163,7 @@ This skill includes detailed reference files for deep-dive topics. Load these wh
 - Debugging slow page loads or poor Lighthouse scores
 
 **Load `references/testing-vitest.md` when:**
+
 - Writing component tests with `@nuxt/test-utils`
 - Testing composables with proper Nuxt context
 - Mocking Nuxt composables (`useFetch`, `useRoute`, etc.)
@@ -166,6 +172,7 @@ This skill includes detailed reference files for deep-dive topics. Load these wh
 - Debugging test failures or improving test coverage
 
 **Load `references/deployment-cloudflare.md` when:**
+
 - Deploying to Cloudflare Pages or Workers
 - Configuring wrangler.toml for Nuxt applications
 - Setting up NuxtHub integration (D1, KV, R2, Blob)
@@ -178,65 +185,69 @@ This skill includes detailed reference files for deep-dive topics. Load these wh
 ### v4.2 Features (Latest)
 
 **1. Abort Control for Data Fetching**
-```typescript
-const controller = ref<AbortController>()
 
-const { data } = await useAsyncData(
-  'users',
-  () => $fetch('/api/users', { signal: controller.value?.signal })
-)
+```typescript
+const controller = ref<AbortController>();
+
+const { data } = await useAsyncData('users', () =>
+  $fetch('/api/users', { signal: controller.value?.signal }),
+);
 
 // Abort the request
 const abortRequest = () => {
-  controller.value?.abort()
-  controller.value = new AbortController()
-}
+  controller.value?.abort();
+  controller.value = new AbortController();
+};
 ```
 
 **2. Enhanced Error Handling**
+
 - Dual error display: custom error page + technical overlay
 - Better error messages in development
 - Improved stack traces
 
 **3. Async Data Handler Extraction**
+
 - 39% smaller client bundles
 - Data fetching logic extracted to server chunks
 - Automatic optimization (no configuration needed)
 
 **4. TypeScript Plugin Support**
+
 - Experimental `@dxup/nuxt` module for TS plugins
 - Better IDE integration
 
 ### v4.1 Features
 
 **1. Enhanced Chunk Stability**
+
 - Import maps prevent cascading hash changes
 - Better long-term caching
 - Fewer unnecessary reloads
 
 **2. Lazy Hydration Without Auto-Imports**
+
 ```vue
 <script setup>
-const LazyComponent = defineLazyHydrationComponent(() =>
-  import('./HeavyComponent.vue')
-)
+const LazyComponent = defineLazyHydrationComponent(() => import('./HeavyComponent.vue'));
 </script>
 ```
 
 **3. Module Lifecycle Hooks**
+
 ```typescript
 // In a Nuxt module
 export default defineNuxtModule({
   setup(options, nuxt) {
     nuxt.hooks.hook('modules:onInstall', () => {
-      console.log('Module just installed')
-    })
+      console.log('Module just installed');
+    });
 
     nuxt.hooks.hook('modules:onUpgrade', () => {
-      console.log('Module upgraded')
-    })
-  }
-})
+      console.log('Module upgraded');
+    });
+  },
+});
 ```
 
 ### Breaking Changes from v3
@@ -256,18 +267,14 @@ export default defineNuxtModule({
 export default defineNuxtConfig({
   // Enable future features
   future: {
-    compatibilityVersion: 4
+    compatibilityVersion: 4,
   },
 
   // Development config
   devtools: { enabled: true },
 
   // Modules
-  modules: [
-    '@nuxt/ui',
-    '@nuxt/content',
-    '@nuxtjs/tailwindcss'
-  ],
+  modules: ['@nuxt/ui', '@nuxt/content', '@nuxtjs/tailwindcss'],
 
   // Runtime config (environment variables)
   runtimeConfig: {
@@ -278,8 +285,8 @@ export default defineNuxtConfig({
     // Public (client + server)
     public: {
       apiBase: process.env.API_BASE || 'https://api.example.com',
-      appName: 'My App'
-    }
+      appName: 'My App',
+    },
   },
 
   // App config
@@ -288,43 +295,43 @@ export default defineNuxtConfig({
       title: 'My Nuxt App',
       meta: [
         { charset: 'utf-8' },
-        { name: 'viewport', content: 'width=device-width, initial-scale=1' }
-      ]
-    }
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      ],
+    },
   },
 
   // Nitro config (server)
   nitro: {
-    preset: 'cloudflare-pages',  // or 'cloudflare-module'
+    preset: 'cloudflare-pages', // or 'cloudflare-module'
     experimental: {
-      websocket: true  // Enable WebSocket support
-    }
+      websocket: true, // Enable WebSocket support
+    },
   },
 
   // TypeScript
   typescript: {
     strict: true,
-    typeCheck: true
+    typeCheck: true,
   },
 
   // Vite config
   vite: {
     optimizeDeps: {
-      include: ['some-heavy-library']
-    }
-  }
-})
+      include: ['some-heavy-library'],
+    },
+  },
+});
 ```
 
 ### Runtime Config Best Practices
 
 ```typescript
 // ✅ Use runtime config for environment variables
-const config = useRuntimeConfig()
-const apiUrl = config.public.apiBase
+const config = useRuntimeConfig();
+const apiUrl = config.public.apiBase;
 
 // ❌ Don't access process.env directly
-const apiUrl = process.env.API_BASE  // Won't work in production
+const apiUrl = process.env.API_BASE; // Won't work in production
 ```
 
 **Why?** Runtime config is reactive and works in both server and client environments. It's also type-safe.
@@ -338,15 +345,15 @@ Composables are auto-imported functions that encapsulate reusable logic. **Key r
 ```typescript
 // ✅ CORRECT: Shared state (survives component unmount)
 export const useCounter = () => {
-  const count = useState('counter', () => 0)  // Singleton
-  return { count }
-}
+  const count = useState('counter', () => 0); // Singleton
+  return { count };
+};
 
 // ❌ WRONG: Creates new instance every time!
 export const useCounter = () => {
-  const count = ref(0)  // Not shared
-  return { count }
-}
+  const count = ref(0); // Not shared
+  return { count };
+};
 ```
 
 **Rule**: `useState` for shared state. `ref` for local component state. `useState` creates a singleton, `ref` doesn't.
@@ -355,30 +362,27 @@ export const useCounter = () => {
 
 ## Data Fetching
 
-| Method | Use Case | SSR | Caching | Reactive |
-|--------|----------|-----|---------|----------|
-| `useFetch` | Simple API calls | ✅ | ✅ | ✅ |
-| `useAsyncData` | Custom async logic | ✅ | ✅ | ✅ |
-| `$fetch` | Client-side only | ❌ | ❌ | ❌ |
+| Method         | Use Case           | SSR | Caching | Reactive |
+| -------------- | ------------------ | --- | ------- | -------- |
+| `useFetch`     | Simple API calls   | ✅  | ✅      | ✅       |
+| `useAsyncData` | Custom async logic | ✅  | ✅      | ✅       |
+| `$fetch`       | Client-side only   | ❌  | ❌      | ❌       |
 
 **Quick Examples:**
 
 ```typescript
 // useFetch - basic
-const { data, error, pending } = await useFetch('/api/users')
+const { data, error, pending } = await useFetch('/api/users');
 
 // useFetch - reactive params (auto-refetch when page changes)
-const page = ref(1)
-const { data } = await useFetch('/api/users', { query: { page } })
+const page = ref(1);
+const { data } = await useFetch('/api/users', { query: { page } });
 
 // useAsyncData - multiple calls
 const { data } = await useAsyncData('dashboard', async () => {
-  const [users, posts] = await Promise.all([
-    $fetch('/api/users'),
-    $fetch('/api/posts')
-  ])
-  return { users, posts }
-})
+  const [users, posts] = await Promise.all([$fetch('/api/users'), $fetch('/api/posts')]);
+  return { users, posts };
+});
 ```
 
 **Critical v4 Change**: Shallow reactivity is default. Use `deep: true` option if you need to mutate nested properties.
@@ -399,17 +403,17 @@ server/api/users/[id].delete.ts  → DELETE /api/users/:id
 
 ```typescript
 export default defineEventHandler(async (event) => {
-  const id = getRouterParam(event, 'id')  // URL params
-  const query = getQuery(event)            // Query params
-  const body = await readBody(event)       // Request body
+  const id = getRouterParam(event, 'id'); // URL params
+  const query = getQuery(event); // Query params
+  const body = await readBody(event); // Request body
 
   // Error handling
   if (!id) {
-    throw createError({ statusCode: 404, message: 'Not found' })
+    throw createError({ statusCode: 404, message: 'Not found' });
   }
 
-  return { id, query, body }
-})
+  return { id, query, body };
+});
 ```
 
 **For complete server patterns** including request/response utilities, cookie handling, database integration (D1 + Drizzle), WebSockets, and middleware, load `references/server.md`.
@@ -439,14 +443,14 @@ app/pages/
 <!-- app/pages/users/[id].vue -->
 <script setup lang="ts">
 // Get route params
-const route = useRoute()
-const userId = route.params.id
+const route = useRoute();
+const userId = route.params.id;
 
 // Or use computed for reactivity
-const userId = computed(() => route.params.id)
+const userId = computed(() => route.params.id);
 
 // Fetch user data
-const { data: user } = await useFetch(`/api/users/${userId.value}`)
+const { data: user } = await useFetch(`/api/users/${userId.value}`);
 </script>
 
 <template>
@@ -505,15 +509,15 @@ definePageMeta({
 // app/middleware/analytics.global.ts
 export default defineNuxtRouteMiddleware((to, from) => {
   // Runs on every route change
-  console.log('Navigating from', from.path, 'to', to.path)
+  console.log('Navigating from', from.path, 'to', to.path);
 
   // Track page view
   if (import.meta.client) {
     window.gtag('event', 'page_view', {
-      page_path: to.path
-    })
+      page_path: to.path,
+    });
   }
-})
+});
 ```
 
 ## SEO & Meta Tags
@@ -528,12 +532,10 @@ useHead({
     { name: 'description', content: 'Page description' },
     { property: 'og:title', content: 'My Page Title' },
     { property: 'og:description', content: 'Page description' },
-    { property: 'og:image', content: 'https://example.com/og-image.jpg' }
+    { property: 'og:image', content: 'https://example.com/og-image.jpg' },
   ],
-  link: [
-    { rel: 'canonical', href: 'https://example.com/my-page' }
-  ]
-})
+  link: [{ rel: 'canonical', href: 'https://example.com/my-page' }],
+});
 </script>
 ```
 
@@ -549,8 +551,8 @@ useSeoMeta({
   ogTitle: 'My Page Title',
   ogDescription: 'Page description',
   ogImage: 'https://example.com/og-image.jpg',
-  twitterCard: 'summary_large_image'
-})
+  twitterCard: 'summary_large_image',
+});
 </script>
 ```
 
@@ -558,8 +560,8 @@ useSeoMeta({
 
 ```vue
 <script setup lang="ts">
-const route = useRoute()
-const { data: post } = await useFetch(`/api/posts/${route.params.slug}`)
+const route = useRoute();
+const { data: post } = await useFetch(`/api/posts/${route.params.slug}`);
 
 useSeoMeta({
   title: post.value?.title,
@@ -568,8 +570,8 @@ useSeoMeta({
   ogDescription: post.value?.excerpt,
   ogImage: post.value?.image,
   ogUrl: `https://example.com/blog/${post.value?.slug}`,
-  twitterCard: 'summary_large_image'
-})
+  twitterCard: 'summary_large_image',
+});
 </script>
 ```
 
@@ -580,10 +582,10 @@ useSeoMeta({
 export default defineNuxtConfig({
   app: {
     head: {
-      titleTemplate: '%s | My App'  // "Page Title | My App"
-    }
-  }
-})
+      titleTemplate: '%s | My App', // "Page Title | My App"
+    },
+  },
+});
 ```
 
 ## State Management
@@ -595,27 +597,27 @@ For simple shared state:
 ```typescript
 // composables/useCart.ts
 export const useCart = () => {
-  const items = useState('cart-items', () => [])
+  const items = useState('cart-items', () => []);
   const total = computed(() =>
-    items.value.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  )
+    items.value.reduce((sum, item) => sum + item.price * item.quantity, 0),
+  );
 
   const addItem = (product) => {
-    const existing = items.value.find(i => i.id === product.id)
+    const existing = items.value.find((i) => i.id === product.id);
 
     if (existing) {
-      existing.quantity++
+      existing.quantity++;
     } else {
-      items.value.push({ ...product, quantity: 1 })
+      items.value.push({ ...product, quantity: 1 });
     }
-  }
+  };
 
   const removeItem = (id) => {
-    items.value = items.value.filter(i => i.id !== id)
-  }
+    items.value = items.value.filter((i) => i.id !== id);
+  };
 
-  return { items, total, addItem, removeItem }
-}
+  return { items, total, addItem, removeItem };
+};
 ```
 
 ### Pinia (For Complex State)
@@ -627,39 +629,39 @@ bun add pinia @pinia/nuxt
 ```typescript
 // nuxt.config.ts
 export default defineNuxtConfig({
-  modules: ['@pinia/nuxt']
-})
+  modules: ['@pinia/nuxt'],
+});
 
 // stores/auth.ts
-import { defineStore } from 'pinia'
+import { defineStore } from 'pinia';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null as User | null,
-    isAuthenticated: false
+    isAuthenticated: false,
   }),
 
   getters: {
-    userName: (state) => state.user?.name ?? 'Guest'
+    userName: (state) => state.user?.name ?? 'Guest',
   },
 
   actions: {
     async login(email: string, password: string) {
       const { data } = await $fetch('/api/auth/login', {
         method: 'POST',
-        body: { email, password }
-      })
+        body: { email, password },
+      });
 
-      this.user = data.user
-      this.isAuthenticated = true
+      this.user = data.user;
+      this.isAuthenticated = true;
     },
 
     logout() {
-      this.user = null
-      this.isAuthenticated = false
-    }
-  }
-})
+      this.user = null;
+      this.isAuthenticated = false;
+    },
+  },
+});
 ```
 
 ## Error Handling
@@ -670,12 +672,12 @@ export const useAuthStore = defineStore('auth', {
 <!-- app/error.vue -->
 <script setup lang="ts">
 const props = defineProps({
-  error: Object
-})
+  error: Object,
+});
 
 const handleError = () => {
-  clearError({ redirect: '/' })
-}
+  clearError({ redirect: '/' });
+};
 </script>
 
 <template>
@@ -691,12 +693,12 @@ const handleError = () => {
 
 ```vue
 <script setup lang="ts">
-const error = ref(null)
+const error = ref(null);
 
 const handleError = (err) => {
-  console.error('Component error:', err)
-  error.value = err
-}
+  console.error('Component error:', err);
+  error.value = err;
+};
 </script>
 
 <template>
@@ -718,34 +720,36 @@ const handleError = (err) => {
 ### API Error Handling
 
 ```typescript
-const { data, error, status } = await useFetch('/api/users')
+const { data, error, status } = await useFetch('/api/users');
 
 if (error.value) {
   showError({
     statusCode: error.value.statusCode,
     message: error.value.message,
-    fatal: true  // Stops rendering
-  })
+    fatal: true, // Stops rendering
+  });
 }
 ```
 
 ## Hydration Best Practices
 
 **Top Causes of "Hydration Mismatch" Errors:**
+
 1. **Non-deterministic values**: `Math.random()`, `Date.now()` → Use `useState` instead
 2. **Browser APIs on server**: `window`, `localStorage`, `document` → Guard with `onMounted()` or `import.meta.client`
 3. **ClientOnly**: Wrap client-only components in `<ClientOnly>` component
 
 **Quick Fix:**
+
 ```vue
 <!-- ❌ Wrong -->
 <script setup>
-const id = Math.random()
+const id = Math.random();
 </script>
 
 <!-- ✅ Right -->
 <script setup>
-const id = useState('id', () => Math.random())
+const id = useState('id', () => Math.random());
 </script>
 ```
 
@@ -754,12 +758,14 @@ const id = useState('id', () => Math.random())
 ## Performance Optimization
 
 **Key Strategies:**
+
 - **Lazy Loading**: `defineAsyncComponent(() => import('~/components/Heavy.vue'))`
 - **Lazy Hydration**: `<Component lazy-hydrate="visible|interaction|idle" />`
 - **Image Optimization**: `<NuxtImg>` and `<NuxtPicture>` for automatic optimization
 - **Route Caching**: Configure `routeRules` in `nuxt.config.ts` for SWR, ISR, prerendering
 
 **Quick Example:**
+
 ```typescript
 // nuxt.config.ts - Route rules
 routeRules: {
@@ -774,11 +780,13 @@ routeRules: {
 ## Testing with Vitest
 
 **Setup:**
+
 ```bash
 bun add -d @nuxt/test-utils vitest @vue/test-utils happy-dom
 ```
 
 **Key Features:**
+
 - `mountSuspended()` for component testing with Nuxt context
 - `@nuxt/test-utils/config` for Vitest configuration
 - Mock Nuxt composables (`useFetch`, `useRoute`, etc.)
@@ -812,28 +820,28 @@ bunx wrangler deploy
 ```typescript
 // ❌ Wrong
 export const useAuth = () => {
-  const user = ref(null)  // New instance every time!
-  return { user }
-}
+  const user = ref(null); // New instance every time!
+  return { user };
+};
 
 // ✅ Right
 export const useAuth = () => {
-  const user = useState('auth-user', () => null)
-  return { user }
-}
+  const user = useState('auth-user', () => null);
+  return { user };
+};
 ```
 
 ### ❌ 2. Missing SSR Guards for Browser APIs
 
 ```typescript
 // ❌ Wrong
-const width = window.innerWidth
+const width = window.innerWidth;
 
 // ✅ Right
-const width = ref(0)
+const width = ref(0);
 onMounted(() => {
-  width.value = window.innerWidth
-})
+  width.value = window.innerWidth;
+});
 ```
 
 ### ❌ 3. Non-Deterministic Transform Functions
@@ -841,45 +849,46 @@ onMounted(() => {
 ```typescript
 // ❌ Wrong
 const { data } = await useFetch('/api/users', {
-  transform: (users) => users.sort(() => Math.random() - 0.5)
-})
+  transform: (users) => users.sort(() => Math.random() - 0.5),
+});
 
 // ✅ Right
 const { data } = await useFetch('/api/users', {
-  transform: (users) => users.sort((a, b) => a.name.localeCompare(b.name))
-})
+  transform: (users) => users.sort((a, b) => a.name.localeCompare(b.name)),
+});
 ```
 
 ### ❌ 4. Missing Error Handling in Data Fetching
 
 ```typescript
 // ❌ Wrong
-const { data } = await useFetch('/api/users')
-console.log(data.value.length)  // Crashes if error!
+const { data } = await useFetch('/api/users');
+console.log(data.value.length); // Crashes if error!
 
 // ✅ Right
-const { data, error } = await useFetch('/api/users')
+const { data, error } = await useFetch('/api/users');
 
 if (error.value) {
-  showToast({ type: 'error', message: error.value.message })
-  return
+  showToast({ type: 'error', message: error.value.message });
+  return;
 }
 
-console.log(data.value.length)
+console.log(data.value.length);
 ```
 
 ### ❌ 5. Accessing process.env Instead of Runtime Config
 
 ```typescript
 // ❌ Wrong
-const apiUrl = process.env.API_URL  // Won't work in production!
+const apiUrl = process.env.API_URL; // Won't work in production!
 
 // ✅ Right
-const config = useRuntimeConfig()
-const apiUrl = config.public.apiBase
+const config = useRuntimeConfig();
+const apiUrl = config.public.apiBase;
 ```
 
 **Additional Common Mistakes:**
+
 - Not using auto-imports (Vue composables, Nuxt utils are auto-imported)
 - Missing method suffix in server route file names (`users.get.ts`, not `users.ts`)
 - Missing TypeScript types in `useFetch<T>()` calls
@@ -910,6 +919,7 @@ const apiUrl = config.public.apiBase
 ## Templates Available
 
 See the `templates/` directory for:
+
 - Production-ready `nuxt.config.ts`
 - Authentication flow (login, register, middleware)
 - Blog with API routes (CRUD operations)

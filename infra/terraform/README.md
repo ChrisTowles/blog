@@ -4,11 +4,10 @@ Infrastructure as code for blog deployment on Google Cloud Platform.
 
 Uses simplified architecture with Cloud SQL public IP + Auth Proxy (no VPC) to minimize costs (~$20-30/mo for both environments).
 
-
 ## GCP Projects
+
 - https://console.cloud.google.com/welcome?project=blog-towles-production
 - https://console.cloud.google.com/welcome?project=blog-towles-staging
-
 
 ## Structure
 
@@ -26,6 +25,7 @@ infra/terraform/
 ## Prerequisites
 
 1. **Install Terraform** (>= 1.5)
+
    ```bash
    wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
    echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
@@ -33,8 +33,9 @@ infra/terraform/
    ```
 
 2. **Install gcloud CLI**
+
    ```bash
-   curl https://sdk.cloud.google.com | bash 
+   curl https://sdk.cloud.google.com | bash
    ```
 
 3. **Create GCP projects**
@@ -44,16 +45,16 @@ infra/terraform/
 4. **Authenticate**
 
    ```bash
-   
+
    # test
    gcloud config set project blog-towles-staging
 
    gcloud config set project blog-towles-production
 
-   
+
    gcloud auth login
 
-   
+
 
    gcloud auth application-default login
    ```
@@ -94,6 +95,7 @@ gcloud storage buckets update "gs://$ENV_PROD_PROJECT_ID-tfstate" --versioning
 Terraform references existing secrets rather than creating them. Secret names are the same in each project (project provides environment isolation).
 
 #### Staging
+
 ```bash
 export PROJECT=blog-towles-staging
 export DB_PASSWORD="$(openssl rand -base64 16)"
@@ -106,6 +108,7 @@ echo -n "$DB_PASSWORD" | gcloud secrets create database-password --data-file=- -
 ```
 
 #### Production
+
 ```bash
 export PROJECT=blog-towles-production
 export DB_PASSWORD="$(openssl rand -base64 16)"
@@ -118,6 +121,7 @@ echo -n "$DB_PASSWORD" | gcloud secrets create database-password --data-file=- -
 ```
 
 #### AWS Bedrock credentials (for RAG embeddings)
+
 ```bash
 # Set PROJECT to staging or production
 export PROJECT=blog-towles-staging  # or blog-towles-production
@@ -127,9 +131,11 @@ echo -n "xxxxxxxxxx" | gcloud secrets create aws-secret-access-key --data-file=-
 ```
 
 #### GitHub OAuth credentials (site login)
+
 Create OAuth apps at https://github.com/settings/developers (one per environment).
 
 Callback URLs:
+
 - Staging: `https://staging-chris.towles.dev/api/auth/github`
 - Production: `https://chris.towles.dev/api/auth/github`
 
@@ -142,6 +148,7 @@ echo -n "YOUR_CLIENT_SECRET" | gcloud secrets create github-oauth-client-secret 
 ```
 
 #### Update secrets
+
 ```bash
 # Set PROJECT to staging or production
 export PROJECT=blog-towles-staging  # or blog-towles-production
@@ -156,6 +163,7 @@ echo -n "NEW_VALUE" | gcloud secrets versions add github-oauth-client-secret --d
 ```
 
 #### View secrets
+
 ```bash
 # Set PROJECT to staging or production
 export PROJECT=blog-towles-staging  # or blog-towles-production
@@ -194,11 +202,13 @@ Repeat for prod environment.
 ### Deploy to staging
 
 **Always use the deploy script** (builds container + applies terraform):
+
 ```bash
 pnpm gcp:staging:deploy
 ```
 
 To apply infrastructure changes only (no container build):
+
 ```bash
 pnpm gcp:staging:apply
 ```
@@ -206,11 +216,13 @@ pnpm gcp:staging:apply
 ### Deploy to prod
 
 **Always use the deploy script** (builds container + applies terraform):
+
 ```bash
 pnpm gcp:prod:deploy
 ```
 
 To apply infrastructure changes only (no container build):
+
 ```bash
 pnpm gcp:prod:apply
 ```
@@ -269,7 +281,7 @@ terraform apply -var="container_image=$REGISTRY/blog:latest"
 | CPU                    | 1           | 1           |
 | Memory                 | 512Mi       | 512Mi       |
 
-*Prod has same resource allocation as staging to minimize costs. Only difference is deletion protection.*
+_Prod has same resource allocation as staging to minimize costs. Only difference is deletion protection._
 
 ## Cost Estimates
 
@@ -281,7 +293,7 @@ Both environments use same resource tiers to minimize costs:
 
 **Both staging + prod: ~$20-30/month**
 
-*Can upgrade prod to db-g1-small regional HA (~$50/mo) + min instance (+ $15/mo) if traffic/uptime requirements increase.*
+_Can upgrade prod to db-g1-small regional HA (~$50/mo) + min instance (+ $15/mo) if traffic/uptime requirements increase._
 
 ## Security
 
@@ -333,6 +345,7 @@ gcloud projects add-iam-policy-binding PROJECT_ID \
 ```
 
 Add to `terraform.tfvars`:
+
 ```
 ci_service_account_email = "ci-cd@PROJECT_ID.iam.gserviceaccount.com"
 ```

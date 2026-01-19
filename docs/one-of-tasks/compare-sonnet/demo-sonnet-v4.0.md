@@ -1,4 +1,3 @@
-
 # AWS ECS Deployment Plan for Nuxt Blog App
 
 ## Project Overview
@@ -17,6 +16,7 @@ This document outlines the complete migration plan from Cloudflare Workers (Nuxt
 ## Target AWS Architecture
 
 ### Core Services
+
 - **ECS Fargate**: Container orchestration for the Nuxt app
 - **Application Load Balancer (ALB)**: Traffic distribution and SSL termination
 - **RDS PostgreSQL**: Database replacement for NuxtHub DB
@@ -27,6 +27,7 @@ This document outlines the complete migration plan from Cloudflare Workers (Nuxt
 - **Certificate Manager**: SSL/TLS certificates
 
 ### Supporting Services
+
 - **VPC**: Network isolation and security
 - **Secrets Manager**: Secure storage for API keys and database credentials
 - **CloudWatch**: Monitoring and logging
@@ -35,23 +36,27 @@ This document outlines the complete migration plan from Cloudflare Workers (Nuxt
 ## Phase 1: Infrastructure Setup (Week 1-2)
 
 ### 1.1 AWS Account & Initial Setup
+
 - [ ] Create/configure AWS account
 - [ ] Set up AWS CLI and credentials
 - [ ] Create dedicated IAM user for deployments
 - [ ] Configure billing alerts
 
 ### 1.2 Network Infrastructure
+
 - [ ] Create VPC with public/private subnets across multiple AZs
 - [ ] Set up Internet Gateway and NAT Gateways
 - [ ] Configure Route Tables
 - [ ] Create Security Groups for ALB, ECS, and RDS
 
 ### 1.3 Domain & SSL
+
 - [ ] Transfer domain to Route 53 (or configure DNS)
 - [ ] Request SSL certificate via Certificate Manager
 - [ ] Validate domain ownership
 
 ### 1.4 Database Setup
+
 - [ ] Create RDS PostgreSQL instance in private subnets
 - [ ] Configure security groups for database access
 - [ ] Set up database credentials in Secrets Manager
@@ -60,18 +65,21 @@ This document outlines the complete migration plan from Cloudflare Workers (Nuxt
 ## Phase 2: Application Containerization (Week 2-3)
 
 ### 2.1 Docker Configuration
+
 - [ ] Create optimized Dockerfile for Nuxt production build
 - [ ] Create docker-compose.yml for local development
 - [ ] Configure .dockerignore file
 - [ ] Test local container build and run
 
 ### 2.2 Database Migration Preparation
+
 - [ ] Update Drizzle config for PostgreSQL
 - [ ] Create database migration scripts
 - [ ] Update environment variables structure
 - [ ] Test database connections locally
 
 ### 2.3 Application Updates
+
 - [ ] Remove NuxtHub specific dependencies
 - [ ] Update environment variable handling
 - [ ] Configure for container deployment
@@ -80,18 +88,21 @@ This document outlines the complete migration plan from Cloudflare Workers (Nuxt
 ## Phase 3: ECS Infrastructure (Week 3-4)
 
 ### 3.1 ECS Cluster Setup
+
 - [ ] Create ECS Fargate cluster
 - [ ] Configure CloudWatch log groups
 - [ ] Set up ECR repository
 - [ ] Create task definition with proper resource allocation
 
 ### 3.2 Load Balancer Configuration
+
 - [ ] Create Application Load Balancer
 - [ ] Configure target groups for ECS service
 - [ ] Set up health checks
 - [ ] Configure HTTPS listeners and redirect HTTP to HTTPS
 
 ### 3.3 ECS Service Configuration
+
 - [ ] Create ECS service with auto-scaling
 - [ ] Configure service discovery
 - [ ] Set up rolling deployment strategy
@@ -100,6 +111,7 @@ This document outlines the complete migration plan from Cloudflare Workers (Nuxt
 ## Phase 4: CI/CD Pipeline (Week 4-5)
 
 ### 4.1 GitHub Actions Workflow
+
 ```yaml
 # .github/workflows/deploy.yml structure:
 # - Build and test on multiple Node versions
@@ -110,6 +122,7 @@ This document outlines the complete migration plan from Cloudflare Workers (Nuxt
 ```
 
 ### 4.2 Pipeline Stages
+
 - [ ] **Build Stage**: Install dependencies, run tests, build application
 - [ ] **Security Stage**: Vulnerability scanning, code analysis
 - [ ] **Docker Stage**: Build and tag container images
@@ -117,6 +130,7 @@ This document outlines the complete migration plan from Cloudflare Workers (Nuxt
 - [ ] **Verification Stage**: Health checks and smoke tests
 
 ### 4.3 Environment Strategy
+
 - [ ] Set up staging environment
 - [ ] Configure production deployment
 - [ ] Implement blue-green deployment strategy
@@ -125,18 +139,21 @@ This document outlines the complete migration plan from Cloudflare Workers (Nuxt
 ## Phase 5: Monitoring & Security (Week 5-6)
 
 ### 5.1 Observability
+
 - [ ] Configure CloudWatch dashboards
 - [ ] Set up application metrics
 - [ ] Create alerts for critical metrics
 - [ ] Implement distributed tracing (X-Ray)
 
 ### 5.2 Security Hardening
+
 - [ ] Implement least-privilege IAM policies
 - [ ] Enable VPC Flow Logs
 - [ ] Configure AWS Config for compliance
 - [ ] Set up GuardDuty for threat detection
 
 ### 5.3 Backup & Disaster Recovery
+
 - [ ] Configure RDS automated backups
 - [ ] Set up cross-region backup for critical data
 - [ ] Document disaster recovery procedures
@@ -145,18 +162,21 @@ This document outlines the complete migration plan from Cloudflare Workers (Nuxt
 ## Phase 6: Data Migration & Go-Live (Week 6-7)
 
 ### 6.1 Data Migration
+
 - [ ] Export data from NuxtHub/Cloudflare D1
 - [ ] Transform data for PostgreSQL schema
 - [ ] Import data to RDS PostgreSQL
 - [ ] Verify data integrity
 
 ### 6.2 DNS & Traffic Switching
+
 - [ ] Configure CloudFront distribution
 - [ ] Set up Route 53 records with health checks
 - [ ] Implement gradual traffic shifting
 - [ ] Monitor application performance
 
 ### 6.3 Post-Migration Tasks
+
 - [ ] Update documentation
 - [ ] Train team on new deployment process
 - [ ] Monitor system performance
@@ -165,6 +185,7 @@ This document outlines the complete migration plan from Cloudflare Workers (Nuxt
 ## Technical Implementation Details
 
 ### Dockerfile Example
+
 ```dockerfile
 # Multi-stage build for optimized production image
 FROM node:18-alpine AS builder
@@ -182,6 +203,7 @@ CMD ["npm", "start"]
 ```
 
 ### Environment Variables
+
 ```env
 # Database
 DATABASE_URL=postgresql://user:pass@rds-endpoint:5432/blog
@@ -202,6 +224,7 @@ AWS_REGION=us-east-1
 ```
 
 ### ECS Task Definition
+
 ```json
 {
   "family": "blog-app",
@@ -237,6 +260,7 @@ AWS_REGION=us-east-1
 ## Cost Estimation
 
 ### Monthly AWS Costs (Estimated)
+
 - **ECS Fargate**: $30-50 (1 vCPU, 2GB RAM, 24/7)
 - **Application Load Balancer**: $18-25
 - **RDS PostgreSQL** (t3.micro): $15-20
@@ -250,11 +274,13 @@ AWS_REGION=us-east-1
 ## Risk Mitigation
 
 ### Technical Risks
+
 - **Database Migration**: Plan for data consistency and minimal downtime
 - **Performance**: Load test before migration
 - **Dependencies**: Audit all NuxtHub-specific code
 
 ### Operational Risks
+
 - **Monitoring**: Implement comprehensive monitoring before migration
 - **Rollback Plan**: Maintain Cloudflare deployment until stability confirmed
 - **Team Training**: Ensure team familiarity with AWS services
@@ -262,12 +288,14 @@ AWS_REGION=us-east-1
 ## Success Criteria
 
 ### Performance Metrics
+
 - [ ] Application response time < 200ms (95th percentile)
 - [ ] 99.9% uptime SLA
 - [ ] Zero data loss during migration
 - [ ] CI/CD pipeline deployment time < 10 minutes
 
 ### Operational Metrics
+
 - [ ] Automated deployments working correctly
 - [ ] Monitoring and alerting functional
 - [ ] Backup and restore procedures validated
@@ -275,14 +303,14 @@ AWS_REGION=us-east-1
 
 ## Timeline Summary
 
-| Phase | Duration | Key Deliverables |
-|-------|----------|------------------|
-| 1 | 2 weeks | AWS infrastructure setup |
-| 2 | 1 week | Application containerization |
-| 3 | 1 week | ECS configuration |
-| 4 | 1 week | CI/CD pipeline |
-| 5 | 1 week | Monitoring & security |
-| 6 | 1 week | Migration & go-live |
+| Phase | Duration | Key Deliverables             |
+| ----- | -------- | ---------------------------- |
+| 1     | 2 weeks  | AWS infrastructure setup     |
+| 2     | 1 week   | Application containerization |
+| 3     | 1 week   | ECS configuration            |
+| 4     | 1 week   | CI/CD pipeline               |
+| 5     | 1 week   | Monitoring & security        |
+| 6     | 1 week   | Migration & go-live          |
 
 **Total Project Duration**: 7 weeks
 

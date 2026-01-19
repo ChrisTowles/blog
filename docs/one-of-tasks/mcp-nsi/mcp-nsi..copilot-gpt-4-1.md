@@ -14,13 +14,13 @@ Model Context Protocol (MCP) is an open protocol designed to standardize the way
 
 ## Project Milestones & Timeline
 
-| Week | Milestone                                      | Description                                                                 |
-|------|------------------------------------------------|-----------------------------------------------------------------------------|
-| 1.1  | Project Setup & AWS Deployment                 | Initialize Python project, set up AWS environment (EC2/Lambda), CI/CD.      |
-| 1.2  | Basic MCP Server Implementation                | Implement core MCP endpoints (e.g., chat, completion) using FastAPI.        |
-| 1.3  | VS Code Usage Example                          | Provide sample VS Code extension or REST client to interact with MCP server.|
-| 2.1  | Authentication Integration                     | Add authentication (e.g., JWT, OAuth) to secure MCP endpoints.              |
-| 2.2  | Documentation & Final Testing                  | Write usage docs, test deployment, and polish for handoff.                  |
+| Week | Milestone                       | Description                                                                  |
+| ---- | ------------------------------- | ---------------------------------------------------------------------------- |
+| 1.1  | Project Setup & AWS Deployment  | Initialize Python project, set up AWS environment (EC2/Lambda), CI/CD.       |
+| 1.2  | Basic MCP Server Implementation | Implement core MCP endpoints (e.g., chat, completion) using FastAPI.         |
+| 1.3  | VS Code Usage Example           | Provide sample VS Code extension or REST client to interact with MCP server. |
+| 2.1  | Authentication Integration      | Add authentication (e.g., JWT, OAuth) to secure MCP endpoints.               |
+| 2.2  | Documentation & Final Testing   | Write usage docs, test deployment, and polish for handoff.                   |
 
 ## Technology Stack
 
@@ -33,10 +33,12 @@ Model Context Protocol (MCP) is an open protocol designed to standardize the way
 ## Example VS Code Usage
 
 Developers can interact with the MCP server directly from VS Code using either:
+
 - A custom VS Code extension (sample provided)
 - The built-in REST client (using `.http` files)
 
 Example `.http` request:
+
 ```http
 POST https://your-mcp-server.aws.com/v1/chat
 Authorization: Bearer <token>
@@ -80,5 +82,3 @@ For questions or support, contact the project lead or refer to the documentation
 ---
 
 Let me know if you want this inserted into your file or need any changes!https://fssfed.ge.com/`
-
-

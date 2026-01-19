@@ -122,12 +122,12 @@ const ragSearchTool = {
     properties: {
       query: {
         type: 'string',
-        description: 'Search query for blog content'
-      }
+        description: 'Search query for blog content',
+      },
     },
-    required: ['query']
-  }
-}
+    required: ['query'],
+  },
+};
 ```
 
 ### Tool Execution
@@ -136,16 +136,18 @@ const ragSearchTool = {
 async function executeTool(toolName: string, input: unknown): Promise<string> {
   switch (toolName) {
     case 'search_blog':
-      const results = await ragService.search(input.query)
+      const results = await ragService.search(input.query);
       // Include post URLs for citation
-      return JSON.stringify(results.map(r => ({
-        title: r.title,
-        excerpt: r.content,
-        url: r.url,
-        score: r.score
-      })))
+      return JSON.stringify(
+        results.map((r) => ({
+          title: r.title,
+          excerpt: r.content,
+          url: r.url,
+          score: r.score,
+        })),
+      );
     default:
-      throw new Error(`Unknown tool: ${toolName}`)
+      throw new Error(`Unknown tool: ${toolName}`);
   }
 }
 ```
@@ -156,38 +158,38 @@ async function executeTool(toolName: string, input: unknown): Promise<string> {
 
 ```typescript
 // server/api/chat.post.ts
-import Anthropic from '@anthropic-ai/sdk'
+import Anthropic from '@anthropic-ai/sdk';
 
 export default defineEventHandler(async (event) => {
   // Validate turnstile, rate limit, get session...
 
-  const anthropic = new Anthropic()
+  const anthropic = new Anthropic();
   const stream = await anthropic.messages.stream({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 4096,
     system: getSystemPrompt(),
     messages: conversationHistory,
-    tools: [ragSearchTool]
-  })
+    tools: [ragSearchTool],
+  });
 
   // Set SSE headers
   setHeaders(event, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive'
-  })
+    Connection: 'keep-alive',
+  });
 
   for await (const event of stream) {
     if (event.type === 'content_block_delta') {
       // Stream text delta
-      sendSSE(event.delta)
+      sendSSE(event.delta);
     } else if (event.type === 'content_block_start' && event.content_block.type === 'tool_use') {
       // Send tool call start (for collapsible UI)
-      sendSSE({ type: 'tool_start', name: event.content_block.name })
+      sendSSE({ type: 'tool_start', name: event.content_block.name });
     }
     // Handle tool execution, continue loop...
   }
-})
+});
 ```
 
 ---
@@ -203,8 +205,8 @@ const chatMetrics = {
   toolCalls: meter.createCounter('chat.tool_calls'),
   errors: meter.createCounter('chat.errors'),
   ragLatency: meter.createHistogram('chat.rag.latency'),
-  ragResultCount: meter.createHistogram('chat.rag.results')
-}
+  ragResultCount: meter.createHistogram('chat.rag.results'),
+};
 ```
 
 ### Traces
@@ -226,22 +228,22 @@ const rateLimiter = createRateLimiter({
   limits: [
     { key: 'ip', max: 10, window: 60_000 },
     { key: 'global', max: 100, window: 60_000 },
-    { key: 'session', max: 50, window: 3600_000 }
-  ]
-})
+    { key: 'session', max: 50, window: 3600_000 },
+  ],
+});
 ```
 
 ---
 
 ## Error Handling
 
-| Scenario | User Message |
-|----------|--------------|
+| Scenario       | User Message                                                  |
+| -------------- | ------------------------------------------------------------- |
 | RAG no results | "I don't have information about that topic in my blog posts." |
 | API rate limit | "I'm experiencing high demand. Please try again in a moment." |
-| API error | "Something went wrong. Please try again." |
-| Turnstile fail | "Verification failed. Please refresh and try again." |
-| Token limit | "This conversation is getting long. Start a new chat?" |
+| API error      | "Something went wrong. Please try again."                     |
+| Turnstile fail | "Verification failed. Please refresh and try again."          |
+| Token limit    | "This conversation is getting long. Start a new chat?"        |
 
 ---
 
@@ -272,6 +274,7 @@ Auto-append to responses when RAG used:
 
 ```markdown
 **Sources:**
+
 - [Post Title](/blog/post-slug)
 - [Another Post](/blog/another-slug)
 ```

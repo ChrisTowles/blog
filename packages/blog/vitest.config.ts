@@ -1,7 +1,7 @@
-import dotenv from 'dotenv'
-import { defineConfig } from 'vitest/config'
-import { defineVitestProject } from '@nuxt/test-utils/config'
-import { findUpSync } from 'find-up'
+import dotenv from 'dotenv';
+import { defineConfig } from 'vitest/config';
+import { defineVitestProject } from '@nuxt/test-utils/config';
+import { findUpSync } from 'find-up';
 
 export default defineConfig({
   test: {
@@ -19,16 +19,17 @@ export default defineConfig({
           environmentOptions: {
             nuxt: {
               domEnvironment: 'happy-dom',
-              overrides: {}
-            }
+              overrides: {},
+            },
           },
           env: {
             ...dotenv.config({
-              path: findUpSync('.env') ,
-             quiet: true }).parsed
-          }
-        }
-      })
-    ]
-  }
-})
+              path: findUpSync('.env'),
+              quiet: true,
+            }).parsed,
+          },
+        },
+      }),
+    ],
+  },
+});

@@ -8,7 +8,7 @@ jobs:
   transfer-issue:
     if: contains(github.event.issue.labels.*.name, 'ui new')
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Transfer issue to towles-tool repo
         uses: actions/github-script@v7
@@ -16,7 +16,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const issue = context.payload.issue;
-            
+
             // Create issue in target repo
             const newIssue = await github.rest.issues.create({
               owner: 'ChrisTowles',
@@ -25,7 +25,7 @@ jobs:
               body: `${issue.body}\n\n---\n*Transferred from ${context.repo.owner}/${context.repo.repo}#${issue.number}*`,
               labels: issue.labels.map(label => label.name).filter(name => name !== 'ui new')
             });
-            
+
             // Close original issue with comment
             await github.rest.issues.createComment({
               owner: context.repo.owner,
@@ -33,7 +33,7 @@ jobs:
               issue_number: issue.number,
               body: `This issue has been transferred to the UI repository: ${newIssue.data.html_url}`
             });
-            
+
             await github.rest.issues.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -41,7 +41,7 @@ jobs:
               state: 'closed',
               state_reason: 'not_planned'
             });
-            
 
-            
+
+
             console.log(`Issue transferred: ${newIssue.data.html_url}`);

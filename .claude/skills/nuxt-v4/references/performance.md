@@ -33,9 +33,7 @@ Nuxt 4 includes automatic optimizations:
 ```vue
 <script setup>
 // Method 1: defineAsyncComponent
-const HeavyChart = defineAsyncComponent(() =>
-  import('~/components/HeavyChart.vue')
-)
+const HeavyChart = defineAsyncComponent(() => import('~/components/HeavyChart.vue'));
 
 // Method 2: Lazy prefix (auto-magic)
 // Just name your component LazyHeavyChart.vue
@@ -58,7 +56,7 @@ const HeavyChart = defineAsyncComponent(() =>
 
 ```vue
 <script setup>
-const showHeavyComponent = ref(false)
+const showHeavyComponent = ref(false);
 </script>
 
 <template>
@@ -74,15 +72,15 @@ const showHeavyComponent = ref(false)
 ```typescript
 // Lazy load a module
 const handleExport = async () => {
-  const { exportToPDF } = await import('~/utils/export')
-  await exportToPDF(data)
-}
+  const { exportToPDF } = await import('~/utils/export');
+  await exportToPDF(data);
+};
 
 // Lazy load a library
 const initChart = async () => {
-  const { Chart } = await import('chart.js')
-  new Chart(canvas, config)
-}
+  const { Chart } = await import('chart.js');
+  new Chart(canvas, config);
+};
 ```
 
 ## Lazy Hydration
@@ -97,10 +95,7 @@ Delay hydration until needed for better initial load performance.
   <LazyHeavyComponent lazy-hydrate="visible" />
 
   <!-- With options -->
-  <LazyHeavyComponent
-    lazy-hydrate="visible"
-    :hydrate-on-visible="{ rootMargin: '100px' }"
-  />
+  <LazyHeavyComponent lazy-hydrate="visible" :hydrate-on-visible="{ rootMargin: '100px' }" />
 </template>
 ```
 
@@ -112,10 +107,7 @@ Delay hydration until needed for better initial load performance.
   <LazyCommentSection lazy-hydrate="interaction" />
 
   <!-- Specific events -->
-  <LazyCommentSection
-    lazy-hydrate="interaction"
-    :hydrate-on-interaction="['click', 'focus']"
-  />
+  <LazyCommentSection lazy-hydrate="interaction" :hydrate-on-interaction="['click', 'focus']" />
 </template>
 ```
 
@@ -127,10 +119,7 @@ Delay hydration until needed for better initial load performance.
   <LazyFooter lazy-hydrate="idle" />
 
   <!-- With timeout -->
-  <LazyFooter
-    lazy-hydrate="idle"
-    :hydrate-on-idle="{ timeout: 3000 }"
-  />
+  <LazyFooter lazy-hydrate="idle" :hydrate-on-idle="{ timeout: 3000 }" />
 </template>
 ```
 
@@ -138,9 +127,7 @@ Delay hydration until needed for better initial load performance.
 
 ```vue
 <script setup>
-const LazyComponent = defineLazyHydrationComponent(() =>
-  import('./HeavyComponent.vue')
-)
+const LazyComponent = defineLazyHydrationComponent(() => import('./HeavyComponent.vue'));
 </script>
 
 <template>
@@ -159,8 +146,8 @@ npm install @nuxt/image
 ```typescript
 // nuxt.config.ts
 export default defineNuxtConfig({
-  modules: ['@nuxt/image']
-})
+  modules: ['@nuxt/image'],
+});
 ```
 
 ### NuxtImg
@@ -182,11 +169,7 @@ export default defineNuxtConfig({
   />
 
   <!-- Responsive -->
-  <NuxtImg
-    src="/hero.jpg"
-    sizes="sm:100vw md:50vw lg:400px"
-    :modifiers="{ fit: 'cover' }"
-  />
+  <NuxtImg src="/hero.jpg" sizes="sm:100vw md:50vw lg:400px" :modifiers="{ fit: 'cover' }" />
 </template>
 ```
 
@@ -195,12 +178,7 @@ export default defineNuxtConfig({
 ```vue
 <template>
   <!-- Auto format selection (WebP, AVIF) -->
-  <NuxtPicture
-    src="/hero.jpg"
-    alt="Hero"
-    sizes="sm:100vw md:50vw lg:400px"
-    format="avif,webp"
-  />
+  <NuxtPicture src="/hero.jpg" alt="Hero" sizes="sm:100vw md:50vw lg:400px" format="avif,webp" />
 </template>
 ```
 
@@ -210,19 +188,19 @@ export default defineNuxtConfig({
 // nuxt.config.ts
 export default defineNuxtConfig({
   image: {
-    provider: 'cloudflare',  // or 'ipx', 'cloudinary', 'imgix', etc.
+    provider: 'cloudflare', // or 'ipx', 'cloudinary', 'imgix', etc.
     cloudflare: {
-      baseURL: 'https://example.com'
+      baseURL: 'https://example.com',
     },
     screens: {
       xs: 320,
       sm: 640,
       md: 768,
       lg: 1024,
-      xl: 1280
-    }
-  }
-})
+      xl: 1280,
+    },
+  },
+});
 ```
 
 ## Font Optimization
@@ -236,8 +214,8 @@ npm install @nuxt/fonts
 ```typescript
 // nuxt.config.ts
 export default defineNuxtConfig({
-  modules: ['@nuxt/fonts']
-})
+  modules: ['@nuxt/fonts'],
+});
 ```
 
 ### Features
@@ -255,14 +233,14 @@ export default defineNuxtConfig({
   fonts: {
     families: [
       { name: 'Inter', provider: 'google' },
-      { name: 'Roboto Mono', provider: 'google', weights: [400, 700] }
+      { name: 'Roboto Mono', provider: 'google', weights: [400, 700] },
     ],
     defaults: {
       weights: [400, 500, 700],
-      styles: ['normal', 'italic']
-    }
-  }
-})
+      styles: ['normal', 'italic'],
+    },
+  },
+});
 ```
 
 ## Route Rules & Caching
@@ -278,18 +256,18 @@ export default defineNuxtConfig({
     '/about': { prerender: true },
 
     // SWR - cache with background revalidation
-    '/api/products': { swr: 3600 },  // 1 hour
-    '/api/users/**': { swr: 300 },   // 5 minutes
+    '/api/products': { swr: 3600 }, // 1 hour
+    '/api/users/**': { swr: 300 }, // 5 minutes
 
     // ISR - Incremental Static Regeneration
-    '/blog/**': { isr: 60 },  // Regenerate every 60 seconds
+    '/blog/**': { isr: 60 }, // Regenerate every 60 seconds
 
     // SPA mode - client-side only (no SSR)
     '/dashboard/**': { ssr: false },
 
     // Custom cache headers
     '/api/static-data': {
-      headers: { 'cache-control': 'max-age=86400' }
+      headers: { 'cache-control': 'max-age=86400' },
     },
 
     // Redirect
@@ -298,39 +276,42 @@ export default defineNuxtConfig({
     // CORS headers
     '/api/**': {
       cors: true,
-      headers: { 'Access-Control-Allow-Origin': '*' }
-    }
-  }
-})
+      headers: { 'Access-Control-Allow-Origin': '*' },
+    },
+  },
+});
 ```
 
 ### Server-Side Caching
 
 ```typescript
 // server/api/products.get.ts
-import { defineCachedEventHandler } from 'nitropack/runtime'
+import { defineCachedEventHandler } from 'nitropack/runtime';
 
-export default defineCachedEventHandler(async (event) => {
-  const products = await db.products.findMany()
-  return products
-}, {
-  maxAge: 60 * 60,  // 1 hour
-  staleMaxAge: 60 * 60 * 24,  // 24 hours stale-while-revalidate
-  swr: true,
-  getKey: (event) => getRequestURL(event).pathname
-})
+export default defineCachedEventHandler(
+  async (event) => {
+    const products = await db.products.findMany();
+    return products;
+  },
+  {
+    maxAge: 60 * 60, // 1 hour
+    staleMaxAge: 60 * 60 * 24, // 24 hours stale-while-revalidate
+    swr: true,
+    getKey: (event) => getRequestURL(event).pathname,
+  },
+);
 ```
 
 ### Data Fetching Cache
 
 ```typescript
 const { data } = await useFetch('/api/products', {
-  key: 'products',  // Cache key
+  key: 'products', // Cache key
   getCachedData(key, nuxtApp) {
     // Custom cache retrieval logic
-    return nuxtApp.payload.data[key]
-  }
-})
+    return nuxtApp.payload.data[key];
+  },
+});
 ```
 
 ## Bundle Optimization
@@ -356,30 +337,30 @@ export default defineNuxtConfig({
 export default defineNuxtConfig({
   vite: {
     optimizeDeps: {
-      include: ['lodash-es', 'axios']  // Pre-bundle heavy deps
+      include: ['lodash-es', 'axios'], // Pre-bundle heavy deps
     },
     build: {
       rollupOptions: {
         output: {
           manualChunks: {
-            'vendor': ['vue', 'vue-router'],
-            'utils': ['lodash-es', 'date-fns']
-          }
-        }
-      }
-    }
-  }
-})
+            vendor: ['vue', 'vue-router'],
+            utils: ['lodash-es', 'date-fns'],
+          },
+        },
+      },
+    },
+  },
+});
 ```
 
 ### Tree Shaking
 
 ```typescript
 // ✅ Good - tree shakeable
-import { debounce } from 'lodash-es'
+import { debounce } from 'lodash-es';
 
 // ❌ Bad - imports entire library
-import _ from 'lodash'
+import _ from 'lodash';
 ```
 
 ### External Dependencies
@@ -390,11 +371,11 @@ export default defineNuxtConfig({
   vite: {
     build: {
       rollupOptions: {
-        external: ['heavy-lib-only-needed-server-side']
-      }
-    }
-  }
-})
+        external: ['heavy-lib-only-needed-server-side'],
+      },
+    },
+  },
+});
 ```
 
 ## Database Optimization
@@ -403,22 +384,22 @@ export default defineNuxtConfig({
 
 ```typescript
 // ❌ Bad - N+1 problem
-const users = await db.users.findMany()
+const users = await db.users.findMany();
 for (const user of users) {
-  user.posts = await db.posts.findMany({ where: { userId: user.id } })
+  user.posts = await db.posts.findMany({ where: { userId: user.id } });
 }
 
 // ✅ Good - single query with include
 const users = await db.users.findMany({
-  include: { posts: true }
-})
+  include: { posts: true },
+});
 
 // ✅ Good - separate optimized queries
-const users = await db.users.findMany()
-const userIds = users.map(u => u.id)
+const users = await db.users.findMany();
+const userIds = users.map((u) => u.id);
 const posts = await db.posts.findMany({
-  where: { userId: { in: userIds } }
-})
+  where: { userId: { in: userIds } },
+});
 ```
 
 ### Pagination
@@ -426,15 +407,15 @@ const posts = await db.posts.findMany({
 ```typescript
 // server/api/users.get.ts
 export default defineEventHandler(async (event) => {
-  const query = getQuery(event)
-  const page = Number(query.page) || 1
-  const limit = Math.min(Number(query.limit) || 20, 100)
-  const offset = (page - 1) * limit
+  const query = getQuery(event);
+  const page = Number(query.page) || 1;
+  const limit = Math.min(Number(query.limit) || 20, 100);
+  const offset = (page - 1) * limit;
 
   const [users, total] = await Promise.all([
     db.users.findMany({ skip: offset, take: limit }),
-    db.users.count()
-  ])
+    db.users.count(),
+  ]);
 
   return {
     data: users,
@@ -442,10 +423,10 @@ export default defineEventHandler(async (event) => {
       page,
       limit,
       total,
-      totalPages: Math.ceil(total / limit)
-    }
-  }
-})
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+});
 ```
 
 ### Select Only Needed Fields
@@ -456,10 +437,10 @@ const users = await db.users.findMany({
   select: {
     id: true,
     name: true,
-    email: true
+    email: true,
     // Excludes large fields like bio, avatar, etc.
-  }
-})
+  },
+});
 ```
 
 ## Monitoring
@@ -471,14 +452,14 @@ const users = await db.users.findMany({
 export default defineNuxtPlugin(() => {
   if (import.meta.client) {
     import('web-vitals').then(({ onCLS, onFID, onLCP, onFCP, onTTFB }) => {
-      onCLS(console.log)
-      onFID(console.log)
-      onLCP(console.log)
-      onFCP(console.log)
-      onTTFB(console.log)
-    })
+      onCLS(console.log);
+      onFID(console.log);
+      onLCP(console.log);
+      onFCP(console.log);
+      onTTFB(console.log);
+    });
   }
-})
+});
 ```
 
 ### Custom Performance Marks
@@ -486,13 +467,13 @@ export default defineNuxtPlugin(() => {
 ```typescript
 // Measure component render time
 onMounted(() => {
-  performance.mark('component-mounted')
-  performance.measure('component-render', 'component-start', 'component-mounted')
-})
+  performance.mark('component-mounted');
+  performance.measure('component-render', 'component-start', 'component-mounted');
+});
 
 onBeforeMount(() => {
-  performance.mark('component-start')
-})
+  performance.mark('component-start');
+});
 ```
 
 ## Checklist

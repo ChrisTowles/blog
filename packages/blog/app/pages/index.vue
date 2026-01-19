@@ -1,25 +1,22 @@
 <script setup lang="ts">
-import { TEST_IDS } from '~~/shared/test-ids'
+import { TEST_IDS } from '~~/shared/test-ids';
 
 // const { data: navigation } = await useAsyncData('navigation', () => queryCollectionNavigation('docs'))
 
-const { data: page } = await useAsyncData('index', () => queryCollection('index').first())
+const { data: page } = await useAsyncData('index', () => queryCollection('index').first());
 
 useSeoMeta({
   titleTemplate: '',
   title: page.value?.title,
   ogTitle: page.value?.title,
   description: page.value?.description,
-  ogDescription: page.value?.description
-})
+  ogDescription: page.value?.description,
+});
 </script>
 
 <template>
   <div v-if="page">
-    <UPageHero
-      :description="page.hero.description"
-      :links="page.hero.links"
-    >
+    <UPageHero :description="page.hero.description" :links="page.hero.links">
       <template #title>
         <span class="font-bold text-(--ui-text-highlighted)">
           Chris Towles's
@@ -48,10 +45,7 @@ useSeoMeta({
 
     <USeparator />
 
-    <UPageSection
-      :title="page.features.title"
-      :description="page.features.description"
-    >
+    <UPageSection :title="page.features.title" :description="page.features.description">
       <UPageGrid>
         <UPageCard
           v-for="(item, index) in page.features.items"
@@ -65,22 +59,9 @@ useSeoMeta({
     <USeparator />
 
     <UPageSection :title="page.logos.title" />
-    <UMarquee
-      :repeat="6"
-      pause-on-hover
-      class="pb-8"
-    >
-      <ULink
-        v-for="x in page.logos.links"
-        :key="x.label"
-        as="button"
-        :to="x.to"
-      >
-        <UIcon
-          :to="x.to"
-          :name="x.icon"
-          class="size-10 shrink-0"
-        />
+    <UMarquee :repeat="6" pause-on-hover class="pb-8">
+      <ULink v-for="x in page.logos.links" :key="x.label" as="button" :to="x.to">
+        <UIcon :to="x.to" :name="x.icon" class="size-10 shrink-0" />
       </ULink>
     </UMarquee>
   </div>

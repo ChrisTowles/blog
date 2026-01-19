@@ -1,24 +1,16 @@
 {
-    "editor.wordWrap": "on",
-    "editor.wordWrapColumn": 160,
-    "search.exclude": {
-        "**/node_modules": true,
-        "**/.nuxt": true,
-        "**/.wrangler": true,
-        "**/.output": true,
-        "**/.dist": true,
-    },
-    // markdown paste image - https://marketplace.visualstudio.com/items?itemName=chris-towles.markdown-paste-image
-    "markdownPasteImage.encodePath": "urlEncode",
-    "markdownPasteImage.imageFolderPath": "${projectRoot}/packages/blog/public/images/blog/",
-    "cSpell.words": [
-        "agentic",
-        "Datalake",
-        "fooocus",
-        "heroicons",
-        "Nuxt",
-        "ollama",
-        "Sideload"
-    ],
-    "browse-lite.startUrl": "http://localhost:3000"
+  "editor.wordWrap": "on",
+  "editor.wordWrapColumn": 160,
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.nuxt": true,
+    "**/.wrangler": true,
+    "**/.output": true,
+    "**/.dist": true
+  },
+  // markdown paste image - https://marketplace.visualstudio.com/items?itemName=chris-towles.markdown-paste-image
+  "markdownPasteImage.encodePath": "urlEncode",
+  "markdownPasteImage.imageFolderPath": "${projectRoot}/packages/blog/public/images/blog/",
+  "cSpell.words": ["agentic", "Datalake", "fooocus", "heroicons", "Nuxt", "ollama", "Sideload"],
+  "browse-lite.startUrl": "http://localhost:3000"
 }

@@ -1,7 +1,7 @@
-import { query } from '@anthropic-ai/claude-agent-sdk'
-import { blogToolsServer, blogToolNames } from './tools/index'
-import { getSkillSources, getProjectRoot, defaultSkillConfig } from './skill-config'
-import type { AgentMessage } from './stream-adapter'
+import { query } from '@anthropic-ai/claude-agent-sdk';
+import { blogToolsServer, blogToolNames } from './tools/index';
+import { getSkillSources, getProjectRoot, defaultSkillConfig } from './skill-config';
+import type { AgentMessage } from './stream-adapter';
 
 // TODO: get promptfoot integration working for these prompts
 
@@ -35,27 +35,27 @@ Your goal is to provide clear, accurate, and well-structured responses.
 
 **SKILLS:**
 - You have access to skills that provide specialized knowledge
-- When a query matches a skill's domain, use it for better responses`
+- When a query matches a skill's domain, use it for better responses`;
 
 /**
  * Options for running the agent
  */
 export interface AgentOptions {
   /** User's message/prompt */
-  prompt: string
+  prompt: string;
   /** Model to use (defaults to runtime config) */
-  model?: string
+  model?: string;
   /** Maximum turns for tool use loop */
-  maxTurns?: number
+  maxTurns?: number;
   /** Maximum thinking tokens for extended thinking */
-  maxThinkingTokens?: number
+  maxThinkingTokens?: number;
   /** Enable/disable skill sources */
   skillConfig?: {
-    project?: boolean
-    global?: boolean
-  }
+    project?: boolean;
+    global?: boolean;
+  };
   /** Session ID to resume (for multi-turn conversations) */
-  resumeSessionId?: string
+  resumeSessionId?: string;
 }
 
 /**
@@ -63,22 +63,22 @@ export interface AgentOptions {
  * Returns an async generator of Agent SDK messages
  */
 export function runAgent(options: AgentOptions): AsyncIterable<AgentMessage> {
-  const config = useRuntimeConfig()
+  const config = useRuntimeConfig();
 
   // Determine skill sources based on config
   const skillSources = getSkillSources({
     ...defaultSkillConfig,
     enabled: {
       project: options.skillConfig?.project ?? true,
-      global: options.skillConfig?.global ?? true
-    }
-  })
+      global: options.skillConfig?.global ?? true,
+    },
+  });
 
   // Build allowed tools list
   const allowedTools = [
     ...blogToolNames,
-    'Skill' // Enable skill invocation
-  ]
+    'Skill', // Enable skill invocation
+  ];
 
   return query({
     prompt: options.prompt,
@@ -87,13 +87,13 @@ export function runAgent(options: AgentOptions): AsyncIterable<AgentMessage> {
       cwd: getProjectRoot(),
 
       // Model selection
-      model: options.model || config.public.model as string || 'sonnet',
+      model: options.model || (config.public.model as string) || 'sonnet',
 
       // System prompt with custom append
       systemPrompt: {
         type: 'preset',
         preset: 'claude_code',
-        append: SYSTEM_PROMPT
+        append: SYSTEM_PROMPT,
       },
 
       // Skill sources for progressive loading
@@ -101,7 +101,7 @@ export function runAgent(options: AgentOptions): AsyncIterable<AgentMessage> {
 
       // Custom tools via MCP server
       mcpServers: {
-        'blog-tools': blogToolsServer
+        'blog-tools': blogToolsServer,
       },
 
       // Allowed tools
@@ -117,9 +117,9 @@ export function runAgent(options: AgentOptions): AsyncIterable<AgentMessage> {
       permissionMode: 'bypassPermissions',
 
       // Resume session for multi-turn conversations
-      ...(options.resumeSessionId && { resume: options.resumeSessionId })
-    }
-  }) as AsyncIterable<AgentMessage>
+      ...(options.resumeSessionId && { resume: options.resumeSessionId }),
+    },
+  }) as AsyncIterable<AgentMessage>;
 }
 
 /**
@@ -127,18 +127,18 @@ export function runAgent(options: AgentOptions): AsyncIterable<AgentMessage> {
  * Useful for non-streaming use cases
  */
 export async function runAgentSync(options: AgentOptions): Promise<{
-  result: string
-  messages: AgentMessage[]
+  result: string;
+  messages: AgentMessage[];
 }> {
-  const messages: AgentMessage[] = []
-  let result = ''
+  const messages: AgentMessage[] = [];
+  let result = '';
 
   for await (const message of runAgent(options)) {
-    messages.push(message)
+    messages.push(message);
     if (message.type === 'result') {
-      result = message.result
+      result = message.result;
     }
   }
 
-  return { result, messages }
+  return { result, messages };
 }

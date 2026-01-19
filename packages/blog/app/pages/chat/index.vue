@@ -1,82 +1,82 @@
 <script setup lang="ts">
 // Note: it took me way to long to figure, out that this file needed to be a index in the chat folder to work correctly.
-import { extractErrorMessage } from '~~/shared/error-util'
-import { TEST_IDS } from '~~/shared/test-ids'
+import { extractErrorMessage } from '~~/shared/error-util';
+import { TEST_IDS } from '~~/shared/test-ids';
 
 definePageMeta({
-  layout: 'chat-side-nav'
-})
+  layout: 'chat-side-nav',
+});
 
-const toast = useToast()
+const toast = useToast();
 
-const input = ref('')
-const loading = ref(false)
-const { model } = useModels()
+const input = ref('');
+const loading = ref(false);
+const { model } = useModels();
 
 async function setPrompt(prompt: string) {
-  input.value = prompt
+  input.value = prompt;
 }
 
 async function createChat(prompt: string) {
-  input.value = prompt
+  input.value = prompt;
 
-  loading.value = true
+  loading.value = true;
 
   try {
     const chat = await $fetch('/api/chats', {
       method: 'POST',
-      body: { input: prompt }
-    })
-    console.log('chat', chat)
-    refreshNuxtData('chats')
-    await navigateTo(`/chat/${chat.id}`)
+      body: { input: prompt },
+    });
+    console.log('chat', chat);
+    refreshNuxtData('chats');
+    await navigateTo(`/chat/${chat.id}`);
     // no loading state to reset, because we are navigating away.
   } catch (error) {
-    console.error('error', error)
+    console.error('error', error);
 
-    loading.value = false
+    loading.value = false;
     toast.add({
       description: extractErrorMessage(error),
       icon: 'i-lucide-alert-circle',
-      color: 'error'
-    })
+      color: 'error',
+    });
   }
 }
 
 function onSubmit() {
-  createChat(input.value)
+  createChat(input.value);
 }
 
 const quickChats = [
   {
     label: 'What posts do you have about dark matter developer?',
-    icon: 'i-heroicons-outline-light-bulb'
+    icon: 'i-heroicons-outline-light-bulb',
   },
   {
-    label: 'What\'s the weather in Cincinnati?',
-    icon: 'i-lucide-cloud-sun'
+    label: "What's the weather in Cincinnati?",
+    icon: 'i-lucide-cloud-sun',
   },
   {
     label: 'Roll 4d6 drop lowest for stats',
-    icon: 'i-lucide-dice-5'
+    icon: 'i-lucide-dice-5',
   },
   {
     label: 'write a script in python to sort a list.',
-    icon: 'i-heroicons-command-line'
+    icon: 'i-heroicons-command-line',
   },
   {
     label: 'write a script in typescript to sort a list.',
-    icon: 'i-heroicons-command-line'
+    icon: 'i-heroicons-command-line',
   },
   {
     label: 'Make a markdown table with 5 jokes.',
-    icon: 'i-heroicons-command-line'
+    icon: 'i-heroicons-command-line',
   },
   {
     label: 'Why use Nuxt UI?',
-    icon: 'i-logos-nuxt-icon'
-  }
-]
+    icon: 'i-logos-nuxt-icon',
+  },
+];
 </script>
 
 <template>
