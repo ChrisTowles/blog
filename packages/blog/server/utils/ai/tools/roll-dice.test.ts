@@ -6,7 +6,7 @@ import { rollDice } from './roll-dice';
 
 describe('rollDice', () => {
   it('should parse simple dice notation', async () => {
-    const result = (await rollDice.handler({ notation: '1d6' }, undefined)) as {
+    const result = (await rollDice.handler({ notation: '1d6', label: undefined }, undefined)) as {
       content: Array<{ text: string }>;
     };
     const data = JSON.parse(result.content[0].text);
@@ -18,7 +18,10 @@ describe('rollDice', () => {
   });
 
   it('should handle modifier notation', async () => {
-    const result = (await rollDice.handler({ notation: '1d20+5' }, undefined)) as {
+    const result = (await rollDice.handler(
+      { notation: '1d20+5', label: undefined },
+      undefined,
+    )) as {
       content: Array<{ text: string }>;
     };
     const data = JSON.parse(result.content[0].text);
@@ -29,7 +32,10 @@ describe('rollDice', () => {
   });
 
   it('should handle negative modifiers', async () => {
-    const result = (await rollDice.handler({ notation: '1d20-2' }, undefined)) as {
+    const result = (await rollDice.handler(
+      { notation: '1d20-2', label: undefined },
+      undefined,
+    )) as {
       content: Array<{ text: string }>;
     };
     const data = JSON.parse(result.content[0].text);
@@ -38,7 +44,7 @@ describe('rollDice', () => {
   });
 
   it('should handle multiple dice', async () => {
-    const result = (await rollDice.handler({ notation: '3d6' }, undefined)) as {
+    const result = (await rollDice.handler({ notation: '3d6', label: undefined }, undefined)) as {
       content: Array<{ text: string }>;
     };
     const data = JSON.parse(result.content[0].text);
@@ -49,7 +55,10 @@ describe('rollDice', () => {
   });
 
   it('should handle keep highest notation', async () => {
-    const result = (await rollDice.handler({ notation: '4d6kh3' }, undefined)) as {
+    const result = (await rollDice.handler(
+      { notation: '4d6kh3', label: undefined },
+      undefined,
+    )) as {
       content: Array<{ text: string }>;
     };
     const data = JSON.parse(result.content[0].text);
@@ -60,7 +69,10 @@ describe('rollDice', () => {
   });
 
   it('should handle keep lowest notation (disadvantage)', async () => {
-    const result = (await rollDice.handler({ notation: '2d20kl1' }, undefined)) as {
+    const result = (await rollDice.handler(
+      { notation: '2d20kl1', label: undefined },
+      undefined,
+    )) as {
       content: Array<{ text: string }>;
     };
     const data = JSON.parse(result.content[0].text);
@@ -81,7 +93,10 @@ describe('rollDice', () => {
   });
 
   it('should reject invalid notation', async () => {
-    const result = (await rollDice.handler({ notation: 'invalid' }, undefined)) as {
+    const result = (await rollDice.handler(
+      { notation: 'invalid', label: undefined },
+      undefined,
+    )) as {
       isError: boolean;
       content: Array<{ text: string }>;
     };
@@ -91,7 +106,7 @@ describe('rollDice', () => {
   });
 
   it('should reject too many dice', async () => {
-    const result = (await rollDice.handler({ notation: '101d6' }, undefined)) as {
+    const result = (await rollDice.handler({ notation: '101d6', label: undefined }, undefined)) as {
       isError: boolean;
       content: Array<{ text: string }>;
     };
@@ -101,7 +116,7 @@ describe('rollDice', () => {
   });
 
   it('should reject invalid die sides', async () => {
-    const result = (await rollDice.handler({ notation: '1d1' }, undefined)) as {
+    const result = (await rollDice.handler({ notation: '1d1', label: undefined }, undefined)) as {
       isError: boolean;
       content: Array<{ text: string }>;
     };
@@ -111,7 +126,7 @@ describe('rollDice', () => {
   });
 
   it('should generate breakdown string', async () => {
-    const result = (await rollDice.handler({ notation: '2d6+3' }, undefined)) as {
+    const result = (await rollDice.handler({ notation: '2d6+3', label: undefined }, undefined)) as {
       content: Array<{ text: string }>;
     };
     const data = JSON.parse(result.content[0].text);
@@ -122,7 +137,10 @@ describe('rollDice', () => {
   // Natural language tests
   describe('natural language notation', () => {
     it('should handle "4d6 drop lowest"', async () => {
-      const result = (await rollDice.handler({ notation: '4d6 drop lowest' }, undefined)) as {
+      const result = (await rollDice.handler(
+        { notation: '4d6 drop lowest', label: undefined },
+        undefined,
+      )) as {
         content: Array<{ text: string }>;
       };
       const data = JSON.parse(result.content[0].text);
@@ -133,7 +151,10 @@ describe('rollDice', () => {
     });
 
     it('should handle "4d6 drop the lowest"', async () => {
-      const result = (await rollDice.handler({ notation: '4d6 drop the lowest' }, undefined)) as {
+      const result = (await rollDice.handler(
+        { notation: '4d6 drop the lowest', label: undefined },
+        undefined,
+      )) as {
         content: Array<{ text: string }>;
       };
       const data = JSON.parse(result.content[0].text);
@@ -144,7 +165,10 @@ describe('rollDice', () => {
     });
 
     it('should handle "2d20 advantage"', async () => {
-      const result = (await rollDice.handler({ notation: '2d20 advantage' }, undefined)) as {
+      const result = (await rollDice.handler(
+        { notation: '2d20 advantage', label: undefined },
+        undefined,
+      )) as {
         content: Array<{ text: string }>;
       };
       const data = JSON.parse(result.content[0].text);
@@ -155,7 +179,10 @@ describe('rollDice', () => {
     });
 
     it('should handle "2d20 disadvantage"', async () => {
-      const result = (await rollDice.handler({ notation: '2d20 disadvantage' }, undefined)) as {
+      const result = (await rollDice.handler(
+        { notation: '2d20 disadvantage', label: undefined },
+        undefined,
+      )) as {
         content: Array<{ text: string }>;
       };
       const data = JSON.parse(result.content[0].text);
@@ -166,7 +193,10 @@ describe('rollDice', () => {
     });
 
     it('should handle "4d6 keep highest 3"', async () => {
-      const result = (await rollDice.handler({ notation: '4d6 keep highest 3' }, undefined)) as {
+      const result = (await rollDice.handler(
+        { notation: '4d6 keep highest 3', label: undefined },
+        undefined,
+      )) as {
         content: Array<{ text: string }>;
       };
       const data = JSON.parse(result.content[0].text);
@@ -177,7 +207,10 @@ describe('rollDice', () => {
     });
 
     it('should handle "1d20 + 5" with spaces', async () => {
-      const result = (await rollDice.handler({ notation: '1d20 + 5' }, undefined)) as {
+      const result = (await rollDice.handler(
+        { notation: '1d20 + 5', label: undefined },
+        undefined,
+      )) as {
         content: Array<{ text: string }>;
       };
       const data = JSON.parse(result.content[0].text);
