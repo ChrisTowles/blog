@@ -1,3 +1,0 @@
-#!/usr/bin/env sh
-# verbose is added so i can see if the image is compressed
-bunx lint-staged --verbose ${1} 

@@ -93,7 +93,7 @@ async function waitForHealthy(): Promise<boolean> {
 async function testContainer() {
   try {
     console.log(chalk.yellow('🔨 Building Docker image...'))
-    await $`docker build -t ${IMAGE_NAME} .`
+    await $`docker build -f infra/container/blog.Dockerfile -t ${IMAGE_NAME} .`
 
     console.log(chalk.yellow('\n🧹 Cleaning up any existing container...'))
     await $`docker rm -f ${CONTAINER_NAME}`.quiet().nothrow()
@@ -191,7 +191,7 @@ async function deployContainer() {
   const imageWithLatest = `${registry}/blog:latest`
   console.log(chalk.yellow(`\n🔨 Building Docker image: ${imageWithDateTag}`))
   console.log(chalk.gray(`   Git SHA: ${gitSha}`))
-  await $`docker build --build-arg GIT_SHA=${gitSha} --build-arg BUILD_TAG=${dateTag} -t ${imageWithDateTag} -t ${imageWithLatest} .`
+  await $`docker build -f infra/container/blog.Dockerfile --build-arg GIT_SHA=${gitSha} --build-arg BUILD_TAG=${dateTag} -t ${imageWithDateTag} -t ${imageWithLatest} .`
 
   // Step 5: Push both tags
   console.log(chalk.yellow(`\n📤 Pushing images to registry...`))
