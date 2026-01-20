@@ -10,6 +10,7 @@ Fixes image issues in uncommitted blog posts before publishing.
 ## Workflow
 
 1. Run the analysis script:
+
 ```bash
 python3 scripts/fix_blog_images.py --json
 ```
@@ -34,11 +35,13 @@ python3 scripts/fix_blog_images.py --json
 ## Example Fix
 
 Before:
+
 ```markdown
 ![alt text](image.png)
 ```
 
 After:
+
 ```markdown
 ![Screenshot showing terminal layout](/images/blog/20251229-post-slug-image.png)
 ```

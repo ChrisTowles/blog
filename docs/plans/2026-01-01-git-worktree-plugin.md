@@ -10,12 +10,14 @@
 ## Implementation Tasks
 
 ### Phase 1: Plugin Setup
+
 - [x] Create `packages/claude-plugins/worktree/` directory structure
 - [x] Create `.claude-plugin/plugin.json` with plugin metadata
 - [x] Create `package.json` with tsx dependency
 - [x] Create `README.md` with usage docs
 
 ### Phase 2: Core Library (`scripts/lib/`)
+
 - [x] `registry.ts` - Read/write `.worktree-registry.json`
 - [x] `slots.ts` - Parse `slots.yaml`, find free slot, allocate/free
 - [x] `env.ts` - Template processing (`{{VAR}}`, `{{COPY:VAR}}`, glob `.env*.template`)
@@ -25,6 +27,7 @@
 - [x] `paths.ts` - Resolve worktree paths, sibling folder naming
 
 ### Phase 3: Commands
+
 - [x] `scripts/worktree-init.ts` - Initialize config for repo
 - [x] `skills/init.md` - Skill definition for `/worktree:init`
 - [x] `scripts/worktree-create.ts` - Create worktree with slot
@@ -35,6 +38,7 @@
 - [x] `skills/remove.md` - Skill definition for `/worktree:remove`
 
 ### Phase 4: Testing & Polish
+
 - [x] Test init flow with interactive prompts
 - [x] Test create with GitHub issue number
 - [x] Test create with manual branch name
@@ -45,40 +49,42 @@
 - [x] Add error handling for all edge cases
 
 ### Future (Not in Initial Scope)
+
 - [ ] `/worktree:sync` command
 
 ---
 
 ## Design Decisions
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Platform | Linux/macOS only | Simpler bash scripts, no Windows path handling |
-| Unmerged branch removal | Offer stash option | Auto-stash before removal, user can recover |
-| Config location | Sibling folder only | Secrets stay out of repo, each dev sets up |
-| Non-GitHub repos | Manual branch name | Prompt for branch name if no GitHub |
-| Env drift | `/worktree sync` command | Update all worktrees' COPY vars at once |
-| Script language | Python 3.11+ | Zero deps (stdlib tomllib), universal availability |
-| Slot reuse | Any free slot | First available, no preference tracking |
-| Auto-detect services | No | Fully manual slot var setup |
-| Port validation | Warn only | Check ports, warn if in use, don't block |
-| Registry corruption | Verify on list | Check actual worktrees, mark stale entries |
-| Post-create automation | None | Just output instructions |
-| Min slots | 1 | Allow even single-slot setups |
-| Multi-env files | Glob pattern | Process all `.env*.template` files |
-| Issue cache | Always fresh | Hit GitHub API each time |
-| List output | Relative path | `../repo-worktrees/feature-xxx` |
-| Sync scope | All worktrees | Update all at once |
-| Zellij integration | None | Separate concerns |
-| Plugin name | `worktree` | `/worktree:create`, `/worktree:list`, etc. |
-| Initial scope | Core 4 commands | create, list, remove, init (sync later) |
-| Dry-run | Yes for both | `--dry-run` flag for create and remove |
+| Decision                | Choice                   | Rationale                                          |
+| ----------------------- | ------------------------ | -------------------------------------------------- |
+| Platform                | Linux/macOS only         | Simpler bash scripts, no Windows path handling     |
+| Unmerged branch removal | Offer stash option       | Auto-stash before removal, user can recover        |
+| Config location         | Sibling folder only      | Secrets stay out of repo, each dev sets up         |
+| Non-GitHub repos        | Manual branch name       | Prompt for branch name if no GitHub                |
+| Env drift               | `/worktree sync` command | Update all worktrees' COPY vars at once            |
+| Script language         | Python 3.11+             | Zero deps (stdlib tomllib), universal availability |
+| Slot reuse              | Any free slot            | First available, no preference tracking            |
+| Auto-detect services    | No                       | Fully manual slot var setup                        |
+| Port validation         | Warn only                | Check ports, warn if in use, don't block           |
+| Registry corruption     | Verify on list           | Check actual worktrees, mark stale entries         |
+| Post-create automation  | None                     | Just output instructions                           |
+| Min slots               | 1                        | Allow even single-slot setups                      |
+| Multi-env files         | Glob pattern             | Process all `.env*.template` files                 |
+| Issue cache             | Always fresh             | Hit GitHub API each time                           |
+| List output             | Relative path            | `../repo-worktrees/feature-xxx`                    |
+| Sync scope              | All worktrees            | Update all at once                                 |
+| Zellij integration      | None                     | Separate concerns                                  |
+| Plugin name             | `worktree`               | `/worktree:create`, `/worktree:list`, etc.         |
+| Initial scope           | Core 4 commands          | create, list, remove, init (sync later)            |
+| Dry-run                 | Yes for both             | `--dry-run` flag for create and remove             |
 
 ---
 
 ## Problem Statement
 
 Working on multiple features simultaneously requires:
+
 - Separate git worktrees per feature
 - Isolated services (different ports per worktree)
 - Resources that require pre-configuration (OAuth apps, API keys, etc.)
@@ -120,7 +126,13 @@ my-project-worktrees/          # Sibling folder (auto-named from repo)
   "repoName": "my-project",
   "slotCount": 5,
   "assignments": [
-    { "slot": 1, "issue": 142, "branch": "feature/142-add-feature", "worktree": "feature-142-add-feature", "createdAt": "2026-01-01T10:00:00Z" },
+    {
+      "slot": 1,
+      "issue": 142,
+      "branch": "feature/142-add-feature",
+      "worktree": "feature-142-add-feature",
+      "createdAt": "2026-01-01T10:00:00Z"
+    },
     { "slot": 2, "issue": null, "branch": null, "worktree": null, "createdAt": null },
     { "slot": 3, "issue": null, "branch": null, "worktree": null, "createdAt": null },
     { "slot": 4, "issue": null, "branch": null, "worktree": null, "createdAt": null },
@@ -139,16 +151,16 @@ slots:
   - slot: 1
     PORT: 3001
     PG_PORT: 5433
-    OAUTH_CLIENT_ID: "Ov23li..."
-    OAUTH_CLIENT_SECRET: "secret1..."
-    WEBHOOK_URL: "https://hooks.example.com/slot1"
+    OAUTH_CLIENT_ID: 'Ov23li...'
+    OAUTH_CLIENT_SECRET: 'secret1...'
+    WEBHOOK_URL: 'https://hooks.example.com/slot1'
 
   - slot: 2
     PORT: 3002
     PG_PORT: 5434
-    OAUTH_CLIENT_ID: "Ov23li..."
-    OAUTH_CLIENT_SECRET: "secret2..."
-    WEBHOOK_URL: "https://hooks.example.com/slot2"
+    OAUTH_CLIENT_ID: 'Ov23li...'
+    OAUTH_CLIENT_SECRET: 'secret2...'
+    WEBHOOK_URL: 'https://hooks.example.com/slot2'
 
   # ... additional slots
 ```
@@ -301,15 +313,16 @@ Update `{{COPY:VAR}}` values across all worktrees:
 
 The `.env*.template` files support three value types:
 
-| Syntax | Source | Example |
-|--------|--------|---------|
-| `{{VAR}}` | From `slots.yaml` for assigned slot | `{{PORT}}` → `3001` |
-| `{{COPY:VAR}}` | From main repo's `.env*` | `{{COPY:API_KEY}}` → `sk-xxx` |
-| Static | Kept as-is | `NODE_ENV=development` |
+| Syntax         | Source                              | Example                       |
+| -------------- | ----------------------------------- | ----------------------------- |
+| `{{VAR}}`      | From `slots.yaml` for assigned slot | `{{PORT}}` → `3001`           |
+| `{{COPY:VAR}}` | From main repo's `.env*`            | `{{COPY:API_KEY}}` → `sk-xxx` |
+| Static         | Kept as-is                          | `NODE_ENV=development`        |
 
 ### Multi-Env File Support
 
 Process all files matching `.env*.template`:
+
 - `.env.template` → `.env`
 - `.env.local.template` → `.env.local`
 - `.env.development.template` → `.env.development`
@@ -319,6 +332,7 @@ Process all files matching `.env*.template`:
 Format: `feature/<issue>-<slug>` or manual name
 
 Slug generation (for GitHub issues):
+
 - Fetch issue title from GitHub (always fresh, no cache)
 - Lowercase, replace spaces with hyphens
 - Remove special chars
@@ -338,6 +352,7 @@ Scripts require `tsx` to run TypeScript directly. On first run, check if tsx exi
 ### Registry Verification
 
 On `/worktree:list`, cross-reference with `git worktree list`:
+
 - Active: worktree exists in both registry and git
 - Free: slot not assigned
 - Stale: in registry but worktree missing (manual deletion)
@@ -346,19 +361,19 @@ On `/worktree:list`, cross-reference with `git worktree list`:
 
 ## Error Handling
 
-| Scenario | Action |
-|----------|--------|
-| Config not initialized | Error: "No worktree config found. Run `/worktree:init` first." |
-| No free slots | Error: "All N slots in use. Remove a worktree first." |
-| Issue not found | Error: "GitHub issue #X not found" |
-| Worktree exists | Error: "Worktree for issue #X already exists (slot Y)" |
-| Branch exists | Prompt: "Branch exists. Use existing or create fresh?" |
-| Unmerged branch on remove | Offer stash, then prompt: "Branch not merged. Force delete?" |
-| Missing template var | Error: "Template has {{VAR}} but not defined in slots.yaml" |
-| Missing COPY source | Warning: "{{COPY:VAR}} not found in main .env, leaving empty" |
-| Port in use | Warning: "Port 3001 appears to be in use" |
-| tsx not installed | Prompt: "Install tsx globally?" |
-| Stale registry entry | Mark as stale in list, don't auto-clean |
+| Scenario                  | Action                                                         |
+| ------------------------- | -------------------------------------------------------------- |
+| Config not initialized    | Error: "No worktree config found. Run `/worktree:init` first." |
+| No free slots             | Error: "All N slots in use. Remove a worktree first."          |
+| Issue not found           | Error: "GitHub issue #X not found"                             |
+| Worktree exists           | Error: "Worktree for issue #X already exists (slot Y)"         |
+| Branch exists             | Prompt: "Branch exists. Use existing or create fresh?"         |
+| Unmerged branch on remove | Offer stash, then prompt: "Branch not merged. Force delete?"   |
+| Missing template var      | Error: "Template has {{VAR}} but not defined in slots.yaml"    |
+| Missing COPY source       | Warning: "{{COPY:VAR}} not found in main .env, leaving empty"  |
+| Port in use               | Warning: "Port 3001 appears to be in use"                      |
+| tsx not installed         | Prompt: "Install tsx globally?"                                |
+| Stale registry entry      | Mark as stale in list, don't auto-clean                        |
 
 ---
 
@@ -372,13 +387,13 @@ slots:
   - slot: 1
     PORT: 3001
     PG_PORT: 5433
-    OAUTH_CLIENT_ID: "Ov23li_slot1..."
-    OAUTH_CLIENT_SECRET: "secret1..."
+    OAUTH_CLIENT_ID: 'Ov23li_slot1...'
+    OAUTH_CLIENT_SECRET: 'secret1...'
   - slot: 2
     PORT: 3002
     PG_PORT: 5434
-    OAUTH_CLIENT_ID: "Ov23li_slot2..."
-    OAUTH_CLIENT_SECRET: "secret2..."
+    OAUTH_CLIENT_ID: 'Ov23li_slot2...'
+    OAUTH_CLIENT_SECRET: 'secret2...'
 ```
 
 ```bash
@@ -399,11 +414,11 @@ slots:
   - slot: 1
     PORT: 3001
     REDIS_PORT: 6380
-    STRIPE_WEBHOOK_SECRET: "whsec_slot1..."
+    STRIPE_WEBHOOK_SECRET: 'whsec_slot1...'
   - slot: 2
     PORT: 3002
     REDIS_PORT: 6381
-    STRIPE_WEBHOOK_SECRET: "whsec_slot2..."
+    STRIPE_WEBHOOK_SECRET: 'whsec_slot2...'
 ```
 
 ```bash

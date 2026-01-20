@@ -1,9 +1,7 @@
-@import "tailwindcss";
-@import "@nuxt/ui";
-
-
+@import 'tailwindcss';
+@import '@nuxt/ui';
 
 :root {
-    /* https://ui.nuxt.com/getting-started/theme */
-    --ui-radius: 0.125rem;
+  /* https://ui.nuxt.com/getting-started/theme */
+  --ui-radius: 0.125rem;
 }

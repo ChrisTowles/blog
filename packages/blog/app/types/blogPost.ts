@@ -15,7 +15,7 @@
 //     } & NuxtLinkProps)[]
 // }
 
-import { z } from 'zod'
+import { z } from 'zod';
 
 export const BlogPostSchema = z.object({
   title: z.string(),
@@ -28,9 +28,9 @@ export const BlogPostSchema = z.object({
       z.object({
         name: z.string(),
         description: z.string().optional(),
-        avatar: z.string()
+        avatar: z.string(),
         // Spread NuxtLinkProps if needed, otherwise leave as is
-      })
+      }),
     )
-    .optional()
-})
+    .optional(),
+});

@@ -27,11 +27,11 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - '${DB_PORT:-5432}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -41,6 +41,7 @@ volumes:
 ```
 
 **Changes:**
+
 - [ ] Remove `container_name: blog-postgres`
 - [ ] Change port from `"5432:5432"` to `"${DB_PORT:-5432}:5432"`
 
@@ -49,6 +50,7 @@ volumes:
 **File:** `.env.example`
 
 Add at top:
+
 ```env
 # Docker Compose isolation (required for worktree support)
 COMPOSE_PROJECT_NAME=blog
@@ -56,11 +58,13 @@ DB_PORT=5432
 ```
 
 Update DATABASE_URL:
+
 ```env
 DATABASE_URL=postgresql://postgres:postgres@localhost:${DB_PORT:-5432}/postgres
 ```
 
 **Changes:**
+
 - [ ] Add `COMPOSE_PROJECT_NAME=blog`
 - [ ] Add `DB_PORT=5432`
 - [ ] Update `DATABASE_URL` to use `${DB_PORT:-5432}`
@@ -70,21 +74,23 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:${DB_PORT:-5432}/postgres
 **File:** `scripts/worktree.ts` (cmdInit function default config)
 
 Update the default slots to use `DB_PORT` consistently:
+
 ```jsonc
 {
-    "slots": {
-        "slot-1": { "DB_PORT": 5433 },
-        "slot-2": { "DB_PORT": 5434 },
-        "slot-3": { "DB_PORT": 5435 },
-        "slot-4": { "DB_PORT": 5436 },
-        "slot-5": { "DB_PORT": 5437 }
-    }
+  "slots": {
+    "slot-1": { "DB_PORT": 5433 },
+    "slot-2": { "DB_PORT": 5434 },
+    "slot-3": { "DB_PORT": 5435 },
+    "slot-4": { "DB_PORT": 5436 },
+    "slot-5": { "DB_PORT": 5437 },
+  },
 }
 ```
 
 Also add `COMPOSE_PROJECT_NAME` to template or derive from slot name.
 
 **Changes:**
+
 - [ ] Update default slots config in `cmdInit()` to use `DB_PORT` (remove `PORT`)
 - [ ] Add `COMPOSE_PROJECT_NAME` as slot variable (e.g., `blog-slot-1`)
 - [ ] Update `.env.template` generation to include `COMPOSE_PROJECT_NAME` and `DATABASE_URL`
@@ -94,10 +100,12 @@ Also add `COMPOSE_PROJECT_NAME` to template or derive from slot name.
 **File:** `CLAUDE.md` or README
 
 Add worktree setup section:
+
 ```markdown
 ## Worktree Development
 
 Main repo requires `.env` with:
+
 - `COMPOSE_PROJECT_NAME=blog`
 - `DB_PORT=5432`
 
@@ -105,6 +113,7 @@ Worktrees get `.env` auto-generated via `nr worktree create <issue>`.
 ```
 
 **Changes:**
+
 - [ ] Document new `.env` requirements
 - [ ] Note that main repo .env is now required (not optional)
 
@@ -132,6 +141,7 @@ Worktrees get `.env` auto-generated via `nr worktree create <issue>`.
 ## Rollback
 
 If issues arise:
+
 1. Restore `container_name: blog-postgres` in docker-compose.yml
 2. Change port back to `"5432:5432"`
 3. Remove new vars from .env.example

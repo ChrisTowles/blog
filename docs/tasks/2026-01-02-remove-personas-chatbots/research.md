@@ -1,6 +1,7 @@
 # Research: Remove Personas & Chatbots System
 
 ## Goal
+
 Remove the personas, chatbots, capabilities, and skills system added in Dec 2025 commits. User wants to head in a different direction.
 
 ## Codebase Context
@@ -8,6 +9,7 @@ Remove the personas, chatbots, capabilities, and skills system added in Dec 2025
 ### What Was Added (Dec 2025)
 
 **Database Tables** (`server/database/schema.ts`):
+
 - `personas` - AI personas with themes, system prompts
 - `chatbots` - Pre-configured chat interfaces with persona FK
 - `capabilities` - Reusable skills/behaviors for personas
@@ -16,6 +18,7 @@ Remove the personas, chatbots, capabilities, and skills system added in Dec 2025
 - Modified `chats` table with personaId, personaSlug, chatbotSlug
 
 **Migrations to Remove**:
+
 - `0005_add-persona-theme.sql`
 - `0006_add-persona-slug.sql`
 - `0007_add-chatbots.sql`
@@ -23,22 +26,26 @@ Remove the personas, chatbots, capabilities, and skills system added in Dec 2025
 - `0009_add-chatbot-slug-to-chats.sql`
 
 **API Routes**:
+
 - `/api/personas/*` - CRUD for personas
 - `/api/chatbots/*` - CRUD + by-path lookup
 - `/api/capabilities/*` - List/get capabilities
 - `/api/skills/*` - List/get/upload skills
 
 **Pages**:
+
 - `/app/pages/bot/index.vue` - Browse chatbots
 - `/app/pages/bot/[slug].vue` - Chatbot-specific chat
 - `/app/pages/c/[...slug].vue` - Dynamic chatbot routes
 
 **Server Utils**:
+
 - `server/utils/chatbots.ts` - Chatbot config loading
 - `server/utils/capabilities/` - Persona definitions, registry
 - `server/utils/skills/` - Skill loader, types, tests
 
 **Tests Added**:
+
 - `chatbots.test.ts`
 - `personas.test.ts`
 - `skills.test.ts`
@@ -48,6 +55,7 @@ Remove the personas, chatbots, capabilities, and skills system added in Dec 2025
 ### What to Keep
 
 The base chat functionality appears to predate this:
+
 - `chats` table (but remove persona/chatbot columns)
 - `messages` table
 - `/api/chats` endpoints
@@ -57,6 +65,7 @@ The base chat functionality appears to predate this:
 ## Removal Scope
 
 ### Files to Delete
+
 ```
 server/api/personas/
 server/api/chatbots/
@@ -73,16 +82,19 @@ docs/skill-loader.md
 ```
 
 ### Schema Changes
+
 - Drop tables: personas, chatbots, capabilities, personaCapabilities, skills
 - Remove from chats: personaId, personaSlug, chatbotSlug columns
 
 ### Migration Strategy
 
 **Option A: New migration removing tables**
+
 - Add `0010_remove-personas-system.sql` dropping all related tables/columns
 - Clean approach, maintains migration history
 
 **Option B: Reset migrations**
+
 - Squash migrations to clean state
 - Only viable if no prod data matters
 
@@ -99,6 +111,7 @@ docs/skill-loader.md
 ## Questions Before Planning
 
 Need to clarify:
+
 1. **What's the new direction?** (Simpler chat? Different AI architecture? No chat at all?)
 2. **Keep base chat?** Should `/chat` remain with a single default persona, or remove chat entirely?
 3. **Data preservation?** Any existing chat history to preserve, or clean slate?

@@ -2,7 +2,6 @@
 
 Created By https://app-privacy-policy-generator.firebaseapp.com/# -->
 
-
 ## Privacy Policy
 
 Built the Right Angle Triangle Solver app as an Ad Supported app. This SERVICE is provided by at no cost and is intended for use as is.
@@ -21,9 +20,9 @@ The app does use third party services that may collect information used to ident
 
 Link to privacy policy of third party service providers used by the app
 
-*   [Google Play Services](https://www.google.com/policies/privacy/)
-*   [AdMob](https://support.google.com/admob/answer/6128543?hl=en)
-*   [Firebase Analytics](https://firebase.google.com/policies/analytics)
+- [Google Play Services](https://www.google.com/policies/privacy/)
+- [AdMob](https://support.google.com/admob/answer/6128543?hl=en)
+- [Firebase Analytics](https://firebase.google.com/policies/analytics)
 
 **Log Data**
 
@@ -39,10 +38,10 @@ This Service does not use these “cookies” explicitly. However, the app may u
 
 I may employ third-party companies and individuals due to the following reasons:
 
-*   To facilitate our Service;
-*   To provide the Service on our behalf;
-*   To perform Service-related services; or
-*   To assist us in analyzing how our Service is used.
+- To facilitate our Service;
+- To provide the Service on our behalf;
+- To perform Service-related services; or
+- To assist us in analyzing how our Service is used.
 
 I want to inform users of this Service that these third parties have access to your Personal Information. The reason is to perform the tasks assigned to them on our behalf. However, they are obligated not to disclose or use the information for any other purpose.
 

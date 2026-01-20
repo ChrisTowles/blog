@@ -15,6 +15,7 @@ pnpm eval:view
 ```
 
 The UI provides:
+
 - ✅ Interactive test results with pass/fail status
 - 📊 Full prompt/response pairs for each test
 - 📈 Token usage stats and cost tracking
@@ -74,6 +75,7 @@ packages/evals/
 **File**: `prompts/chatbot-system.txt`
 
 Key requirements:
+
 - ALWAYS use searchBlogContent tool first
 - NO markdown headings (#, ##, etc.)
 - Use **bold** for emphasis instead

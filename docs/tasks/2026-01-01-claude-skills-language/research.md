@@ -1,6 +1,7 @@
 # Claude Code Skills: Language, Build Steps, Dependencies
 
 ## Question
+
 When creating Claude Code skills, which language is best? Are build steps OK? How do you handle dependencies?
 
 ---
@@ -10,10 +11,12 @@ When creating Claude Code skills, which language is best? Are build steps OK? Ho
 ### 1. Language: Markdown Only (with script bundles)
 
 **Skills are Markdown-based, not code-based.** The core skill is always `SKILL.md`:
+
 - YAML frontmatter for metadata
 - Markdown instructions Claude follows
 
 However, **utility scripts can be bundled** in any language:
+
 - Python scripts (most common)
 - Bash/shell scripts
 - TypeScript via `tsx` (seen in this repo's worktree plugin)
@@ -35,11 +38,13 @@ my-skill/
 The skill framework has **no build system**. Skills don't compile.
 
 **Workarounds observed in this repo:**
+
 - Use `tsx` to run TypeScript directly (worktree plugin)
 - Python scripts need no build
 - Bash scripts need no build
 
 If you need TypeScript, add to package.json:
+
 ```json
 {
   "devDependencies": {
@@ -55,11 +60,14 @@ Then reference scripts with shebang: `#!/usr/bin/env tsx`
 
 **Official approach:** Declare requirements in SKILL.md, let users install.
 
-```markdown
+````markdown
 ## Requirements
+
 ```bash
 pip install pypdf pdfplumber
 ```
+````
+
 ```
 
 **No package manager integration** for skills—dependencies must be pre-installed in environment.
@@ -128,3 +136,4 @@ The worktree plugin shows **TypeScript is viable** if you:
 - [Claude Code customization guide](https://alexop.dev/posts/claude-code-customization-guide-claudemd-skills-subagents/)
 - [Agent Skills in the SDK](https://platform.claude.com/docs/en/agent-sdk/skills)
 - Codebase: `packages/claude-plugins/worktree/` (TypeScript example)
+```

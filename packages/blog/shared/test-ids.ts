@@ -23,7 +23,7 @@ export const TEST_IDS = {
     DELETE_ALL_BUTTON: 'delete-all-chats-button',
     STOP_BUTTON: 'stop-generation',
     RELOAD_BUTTON: 'reload-message',
-    COPY_BUTTON: 'copy-message'
+    COPY_BUTTON: 'copy-message',
   },
   BLOG: {
     POST_LIST: 'blog-post-list',
@@ -35,7 +35,7 @@ export const TEST_IDS = {
     POST_META: 'post-metadata',
     PREV_POST: 'prev-post-link',
     NEXT_POST: 'next-post-link',
-    PAGE: 'blog-page'
+    PAGE: 'blog-page',
   },
   NAVIGATION: {
     HEADER: 'app-header',
@@ -46,14 +46,15 @@ export const TEST_IDS = {
     CHAT_LINK: 'nav-chat',
     USER_MENU: 'user-menu',
     LOGIN_BUTTON: 'login-button',
-    THEME_TOGGLE: 'theme-toggle'
+    THEME_TOGGLE: 'theme-toggle',
   },
   SHARED: {
     MODEL_SELECT: 'model-select',
     SEARCH_BUTTON: 'search-button',
-    LOADING_INDICATOR: 'loading-indicator'
-  }
-} as const
+    LOADING_INDICATOR: 'loading-indicator',
+  },
+} as const;
 
 // Type helper to ensure test IDs are used correctly
-export type TestId = typeof TEST_IDS[keyof typeof TEST_IDS][keyof typeof TEST_IDS[keyof typeof TEST_IDS]]
+export type TestId =
+  (typeof TEST_IDS)[keyof typeof TEST_IDS][keyof (typeof TEST_IDS)[keyof typeof TEST_IDS]];

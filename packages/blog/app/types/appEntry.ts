@@ -1,11 +1,11 @@
-import { z } from 'zod'
+import { z } from 'zod';
 
 export enum AppType {
-  MobileAndroid
+  MobileAndroid,
 }
 
 export const AppEntrySchema = z.object({
   title: z.string(),
   description: z.string(),
-  date: z.string()
-})
+  date: z.string(),
+});

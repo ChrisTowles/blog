@@ -5,6 +5,7 @@ This project is a web application of a personal blog. The application is built u
 ## Project Structure
 
 This is a personal blog built with:
+
 - **Nuxt 3** with Nuxt UI Pro
 - **NuxtHub** for Cloudflare Workers deployment
 - **Vitest** for testing
@@ -61,6 +62,7 @@ nuxt typecheck
 ## Large File Editing Protocol
 
 When working with files >300 lines or complex changes:
+
 1. Create detailed plan before making edits
 2. Include all functions/sections needing modification
 3. Show order of changes and dependencies

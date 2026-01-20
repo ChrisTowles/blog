@@ -5,7 +5,7 @@ theme: default
 background: https://images.unsplash.com/photo-1516849841032-87cbac4d88f7?q=80&w=2070
 highlighter: shiki
 
-title: "Why You Should Use the Latest AI Models"
+title: 'Why You Should Use the Latest AI Models'
 
 info: |
   ## Staying Current with AI Models
@@ -39,8 +39,10 @@ Opening hook: Everyone knows AI is improving rapidly, Not alot staying current w
 -->
 
 ---
+
 layout: center
 class: text-center
+
 ---
 
 # How do we know if a new model is better?
@@ -68,10 +70,11 @@ You can't rely on <span class="text-orange-400">**gut feelings**</span> 🎲
 <div class="text-3xl mt-12 text-green-400 font-bold">
 
 You need a <span class="text-yellow-400">objective</span> way to <span class="text-cyan-400">compare</span>
+
 </div>
 
 <div class="text-2xl mt-10 opacity-75">
-That means <span class="text-purple-400">📈 Benchmarks</span> and <span class="text-cyan-400">📊 Evals</span> 
+That means <span class="text-purple-400">📈 Benchmarks</span> and <span class="text-cyan-400">📊 Evals</span>
 
 </div>
 
@@ -84,7 +87,7 @@ That means <span class="text-purple-400">📈 Benchmarks</span> and <span class=
 - **gut feelings** aka marketing claims
 
 - Nope we need compare, with something objective, that means benchmarks and evals
-- 
+-
 - so what type?
 -->
 
@@ -136,94 +139,83 @@ That means <span class="text-purple-400">📈 Benchmarks</span> and <span class=
 ---
 
 # [SWE-bench](https://www.swebench.com/)
+
 ## Real-World Coding Problems
 
-
 **What it measures:**
+
 - Popular GitHub repositories
 - Real GitHub issues
 - Tests ability to understand, plan, and fix actual software bugs
 - Industry-standard for measuring coding capability
 
 ## [The Dataset](https://www.swebench.com/original.html)
+
 They collected 2,294 task instances by crawling Pull Requests and Issues from 12 popular Python repositories. Each instance is based on a pull request that (1) is associated with an issue, and (2) modified 1+ testing related files.
 
-
-<!-- 
+<!--
 This a the benchmark you'll see in every press release about any new model comes out.
 
-These aren't hypothetical problems or toy examples, these are popular github repos with complex structure and tech stacks. 
+These aren't hypothetical problems or toy examples, these are popular github repos with complex structure and tech stacks.
 
 
 Now obviously I'll add that I'm sure that some of the model providers train on the data set. Anthropic says it actually tries really hard not to do this because those shortcuts harm long term progress of the models.
 
-lets look at the current scores over time. 
+lets look at the current scores over time.
 
 -->
 
-
-
----
-transition: fade
 ---
 
-
+## transition: fade
 
 <img src="/latest-models/images/llm-evolution-0.png" class="w-full h-auto" />
 
 <!-- zero means you've never even heard of code before-->
 
-
----
-transition: fade
 ---
 
+## transition: fade
 
 <img src="/latest-models/images/llm-evolution-1.png" class="w-full h-auto" />
 
 <!-- at 3% this GPT 3.5 came out 3 years ago, and the world lost its mind!-->
 
 ---
-transition: fade
----
+
+## transition: fade
 
 <img src="/latest-models/images/llm-evolution-2.png" class="w-full h-auto" />
 
 <!-- at 20% this is first day intern -->
 
-
----
-transition: fade
 ---
 
+## transition: fade
 
 <img src="/latest-models/images/llm-evolution-3.png" class="w-full h-auto" />
 
 <!-- huge jump here with fine tuning, its now solving a third of the problems -->
 
+---
 
----
-transition: fade
----
+## transition: fade
 
 <img src="/latest-models/images/llm-evolution-4.png" class="w-full h-auto" />
 
 <!-- 3.7 is out, it passed the half way mark, its a dev you can give real work to and it can solve half of them. -->
 
-
----
-transition: fade
 ---
 
+## transition: fade
 
 <img src="/latest-models/images/llm-evolution-5.png" class="w-full h-auto" />
 
 <!-- 4 comes out, just a few months later, its up to 70%, and can oneshot some real world problems.  -->
 
+---
 
----
-transition: fade
----
+## transition: fade
 
 <img src="/latest-models/images/llm-evolution-6.png" class="w-full h-auto" />
 <!-- 
@@ -233,8 +225,8 @@ transition: fade
 -->
 
 ---
-layout: two-cols
----
+
+## layout: two-cols
 
 # What we pay per Model
 
@@ -254,8 +246,6 @@ Claude 3.5 Sonnet
 <div class="text-6xl mt-10">
 💰 $3 / $15
 </div>
-
-
 
 <div class="text-2xl mt-5 opacity-75">
 Claude 4.5 Sonnet
@@ -315,7 +305,6 @@ This is the easiest win you can get.
 - but all of those time consuming efforts deliver far less impact than just switching to the latest model.
 -->
 
-
 ---
 
 # Switching Models: One Line of Code
@@ -334,14 +323,11 @@ response = bedrock.invoke_model(
 )
 ```
 
-
----
-transition: fade
 ---
 
+## transition: fade
 
 # Switching Models: One Line of Code
-
 
 ```python {5}
 import boto3
@@ -357,7 +343,6 @@ response = bedrock.invoke_model(
 )
 ```
 
-
 <div v-click class="text-center mt-5 text-xl">
 
 Change one string. Get better performance. Same price.
@@ -369,10 +354,11 @@ Change one string. Get better performance. Same price.
 Open it op for questions
 -->
 
-
 ---
+
 layout: center
 class: text-center
+
 ---
 
 # It can work for 30+ hours straight
@@ -392,11 +378,13 @@ Here's the game-changer: how long can it stay focused without human intervention
 <v-clicks>
 
 **Performance:**
+
 - **Claude 4.0 Opus**: 7 hours of focused work
 - **Claude 4.5 Sonnet**: <span class="text-green-400 text-4xl font-bold">30+ hours</span> of focused work
 - **Improvement**: <span class="text-green-400 text-2xl font-bold">4x longer</span> autonomous operation
 
 **What this means:**
+
 - Start it Friday evening, review Monday morning
 - Handles complex refactors while you sleep
 - Fewer "I need to ask the human" interruptions
@@ -415,23 +403,20 @@ Here's the game-changer: how long can it stay focused without human intervention
 
 # Questions & Answers
 
-
 ## What's the catch?
 
-We hit throttle limits on AWS shared accounts. 
+We hit throttle limits on AWS shared accounts.
 
 - Default: 200 req/min. My team raised requests on 10/16 to raise it to 1000/min for Sonnet 4.5. Non-prod done 10/24, prod pending.
-- This is actually one of the issues we brought up with AWS as being a real problem for us and trying to get them to be more proactive in helping us solve it. 
-
+- This is actually one of the issues we brought up with AWS as being a real problem for us and trying to get them to be more proactive in helping us solve it.
 
 ## Do we need to retrain our team?
 
-No. Drop-in replacement. Change one parameter. but you made evals to verify performance. Right? 😊 
+No. Drop-in replacement. Change one parameter. but you made evals to verify performance. Right? 😊
 
 **"What about hallucinations/accuracy?"**
 
 25% accuracy improvement (HackerOne).
-
 
 <!--
 
@@ -445,12 +430,14 @@ No. Drop-in replacement. Change one parameter. but you made evals to verify perf
 <div>
 
 ### AIME 2025
+
 **Advanced Math**
 
 - With Python tools: **100%**
 - Without Python tools: 87%
 
 ### GPQA Diamond
+
 **Science Reasoning**
 
 - Score: **83.4%**
@@ -500,8 +487,10 @@ Resources slide: Have this ready to share after. Send the link to this deck or a
 -->
 
 ---
+
 layout: center
 class: text-center
+
 ---
 
 # Thank You

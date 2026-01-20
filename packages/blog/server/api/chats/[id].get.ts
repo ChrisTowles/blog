@@ -1,5 +1,5 @@
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+  const session = await getUserSession(event);
 
   // const userId = session.user?.id
   // if (!userId) {
@@ -9,14 +9,15 @@ export default defineEventHandler(async (event) => {
   //   })
   // }
 
-  const { id } = getRouterParams(event)
+  const { id } = getRouterParams(event);
 
   const chat = await useDrizzle().query.chats.findFirst({
-    where: (chat, { eq }) => and(eq(chat.id, id as string), eq(chat.userId, session.user?.id || session.id)),
+    where: (chat, { eq }) =>
+      and(eq(chat.id, id as string), eq(chat.userId, session.user?.id || session.id)),
     with: {
-      messages: true
-    }
-  })
+      messages: true,
+    },
+  });
 
-  return chat
-})
+  return chat;
+});

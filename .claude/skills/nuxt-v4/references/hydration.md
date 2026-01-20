@@ -29,36 +29,36 @@ Hydration is the process of making server-rendered HTML interactive on the clien
 
 ```typescript
 // ❌ WRONG: window doesn't exist on server
-const width = window.innerWidth
+const width = window.innerWidth;
 
 // ❌ WRONG: document doesn't exist on server
-const element = document.getElementById('app')
+const element = document.getElementById('app');
 
 // ❌ WRONG: localStorage doesn't exist on server
-const token = localStorage.getItem('token')
+const token = localStorage.getItem('token');
 ```
 
 ### 2. Non-Deterministic Values
 
 ```typescript
 // ❌ WRONG: Different value on server vs client
-const id = Math.random()
+const id = Math.random();
 
 // ❌ WRONG: Different timestamp on server vs client
-const now = Date.now()
+const now = Date.now();
 
 // ❌ WRONG: Different date string on server vs client
-const date = new Date().toLocaleDateString()
+const date = new Date().toLocaleDateString();
 ```
 
 ### 3. Third-Party Libraries
 
 ```typescript
 // ❌ WRONG: Library depends on browser APIs
-import SomeLibrary from 'some-browser-library'
+import SomeLibrary from 'some-browser-library';
 
 // This will fail on server
-const instance = new SomeLibrary()
+const instance = new SomeLibrary();
 ```
 
 ### 4. Structural Differences
@@ -81,23 +81,23 @@ const instance = new SomeLibrary()
 
 ```typescript
 // ✅ Solution 1: onMounted hook
-const width = ref(0)
+const width = ref(0);
 
 onMounted(() => {
-  width.value = window.innerWidth
+  width.value = window.innerWidth;
 
   window.addEventListener('resize', () => {
-    width.value = window.innerWidth
-  })
-})
+    width.value = window.innerWidth;
+  });
+});
 ```
 
 ```typescript
 // ✅ Solution 2: import.meta.client check
-const width = ref(0)
+const width = ref(0);
 
 if (import.meta.client) {
-  width.value = window.innerWidth
+  width.value = window.innerWidth;
 }
 ```
 
@@ -105,32 +105,32 @@ if (import.meta.client) {
 // ✅ Solution 3: useState with client check
 const token = useState('auth-token', () => {
   if (import.meta.client) {
-    return localStorage.getItem('token')
+    return localStorage.getItem('token');
   }
-  return null
-})
+  return null;
+});
 ```
 
 ### For Non-Deterministic Values
 
 ```typescript
 // ✅ Use useState to ensure same value server & client
-const randomId = useState('random-id', () => Math.random())
+const randomId = useState('random-id', () => Math.random());
 
 // ✅ For dates, use a fixed reference or format consistently
-const timestamp = useState('timestamp', () => Date.now())
+const timestamp = useState('timestamp', () => Date.now());
 ```
 
 ### For Third-Party Libraries
 
 ```typescript
 // ✅ Dynamic import in onMounted
-let library: any = null
+let library: any = null;
 
 onMounted(async () => {
-  const { default: SomeLibrary } = await import('some-browser-library')
-  library = new SomeLibrary()
-})
+  const { default: SomeLibrary } = await import('some-browser-library');
+  library = new SomeLibrary();
+});
 ```
 
 ```vue
@@ -262,35 +262,37 @@ export const useLocalStorage = <T>(key: string, defaultValue: T) => {
   const data = useState<T>(key, () => {
     // Only access localStorage on client
     if (import.meta.client) {
-      const stored = localStorage.getItem(key)
-      return stored ? JSON.parse(stored) : defaultValue
+      const stored = localStorage.getItem(key);
+      return stored ? JSON.parse(stored) : defaultValue;
     }
-    return defaultValue
-  })
+    return defaultValue;
+  });
 
   // Watch for changes (client-side only)
   if (import.meta.client) {
-    watch(data, (newValue) => {
-      localStorage.setItem(key, JSON.stringify(newValue))
-    }, { deep: true })
+    watch(
+      data,
+      (newValue) => {
+        localStorage.setItem(key, JSON.stringify(newValue));
+      },
+      { deep: true },
+    );
   }
 
-  return data
-}
+  return data;
+};
 ```
 
 ### In Templates (via computed)
 
 ```vue
 <script setup>
-const isClient = computed(() => import.meta.client)
+const isClient = computed(() => import.meta.client);
 </script>
 
 <template>
   <!-- Use v-show to avoid structural differences -->
-  <div v-show="isClient">
-    Client-only content
-  </div>
+  <div v-show="isClient">Client-only content</div>
 </template>
 ```
 
@@ -299,6 +301,7 @@ const isClient = computed(() => import.meta.client)
 ### 1. Check Browser Console
 
 Look for specific hydration warnings:
+
 ```
 [Vue warn]: Hydration node mismatch
 [Vue warn]: Hydration text content mismatch
@@ -310,13 +313,13 @@ Look for specific hydration warnings:
 ```typescript
 // In a component
 onMounted(() => {
-  console.log('Server HTML:', document.body.innerHTML)
-})
+  console.log('Server HTML:', document.body.innerHTML);
+});
 
 // During SSR (in server middleware)
 export default defineEventHandler((event) => {
-  console.log('Rendering on server')
-})
+  console.log('Rendering on server');
+});
 ```
 
 ### 3. Isolate the Problem
@@ -350,15 +353,15 @@ npm run dev  # More detailed hydration warnings
 
 ## Quick Reference
 
-| Problem | Solution |
-|---------|----------|
+| Problem                    | Solution                                  |
+| -------------------------- | ----------------------------------------- |
 | `window`/`document` access | Use `onMounted()` or `import.meta.client` |
-| `Math.random()` | Use `useState()` |
-| `Date.now()` | Use `useState()` |
-| `localStorage` | Guard with `import.meta.client` |
-| Third-party browser lib | Dynamic import in `onMounted()` |
-| Different HTML structure | Use `v-show` or `<ClientOnly>` |
-| Timezone differences | Use `<ClientOnly>` for date display |
+| `Math.random()`            | Use `useState()`                          |
+| `Date.now()`               | Use `useState()`                          |
+| `localStorage`             | Guard with `import.meta.client`           |
+| Third-party browser lib    | Dynamic import in `onMounted()`           |
+| Different HTML structure   | Use `v-show` or `<ClientOnly>`            |
+| Timezone differences       | Use `<ClientOnly>` for date display       |
 
 ## Best Practices
 

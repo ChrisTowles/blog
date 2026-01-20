@@ -61,8 +61,8 @@ COPY --from=builder /app/packages/blog/.output /app/.output
 COPY --from=builder /app/packages/blog/content /app/content
 
 # Copy entrypoint
-COPY docker-entrypoint.sh /app/docker-entrypoint.sh
-RUN chmod +x /app/docker-entrypoint.sh
+COPY infra/container/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 # Set environment variables
 ENV NODE_ENV=production
@@ -75,4 +75,4 @@ ENV BUILD_TAG=$BUILD_TAG
 EXPOSE $UI_PORT
 
 # Start the application
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]

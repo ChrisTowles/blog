@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { TEST_IDS } from '~~/shared/test-ids'
+import { TEST_IDS } from '~~/shared/test-ids';
 
-const route = useRoute()
+const route = useRoute();
 
-const { data: posts } = await useAsyncData(route.path, () => queryCollection('posts').order('date', 'DESC').all())
+const { data: posts } = await useAsyncData(route.path, () =>
+  queryCollection('posts').order('date', 'DESC').all(),
+);
 </script>
 
 <template>
@@ -15,19 +17,24 @@ const { data: posts } = await useAsyncData(route.path, () => queryCollection('po
       :title="post.title"
       :description="post.description"
       :image="post.image"
-      :date="new Date(post.date).toLocaleDateString('en', { year: 'numeric', month: 'short', day: 'numeric' })"
+      :date="
+        new Date(post.date).toLocaleDateString('en', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        })
+      "
       :authors="post.authors"
       :data-testid="TEST_IDS.BLOG.POST_CARD"
       :badge="{
         label: post.badge ? post.badge.label : '',
-        color: 'primary'
-
+        color: 'primary',
       }"
       :orientation="index === 0 ? 'horizontal' : 'vertical'"
       :class="[index === 0 && 'col-span-full']"
       variant="naked"
       :ui="{
-        description: 'line-clamp-2'
+        description: 'line-clamp-2',
       }"
     />
   </UBlogPosts>

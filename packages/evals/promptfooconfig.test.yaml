@@ -1,7 +1,7 @@
 # Test configuration to verify Promptfoo setup without API key
 # This uses the echo provider which doesn't require external API calls
 
-description: "Promptfoo setup verification test"
+description: 'Promptfoo setup verification test'
 
 # Use echo provider for testing
 providers:
@@ -9,12 +9,12 @@ providers:
 
 # Simple prompt
 prompts:
-  - "Test prompt: {{query}}"
+  - 'Test prompt: {{query}}'
 
 # Simple test case
 tests:
   - vars:
-      query: "Hello"
+      query: 'Hello'
     assert:
       - type: contains
-        value: "Hello"
+        value: 'Hello'

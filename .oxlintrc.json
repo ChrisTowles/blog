@@ -7,11 +7,5 @@
     "nursery": "off"
   },
   "rules": {},
-  "ignorePatterns": [
-    "node_modules",
-    ".nuxt",
-    ".output",
-    "dist",
-    "*.d.ts"
-  ]
+  "ignorePatterns": ["node_modules", ".nuxt", ".output", "dist", "*.d.ts"]
 }

@@ -155,12 +155,8 @@
           "name": "document_chunks_documentId_documents_id_fk",
           "tableFrom": "document_chunks",
           "tableTo": "documents",
-          "columnsFrom": [
-            "documentId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["documentId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -249,9 +245,7 @@
         "documents_slug_unique": {
           "name": "documents_slug_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "policies": {},
@@ -317,12 +311,8 @@
           "name": "messages_chatId_chats_id_fk",
           "tableFrom": "messages",
           "tableTo": "chats",
-          "columnsFrom": [
-            "chatId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["chatId"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -423,17 +413,12 @@
     "public.provider": {
       "name": "provider",
       "schema": "public",
-      "values": [
-        "github"
-      ]
+      "values": ["github"]
     },
     "public.role": {
       "name": "role",
       "schema": "public",
-      "values": [
-        "user",
-        "assistant"
-      ]
+      "values": ["user", "assistant"]
     }
   },
   "schemas": {},

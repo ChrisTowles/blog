@@ -42,6 +42,8 @@
     "slides:no-brainer": "pnpm --filter @chris-towles/slides dev no-brainer-upgrade.slides.md",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix-dangerously .",
+    "format": "oxfmt --write",
+    "format:check": "oxfmt --check",
     "typecheck": "pnpm --filter @chris-towles/blog typecheck",
     "test": "pnpm --filter @chris-towles/blog test",
     "test:e2e": "pnpm --filter @chris-towles/blog test:e2e",
@@ -49,12 +51,15 @@
     "eval": "pnpm --filter @chris-towles/evals eval",
     "eval:watch": "pnpm --filter @chris-towles/evals eval:watch",
     "eval:view": "pnpm --filter @chris-towles/evals eval:view",
-    "prepare": "husky",
+    "prepare": "simple-git-hooks",
     "mcp:inspect": "pnpm dlx @modelcontextprotocol/inspector",
     "deps:update": "pnpm dlx taze --interactive --recursive",
     "clean": "rm -rf node_modules packages/*/node_modules .nuxt .output .nitro dist packages/*/.nuxt packages/*/.output pnpm-lock.yaml",
     "worktree": "pnpm tsx scripts/worktree.ts",
     "ralph": "pnpm tsx scripts/ralph-loop.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.958.0"
   },
   "devDependencies": {
     "@types/node": "^25.0.3",
@@ -62,16 +67,29 @@
     "cli-table3": "^0.6.5",
     "dotenv": "^17.2.3",
     "find-up": "^8.0.0",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.2.7",
-    "oxlint": "^1.36.0",
+    "lint-staged": "^15.5.1",
+    "oxfmt": "^0.24.0",
+    "oxlint": "^1.2.0",
     "playwright-chromium": "^1.57.0",
+    "simple-git-hooks": "^2.11.1",
     "strip-json-comments": "^5.0.3",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16",
     "zod": "^4.3.5",
     "zx": "^8.8.5"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm lint-staged && pnpm format && pnpm typecheck"
+  },
+  "lint-staged": {
+    "*.png": "pnpm tsx scripts/compress-images.ts",
+    "*.{ts,tsx,mts,cts,js,cjs,mjs}": [
+      "oxlint --fix"
+    ],
+    "*.*": [
+      "oxfmt --write"
+    ]
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -86,12 +104,5 @@
       "unrs-resolver",
       "vue-demi"
     ]
-  },
-  "lint-staged": {
-    "*.png": "pnpm tsx scripts/compress-images.ts",
-    "*.{js,ts,vue}": "oxlint --fix"
-  },
-  "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.958.0"
   }
 }

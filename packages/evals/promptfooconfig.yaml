@@ -1,14 +1,14 @@
 # Promptfoo Configuration for Blog AI Prompts
 # See: https://www.promptfoo.dev/docs/configuration/reference/
 
-description: "Blog chatbot prompt evaluation suite"
+description: 'Blog chatbot prompt evaluation suite'
 
 # Model provider configuration
 providers:
   - id: file://provider-anthropic.ts
-    label: "Haiku 4.5 (baseline)"
+    label: 'Haiku 4.5 (baseline)'
     config:
-      model: "claude-haiku-4-5"
+      model: 'claude-haiku-4-5'
       max_tokens: 1024
 
 # Prompts to test

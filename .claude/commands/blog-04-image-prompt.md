@@ -27,6 +27,7 @@ Generate a compelling, detailed prompt for AI image generation that captures the
 ## Brand Guidelines
 
 **Visual Style**:
+
 - Cinematic realism with dramatic lighting
 - Warm/cool color contrast for depth
 - Professional photography quality (8k, photorealistic)
@@ -35,6 +36,7 @@ Generate a compelling, detailed prompt for AI image generation that captures the
 **Mood**: Contemplative, thought-provoking, professional yet approachable
 
 **Composition**:
+
 - 16:9 aspect ratio (landscape)
 - Rule of thirds or centered dramatic composition
 - Depth of field for focus
@@ -65,7 +67,7 @@ Save to `._tmp/images/{YYYY}-{MM}-{DD}-{HH}{MM}-{blog-title}.md`:
 - **Recommended filename**: `{YYYY}{MM}{DD}-{HH}{MM}-{blog-title}.png`
 - **Aspect ratio**: 16:9 (landscape)
 - **Suggested generators**:
-   - include the probmpt as a URL-encoded parameter for easy copy-paste
+  - include the probmpt as a URL-encoded parameter for easy copy-paste
   - [Google AI Studio](https://aistudio.google.com/prompts/new_chat?model=models%2Fgemini-3-pro-image-preview&prompt={PROMPT_ENCODED_FOR_URL}) - use 16:9 aspect ratio
 
 ## Post-Generation Notes
@@ -76,9 +78,11 @@ Save to `._tmp/images/{YYYY}-{MM}-{DD}-{HH}{MM}-{blog-title}.md`:
 ## Examples
 
 **For a post about performance optimization**:
+
 > A sleek, futuristic engine room with glowing holographic performance graphs floating in mid-air, a software engineer studying the data with focused intensity. Dramatic side lighting creates contrast between cool blue holographic displays and warm ambient light, shallow depth of field. Cinematic realism, professional photography, 8k quality, high contrast color grading with teal and orange tones.
 
 **For a post about architecture decisions**:
+
 > An architect's desk from above showing scattered blueprints transforming into floating 3D holographic building structures, hands gesturing between physical and digital elements. Golden hour lighting through windows, contemplative atmosphere, photorealistic with subtle sci-fi elements. 16:9 composition, rule of thirds, high detail, cinematic color grading.
 
 ## Tips

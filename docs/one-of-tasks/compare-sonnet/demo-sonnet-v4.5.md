@@ -1,9 +1,11 @@
 # Project Plan: Deploy Nuxt App to AWS ECS via GitHub Actions
 
 ## Overview
+
 This plan outlines the migration of the blog application from Cloudflare Workers (NuxtHub) to AWS ECS (Elastic Container Service) with automated deployment via GitHub Actions.
 
 ## Project Goals
+
 - Deploy the Nuxt 3 blog application to AWS ECS
 - Implement CI/CD pipeline using GitHub Actions
 - Maintain feature parity with current Cloudflare deployment
@@ -11,6 +13,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 - Minimize downtime during migration
 
 ## Prerequisites
+
 - AWS Account with appropriate IAM permissions
 - GitHub repository with Actions enabled
 - Docker knowledge for containerization
@@ -19,6 +22,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 ## Phase 1: Infrastructure Planning & Setup (Week 1)
 
 ### 1.1 AWS Architecture Design
+
 - [ ] Design VPC architecture (public/private subnets)
 - [ ] Plan ECS cluster configuration (Fargate vs EC2)
 - [ ] Design Application Load Balancer (ALB) setup
@@ -28,6 +32,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 - [ ] Design secrets management with AWS Secrets Manager
 
 ### 1.2 Infrastructure as Code (IaC)
+
 - [ ] Choose IaC tool (Terraform or AWS CDK)
 - [ ] Create VPC and networking resources
 - [ ] Configure security groups and NACLs
@@ -38,6 +43,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 - [ ] Set up CloudWatch logging and monitoring
 
 ### 1.3 Domain & SSL
+
 - [ ] Configure Route 53 hosted zone
 - [ ] Request/import SSL certificate in ACM
 - [ ] Plan DNS migration strategy
@@ -46,6 +52,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 ## Phase 2: Application Containerization (Week 2)
 
 ### 2.1 Dockerfile Creation
+
 - [ ] Create optimized multi-stage Dockerfile
   ```dockerfile
   # Build stage
@@ -58,12 +65,14 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 - [ ] Test local Docker build and run
 
 ### 2.2 Docker Compose (Local Development)
+
 - [ ] Create docker-compose.yml for local testing
 - [ ] Configure service dependencies (database, redis)
 - [ ] Set up volume mounts for development
 - [ ] Document local Docker workflow
 
 ### 2.3 Application Configuration
+
 - [ ] Adapt Nuxt config for AWS environment
 - [ ] Configure database connection for RDS
 - [ ] Update static asset paths for S3/CloudFront
@@ -74,6 +83,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 ## Phase 3: Database Migration (Week 2-3)
 
 ### 3.1 Database Setup
+
 - [ ] Provision RDS PostgreSQL instance
 - [ ] Configure security groups for database access
 - [ ] Set up automated backups
@@ -81,6 +91,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 - [ ] Enable encryption at rest
 
 ### 3.2 Schema Migration
+
 - [ ] Export Drizzle schema
 - [ ] Test schema migration in staging
 - [ ] Create migration scripts
@@ -88,6 +99,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 - [ ] Set up connection pooling
 
 ### 3.3 Data Migration
+
 - [ ] Export data from NuxtHub database
 - [ ] Transform data if needed
 - [ ] Import data to RDS
@@ -97,12 +109,14 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 ## Phase 4: AWS Services Integration (Week 3)
 
 ### 4.1 ECR (Elastic Container Registry)
+
 - [ ] Create ECR repository
 - [ ] Configure lifecycle policies
 - [ ] Set up image scanning
 - [ ] Document image tagging strategy
 
 ### 4.2 ECS Configuration
+
 - [ ] Create ECS cluster
 - [ ] Define task definition with proper resource limits
 - [ ] Configure service with auto-scaling
@@ -110,6 +124,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 - [ ] Configure service discovery (optional)
 
 ### 4.3 Storage & CDN
+
 - [ ] Set up S3 bucket for static assets
 - [ ] Configure bucket policies and CORS
 - [ ] Create CloudFront distribution
@@ -117,6 +132,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 - [ ] Set up S3 for uploaded content
 
 ### 4.4 Secrets Management
+
 - [ ] Migrate environment variables to AWS Secrets Manager
 - [ ] Configure ECS task role for secrets access
 - [ ] Update application to read from Secrets Manager
@@ -126,6 +142,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 ## Phase 5: GitHub Actions CI/CD Pipeline (Week 4)
 
 ### 5.1 Workflow Setup
+
 - [ ] Create `.github/workflows/deploy-aws.yml`
 - [ ] Configure workflow triggers (push to main, tags)
 - [ ] Set up GitHub environments (staging, production)
@@ -141,7 +158,6 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 - [ ] Run tests (vitest)
 - [ ] Build Nuxt application
 
-
 ### 5.3 Docker Job
 
 - [ ] Set up Docker Buildx
@@ -152,6 +168,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 - [ ] Scan image for vulnerabilities
 
 ### 5.4 Deploy Job
+
 - [ ] Configure AWS credentials
 - [ ] Update ECS task definition
 - [ ] Deploy to ECS service
@@ -160,6 +177,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 - [ ] Notify team of deployment status
 
 ### 5.5 Rollback Strategy
+
 - [ ] Implement automated rollback on failure
 - [ ] Create manual rollback workflow
 - [ ] Document rollback procedures
@@ -168,12 +186,14 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 ## Phase 6: Monitoring & Logging (Week 4-5)
 
 ### 6.1 CloudWatch Setup
+
 - [ ] Configure ECS container logging
 - [ ] Create custom log groups
 - [ ] Set up log retention policies
 - [ ] Configure log insights queries
 
 ### 6.2 Monitoring & Alarms
+
 - [ ] Set up CloudWatch dashboards
 - [ ] Create alarms for:
   - [ ] CPU/Memory utilization
@@ -185,6 +205,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 - [ ] Integrate with Slack/email
 
 ### 6.3 Application Performance
+
 - [ ] Integrate AWS X-Ray for tracing
 - [ ] Set up RUM (Real User Monitoring)
 - [ ] Configure custom metrics
@@ -193,6 +214,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 ## Phase 7: Testing & Validation (Week 5)
 
 ### 7.1 Staging Environment
+
 - [ ] Deploy to staging environment
 - [ ] Run integration tests
 - [ ] Perform load testing
@@ -200,6 +222,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 - [ ] Validate monitoring and alerts
 
 ### 7.2 Security Testing
+
 - [ ] Run security scanning (container, dependencies)
 - [ ] Test IAM roles and policies
 - [ ] Validate secrets management
@@ -207,6 +230,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 - [ ] Perform penetration testing
 
 ### 7.3 Performance Testing
+
 - [ ] Benchmark against Cloudflare deployment
 - [ ] Test CDN cache hit rates
 - [ ] Measure page load times
@@ -216,6 +240,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 ## Phase 8: Production Deployment (Week 6)
 
 ### 8.1 Pre-deployment
+
 - [ ] Final review of all configurations
 - [ ] Backup current production data
 - [ ] Prepare rollback plan
@@ -223,6 +248,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 - [ ] Notify stakeholders
 
 ### 8.2 Deployment
+
 - [ ] Deploy infrastructure to production
 - [ ] Migrate production database
 - [ ] Deploy application to ECS
@@ -230,6 +256,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 - [ ] Monitor deployment closely
 
 ### 8.3 Post-deployment
+
 - [ ] Verify all functionality
 - [ ] Monitor error rates and performance
 - [ ] Test all critical user flows
@@ -239,6 +266,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 ## Phase 9: Optimization & Documentation (Week 7)
 
 ### 9.1 Cost Optimization
+
 - [ ] Review AWS Cost Explorer
 - [ ] Optimize ECS task sizing
 - [ ] Configure spot instances if applicable
@@ -246,6 +274,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 - [ ] Set up cost alerts
 
 ### 9.2 Performance Optimization
+
 - [ ] Tune auto-scaling policies
 - [ ] Optimize database queries
 - [ ] Configure CDN caching strategies
@@ -253,6 +282,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 - [ ] Review and optimize logs
 
 ### 9.3 Documentation
+
 - [ ] Document architecture diagram
 - [ ] Create runbook for common operations
 - [ ] Document deployment procedures
@@ -262,6 +292,7 @@ This plan outlines the migration of the blog application from Cloudflare Workers
 ## Key Files to Create/Modify
 
 ### New Files
+
 ```
 packages/blog/
 ├── Dockerfile
@@ -287,6 +318,7 @@ infrastructure/
 ```
 
 ### Modified Files
+
 ```
 packages/blog/
 ├── nuxt.config.ts          # AWS-specific configuration
@@ -297,6 +329,7 @@ packages/blog/
 ## Environment Variables Mapping
 
 ### From NuxtHub to AWS
+
 ```
 NUXT_HUB_* → AWS Secrets Manager
 NUXT_OAUTH_GITHUB_* → AWS Secrets Manager
@@ -308,9 +341,9 @@ AI: NuxtHub AI → AWS Bedrock or external API
 ## Risk Assessment & Mitigation
 
 ### High Priority Risks
+
 1. **Downtime during migration**
    - Mitigation: Blue-green deployment, DNS gradual cutover
-   
 2. **Data loss during database migration**
    - Mitigation: Multiple backups, dry-run migrations, verification scripts
 
@@ -321,9 +354,9 @@ AI: NuxtHub AI → AWS Bedrock or external API
    - Mitigation: Load testing before production, monitoring dashboards, rollback plan
 
 ### Medium Priority Risks
+
 1. **OAuth configuration issues**
    - Mitigation: Test authentication thoroughly in staging
-   
 2. **Static asset delivery delays**
    - Mitigation: Pre-warm CloudFront cache, optimize S3 configuration
 
@@ -331,6 +364,7 @@ AI: NuxtHub AI → AWS Bedrock or external API
    - Mitigation: Optimize Docker image, configure proper health checks
 
 ## Success Criteria
+
 - [ ] Application accessible via HTTPS on production domain
 - [ ] All blog posts and content migrated successfully
 - [ ] Authentication (GitHub OAuth) working
@@ -343,11 +377,13 @@ AI: NuxtHub AI → AWS Bedrock or external API
 - [ ] Auto-scaling working as expected
 
 ## Estimated Timeline
+
 - **Total Duration**: 7 weeks
 - **Part-time effort**: ~15-20 hours/week
 - **Full-time effort**: ~5-6 weeks
 
 ## Budget Estimate (Monthly)
+
 - ECS Fargate (2 tasks): ~$50-80
 - RDS PostgreSQL (db.t3.small): ~$30-40
 - Application Load Balancer: ~$20-25
@@ -358,6 +394,7 @@ AI: NuxtHub AI → AWS Bedrock or external API
 - **Total**: ~$130-205/month (varies by traffic)
 
 ## Next Steps
+
 1. Review and approve this plan
 2. Set up AWS account and IAM users
 3. Choose IaC tool (Terraform recommended)
@@ -365,6 +402,7 @@ AI: NuxtHub AI → AWS Bedrock or external API
 5. Begin Phase 1: Infrastructure Planning
 
 ## References
+
 - [Nuxt Deployment Docs](https://nuxt.com/docs/getting-started/deployment)
 - [AWS ECS Best Practices](https://docs.aws.amazon.com/AmazonECS/latest/bestpracticesguide/intro.html)
 - [GitHub Actions for AWS](https://github.com/aws-actions)

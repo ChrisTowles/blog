@@ -1,8 +1,8 @@
 {
-    "name": "stage-power-settings-function",
-    "version": "1.0.0",
-    "main": "index.js",
-    "dependencies": {
-        "googleapis": "^140.0.1"
-    }
+  "name": "stage-power-settings-function",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "googleapis": "^140.0.1"
+  }
 }

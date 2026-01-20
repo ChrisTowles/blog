@@ -5,12 +5,14 @@
 ### Current Implementation
 
 **Files using TOML:**
+
 - `packages/towles-tool/worktree/skills/lib/slots.py` - Main parser using `tomllib`
 - `packages/towles-tool/worktree/skills/worktree_init.py` - Generates `slots.toml`
 
 **Config location:** `../{repo}-worktrees/config/slots.toml`
 
 **Current TOML structure:**
+
 ```toml
 [settings]
 slot_count = 5
@@ -21,24 +23,26 @@ values = [3001, 3002, 3003, 3004, 3005]
 ```
 
 **Parsed to:**
+
 ```python
 SlotsConfig(slots=[SlotConfig(slot=1, values={"PORT": 3001}), ...])
 ```
 
 ### Files to Modify
 
-| File | Changes Needed |
-|------|----------------|
-| `skills/lib/slots.py` | Replace `tomllib` with `json`, update parsing |
-| `skills/worktree_init.py` | Generate JSON instead of TOML |
-| `skills/init.md` | Update docs |
-| `skills/create.md` | Update docs |
-| `commands/init.md` | Update docs |
-| `README.md` | Update docs |
+| File                      | Changes Needed                                |
+| ------------------------- | --------------------------------------------- |
+| `skills/lib/slots.py`     | Replace `tomllib` with `json`, update parsing |
+| `skills/worktree_init.py` | Generate JSON instead of TOML                 |
+| `skills/init.md`          | Update docs                                   |
+| `skills/create.md`        | Update docs                                   |
+| `commands/init.md`        | Update docs                                   |
+| `README.md`               | Update docs                                   |
 
 ### Existing JSON Pattern
 
 The project already uses JSON for `.worktree-registry.json`:
+
 ```json
 {
   "repo_name": "blog",
@@ -72,6 +76,7 @@ The project already uses JSON for `.worktree-registry.json`:
 ```
 
 **Why this structure:**
+
 1. Matches current TOML semantic model (easy migration)
 2. `$schema` enables IDE autocomplete/validation
 3. camelCase aligns with JSON conventions
@@ -79,13 +84,13 @@ The project already uses JSON for `.worktree-registry.json`:
 
 ### Benefits of JSON over TOML
 
-| Aspect | TOML | JSON |
-|--------|------|------|
-| IDE support | Needs extension | Native everywhere |
-| Python parsing | `tomllib` (3.11+) | `json` (stdlib, all versions) |
-| Schema validation | No standard | JSON Schema |
-| Familiarity | Niche | Universal |
-| Comments | Supported | Not supported (use `_comment` keys) |
+| Aspect            | TOML              | JSON                                |
+| ----------------- | ----------------- | ----------------------------------- |
+| IDE support       | Needs extension   | Native everywhere                   |
+| Python parsing    | `tomllib` (3.11+) | `json` (stdlib, all versions)       |
+| Schema validation | No standard       | JSON Schema                         |
+| Familiarity       | Niche             | Universal                           |
+| Comments          | Supported         | Not supported (use `_comment` keys) |
 
 ### Migration Path
 
@@ -98,21 +103,22 @@ The project already uses JSON for `.worktree-registry.json`:
 ### Optional: JSON Schema
 
 Create `slots.schema.json` for validation:
+
 ```json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "required": ["slotCount", "variables"],
   "properties": {
-    "slotCount": {"type": "integer", "minimum": 1},
+    "slotCount": { "type": "integer", "minimum": 1 },
     "variables": {
       "type": "object",
       "additionalProperties": {
         "type": "object",
         "required": ["values"],
         "properties": {
-          "description": {"type": "string"},
-          "values": {"type": "array"}
+          "description": { "type": "string" },
+          "values": { "type": "array" }
         }
       }
     }

@@ -5,30 +5,29 @@ AWS resources for RAG (embeddings + reranking) via AWS Bedrock.
 ## Resources Created
 
 ### IAM Policy
+
 - **Name**: `BedrockRAGPolicy`
 - **ARN**: `arn:aws:iam::223452314076:policy/BedrockRAGPolicy`
 - **Permissions**: `bedrock:InvokeModel` on Titan Embeddings v2 and Cohere Rerank v3
 
 ### IAM Users
 
-| Environment | User Name | Purpose |
-|-------------|-----------|---------|
-| Staging | `blog-staging-bedrock` | Bedrock access for staging Cloud Run |
-| Production | `blog-prod-bedrock` | Bedrock access for production Cloud Run |
+| Environment | User Name              | Purpose                                 |
+| ----------- | ---------------------- | --------------------------------------- |
+| Staging     | `blog-staging-bedrock` | Bedrock access for staging Cloud Run    |
+| Production  | `blog-prod-bedrock`    | Bedrock access for production Cloud Run |
 
 ## IAM Policy Document
 
 `bedrock-iam.yaml`
 
-
-
 ## Credential Storage
 
 AWS credentials are stored in **GCP Secret Manager** (not AWS Secrets Manager) for use by Cloud Run:
 
-| GCP Secret | AWS Credential |
-|------------|----------------|
-| `aws-access-key-id` | AWS Access Key ID |
+| GCP Secret              | AWS Credential        |
+| ----------------------- | --------------------- |
+| `aws-access-key-id`     | AWS Access Key ID     |
 | `aws-secret-access-key` | AWS Secret Access Key |
 
 Each GCP project (staging/production) has its own secrets with environment-specific credentials.

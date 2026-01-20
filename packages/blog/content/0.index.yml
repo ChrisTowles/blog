@@ -3,7 +3,7 @@ description: Usually in AWS, AI, Python, Typescript, and tinkering with everythi
 navigation: false
 hero:
   title: Chris Towles's Blog
-  description: I'm a Principal Architect for Cloud AI at GE Aerospace and full stack developer. Usually in AWS, AI, Python, Typescript, and tinkering with everything else. 
+  description: I'm a Principal Architect for Cloud AI at GE Aerospace and full stack developer. Usually in AWS, AI, Python, Typescript, and tinkering with everything else.
   links:
     - label: Blog
       icon: i-lucide-notebook-text
@@ -18,7 +18,6 @@ hero:
       size: xl
       variant: solid
 
-    
 logos:
   title: My thoughts are my own as I write about...
   links:
@@ -42,18 +41,17 @@ logos:
 
     - label: Typescript
       to: 'https://www.typescriptlang.org'
-      icon:   i-simple-icons-typescript
+      icon: i-simple-icons-typescript
     - label: Python
       to: 'https://www.python.org'
       icon: i-simple-icons-python
     - label: Nuxt.js
       to: 'https://nuxtjs.org'
       icon: i-simple-icons-nuxtdotjs
-    
+
     - label: Vue
       to: 'https://vuejs.org'
       icon: i-simple-icons-vuedotjs
-    
 
 features:
   # headline: What is this blog about?
@@ -64,10 +62,8 @@ features:
       description: Always take notes. You will forget given time. Leave a clue for future you.
       icon: i-heroicons-pencil-square
     - title: Setup CI/CD
-      description: if its worth deploying, its worth doing so in a repeatable way. 
-      icon: i-heroicons-rocket-launch  
+      description: if its worth deploying, its worth doing so in a repeatable way.
+      icon: i-heroicons-rocket-launch
     - title: Tests
       description: tests help you! Want to refactor and improve things? Tests let you do that!
       icon: i-heroicons-academic-cap-solid
-      
-

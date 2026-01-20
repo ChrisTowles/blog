@@ -1,35 +1,35 @@
 <script setup lang="ts">
-import { ShikiCachedRenderer } from 'shiki-stream/vue'
+import { ShikiCachedRenderer } from 'shiki-stream/vue';
 
-const colorMode = useColorMode()
+const colorMode = useColorMode();
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shiki version mismatch between shiki and shiki-stream
-const highlighter = await useHighlighter() as any
+const highlighter = (await useHighlighter()) as any;
 const props = defineProps<{
-  code: string
-  language: string
-  class?: string
-  meta?: string
-}>()
+  code: string;
+  language: string;
+  class?: string;
+  meta?: string;
+}>();
 const trimmedCode = computed(() => {
-  return props.code.trim().replace(/`+$/, '')
-})
+  return props.code.trim().replace(/`+$/, '');
+});
 const lang = computed(() => {
   switch (props.language) {
     case 'vue':
-      return 'vue'
+      return 'vue';
     case 'javascript':
-      return 'js'
+      return 'js';
     case 'typescript':
-      return 'ts'
+      return 'ts';
     case 'css':
-      return 'css'
+      return 'css';
     default:
-      return props.language
+      return props.language;
   }
-})
+});
 const key = computed(() => {
-  return `${lang.value}-${colorMode.value}`
-})
+  return `${lang.value}-${colorMode.value}`;
+});
 </script>
 
 <template>

@@ -1,1 +1,0 @@
-Use the `skill-creator` to create a new skill.  if that skill is not installed tell the user to install it.

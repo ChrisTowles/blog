@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from 'zod';
 
 export const envSchema = z.object({
   // Build metadata
@@ -25,33 +25,33 @@ export const envSchema = z.object({
   // AWS Bedrock
   AWS_REGION: z.string().default('us-east-1'),
   AWS_ACCESS_KEY_ID: z.string().min(1, 'AWS_ACCESS_KEY_ID is required'),
-  AWS_SECRET_ACCESS_KEY: z.string().min(1, 'AWS_SECRET_ACCESS_KEY is required')
-})
+  AWS_SECRET_ACCESS_KEY: z.string().min(1, 'AWS_SECRET_ACCESS_KEY is required'),
+});
 
-export type EnvConfig = z.infer<typeof envSchema>
+export type EnvConfig = z.infer<typeof envSchema>;
 
 const SENSITIVE_KEYS = new Set([
   'DATABASE_URL', // Database connection string can have password info
-])
+]);
 
-const SENSITIVE_PATTERNS = ['SECRET', 'KEY', 'PASSWORD', 'TOKEN']
+const SENSITIVE_PATTERNS = ['SECRET', 'KEY', 'PASSWORD', 'TOKEN'];
 
 function isSensitiveKey(key: string): boolean {
-  if (SENSITIVE_KEYS.has(key)) return true
-  const upperKey = key.toUpperCase()
-  return SENSITIVE_PATTERNS.some(pattern => upperKey.includes(pattern))
+  if (SENSITIVE_KEYS.has(key)) return true;
+  const upperKey = key.toUpperCase();
+  return SENSITIVE_PATTERNS.some((pattern) => upperKey.includes(pattern));
 }
 
 export function maskValue(key: string, value: string): string {
-  if (!isSensitiveKey(key)) return value
-  if (value.length >= 6) return `${value.slice(0, 2)}***${value.slice(-4)}`
-  return '***'
+  if (!isSensitiveKey(key)) return value;
+  if (value.length >= 6) return `${value.slice(0, 2)}***${value.slice(-4)}`;
+  return '***';
 }
 
 export function getMaskedConfig(config: EnvConfig): Record<string, string> {
-  const masked: Record<string, string> = {}
+  const masked: Record<string, string> = {};
   for (const [key, value] of Object.entries(config).sort(([a], [b]) => a.localeCompare(b))) {
-    masked[key] = maskValue(key, String(value))
+    masked[key] = maskValue(key, String(value));
   }
-  return masked
+  return masked;
 }

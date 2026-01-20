@@ -14,9 +14,11 @@ This is just my personal blog at <https://Chris.Towles.dev>
 - [AWS Console](https://ctowles.awsapps.com/start/#/?tab=accounts)
   - `223452314076`
   - `aws configure sso`
- - [Claude Code Docs](https://code.claude.com/docs/en/claude_code_docs_map.md)
+- [Claude Code Docs](https://code.claude.com/docs/en/claude_code_docs_map.md)
+- [Hosting & Deployment](docs/hosting.md)
 
-- 
+-
+
 ## Claude Code Plugin Marketplace
 
 This repo is also a [Claude Code](https://docs.anthropic.com/en/docs/claude-code) plugin marketplace.
@@ -25,10 +27,10 @@ This repo is also a [Claude Code](https://docs.anthropic.com/en/docs/claude-code
 
 ### Available Plugins
 
-| Plugin | Commands/Hooks | Description |
-|--------|---------------|-------------|
-| `tt-core` | `/tt:commit`, `/tt:refine` | Git commit generator, text refinement |
-| `notifications` | Stop hook | Audio notification when Claude stops |
+| Plugin          | Commands/Hooks             | Description                           |
+| --------------- | -------------------------- | ------------------------------------- |
+| `tt-core`       | `/tt:commit`, `/tt:refine` | Git commit generator, text refinement |
+| `notifications` | Stop hook                  | Audio notification when Claude stops  |
 
 ### Adding a Marketplace
 
@@ -93,13 +95,11 @@ packages/claude-plugins/
   - <https://heroicons.com/>
   - <https://simpleicons.org/>
 
-
 - [@ai-sdk/vue](https://sdk.vercel.ai/docs/getting-started/nuxt)
 
-- GitHub OAuth client ID - Setup 
- - https://github.com/settings/developers
- - https://nuxt.com/modules/auth-utils
-
+- GitHub OAuth client ID - Setup
+- https://github.com/settings/developers
+- https://nuxt.com/modules/auth-utils
 
 ## Development
 
@@ -116,7 +116,6 @@ pnpm test
 # Build for production
 pnpm build
 ```
-
 
 ## Deployment
 

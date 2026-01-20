@@ -1,6 +1,5 @@
 # Compress images
 
-
 ```bash
 # Install Image Optimizers
 sudo apt-get install pngquant -y

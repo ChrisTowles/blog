@@ -5,16 +5,14 @@ lang: en
 duration: 5min
 ---
 
-
-
 ```
 Proxy socket connection error,Failed to establish a socket connection to proxies
 ```
 
-
 ## Fix
+
 ```json
-{ 
-"http.proxyStrictSSL": false,
+{
+  "http.proxyStrictSSL": false
 }
 ```

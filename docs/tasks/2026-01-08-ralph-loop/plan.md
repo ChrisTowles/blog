@@ -13,6 +13,7 @@ Create `scripts/ralph-loop.ts` - a TypeScript script that runs Claude Code CLI i
 ### Existing Script Patterns
 
 From `scripts/worktree.ts` and other scripts:
+
 - Shebang: `#!/usr/bin/env -S pnpx tsx`
 - Use `zx` for shell execution (`$`, `fs`, `chalk`)
 - Manual argument parsing (no yargs/commander)
@@ -23,11 +24,11 @@ From `scripts/worktree.ts` and other scripts:
 
 ### Relevant Existing Code
 
-| File | Pattern |
-|------|---------|
-| `scripts/worktree.ts` | JSON registry, interactive CLI, slot system |
-| `scripts/build.ts` | Subprocess spawning, async command execution |
-| `packages/evals/run-eval.ts` | CLI subprocess with `execFileSync` |
+| File                                                                      | Pattern                                             |
+| ------------------------------------------------------------------------- | --------------------------------------------------- |
+| `scripts/worktree.ts`                                                     | JSON registry, interactive CLI, slot system         |
+| `scripts/build.ts`                                                        | Subprocess spawning, async command execution        |
+| `packages/evals/run-eval.ts`                                              | CLI subprocess with `execFileSync`                  |
 | `packages/towles-tool/tt-core/commands/create_ralph_implement_command.md` | Ralph iteration concept with `--completion-promise` |
 
 ### Dependencies Available
@@ -46,6 +47,7 @@ From `scripts/worktree.ts` and other scripts:
 ### Claude CLI Usage
 
 Per [Claude Code CLI documentation](https://docs.anthropic.com/en/docs/claude-code):
+
 - `--print` flag outputs to stdout without interactive mode
 - `--output-format stream-json` outputs newline-delimited JSON events
 - `--include-partial-messages` includes streaming text deltas
@@ -56,6 +58,7 @@ Per [Claude Code CLI documentation](https://docs.anthropic.com/en/docs/claude-co
 ### Stream JSON Parsing
 
 The script parses streaming JSON events to extract readable text:
+
 - `content_block_delta` events contain incremental text in `event.delta.text`
 - `result` events contain the final output summary
 - Non-JSON lines are passed through as-is
@@ -63,6 +66,7 @@ The script parses streaming JSON events to extract readable text:
 ### Subprocess Best Practices
 
 From Node.js docs and ZX patterns:
+
 - Use `$` from zx for shell commands with proper escaping
 - Capture stdout/stderr separately for parsing
 - Handle SIGINT/SIGTERM for graceful shutdown
@@ -71,6 +75,7 @@ From Node.js docs and ZX patterns:
 ### State Machine Pattern
 
 For iteration loops with state:
+
 1. Load state → 2. Execute → 3. Parse output → 4. Update state → 5. Check completion → repeat
 
 ## Recommended Approach
@@ -191,12 +196,14 @@ flowchart TD
 ## Implementation TODOs
 
 ### Phase 1: Core Script Structure
+
 - [x] Create `scripts/ralph-loop.ts` with shebang and imports
 - [x] Implement CLI argument parsing (--task, --task-file, --max-iterations, --dry-run, --claude-args)
 - [x] Add TypeScript interfaces for State and Config
 - [x] Implement state file load/save functions
 
 ### Phase 2: Execution Loop
+
 - [x] Build iteration prompt with state context
 - [x] Implement Claude CLI spawning with zx
 - [x] Stream output to console while capturing
@@ -204,12 +211,14 @@ flowchart TD
 - [x] Log iteration summary between runs
 
 ### Phase 3: Completion & Polish
+
 - [x] Handle graceful shutdown (SIGINT/SIGTERM)
 - [x] Add --dry-run mode showing config without execution
 - [x] Add colored console output (iteration #, status, summary)
 - [x] Add package.json script entry: `"ralph": "pnpm tsx scripts/ralph-loop.ts"`
 
 ### Phase 4: Testing
+
 - [x] Manual test with simple task
 - [x] Test max-iterations limit
 - [x] Test RALPH_DONE detection
@@ -236,25 +245,25 @@ flowchart TD
 
 ## Exit Codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | Task completed (RALPH_DONE found) |
-| 1 | Max iterations reached without completion |
-| 2 | Invalid arguments / configuration error |
-| 130 | Interrupted (SIGINT) |
+| Code | Meaning                                   |
+| ---- | ----------------------------------------- |
+| 0    | Task completed (RALPH_DONE found)         |
+| 1    | Max iterations reached without completion |
+| 2    | Invalid arguments / configuration error   |
+| 130  | Interrupted (SIGINT)                      |
 
 ## Files to Create/Modify
 
-| File | Action |
-|------|--------|
-| `scripts/ralph-loop.ts` | Create - main script |
-| `package.json` | Modify - add "ralph" script |
+| File                    | Action                      |
+| ----------------------- | --------------------------- |
+| `scripts/ralph-loop.ts` | Create - main script        |
+| `package.json`          | Modify - add "ralph" script |
 
 ## Risks & Mitigations
 
-| Risk | Mitigation |
-|------|------------|
+| Risk                     | Mitigation                                           |
+| ------------------------ | ---------------------------------------------------- |
 | Claude CLI not installed | Check for `claude` in PATH at startup, error clearly |
-| Runaway iterations | --max-iterations with default 10 |
-| State file corruption | Validate JSON on load, backup before write |
-| Process hangs | User can Ctrl+C; no built-in timeout per decision |
+| Runaway iterations       | --max-iterations with default 10                     |
+| State file corruption    | Validate JSON on load, backup before write           |
+| Process hangs            | User can Ctrl+C; no built-in timeout per decision    |

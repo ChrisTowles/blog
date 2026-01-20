@@ -10,6 +10,7 @@ This skill helps create and edit presentation slides using Slidev, a markdown-ba
 ## When to Use This Skill
 
 Use this skill when the user asks to:
+
 - Create a new presentation or slide deck
 - Edit existing slides
 - Add or modify slide content
@@ -19,6 +20,7 @@ Use this skill when the user asks to:
 ## Project Structure
 
 Slides are located in `packages/slides/` directory with:
+
 - Slide files: `*.slides.md` or `slides.md`
 - Components: `components/` directory for Vue components
 - Configuration: `package.json` for dependencies
@@ -26,10 +28,10 @@ Slides are located in `packages/slides/` directory with:
 ## Running Slidev
 
 Start the development server:
+
 ```bash
 pnpm run slides [filename]
 ```
-
 
 The dev server runs on `http://localhost:3030` by default.
 
@@ -41,7 +43,7 @@ Every Slidev file starts with YAML frontmatter:
 
 ```yaml
 ---
-theme: seriph  # or 'default'
+theme: seriph # or 'default'
 title: Your Presentation Title
 info: |
   ## Presentation description
@@ -49,7 +51,7 @@ info: |
 class: text-center
 drawings:
   persist: false
-transition: slide-left  # fade-out, slide-up, etc.
+transition: slide-left # fade-out, slide-up, etc.
 mdc: true
 duration: 10min
 ---
@@ -64,8 +66,8 @@ Slides are separated by `---`:
 # Slide 1
 
 Content here
-
 ---
+
 # Slide 2
 
 More content
@@ -117,15 +119,9 @@ Content here
 Use `v-click` for progressive reveals:
 
 ```html
-<v-click>
-Content appears on click
-</v-click>
+<v-click> Content appears on click </v-click>
 
-<v-clicks>
-- Item 1
-- Item 2
-- Item 3
-</v-clicks>
+<v-clicks> - Item 1 - Item 2 - Item 3 </v-clicks>
 ```
 
 ### Components
@@ -144,8 +140,8 @@ Syntax highlighting with line highlighting:
 
 ````markdown
 ```ts {1|3|1-3}
-const message = "Hello"
-console.log(message)
+const message = 'Hello';
+console.log(message);
 ```
 ````
 
@@ -155,6 +151,7 @@ Add notes in HTML comments at the end of slides:
 
 ```markdown
 ---
+
 # Slide Title
 
 Content

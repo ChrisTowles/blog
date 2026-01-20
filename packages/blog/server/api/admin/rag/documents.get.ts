@@ -1,19 +1,19 @@
-import { sql } from 'drizzle-orm'
+import { sql } from 'drizzle-orm';
 
 defineRouteMeta({
   openAPI: {
     description: 'List all indexed documents with chunk counts',
-    tags: ['admin', 'rag']
-  }
-})
+    tags: ['admin', 'rag'],
+  },
+});
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event)
+  const session = await getUserSession(event);
   if (!session.user) {
-    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' });
   }
 
-  const db = useDrizzle()
+  const db = useDrizzle();
 
   // Get all documents with chunk counts
   const documents = await db.execute(sql`
@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
     LEFT JOIN document_chunks dc ON d.id = dc."documentId"
     GROUP BY d.id
     ORDER BY d."createdAt" DESC
-  `)
+  `);
 
   return {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- raw SQL query result
@@ -49,8 +49,8 @@ export default defineEventHandler(async (event) => {
       chunkCount: Number(doc.chunkCount || 0),
       contentSize: Number(doc.contentSize || 0),
       embeddedChunks: Number(doc.embeddedChunks || 0),
-      isFullyEmbedded: Number(doc.chunkCount || 0) === Number(doc.embeddedChunks || 0)
+      isFullyEmbedded: Number(doc.chunkCount || 0) === Number(doc.embeddedChunks || 0),
     })),
-    total: documents.rows.length
-  }
-})
+    total: documents.rows.length,
+  };
+});
