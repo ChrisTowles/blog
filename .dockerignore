@@ -52,6 +52,7 @@ packages/slides
 
 # Infrastructure
 infra
+!infra/container/entrypoint.sh
 
 # Docs
 docs
