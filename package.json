@@ -87,7 +87,7 @@
     "*.{ts,tsx,mts,cts,js,cjs,mjs}": [
       "oxlint --fix"
     ],
-    "*.*": [
+    "*.{ts,tsx,mts,cts,js,cjs,mjs,json,css,html,vue,yaml,yml}": [
       "oxfmt --write"
     ]
   },
