@@ -41,6 +41,7 @@
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.44.7",
     "find-up": "^6.3.0",
+    "mermaid": "^11.12.2",
     "nuxt": "^4.2.2",
     "nuxt-auth-utils": "^0.5.26",
     "nuxt-og-image": "^5.1.13",

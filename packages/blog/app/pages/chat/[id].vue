@@ -2,14 +2,14 @@
 import type { DefineComponent } from 'vue';
 import { useClipboard } from '@vueuse/core';
 import type { ChatMessage, ToolUsePart, ToolResultPart } from '~~/shared/chat-types';
-import ProseStreamPre from '../../components/prose/PreStream.vue';
+import ProsePre from '../../components/prose/ProsePre.vue';
 
 definePageMeta({
   layout: 'chat-side-nav',
 });
 
 const components = {
-  pre: ProseStreamPre as unknown as DefineComponent,
+  pre: ProsePre as unknown as DefineComponent,
 };
 
 const route = useRoute();
