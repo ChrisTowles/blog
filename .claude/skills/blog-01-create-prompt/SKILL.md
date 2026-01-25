@@ -1,5 +1,5 @@
 ---
-title: blog-01-create-prompt
+name: blog-01-create-prompt
 description: Create a detailed prompt for generating high-quality blog posts
 ---
 

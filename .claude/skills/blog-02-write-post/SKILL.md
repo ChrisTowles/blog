@@ -1,5 +1,5 @@
 ---
-title: blog-02-write-post
+name: blog-02-write-post
 description: Create a new technical blog post with deep educational value and professional quality
 ---
 

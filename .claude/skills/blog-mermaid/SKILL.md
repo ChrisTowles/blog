@@ -11,14 +11,14 @@ Create mermaid diagrams that match the blog's visual theme.
 
 The blog uses **sky** as primary and **zinc** as neutral colors.
 
-| Element          | Light Mode    | Dark Mode     |
-| ---------------- | ------------- | ------------- |
-| Background       | white         | #020618       |
-| Primary fill     | sky-100       | sky-900       |
-| Secondary fill   | zinc-100      | zinc-800      |
-| Borders/lines    | sky-600       | sky-500       |
-| Text             | zinc-900      | zinc-100      |
-| Accent/highlight | sky-400       | sky-400       |
+| Element          | Light Mode | Dark Mode |
+| ---------------- | ---------- | --------- |
+| Background       | white      | #020618   |
+| Primary fill     | sky-100    | sky-900   |
+| Secondary fill   | zinc-100   | zinc-800  |
+| Borders/lines    | sky-600    | sky-500   |
+| Text             | zinc-900   | zinc-100  |
+| Accent/highlight | sky-400    | sky-400   |
 
 ## Diagram Style Guidelines
 

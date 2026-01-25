@@ -1,5 +1,5 @@
 ---
-title: blog-04-image-prompt
+name: blog-04-image-prompt
 description: Generate optimized AI image prompts for blog post hero images
 ---
 
