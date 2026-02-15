@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Counting US Coins</title>
+<style>
+  @page {
+    margin: 0;
+    size: letter portrait;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Page containers */
+  .page {
+    width: 100%;
+    height: 10.5in;
+    padding: 0.35in;
+    display: flex;
+    flex-direction: column;
+    page-break-after: always;
+  }
+  .page:last-child { page-break-after: avoid; }
+
+  h1 {
+    text-align: center;
+    font-size: 26px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+  h2 {
+    text-align: center;
+    font-size: 22px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+
+  /* Coin circles - reusable */
+  .coin {
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    border: 3px solid;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .coin::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    border: 1px dashed;
+    opacity: 0.4;
+  }
+  /* Real proportions: dime 17.9mm, penny 19mm, nickel 21.2mm, quarter 24.3mm */
+  .coin-penny   { width: 56px; height: 56px; font-size: 15px; background: #e8a165; border-color: #b5713a; color: #6b3410; }
+  .coin-penny::after { border-color: #6b3410; }
+  .coin-nickel  { width: 63px; height: 63px; font-size: 16px; background: #c0c0c0; border-color: #888; color: #333; }
+  .coin-nickel::after { border-color: #333; }
+  .coin-dime    { width: 53px; height: 53px; font-size: 14px; background: #d4d4d4; border-color: #999; color: #333; }
+  .coin-dime::after { border-color: #333; }
+  .coin-quarter { width: 72px; height: 72px; font-size: 17px; background: #c8c8c8; border-color: #888; color: #333; }
+  .coin-quarter::after { border-color: #333; }
+  /* Small inline coins */
+  .coin-sm { width: 28px; height: 28px; font-size: 9px; border-width: 2px; }
+  .coin-sm::after { inset: 2px; }
+
+  /* Coin reference row */
+  .coins-row {
+    display: flex;
+    justify-content: space-around;
+    align-items: stretch;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+    gap: 6px;
+  }
+  .coin-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex: 1;
+    padding: 8px 4px 6px;
+    border-radius: 10px;
+    border: 2px solid transparent;
+  }
+  .coin-card.card-penny   { background: #fef0e2; border-color: #b5713a; }
+  .coin-card.card-nickel  { background: #f0f0f0; border-color: #888; }
+  .coin-card.card-dime    { background: #e4edf8; border-color: #5a7fbf; }
+  .coin-card.card-quarter { background: #e4f2e8; border-color: #5a9e6f; }
+  .coin-name { font-weight: bold; font-size: 14px; text-align: center; }
+  .coin-value { font-size: 12px; color: #555; text-align: center; }
+
+  /* Section headers */
+  .section-header {
+    font-size: 17px;
+    font-weight: bold;
+    margin: 6px 0 4px 0;
+    flex-shrink: 0;
+    text-align: center;
+  }
+
+  /* Counting tables */
+  .count-tables {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .count-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .count-label {
+    font-weight: bold;
+    font-size: 13px;
+    padding: 2px 8px;
+    border-radius: 6px 6px 0 0;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .count-label.penny   { background: #b5713a; }
+  .count-label.nickel  { background: #707070; }
+  .count-label.dime    { background: #5a7fbf; }
+  .count-label.quarter { background: #5a9e6f; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+    flex-grow: 1;
+  }
+  td {
+    border: 2px solid #555;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    vertical-align: middle;
+  }
+  .penny-row td   { background: #fef0e2; color: #7a3d10; }
+  .penny-row td.dollar { background: #e8a165; color: #5a2800; }
+  .nickel-row td  { background: #f0f0f0; color: #333; }
+  .nickel-row td.dollar { background: #b0b0b0; color: #222; }
+  .dime-row td    { background: #e4edf8; color: #2a4d7a; }
+  .dime-row td.dollar { background: #89abd4; color: #1a3355; }
+  .quarter-row td { background: #e4f2e8; color: #2a5c38; }
+  .quarter-row td.dollar { background: #7cc492; color: #1a3d24; }
+
+  /* How many make a dollar */
+  .dollar-row {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 4px;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .dollar-card {
+    flex: 1;
+    border: 2px solid #555;
+    border-radius: 8px;
+    padding: 4px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: bold;
+  }
+  .dollar-card .big { font-size: 24px; display: block; }
+
+  /* === PAGE 2 === */
+
+  /* Front & Back coins - real images */
+  .coin-sides {
+    display: flex;
+    justify-content: space-around;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .coin-side-card {
+    flex: 1;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    padding: 6px 4px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+  .coin-side-card .sides {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+  }
+  .coin-side-card .side-label {
+    font-size: 10px;
+    color: #777;
+    text-align: center;
+  }
+  .coin-side-card .side-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .coin-side-card .coin-name { font-size: 13px; }
+  .coin-img {
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+  }
+  /* Real proportional sizes for coin images: dime 17.9mm, penny 19mm, nickel 21.2mm, quarter 24.3mm */
+  .coin-img-penny   { width: 62px; height: 62px; }
+  .coin-img-nickel  { width: 70px; height: 70px; }
+  .coin-img-dime    { width: 58px; height: 58px; }
+  .coin-img-quarter { width: 80px; height: 80px; }
+
+  /* Equivalents */
+  .equiv-section {
+    margin-bottom: 6px;
+  }
+  .equiv-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 5px;
+    margin-bottom: 3px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+    font-size: 15px;
+    font-weight: bold;
+  }
+  .equiv-row .eq { font-size: 20px; color: #888; }
+  .coin-group {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+  }
+
+  /* Ways to Make $1.00 grid */
+  .dollar-grid {
+    flex-grow: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+  .dollar-grid-card {
+    border: 3px solid;
+    border-radius: 10px;
+    padding: 6px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    text-align: center;
+  }
+  .dollar-grid-card .dg-count {
+    font-size: 32px;
+    font-weight: bold;
+    line-height: 1;
+  }
+  .dollar-grid-card .dg-label {
+    font-size: 13px;
+    font-weight: bold;
+  }
+  .dollar-grid-card .dg-coins {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    justify-content: center;
+    align-items: center;
+  }
+  .dollar-grid-card .dg-value {
+    font-size: 11px;
+    color: #666;
+  }
+  .dollar-grid-card.card-bill {
+    border-color: #2a6e3f;
+    background: #e8f5e9;
+    grid-column: 1 / -1;
+  }
+  .dollar-grid-card.card-bill img {
+    height: 50px;
+    border-radius: 4px;
+    border: 1px solid #aaa;
+  }
+  .dollar-grid-card.card-bill .dg-count {
+    color: #1b5e20;
+  }
+  .dollar-grid-card.card-quarter {
+    border-color: #5a9e6f;
+    background: #e4f2e8;
+  }
+  .dollar-grid-card.card-quarter .dg-count { color: #2a5c38; }
+  .dollar-grid-card.card-dime {
+    border-color: #5a7fbf;
+    background: #e4edf8;
+  }
+  .dollar-grid-card.card-dime .dg-count { color: #2a4d7a; }
+  .dollar-grid-card.card-nickel {
+    border-color: #888;
+    background: #f0f0f0;
+  }
+  .dollar-grid-card.card-nickel .dg-count { color: #333; }
+  .dollar-grid-card.card-penny {
+    border-color: #b5713a;
+    background: #fef0e2;
+    grid-column: 2;
+  }
+  .dollar-grid-card.card-penny .dg-count { color: #7a3d10; }
+
+  @media print {
+    .page { height: 100vh; padding: 0.35in; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== PAGE 1 ==================== -->
+<div class="page">
+<h1>Counting US Coins</h1>
+
+<!-- Coin identification -->
+<div class="coins-row">
+  <div class="coin-card card-penny">
+    <div class="coin coin-penny">1&cent;</div>
+    <div class="coin-name">Penny</div>
+    <div class="coin-value">1 cent</div>
+  </div>
+  <div class="coin-card card-nickel">
+    <div class="coin coin-nickel">5&cent;</div>
+    <div class="coin-name">Nickel</div>
+    <div class="coin-value">5 cents</div>
+  </div>
+  <div class="coin-card card-dime">
+    <div class="coin coin-dime">10&cent;</div>
+    <div class="coin-name">Dime</div>
+    <div class="coin-value">10 cents</div>
+  </div>
+  <div class="coin-card card-quarter">
+    <div class="coin coin-quarter">25&cent;</div>
+    <div class="coin-name">Quarter</div>
+    <div class="coin-value">25 cents</div>
+  </div>
+</div>
+
+<div class="section-header">Count by Each Coin to $1.00</div>
+
+<div class="count-tables">
+  <div class="count-group">
+    <div class="count-label penny"><span class="coin coin-penny coin-sm">1&cent;</span> Pennies &mdash; count by 1&cent;</div>
+    <table>
+    <tr class="penny-row"><td>1&cent;</td><td>2&cent;</td><td>3&cent;</td><td>4&cent;</td><td>5&cent;</td><td>6&cent;</td><td>7&cent;</td><td>8&cent;</td><td>9&cent;</td><td class="dollar">10&cent;</td></tr>
+    <tr class="penny-row"><td>11&cent;</td><td>12&cent;</td><td>13&cent;</td><td>14&cent;</td><td>15&cent;</td><td>16&cent;</td><td>17&cent;</td><td>18&cent;</td><td>19&cent;</td><td class="dollar">20&cent;</td></tr>
+    </table>
+  </div>
+
+  <div class="count-group">
+    <div class="count-label nickel"><span class="coin coin-nickel coin-sm">5&cent;</span> Nickels &mdash; count by 5&cent;</div>
+    <table>
+    <tr class="nickel-row"><td>5&cent;</td><td>10&cent;</td><td>15&cent;</td><td>20&cent;</td><td>25&cent;</td><td>30&cent;</td><td>35&cent;</td><td>40&cent;</td><td>45&cent;</td><td class="dollar">50&cent;</td></tr>
+    <tr class="nickel-row"><td>55&cent;</td><td>60&cent;</td><td>65&cent;</td><td>70&cent;</td><td>75&cent;</td><td>80&cent;</td><td>85&cent;</td><td>90&cent;</td><td>95&cent;</td><td class="dollar">$1.00</td></tr>
+    </table>
+  </div>
+
+  <div class="count-group">
+    <div class="count-label dime"><span class="coin coin-dime coin-sm">10&cent;</span> Dimes &mdash; count by 10&cent;</div>
+    <table>
+    <tr class="dime-row"><td>10&cent;</td><td>20&cent;</td><td>30&cent;</td><td>40&cent;</td><td>50&cent;</td><td>60&cent;</td><td>70&cent;</td><td>80&cent;</td><td>90&cent;</td><td class="dollar">$1.00</td></tr>
+    </table>
+  </div>
+
+  <div class="count-group">
+    <div class="count-label quarter"><span class="coin coin-quarter coin-sm">25&cent;</span> Quarters &mdash; count by 25&cent;</div>
+    <table>
+    <tr class="quarter-row"><td>25&cent;</td><td>50&cent;</td><td>75&cent;</td><td class="dollar">$1.00</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="section-header" style="margin-top:6px;">How Many Make $1.00?</div>
+<div class="dollar-row">
+  <div class="dollar-card" style="background:#fef0e2; border-color:#b5713a;">
+    <span class="big">100</span> pennies
+  </div>
+  <div class="dollar-card" style="background:#f0f0f0; border-color:#888;">
+    <span class="big">20</span> nickels
+  </div>
+  <div class="dollar-card" style="background:#e4edf8; border-color:#5a7fbf;">
+    <span class="big">10</span> dimes
+  </div>
+  <div class="dollar-card" style="background:#e4f2e8; border-color:#5a9e6f;">
+    <span class="big">4</span> quarters
+  </div>
+</div>
+</div>
+
+<!-- ==================== PAGE 2 ==================== -->
+<div class="page">
+<h2>Coins: Front &amp; Back</h2>
+
+<!-- Front and Back of coins - real images -->
+<div class="coin-sides">
+  <div class="coin-side-card" style="background:#fef0e2; border-color:#b5713a;">
+    <div class="coin-name">Penny &mdash; 1&cent;</div>
+    <div class="sides">
+      <div class="side-col">
+        <img class="coin-img coin-img-penny" src="coins/penny-front.png" alt="Penny front - Abraham Lincoln">
+        <div class="side-label">Front<br>Lincoln</div>
+      </div>
+      <div class="side-col">
+        <img class="coin-img coin-img-penny" src="coins/penny-back.png" alt="Penny back - Union Shield">
+        <div class="side-label">Back<br>Shield</div>
+      </div>
+    </div>
+  </div>
+  <div class="coin-side-card" style="background:#f0f0f0; border-color:#888;">
+    <div class="coin-name">Nickel &mdash; 5&cent;</div>
+    <div class="sides">
+      <div class="side-col">
+        <img class="coin-img coin-img-nickel" src="coins/nickel-front.jpg" alt="Nickel front - Thomas Jefferson">
+        <div class="side-label">Front<br>Jefferson</div>
+      </div>
+      <div class="side-col">
+        <img class="coin-img coin-img-nickel" src="coins/nickel-back.png" alt="Nickel back - Monticello">
+        <div class="side-label">Back<br>Monticello</div>
+      </div>
+    </div>
+  </div>
+  <div class="coin-side-card" style="background:#e4edf8; border-color:#5a7fbf;">
+    <div class="coin-name">Dime &mdash; 10&cent;</div>
+    <div class="sides">
+      <div class="side-col">
+        <img class="coin-img coin-img-dime" src="coins/dime-front.png" alt="Dime front - Franklin Roosevelt">
+        <div class="side-label">Front<br>Roosevelt</div>
+      </div>
+      <div class="side-col">
+        <img class="coin-img coin-img-dime" src="coins/dime-back.png" alt="Dime back - Torch, olive and oak branches">
+        <div class="side-label">Back<br>Torch</div>
+      </div>
+    </div>
+  </div>
+  <div class="coin-side-card" style="background:#e4f2e8; border-color:#5a9e6f;">
+    <div class="coin-name">Quarter &mdash; 25&cent;</div>
+    <div class="sides">
+      <div class="side-col">
+        <img class="coin-img coin-img-quarter" src="coins/quarter-front.jpg" alt="Quarter front - George Washington">
+        <div class="side-label">Front<br>Washington</div>
+      </div>
+      <div class="side-col">
+        <img class="coin-img coin-img-quarter" src="coins/quarter-back.jpg" alt="Quarter back - Eagle design">
+        <div class="side-label">Back<br>Eagle</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Coin Equivalents -->
+<div class="section-header">Coin Equivalents</div>
+<div class="equiv-section">
+  <div class="equiv-row">
+    <div class="coin-group"><span class="coin coin-quarter coin-sm">25&cent;</span></div>
+    <span class="eq">=</span>
+    <div class="coin-group">
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+    </div>
+    <span class="eq">=</span>
+    <div class="coin-group">
+      <span class="coin coin-dime coin-sm">10&cent;</span>
+      <span class="coin coin-dime coin-sm">10&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+    </div>
+  </div>
+  <div class="equiv-row">
+    <div class="coin-group"><span class="coin coin-dime coin-sm">10&cent;</span></div>
+    <span class="eq">=</span>
+    <div class="coin-group">
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+    </div>
+    <span class="eq">=</span>
+    <div class="coin-group">
+      <span class="coin coin-penny coin-sm">1&cent;</span>
+      <span class="coin coin-penny coin-sm">1&cent;</span>
+      <span class="coin coin-penny coin-sm">1&cent;</span>
+      <span class="coin coin-penny coin-sm">1&cent;</span>
+      <span class="coin coin-penny coin-sm">1&cent;</span>
+      <span class="coin coin-penny coin-sm">1&cent;</span>
+      <span class="coin coin-penny coin-sm">1&cent;</span>
+      <span class="coin coin-penny coin-sm">1&cent;</span>
+      <span class="coin coin-penny coin-sm">1&cent;</span>
+      <span class="coin coin-penny coin-sm">1&cent;</span>
+    </div>
+  </div>
+  <div class="equiv-row">
+    <div class="coin-group"><span class="coin coin-nickel coin-sm">5&cent;</span></div>
+    <span class="eq">=</span>
+    <div class="coin-group">
+      <span class="coin coin-penny coin-sm">1&cent;</span>
+      <span class="coin coin-penny coin-sm">1&cent;</span>
+      <span class="coin coin-penny coin-sm">1&cent;</span>
+      <span class="coin coin-penny coin-sm">1&cent;</span>
+      <span class="coin coin-penny coin-sm">1&cent;</span>
+    </div>
+  </div>
+</div>
+
+<!-- Ways to Make $1.00 -->
+<div class="section-header">Ways to Make $1.00</div>
+<div class="dollar-grid">
+  <div class="dollar-grid-card card-bill">
+    <img src="coins/dollar-bill-front.jpg" alt="US one dollar bill">
+    <div class="dg-count">1</div>
+    <div class="dg-label">Dollar Bill</div>
+    <div class="dg-value">$1.00</div>
+  </div>
+  <div class="dollar-grid-card card-quarter">
+    <div class="dg-coins">
+      <span class="coin coin-quarter coin-sm">25&cent;</span>
+      <span class="coin coin-quarter coin-sm">25&cent;</span>
+      <span class="coin coin-quarter coin-sm">25&cent;</span>
+      <span class="coin coin-quarter coin-sm">25&cent;</span>
+    </div>
+    <div class="dg-count">4</div>
+    <div class="dg-label">Quarters</div>
+    <div class="dg-value">4 &times; 25&cent; = $1.00</div>
+  </div>
+  <div class="dollar-grid-card card-dime">
+    <div class="dg-coins">
+      <span class="coin coin-dime coin-sm">10&cent;</span>
+      <span class="coin coin-dime coin-sm">10&cent;</span>
+      <span class="coin coin-dime coin-sm">10&cent;</span>
+      <span class="coin coin-dime coin-sm">10&cent;</span>
+      <span class="coin coin-dime coin-sm">10&cent;</span>
+    </div>
+    <div class="dg-coins">
+      <span class="coin coin-dime coin-sm">10&cent;</span>
+      <span class="coin coin-dime coin-sm">10&cent;</span>
+      <span class="coin coin-dime coin-sm">10&cent;</span>
+      <span class="coin coin-dime coin-sm">10&cent;</span>
+      <span class="coin coin-dime coin-sm">10&cent;</span>
+    </div>
+    <div class="dg-count">10</div>
+    <div class="dg-label">Dimes</div>
+    <div class="dg-value">10 &times; 10&cent; = $1.00</div>
+  </div>
+  <div class="dollar-grid-card card-nickel">
+    <div class="dg-coins">
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+    </div>
+    <div class="dg-coins">
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+    </div>
+    <div class="dg-coins">
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+    </div>
+    <div class="dg-coins">
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+      <span class="coin coin-nickel coin-sm">5&cent;</span>
+    </div>
+    <div class="dg-count">20</div>
+    <div class="dg-label">Nickels</div>
+    <div class="dg-value">20 &times; 5&cent; = $1.00</div>
+  </div>
+  <div class="dollar-grid-card card-penny">
+    <div class="dg-count">100</div>
+    <div class="dg-label">Pennies</div>
+    <div class="dg-value">100 &times; 1&cent; = $1.00</div>
+  </div>
+</div>
+</div>
+
+</body>
+</html>
