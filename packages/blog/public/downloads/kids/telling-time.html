@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Telling Time — Clock Reference &amp; Practice</title>
+    <style>
+      @page {
+        margin: 0;
+        size: letter portrait;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .page {
+        width: 100%;
+        height: 100vh;
+        padding: 0.3in 0.35in;
+        display: flex;
+        flex-direction: column;
+        page-break-after: always;
+      }
+      .page:last-child {
+        page-break-after: avoid;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 28px;
+        margin-bottom: 4px;
+        flex-shrink: 0;
+      }
+      .subtitle {
+        text-align: center;
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 8px;
+        flex-shrink: 0;
+      }
+
+      /* ---- Page 1: Reference ---- */
+      .ref-layout {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .main-clock-row {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+      }
+
+      .main-clock-col {
+        flex: 0 0 auto;
+        text-align: center;
+      }
+
+      .key-concepts {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .concept-box {
+        background: #f0f7ff;
+        border: 2px solid #4a90d9;
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 14px;
+      }
+      .concept-box strong {
+        color: #2c5f9e;
+      }
+
+      .minute-ref {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 4px;
+        text-align: center;
+      }
+      .minute-ref .cell {
+        background: #eef6ee;
+        border: 1px solid #7bc47b;
+        border-radius: 6px;
+        padding: 4px 2px;
+        font-size: 12px;
+        line-height: 1.3;
+      }
+      .minute-ref .cell .num {
+        font-weight: bold;
+        font-size: 16px;
+        color: #2e7d32;
+      }
+
+      .examples-title {
+        font-weight: bold;
+        font-size: 16px;
+        text-align: center;
+        margin-top: 2px;
+        color: #333;
+      }
+
+      .examples-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        flex: 1;
+      }
+
+      .example-card {
+        border: 2px solid #ccc;
+        border-radius: 10px;
+        padding: 6px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+      }
+      .example-card .label {
+        font-weight: bold;
+        font-size: 14px;
+        color: #fff;
+        background: #4a90d9;
+        border-radius: 6px;
+        padding: 2px 10px;
+        width: 100%;
+      }
+      .example-card:nth-child(2) .label {
+        background: #e67e22;
+      }
+      .example-card:nth-child(3) .label {
+        background: #27ae60;
+      }
+      .example-card:nth-child(4) .label {
+        background: #8e44ad;
+      }
+
+      .example-card .digital {
+        font-size: 22px;
+        font-weight: bold;
+        font-family: 'Courier New', monospace;
+        color: #333;
+        margin-top: 2px;
+      }
+
+      /* ---- Page 2: Practice ---- */
+      .practice-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        flex: 1;
+      }
+
+      .practice-item {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .write-line {
+        border-bottom: 2px solid #999;
+        width: 90%;
+        height: 22px;
+        font-size: 14px;
+        font-family: 'Courier New', monospace;
+        text-align: center;
+        margin-top: 2px;
+      }
+
+      .answer-key {
+        margin-top: 6px;
+        padding: 4px 8px;
+        font-size: 9px;
+        color: #bbb;
+        text-align: center;
+        flex-shrink: 0;
+        transform: rotate(180deg);
+        border-top: 1px dashed #ddd;
+      }
+
+      /* ---- SVG Clocks ---- */
+      .clock-svg .face {
+        fill: #fff;
+        stroke: #333;
+        stroke-width: 2;
+      }
+      .clock-svg .tick {
+        stroke: #555;
+      }
+      .clock-svg .number {
+        font-family: Arial, sans-serif;
+        font-size: 13px;
+        fill: #333;
+        text-anchor: middle;
+        dominant-baseline: central;
+        font-weight: bold;
+      }
+      .clock-svg .hour-hand {
+        stroke: #d32f2f;
+        stroke-width: 4;
+        stroke-linecap: round;
+      }
+      .clock-svg .minute-hand {
+        stroke: #1565c0;
+        stroke-width: 3;
+        stroke-linecap: round;
+      }
+      .clock-svg .center-dot {
+        fill: #333;
+      }
+
+      .hand-legend {
+        font-size: 11px;
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 2px;
+      }
+      .hand-legend .h {
+        color: #d32f2f;
+        font-weight: bold;
+      }
+      .hand-legend .m {
+        color: #1565c0;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- PAGE 1 — CLOCK REFERENCE -->
+    <div class="page">
+      <h1>⏰ Telling Time</h1>
+      <div class="subtitle">Clock Reference Sheet</div>
+
+      <div class="ref-layout">
+        <div class="main-clock-row">
+          <div class="main-clock-col" id="main-clock-container"></div>
+          <div class="key-concepts">
+            <div class="concept-box">
+              <strong style="color: #d32f2f">🔴 Hour Hand</strong> — the
+              <strong>short</strong> hand. It tells which <strong>hour</strong> it is.
+            </div>
+            <div class="concept-box">
+              <strong style="color: #1565c0">🔵 Minute Hand</strong> — the
+              <strong>long</strong> hand. It tells how many <strong>minutes</strong> past the hour.
+            </div>
+            <div class="concept-box">
+              The minute hand starts at <strong>12</strong> (0 minutes) and goes around. Each number
+              = <strong>5 minutes</strong>.
+            </div>
+            <div class="hand-legend">
+              <span><span class="h">━━</span> Hour (short)</span>
+              <span><span class="m">━━</span> Minute (long)</span>
+            </div>
+            <div style="font-size: 13px; font-weight: bold; text-align: center; margin-top: 2px">
+              Each Number = How Many Minutes
+            </div>
+            <div class="minute-ref" id="minute-ref"></div>
+          </div>
+        </div>
+
+        <div class="examples-title">Common Times</div>
+        <div class="examples-grid" id="examples-grid"></div>
+      </div>
+    </div>
+
+    <!-- PAGE 2 — PRACTICE -->
+    <div class="page">
+      <h1>⏰ What Time Is It?</h1>
+      <div class="subtitle">Write the time shown on each clock</div>
+
+      <div class="practice-grid" id="practice-grid"></div>
+
+      <div class="answer-key" id="answer-key"></div>
+    </div>
+
+    <script>
+      // --- SVG Clock Generator ---
+      function clockSVG(hour, minute, size, showNumbers) {
+        const cx = size / 2,
+          cy = size / 2,
+          r = size / 2 - 4;
+        let svg = `<svg class="clock-svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`;
+        svg += `<circle class="face" cx="${cx}" cy="${cy}" r="${r}"/>`;
+
+        // Tick marks
+        for (let i = 0; i < 60; i++) {
+          const angle = ((i * 6 - 90) * Math.PI) / 180;
+          const outer = r - 2;
+          const inner = i % 5 === 0 ? r - 10 : r - 5;
+          const sw = i % 5 === 0 ? 2 : 0.8;
+          svg += `<line class="tick" x1="${cx + inner * Math.cos(angle)}" y1="${cy + inner * Math.sin(angle)}" x2="${cx + outer * Math.cos(angle)}" y2="${cy + outer * Math.sin(angle)}" stroke-width="${sw}"/>`;
+        }
+
+        // Numbers
+        if (showNumbers !== false) {
+          for (let n = 1; n <= 12; n++) {
+            const angle = ((n * 30 - 90) * Math.PI) / 180;
+            const nr = r - 18;
+            svg += `<text class="number" x="${cx + nr * Math.cos(angle)}" y="${cy + nr * Math.sin(angle)}">${n}</text>`;
+          }
+        }
+
+        // Hour hand
+        const hAngle = (((hour % 12) * 30 + minute * 0.5 - 90) * Math.PI) / 180;
+        const hLen = r * 0.5;
+        svg += `<line class="hour-hand" x1="${cx}" y1="${cy}" x2="${cx + hLen * Math.cos(hAngle)}" y2="${cy + hLen * Math.sin(hAngle)}"/>`;
+
+        // Minute hand
+        const mAngle = ((minute * 6 - 90) * Math.PI) / 180;
+        const mLen = r * 0.75;
+        svg += `<line class="minute-hand" x1="${cx}" y1="${cy}" x2="${cx + mLen * Math.cos(mAngle)}" y2="${cy + mLen * Math.sin(mAngle)}"/>`;
+
+        // Center dot
+        svg += `<circle class="center-dot" cx="${cx}" cy="${cy}" r="3"/>`;
+        svg += `</svg>`;
+        return svg;
+      }
+
+      function digitalStr(h, m) {
+        return (h === 0 ? 12 : h > 12 ? h - 12 : h) + ':' + String(m).padStart(2, '0');
+      }
+
+      // --- Page 1: Main Clock ---
+      document.getElementById('main-clock-container').innerHTML = clockSVG(10, 10, 180, true);
+
+      // Minute reference grid
+      const minRef = document.getElementById('minute-ref');
+      for (let n = 1; n <= 12; n++) {
+        const d = document.createElement('div');
+        d.className = 'cell';
+        d.innerHTML = `<div class="num">${n}</div>${n * 5} min`;
+        minRef.appendChild(d);
+      }
+
+      // Examples
+      const examples = [
+        { label: "O'Clock", hour: 3, min: 0, desc: 'Minute hand on 12' },
+        { label: 'Half Past', hour: 6, min: 30, desc: 'Minute hand on 6' },
+        { label: 'Quarter Past', hour: 9, min: 15, desc: 'Minute hand on 3' },
+        { label: 'Quarter To', hour: 2, min: 45, desc: 'Minute hand on 9' },
+      ];
+      const exGrid = document.getElementById('examples-grid');
+      examples.forEach((ex) => {
+        const card = document.createElement('div');
+        card.className = 'example-card';
+        card.innerHTML = `
+          <div class="label">${ex.label}</div>
+          ${clockSVG(ex.hour, ex.min, 120, true)}
+          <div class="digital">${digitalStr(ex.hour, ex.min)}</div>
+          <div style="font-size:11px;color:#666;">${ex.desc}</div>
+        `;
+        exGrid.appendChild(card);
+      });
+
+      // --- Page 2: Practice Clocks ---
+      const practiceProblems = [
+        { h: 1, m: 0 },
+        { h: 7, m: 0 },
+        { h: 12, m: 0 },
+        { h: 4, m: 30 },
+        { h: 9, m: 30 },
+        { h: 11, m: 30 },
+        { h: 2, m: 15 },
+        { h: 5, m: 45 },
+        { h: 8, m: 15 },
+        { h: 3, m: 10 },
+        { h: 6, m: 40 },
+        { h: 10, m: 55 },
+      ];
+
+      const pGrid = document.getElementById('practice-grid');
+      practiceProblems.forEach((p, i) => {
+        const item = document.createElement('div');
+        item.className = 'practice-item';
+        item.innerHTML = `
+          <div style="font-size:13px;font-weight:bold;color:#555;">#${i + 1}</div>
+          ${clockSVG(p.h, p.m, 120, true)}
+          <div class="write-line">______</div>
+        `;
+        pGrid.appendChild(item);
+      });
+
+      // Answer key (upside-down)
+      const answers = practiceProblems
+        .map((p, i) => `#${i + 1}: ${digitalStr(p.h, p.m)}`)
+        .join('  •  ');
+      document.getElementById('answer-key').textContent = 'Answers: ' + answers;
+    </script>
+  </body>
+</html>
