@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dolch Sight Words (Front &amp; Back)</title>
+<style>
+  @page {
+    margin: 0;
+    size: letter portrait;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .page {
+    width: 100%;
+    height: 100vh;
+    padding: 0.3in 0.35in;
+    display: flex;
+    flex-direction: column;
+    page-break-after: always;
+  }
+  .page:last-child { page-break-after: avoid; }
+
+  h1 {
+    text-align: center;
+    font-size: 28px;
+    margin-bottom: 4px;
+    flex-shrink: 0;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+
+  .word-section {
+    margin-bottom: 8px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .word-section:last-child { margin-bottom: 0; }
+
+  .section-label {
+    font-weight: bold;
+    font-size: 16px;
+    padding: 4px 12px;
+    border-radius: 6px 6px 0 0;
+    color: #fff;
+    display: inline-block;
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+
+  .word-grid {
+    display: flex;
+    flex-wrap: wrap;
+    border: 2px solid #ccc;
+    border-radius: 0 8px 8px 8px;
+    padding: 6px;
+    gap: 0;
+    flex: 1;
+    align-content: space-evenly;
+  }
+  .word-cell {
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    padding: 6px 2px;
+    border-radius: 6px;
+    margin: 2px;
+  }
+
+  /* Pre-Primer: warm orange */
+  .label-preprimer { background: #e67e22; }
+  .preprimer .word-grid { border-color: #e67e22; background: #fef5ec; }
+  .preprimer .word-cell { color: #8b4513; background: #fdebd0; width: calc(12.5% - 4px); }
+
+  /* Primer: blue */
+  .label-primer { background: #2980b9; }
+  .primer .word-grid { border-color: #2980b9; background: #eaf2f8; }
+  .primer .word-cell { color: #1a4d6e; background: #d4e6f1; width: calc(12.5% - 4px); }
+
+  /* 1st Grade: green */
+  .label-1st { background: #27ae60; }
+  .first .word-grid { border-color: #27ae60; background: #eafaf1; }
+  .first .word-cell { color: #1a5c32; background: #d5f5e3; width: calc(12.5% - 4px); }
+
+  /* 2nd Grade: purple */
+  .label-2nd { background: #8e44ad; }
+  .second .word-grid { border-color: #8e44ad; background: #f5eef8; }
+  .second .word-cell { color: #5b2c6f; background: #e8daef; width: calc(12.5% - 4px); }
+
+  /* 3rd Grade: teal */
+  .label-3rd { background: #16a085; }
+  .third .word-grid { border-color: #16a085; background: #eafaf6; }
+  .third .word-cell { color: #0e6655; background: #d1f2eb; width: calc(12.5% - 4px); }
+
+  .word-count {
+    font-size: 11px;
+    font-weight: normal;
+    opacity: 0.9;
+  }
+
+  @media print {
+    .page { height: 100vh; }
+  }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1: Pre-Primer & Primer -->
+<div class="page">
+<h1>Dolch Sight Words</h1>
+<div class="subtitle">Pre-K &amp; Kindergarten — Learn to read these words by sight!</div>
+
+<div class="word-section preprimer">
+  <div class="section-label label-preprimer">Pre-Primer <span class="word-count">(40 words)</span></div>
+  <div class="word-grid">
+  <script>
+  (function(){
+    var words = ["a","and","away","big","blue","can","come","down","find","for","funny","go","help","here","I","in","is","it","jump","little","look","make","me","my","not","one","play","red","run","said","see","the","three","to","two","up","we","where","yellow","you"];
+    for (var i = 0; i < words.length; i++) {
+      document.write('<div class="word-cell">' + words[i] + '</div>');
+    }
+  })();
+  </script>
+  </div>
+</div>
+
+<div class="word-section primer">
+  <div class="section-label label-primer">Primer <span class="word-count">(52 words)</span></div>
+  <div class="word-grid">
+  <script>
+  (function(){
+    var words = ["all","am","are","at","ate","be","black","brown","but","came","did","do","eat","four","get","good","have","he","into","like","must","new","no","now","on","our","out","please","pretty","ran","ride","saw","say","she","so","soon","that","there","they","this","too","under","want","was","well","went","what","white","who","will","with","yes"];
+    for (var i = 0; i < words.length; i++) {
+      document.write('<div class="word-cell">' + words[i] + '</div>');
+    }
+  })();
+  </script>
+  </div>
+</div>
+
+<div style="text-align:center; font-size:10px; color:#999; margin-top:4px; flex-shrink:0;">chris.towles.dev — Free Printable Sight Words</div>
+</div>
+
+<!-- PAGE 2: 1st, 2nd, 3rd Grade -->
+<div class="page">
+<h1>Dolch Sight Words</h1>
+<div class="subtitle">1st, 2nd &amp; 3rd Grade</div>
+
+<div class="word-section first">
+  <div class="section-label label-1st">1st Grade <span class="word-count">(41 words)</span></div>
+  <div class="word-grid">
+  <script>
+  (function(){
+    var words = ["after","again","an","any","as","ask","by","could","every","fly","from","give","going","had","has","her","him","his","how","just","know","let","live","may","of","old","once","open","over","put","round","some","stop","take","thank","them","then","think","walk","were","when"];
+    for (var i = 0; i < words.length; i++) {
+      document.write('<div class="word-cell">' + words[i] + '</div>');
+    }
+  })();
+  </script>
+  </div>
+</div>
+
+<div class="word-section second">
+  <div class="section-label label-2nd">2nd Grade <span class="word-count">(46 words)</span></div>
+  <div class="word-grid">
+  <script>
+  (function(){
+    var words = ["always","around","because","been","before","best","both","buy","call","cold","does","don\u2019t","fast","first","five","found","gave","goes","green","its","made","many","off","or","pull","read","right","sing","sit","sleep","tell","their","these","those","upon","us","use","very","wash","which","why","wish","work","would","write","your"];
+    for (var i = 0; i < words.length; i++) {
+      document.write('<div class="word-cell">' + words[i] + '</div>');
+    }
+  })();
+  </script>
+  </div>
+</div>
+
+<div class="word-section third">
+  <div class="section-label label-3rd">3rd Grade <span class="word-count">(41 words)</span></div>
+  <div class="word-grid">
+  <script>
+  (function(){
+    var words = ["about","better","bring","carry","clean","cut","done","draw","drink","eight","fall","far","full","got","grow","hold","hot","hurt","if","keep","kind","laugh","light","long","much","myself","never","only","own","pick","seven","shall","show","six","small","start","ten","today","together","try","warm"];
+    for (var i = 0; i < words.length; i++) {
+      document.write('<div class="word-cell">' + words[i] + '</div>');
+    }
+  })();
+  </script>
+  </div>
+</div>
+
+<div style="text-align:center; font-size:10px; color:#999; margin-top:4px; flex-shrink:0;">chris.towles.dev — Free Printable Sight Words</div>
+</div>
+
+</body>
+</html>

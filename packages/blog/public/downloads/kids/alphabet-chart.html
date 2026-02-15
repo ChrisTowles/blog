@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Alphabet Chart &amp; Handwriting Practice (Front &amp; Back)</title>
+<style>
+  @page {
+    margin: 0;
+    size: letter portrait;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* === PAGE 1: Alphabet Chart === */
+  .page1 {
+    height: 100vh;
+    padding: 0.3in 0.35in;
+    display: flex;
+    flex-direction: column;
+    page-break-after: always;
+  }
+  .page1 h1 {
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+  }
+  .alpha-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
+    flex-grow: 1;
+  }
+  /* Last row has only 1 item (Z), center it */
+  .alpha-card {
+    border: 2px solid #555;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 4px;
+    text-align: center;
+  }
+  .alpha-card .letter-upper {
+    font-size: 36px;
+    font-weight: bold;
+    line-height: 1;
+  }
+  .alpha-card .letter-lower {
+    font-size: 22px;
+    color: #555;
+    line-height: 1;
+    margin-bottom: 1px;
+  }
+  .alpha-card .emoji {
+    font-size: 24px;
+    line-height: 1.1;
+  }
+  .alpha-card .word {
+    font-size: 11px;
+    font-weight: bold;
+    color: #444;
+    line-height: 1.1;
+  }
+  /* Rainbow row colors */
+  .row-red    { background: #fee2e2; border-color: #f87171; }
+  .row-red .letter-upper { color: #b91c1c; }
+  .row-orange { background: #ffedd5; border-color: #fb923c; }
+  .row-orange .letter-upper { color: #c2410c; }
+  .row-yellow { background: #fef9c3; border-color: #facc15; }
+  .row-yellow .letter-upper { color: #a16207; }
+  .row-green  { background: #dcfce7; border-color: #4ade80; }
+  .row-green .letter-upper { color: #15803d; }
+  .row-blue   { background: #dbeafe; border-color: #60a5fa; }
+  .row-blue .letter-upper { color: #1d4ed8; }
+  .row-purple { background: #ede9fe; border-color: #a78bfa; }
+  .row-purple .letter-upper { color: #6d28d9; }
+  /* Z gets its own centered treatment */
+  .alpha-card.z-card {
+    grid-column: 3;
+  }
+
+  /* === PAGE 2: Handwriting Practice === */
+  .page2 {
+    height: 100vh;
+    padding: 0.25in 0.4in;
+    display: flex;
+    flex-direction: column;
+  }
+  .page2 h1 {
+    text-align: center;
+    font-size: 22px;
+    margin-bottom: 4px;
+    flex-shrink: 0;
+  }
+  .page2 .subtitle {
+    text-align: center;
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 4px;
+    flex-shrink: 0;
+  }
+  .hw-grid {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .hw-row {
+    flex: 1;
+    display: flex;
+    align-items: stretch;
+    border-bottom: 2px solid #333;
+    position: relative;
+    min-height: 0;
+  }
+  .hw-row:last-child { border-bottom: none; }
+  /* Dashed midline */
+  .hw-row::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    border-top: 1px dashed #ccc;
+    pointer-events: none;
+  }
+  .hw-label {
+    width: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-weight: bold;
+    border-right: 2px solid #333;
+    flex-shrink: 0;
+    background: #f8f8f8;
+    padding: 0 2px;
+  }
+  .hw-label .hw-upper {
+    font-size: 20px;
+    color: #1d4ed8;
+  }
+  .hw-label .hw-lower {
+    font-size: 16px;
+    color: #555;
+  }
+  .hw-trace {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+    gap: 10px;
+    overflow: hidden;
+  }
+  .hw-trace .trace-letter {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ddd;
+    letter-spacing: 2px;
+  }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1: Alphabet Chart -->
+<div class="page1">
+<h1>🔤 Alphabet Chart</h1>
+<div class="alpha-grid">
+<script>
+(function(){
+  var letters = [
+    {u:'A',l:'a',w:'Apple',e:'🍎'},
+    {u:'B',l:'b',w:'Ball',e:'⚽'},
+    {u:'C',l:'c',w:'Cat',e:'🐱'},
+    {u:'D',l:'d',w:'Dog',e:'🐕'},
+    {u:'E',l:'e',w:'Elephant',e:'🐘'},
+    {u:'F',l:'f',w:'Fish',e:'🐟'},
+    {u:'G',l:'g',w:'Grapes',e:'🍇'},
+    {u:'H',l:'h',w:'House',e:'🏠'},
+    {u:'I',l:'i',w:'Ice Cream',e:'🍦'},
+    {u:'J',l:'j',w:'Jar',e:'🫙'},
+    {u:'K',l:'k',w:'Kite',e:'🪁'},
+    {u:'L',l:'l',w:'Lion',e:'🦁'},
+    {u:'M',l:'m',w:'Moon',e:'🌙'},
+    {u:'N',l:'n',w:'Nest',e:'🪺'},
+    {u:'O',l:'o',w:'Orange',e:'🍊'},
+    {u:'P',l:'p',w:'Penguin',e:'🐧'},
+    {u:'Q',l:'q',w:'Queen',e:'👑'},
+    {u:'R',l:'r',w:'Rainbow',e:'🌈'},
+    {u:'S',l:'s',w:'Sun',e:'☀️'},
+    {u:'T',l:'t',w:'Tree',e:'🌳'},
+    {u:'U',l:'u',w:'Umbrella',e:'☂️'},
+    {u:'V',l:'v',w:'Violin',e:'🎻'},
+    {u:'W',l:'w',w:'Whale',e:'🐋'},
+    {u:'X',l:'x',w:'Xylophone',e:'🎵'},
+    {u:'Y',l:'y',w:'Yarn',e:'🧶'},
+    {u:'Z',l:'z',w:'Zebra',e:'🦓'}
+  ];
+  var rowColors = ['row-red','row-orange','row-yellow','row-green','row-blue','row-purple'];
+  for (var i = 0; i < letters.length; i++) {
+    var lt = letters[i];
+    var rowIdx = Math.floor(i / 5);
+    var cls = rowColors[rowIdx % rowColors.length];
+    var extra = (i === 25) ? ' z-card' : '';
+    document.write(
+      '<div class="alpha-card ' + cls + extra + '">' +
+        '<div class="emoji">' + lt.e + '</div>' +
+        '<div class="letter-upper">' + lt.u + '</div>' +
+        '<div class="letter-lower">' + lt.l + '</div>' +
+        '<div class="word">' + lt.w + '</div>' +
+      '</div>'
+    );
+  }
+})();
+</script>
+</div>
+</div>
+
+<!-- PAGE 2: Handwriting Practice -->
+<div class="page2">
+<h1>✏️ Handwriting Practice</h1>
+<div class="subtitle">Trace the light letters, then write your own!</div>
+<div class="hw-grid">
+<script>
+(function(){
+  var abc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  for (var i = 0; i < 26; i++) {
+    var upper = abc[i];
+    var lower = abc[i].toLowerCase();
+    // Create trace guides: 3 uppercase then 3 lowercase in light gray
+    var trace = '';
+    for (var j = 0; j < 3; j++) trace += upper + ' ';
+    trace += '&nbsp;&nbsp;';
+    for (var j = 0; j < 3; j++) trace += lower + ' ';
+    document.write(
+      '<div class="hw-row">' +
+        '<div class="hw-label">' +
+          '<span class="hw-upper">' + upper + '</span>' +
+          '<span class="hw-lower">' + lower + '</span>' +
+        '</div>' +
+        '<div class="hw-trace">' +
+          '<span class="trace-letter">' + trace + '</span>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+})();
+</script>
+</div>
+</div>
+
+</body>
+</html>
