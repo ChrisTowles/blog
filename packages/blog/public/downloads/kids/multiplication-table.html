@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Multiplication Table &amp; Number Bonds (Front &amp; Back)</title>
+<style>
+  @page {
+    margin: 0;
+    size: letter portrait;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* === PAGE 1: Multiplication Table === */
+  .page1 {
+    height: 100vh;
+    padding: 0.4in;
+    display: flex;
+    flex-direction: column;
+    page-break-after: always;
+  }
+  .page1 h1 {
+    text-align: center;
+    font-size: 26px;
+    margin-bottom: 4px;
+    flex-shrink: 0;
+  }
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .legend-swatch {
+    width: 14px;
+    height: 14px;
+    border: 1px solid #999;
+    border-radius: 3px;
+    display: inline-block;
+  }
+  .mult-table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+    flex-grow: 1;
+  }
+  .mult-table th, .mult-table td {
+    border: 2px solid #555;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 22px;
+    font-weight: bold;
+  }
+  .mult-table th.corner {
+    background: #374151;
+    color: #fff;
+    font-size: 26px;
+  }
+  .mult-table th.col-header {
+    background: #e0e7ff;
+    color: #3730a3;
+  }
+  .mult-table th.row-header {
+    background: #e0e7ff;
+    color: #3730a3;
+  }
+  .mult-table td { color: #222; }
+  .mult-table td.v1  { background: #fefce8; }
+  .mult-table td.v2  { background: #fef9c3; }
+  .mult-table td.v3  { background: #fef08a; }
+  .mult-table td.v4  { background: #fde68a; }
+  .mult-table td.v5  { background: #fed7aa; }
+  .mult-table td.v6  { background: #fdba74; }
+  .mult-table td.v7  { background: #fca5a1; }
+  .mult-table td.v8  { background: #fda4af; }
+  .mult-table td.v9  { background: #f0abfc; }
+  .mult-table td.v10 { background: #c4b5fd; }
+  .mult-table td.square {
+    border: 3px solid #7c3aed;
+    font-size: 23px;
+  }
+
+  /* === PAGE 2: Number Bonds === */
+  .page2 {
+    height: 100vh;
+    padding: 0.4in;
+    display: flex;
+    flex-direction: column;
+  }
+  .page2 h1 {
+    text-align: center;
+    font-size: 26px;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+  }
+  .section {
+    margin-bottom: 16px;
+  }
+  .section:last-child { margin-bottom: 0; }
+  .section h2 {
+    font-size: 20px;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  .bonds-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+  .bond-card {
+    width: 130px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 2px solid #999;
+    border-radius: 10px;
+    padding: 8px 4px;
+    background: #fff;
+  }
+  .bond-total {
+    font-size: 28px;
+    font-weight: bold;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+  .bond-line {
+    width: 2px;
+    height: 12px;
+    background: #999;
+  }
+  .bond-split {
+    display: flex;
+    gap: 0;
+    align-items: flex-start;
+  }
+  .bond-arm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 50px;
+  }
+  .bond-arm-line {
+    width: 2px;
+    height: 10px;
+    background: #999;
+  }
+  .bond-part {
+    font-size: 22px;
+    font-weight: bold;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #999;
+  }
+  .bond-plus {
+    font-size: 18px;
+    color: #666;
+    margin: 0 2px;
+    align-self: center;
+    padding-top: 10px;
+  }
+  /* Color themes */
+  .make10 .bond-total { background: #2563eb; }
+  .make10 .bond-card { border-color: #93c5fd; }
+  .make10 .bond-part { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+  .make10 .bond-line, .make10 .bond-arm-line { background: #93c5fd; }
+  .make20 .bond-total { background: #16a34a; }
+  .make20 .bond-card { border-color: #86efac; }
+  .make20 .bond-part { background: #dcfce7; color: #166534; border-color: #86efac; }
+  .make20 .bond-line, .make20 .bond-arm-line { background: #86efac; }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1: Multiplication Table -->
+<div class="page1">
+<h1>Multiplication Table 1&ndash;10</h1>
+<div class="legend">
+  <div class="legend-item"><span class="legend-swatch" style="background:#fefce8"></span> → <span class="legend-swatch" style="background:#c4b5fd"></span> Small to Large</div>
+  <div class="legend-item"><span class="legend-swatch" style="background:#e0e7ff; border:3px solid #7c3aed"></span> Perfect Square</div>
+</div>
+<table class="mult-table">
+<thead>
+<tr>
+  <th class="corner">&times;</th>
+  <script>
+  for (let c = 1; c <= 10; c++) {
+    document.write('<th class="col-header">' + c + '</th>');
+  }
+  </script>
+</tr>
+</thead>
+<tbody>
+<script>
+(function(){
+  function colorClass(val) {
+    if (val <= 5) return 'v1';
+    if (val <= 10) return 'v2';
+    if (val <= 15) return 'v3';
+    if (val <= 20) return 'v4';
+    if (val <= 30) return 'v5';
+    if (val <= 40) return 'v6';
+    if (val <= 50) return 'v7';
+    if (val <= 64) return 'v8';
+    if (val <= 81) return 'v9';
+    return 'v10';
+  }
+  for (let r = 1; r <= 10; r++) {
+    let tr = '<tr><th class="row-header">' + r + '</th>';
+    for (let c = 1; c <= 10; c++) {
+      const val = r * c;
+      let cls = colorClass(val);
+      if (r === c) cls += ' square';
+      tr += '<td class="' + cls + '">' + val + '</td>';
+    }
+    tr += '</tr>';
+    document.write(tr);
+  }
+})();
+</script>
+</tbody>
+</table>
+</div>
+
+<!-- PAGE 2: Number Bonds -->
+<div class="page2">
+<h1>Number Bonds</h1>
+
+<div class="section make10">
+  <h2 style="color:#2563eb">Ways to Make 10</h2>
+  <div class="bonds-grid">
+    <script>
+    (function(){
+      var pairs = [[0,10],[1,9],[2,8],[3,7],[4,6],[5,5],[6,4],[7,3],[8,2],[9,1],[10,0]];
+      for (var i = 0; i < pairs.length; i++) {
+        var a = pairs[i][0], b = pairs[i][1];
+        document.write(
+          '<div class="bond-card">' +
+            '<div class="bond-total">10</div>' +
+            '<div class="bond-line"></div>' +
+            '<div class="bond-split">' +
+              '<div class="bond-arm"><div class="bond-arm-line"></div><div class="bond-part">' + a + '</div></div>' +
+              '<span class="bond-plus">+</span>' +
+              '<div class="bond-arm"><div class="bond-arm-line"></div><div class="bond-part">' + b + '</div></div>' +
+            '</div>' +
+          '</div>'
+        );
+      }
+    })();
+    </script>
+  </div>
+</div>
+
+<div class="section make20">
+  <h2 style="color:#16a34a">Ways to Make 20</h2>
+  <div class="bonds-grid">
+    <script>
+    (function(){
+      var pairs = [[10,10],[11,9],[12,8],[13,7],[14,6],[15,5],[16,4],[17,3],[18,2],[19,1],[20,0]];
+      for (var i = 0; i < pairs.length; i++) {
+        var a = pairs[i][0], b = pairs[i][1];
+        document.write(
+          '<div class="bond-card">' +
+            '<div class="bond-total">20</div>' +
+            '<div class="bond-line"></div>' +
+            '<div class="bond-split">' +
+              '<div class="bond-arm"><div class="bond-arm-line"></div><div class="bond-part">' + a + '</div></div>' +
+              '<span class="bond-plus">+</span>' +
+              '<div class="bond-arm"><div class="bond-arm-line"></div><div class="bond-part">' + b + '</div></div>' +
+            '</div>' +
+          '</div>'
+        );
+      }
+    })();
+    </script>
+  </div>
+</div>
+
+</div>
+</body>
+</html>
