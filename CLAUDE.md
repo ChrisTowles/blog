@@ -7,6 +7,9 @@ Personal blog/website - Vue/Nuxt monorepo + AI playground.
 ```
 packages/
 ├── blog/           # Main Nuxt 4 and Nuxt UI application (content/, server/database/)
+│   ├── app/        # Client-side: components, composables, pages
+│   ├── server/     # Server-side: API routes, utils, database
+│   └── shared/     # Types shared between client and server
 ├── slides/         # Slidev presentations
 infra/              # infrastructure
     container/       # block docker files
@@ -25,6 +28,14 @@ pnpm typecheck    # TypeScript checks
 pnpm gcp:prod:deploy   # Build container + deploy to GCP prod (needs terraform & gcloud)
 pnpm gcp:staging:deploy # Build container + deploy to GCP staging
 ```
+
+## AI Features
+
+The blog includes several AI-powered features built on the Anthropic SDK:
+
+- **Chat** (`/chat`) — Conversational AI with tool use (search blog, weather, dice). Server-streamed via SSE. See `server/api/chats/`.
+- **Artifacts** — Interactive code execution embedded in blog posts via `::code-runner` MDC component. Uses Anthropic's Code Execution Tool (beta) to run code in isolated containers. See `server/api/artifacts/` and `app/components/CodeRunner.vue`.
+- **RAG** — Blog content is chunked and embedded for semantic search. See `server/utils/rag/`.
 
 ## Printable Worksheets
 

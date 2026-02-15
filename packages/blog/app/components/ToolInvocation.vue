@@ -47,43 +47,45 @@ function formatResult(result: unknown): string {
 </script>
 
 <template>
-  <UCollapsible v-model:open="open" class="flex flex-col gap-1 my-3">
-    <UButton
-      class="p-0 group"
-      color="neutral"
-      variant="link"
-      :leading-icon="isComplete ? toolIcon : 'i-lucide-loader-circle'"
-      trailing-icon="i-lucide-chevron-down"
-      :ui="{
-        leadingIcon: isComplete ? '' : 'animate-spin',
-        trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200',
-      }"
-    >
-      <span class="text-sm">
-        {{ toolLabel }}
-        <span v-if="toolUse.args && Object.keys(toolUse.args).length > 0" class="text-muted">
-          {{ formatArgs(toolUse.args) }}
+  <div class="my-3 rounded-lg border border-muted/20 bg-muted/5 px-3 py-2">
+    <UCollapsible v-model:open="open" class="flex flex-col gap-1">
+      <UButton
+        class="p-0 group"
+        color="neutral"
+        variant="link"
+        :leading-icon="isComplete ? toolIcon : 'i-lucide-loader-circle'"
+        trailing-icon="i-lucide-chevron-down"
+        :ui="{
+          leadingIcon: isComplete ? '' : 'animate-spin',
+          trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200',
+        }"
+      >
+        <span class="text-sm">
+          {{ toolLabel }}
+          <span v-if="toolUse.args && Object.keys(toolUse.args).length > 0" class="text-muted">
+            {{ formatArgs(toolUse.args) }}
+          </span>
+          <span v-if="!isComplete" class="text-muted ml-1">running...</span>
         </span>
-        <span v-if="!isComplete" class="text-muted ml-1">running...</span>
-      </span>
-    </UButton>
+      </UButton>
 
-    <template #content>
-      <div class="pl-6 border-l-2 border-muted/30 ml-2">
-        <div v-if="toolUse.args && Object.keys(toolUse.args).length > 1" class="mb-2">
-          <span class="text-xs text-muted font-semibold">Input:</span>
-          <pre class="text-xs text-muted bg-muted/10 rounded p-2 mt-1 overflow-x-auto">{{
-            formatArgs(toolUse.args)
-          }}</pre>
+      <template #content>
+        <div class="pl-6 border-l-2 border-muted/30 ml-2">
+          <div v-if="toolUse.args && Object.keys(toolUse.args).length > 1" class="mb-2">
+            <span class="text-xs text-muted font-semibold">Input:</span>
+            <pre class="text-xs text-muted bg-muted/10 rounded p-2 mt-1 overflow-x-auto">{{
+              formatArgs(toolUse.args)
+            }}</pre>
+          </div>
+          <div v-if="toolResult">
+            <span class="text-xs text-muted font-semibold">Result:</span>
+            <pre class="text-xs text-muted bg-muted/10 rounded p-2 mt-1 overflow-x-auto max-h-48">{{
+              formatResult(toolResult.result)
+            }}</pre>
+          </div>
+          <div v-else class="text-xs text-muted italic">Waiting for result...</div>
         </div>
-        <div v-if="toolResult">
-          <span class="text-xs text-muted font-semibold">Result:</span>
-          <pre class="text-xs text-muted bg-muted/10 rounded p-2 mt-1 overflow-x-auto max-h-48">{{
-            formatResult(toolResult.result)
-          }}</pre>
-        </div>
-        <div v-else class="text-xs text-muted italic">Waiting for result...</div>
-      </div>
-    </template>
-  </UCollapsible>
+      </template>
+    </UCollapsible>
+  </div>
 </template>

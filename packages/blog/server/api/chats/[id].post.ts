@@ -39,8 +39,9 @@ function convertToAnthropicMessages(messages: ChatMessage[]): MessageParam[] {
   });
 }
 
+const encoder = new TextEncoder();
+
 function sendSSE(controller: ReadableStreamDefaultController, event: SSEEvent) {
-  const encoder = new TextEncoder();
   controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
 }
 

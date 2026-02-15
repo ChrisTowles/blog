@@ -123,6 +123,12 @@ onMounted(() => {
           class="lg:pt-(--ui-header-height) pb-4 sm:pb-6"
           :spacing-offset="160"
         >
+          <template #indicator>
+            <div class="flex items-center gap-2 p-3 text-sm text-muted">
+              <UIcon name="i-lucide-brain" class="animate-pulse" />
+              <span>Thinking...</span>
+            </div>
+          </template>
           <template #content="{ message }">
             <div class="*:first:mt-0 *:last:mb-0">
               <template

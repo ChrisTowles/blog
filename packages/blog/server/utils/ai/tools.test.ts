@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { chatTools, toolRegistry, executeTool, getToolsByNames } from './tools';
 
 // Register tools before tests
 beforeEach(() => {
