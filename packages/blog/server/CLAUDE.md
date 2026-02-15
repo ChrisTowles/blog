@@ -5,6 +5,7 @@ Nuxt Nitro server — API routes, database, AI integrations.
 ## API Route Conventions
 
 Routes use Nitro file-based routing with HTTP method suffixes:
+
 - `api/chats.get.ts` → `GET /api/chats`
 - `api/chats/[id].post.ts` → `POST /api/chats/:id`
 - `api/artifacts/execute.post.ts` → `POST /api/artifacts/execute`
@@ -44,9 +45,12 @@ Event types are defined in `shared/chat-types.ts` and `shared/artifact-types.ts`
 ### Artifact Execution
 
 Uses Anthropic beta APIs — the beta headers and response shapes may change:
+
 - `code_execution_20250825` tool type for sandboxed execution
-- `code_execution_tool_result` content block for stdout/stderr
-- Files referenced by `file_id`, downloaded via Files API beta
+- `bash_code_execution_tool_result` / `text_editor_code_execution_tool_result` content blocks for stdout/stderr
+- Files referenced by `file_id`, downloaded via Files API beta — metadata via `client.beta.files.retrieveMetadata()` (NOT `retrieve`)
+- Beta response types are unstable — typed interfaces in `utils/ai/anthropic-beta-types.ts` use `any` for `content` fields where union narrowing is impractical
+- Hoist `TextEncoder` to module scope (not per-function call) in SSE streaming handlers
 
 ## Database
 

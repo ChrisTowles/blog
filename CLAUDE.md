@@ -34,7 +34,7 @@ pnpm gcp:staging:deploy # Build container + deploy to GCP staging
 The blog includes several AI-powered features built on the Anthropic SDK:
 
 - **Chat** (`/chat`) — Conversational AI with tool use (search blog, weather, dice). Server-streamed via SSE. See `server/api/chats/`.
-- **Artifacts** — Interactive code execution embedded in blog posts via `::blog-artifact` MDC component. Uses Anthropic's Code Execution Tool (beta) to run code in isolated containers. See `server/api/artifacts/` and `app/components/BlogArtifact.vue`.
+- **Artifacts** — Interactive code execution embedded in blog posts via `::code-runner` MDC component. Uses Anthropic's Code Execution Tool (beta) to run code in isolated containers. See `server/api/artifacts/` and `app/components/CodeRunner.vue`.
 - **RAG** — Blog content is chunked and embedded for semantic search. See `server/utils/rag/`.
 
 ## Printable Worksheets

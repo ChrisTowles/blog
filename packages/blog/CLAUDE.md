@@ -7,7 +7,7 @@ Main Nuxt 4 application — blog content, AI chat, and interactive artifacts.
 ```
 app/
 ├── components/         # Vue components (auto-imported by Nuxt)
-│   ├── BlogArtifact.vue    # MDC component for interactive code execution
+│   ├── CodeRunner.vue    # MDC component for interactive code execution
 │   ├── artifact/Output.vue # Renders artifact execution results
 │   ├── prose/ProsePre.vue  # Code blocks with Shiki + Mermaid
 │   ├── tool/               # Chat tool result renderers (Weather, Dice)
@@ -37,7 +37,8 @@ shared/                 # Types shared between client and server
 ## Component Naming Conventions
 
 Nuxt auto-imports components with directory prefix:
-- `components/BlogArtifact.vue` → `<BlogArtifact>` / `::blog-artifact` in MDC
+
+- `components/CodeRunner.vue` → `<CodeRunner>` / `::code-runner` in MDC
 - `components/artifact/Output.vue` → `<ArtifactOutput>`
 - `components/tool/Weather.vue` → `<ToolWeather>`
 - `components/prose/ProsePre.vue` → `<ProsePre>` (prose components are special)
@@ -49,7 +50,7 @@ Interactive code execution in blog posts using Anthropic's Code Execution Tool.
 ### MDC Usage
 
 ```markdown
-::blog-artifact{language="python" title="Example"}
+::code-runner{language="python" title="Example"}
 print("Hello from an isolated container")
 ::
 ```
@@ -75,10 +76,12 @@ Props: `language`, `title`, `prompt`, `code`, `readonly`
 ### Tool Pattern
 
 Tools are defined in two places (being consolidated):
+
 - `server/utils/ai/tools.ts` — Anthropic SDK format tool definitions + `executeTool()` switch
 - `server/utils/ai/tools/*.ts` — Agent SDK format tools (used for MCP server)
 
 When adding a new chat tool:
+
 1. Add tool definition to `chatTools` array in `tools.ts`
 2. Add execution case to `executeTool()` switch
 3. Optionally create Agent SDK tool in `tools/` directory
@@ -87,6 +90,7 @@ When adding a new chat tool:
 ### SSE Streaming Pattern
 
 Both chat and artifacts use SSE with the same pattern:
+
 - Server creates `ReadableStream`, sends `data: {json}\n\n` lines
 - Client reads with `response.body.getReader()`, parses line-by-line
 - Event types defined in `shared/*-types.ts`
@@ -94,6 +98,7 @@ Both chat and artifacts use SSE with the same pattern:
 ## Environment
 
 Required env vars (see `server/utils/env-config.ts`):
+
 - `ANTHROPIC_API_KEY` — for all AI features
 - `DATABASE_URL` — PostgreSQL connection
 - `BRAINTRUST_API_KEY` / `BRAINTRUST_PROJECT_NAME` — observability
@@ -106,3 +111,13 @@ pnpm test:e2e       # Playwright E2E tests
 ```
 
 Test files live next to source: `foo.ts` → `foo.test.ts`
+
+## Gotchas
+
+- **MDC slots parse as markdown** — code in `::component` body loses indentation and `[x]` becomes links. Use `code` prop with `\n` escapes for code content.
+- **Nuxt auto-imports don't work in Vitest** — test files need explicit imports (`import { chatTools } from './tools'`).
+- **Vue ref unwrapping** — nested refs in objects returned from composables are NOT auto-unwrapped in templates. Destructure to top-level: `const { status, code } = useMyComposable()`.
+- **Auth pattern** — every AI-calling route must call `await getUserSession(event)` at the top of the handler.
+- **Syntax highlighting** — use `useHighlighter()` composable with `material-theme-palenight` theme (Shiki).
+- **Model config** — use `useRuntimeConfig().public.model` instead of hardcoding model strings.
+- **Debugging beta APIs** — beta client methods cast via `AnthropicBetaClient` can silently fail in try/catch. Check `tail /tmp/nuxt-dev.log | grep -i warn` for swallowed errors.

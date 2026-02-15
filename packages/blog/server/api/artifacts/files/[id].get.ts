@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { AnthropicBetaClient } from '~~/server/utils/ai/anthropic-beta-types';
 
 defineRouteMeta({
   openAPI: {
@@ -8,6 +9,8 @@ defineRouteMeta({
 });
 
 export default defineEventHandler(async (event) => {
+  await getUserSession(event);
+
   const { id } = await getValidatedRouterParams(
     event,
     z.object({
@@ -18,15 +21,16 @@ export default defineEventHandler(async (event) => {
   try {
     const client = getAnthropicClient();
 
-    // Download the file content via Anthropic Files API
-    const fileResponse = await (client as any).beta.files.download(id, {
-      betas: ['files-api-2025-04-14'],
-    });
-
-    // Get file metadata for content-type
-    const fileMeta = await (client as any).beta.files.retrieve(id, {
-      betas: ['files-api-2025-04-14'],
-    });
+    // Download file content and metadata in parallel
+    const betaClient = client as unknown as AnthropicBetaClient;
+    const [fileResponse, fileMeta] = await Promise.all([
+      betaClient.beta.files.download(id, {
+        betas: ['files-api-2025-04-14'],
+      }),
+      betaClient.beta.files.retrieveMetadata(id, {
+        betas: ['files-api-2025-04-14'],
+      }),
+    ]);
 
     const contentType = fileMeta?.mime_type || 'application/octet-stream';
     const fileName = fileMeta?.filename || 'download';
@@ -35,24 +39,20 @@ export default defineEventHandler(async (event) => {
     setHeader(event, 'Content-Disposition', `inline; filename="${fileName}"`);
     setHeader(event, 'Cache-Control', 'public, max-age=86400');
 
-    // fileResponse is a Response-like object, extract the body
+    // Extract the streamable body from whichever response shape the SDK returns
     if (fileResponse instanceof Response) {
       return fileResponse.body;
     }
-
-    // If it's a buffer/ArrayBuffer
-    if (fileResponse instanceof ArrayBuffer || ArrayBuffer.isView(fileResponse)) {
-      return new Uint8Array(
-        fileResponse instanceof ArrayBuffer ? fileResponse : fileResponse.buffer,
-      );
+    if (fileResponse instanceof ArrayBuffer) {
+      return new Uint8Array(fileResponse);
     }
-
-    // If it's a readable stream
-    if (typeof fileResponse.body?.getReader === 'function') {
+    if (ArrayBuffer.isView(fileResponse)) {
+      return new Uint8Array(fileResponse.buffer);
+    }
+    // Response-like object with a readable body (StreamableResponse)
+    if (fileResponse.body) {
       return fileResponse.body;
     }
-
-    // Fallback: return as-is
     return fileResponse;
   } catch (err) {
     console.error('File download error:', err);

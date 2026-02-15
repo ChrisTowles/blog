@@ -1,8 +1,6 @@
 import { z } from 'zod';
-import type {
-  ArtifactSSEEvent,
-  ArtifactFile,
-} from '~~/shared/artifact-types';
+import type { ArtifactSSEEvent, ArtifactFile } from '~~/shared/artifact-types';
+import type { AnthropicBetaClient } from '~~/server/utils/ai/anthropic-beta-types';
 
 defineRouteMeta({
   openAPI: {
@@ -21,12 +19,15 @@ const SYSTEM_PROMPT = `You are a code execution assistant embedded in a blog. Us
 - Keep explanations brief — focus on running the code and producing output
 - If the user provides initial code, execute it directly (fix obvious errors if needed)`;
 
+const encoder = new TextEncoder();
+
 function sendSSE(controller: ReadableStreamDefaultController, event: ArtifactSSEEvent) {
-  const encoder = new TextEncoder();
   controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
 }
 
 export default defineEventHandler(async (event) => {
+  await getUserSession(event);
+
   const { prompt, code, language, containerId, skills } = await readValidatedBody(
     event,
     z.object({
@@ -53,31 +54,42 @@ export default defineEventHandler(async (event) => {
     userContent = `${prompt}\n\nHere is the code to execute:\n\`\`\`${lang}\n${code}\n\`\`\``;
   }
 
+  const config = useRuntimeConfig();
+
   const stream = new ReadableStream({
     async start(controller) {
       try {
         const client = getAnthropicClient();
 
-        // Build container config
-        const containerConfig: Record<string, unknown> = {};
-        if (containerId) {
-          containerConfig.id = containerId;
-        }
-        if (skills && skills.length > 0) {
-          containerConfig.skills = skills.map((s) => ({
-            type: s.type,
-            skill_id: s.skillId,
-            version: s.version || 'latest',
-          }));
-        }
+        // Build container config (only included if there's something to set)
+        const hasContainer = containerId || (skills && skills.length > 0);
+        const containerConfig = hasContainer
+          ? {
+              ...(containerId ? { id: containerId } : {}),
+              ...(skills?.length
+                ? {
+                    skills: skills.map((s) => ({
+                      type: s.type,
+                      skill_id: s.skillId,
+                      version: s.version || 'latest',
+                    })),
+                  }
+                : {}),
+            }
+          : undefined;
 
         // Call Anthropic Messages API with code execution tool
-        const response = await (client as any).beta.messages.create({
-          model: 'claude-sonnet-4-5-20250929',
+        const betaClient = client as unknown as AnthropicBetaClient;
+        const response = await betaClient.beta.messages.create({
+          model: config.public.model as string,
           max_tokens: 16000,
           system: SYSTEM_PROMPT,
-          betas: ['code-execution-2025-08-25', ...(skills?.length ? ['skills-2025-10-02'] : [])],
-          ...(Object.keys(containerConfig).length > 0 ? { container: containerConfig } : {}),
+          betas: [
+            'code-execution-2025-08-25',
+            'files-api-2025-04-14',
+            ...(skills?.length ? ['skills-2025-10-02'] : []),
+          ],
+          ...(containerConfig ? { container: containerConfig } : {}),
           tools: [
             {
               type: 'code_execution_20250825',
@@ -97,62 +109,69 @@ export default defineEventHandler(async (event) => {
         }
 
         // Process response content blocks
-        const files: ArtifactFile[] = [];
+        const seenFileIds = new Set<string>();
+
+        async function emitFile(fileId: string) {
+          if (seenFileIds.has(fileId)) return;
+          seenFileIds.add(fileId);
+          // Fetch actual metadata from the Files API
+          let fileName = 'output';
+          let mediaType = 'application/octet-stream';
+          try {
+            const meta = await betaClient.beta.files.retrieveMetadata(fileId, {
+              betas: ['files-api-2025-04-14'],
+            });
+            fileName = meta.filename || fileName;
+            mediaType = meta.mime_type || mediaType;
+          } catch (e) {
+            console.warn(`[artifact] Failed to fetch metadata for file ${fileId}:`, e);
+          }
+          const file: ArtifactFile = {
+            fileId,
+            fileName,
+            mediaType,
+            url: `/api/artifacts/files/${fileId}`,
+          };
+          sendSSE(controller, { type: 'artifact_file', file });
+        }
 
         for (const block of response.content) {
           if (block.type === 'text') {
             sendSSE(controller, { type: 'artifact_text', text: block.text });
-          } else if (block.type === 'server_tool_use' && block.name === 'code_execution') {
-            // Code execution was requested
+          } else if (block.type === 'server_tool_use') {
+            // Handle both bash and text_editor tool use blocks
             sendSSE(controller, { type: 'artifact_execution_start' });
-            if (block.input?.code) {
+            if (block.name === 'bash_code_execution' && block.input?.command) {
               sendSSE(controller, {
                 type: 'artifact_code',
-                code: block.input.code as string,
-                language: (block.input.language as string) || 'python',
+                code: block.input.command as string,
+                language: 'bash',
+              });
+            } else if (block.name === 'text_editor_code_execution' && block.input?.file_text) {
+              sendSSE(controller, {
+                type: 'artifact_code',
+                code: block.input.file_text as string,
+                language: (block.input.path as string)?.split('.').pop() || 'text',
               });
             }
-          } else if (block.type === 'code_execution_tool_result') {
-            // Code execution completed
-            sendSSE(controller, {
-              type: 'artifact_execution_result',
-              stdout: block.content?.stdout || '',
-              stderr: block.content?.stderr || '',
-              exitCode: block.content?.return_code ?? 0,
-            });
-          } else if (block.type === 'code_execution_tool_result_file') {
-            // A file was generated
-            const file: ArtifactFile = {
-              fileId: block.file_id,
-              fileName: block.file_name || 'output',
-              mediaType: block.media_type || 'application/octet-stream',
-              url: `/api/artifacts/files/${block.file_id}`,
-            };
-            files.push(file);
-            sendSSE(controller, { type: 'artifact_file', file });
-          }
-        }
-
-        // Check for files referenced in content blocks (alternative structure)
-        if (response.content) {
-          for (const block of response.content) {
-            if (block.type === 'code_execution_tool_result') {
-              // Check for nested file content
-              if (Array.isArray(block.content)) {
-                for (const item of block.content) {
-                  if (item.type === 'file' && item.file_id) {
-                    const existingFile = files.find((f) => f.fileId === item.file_id);
-                    if (!existingFile) {
-                      const file: ArtifactFile = {
-                        fileId: item.file_id,
-                        fileName: item.file_name || 'output',
-                        mediaType: item.media_type || 'application/octet-stream',
-                        url: `/api/artifacts/files/${item.file_id}`,
-                      };
-                      files.push(file);
-                      sendSSE(controller, { type: 'artifact_file', file });
-                    }
-                  }
+          } else if (
+            block.type === 'bash_code_execution_tool_result' ||
+            block.type === 'text_editor_code_execution_tool_result'
+          ) {
+            const result = block.content;
+            if (result?.stdout !== undefined || result?.stderr !== undefined) {
+              sendSSE(controller, {
+                type: 'artifact_execution_result',
+                stdout: result.stdout || '',
+                stderr: result.stderr || '',
+                exitCode: result.return_code ?? 0,
+              });
+            }
+            // Files are nested in result.content[] array
+            if (Array.isArray(result?.content)) {
+              for (const item of result.content) {
+                if (item.file_id) {
+                  await emitFile(item.file_id);
                 }
               }
             }

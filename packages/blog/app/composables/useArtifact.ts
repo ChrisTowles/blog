@@ -28,6 +28,15 @@ export function useArtifact(options: UseArtifactOptions = {}) {
   const containerId = ref<string | null>(null);
   const abortController = ref<AbortController | null>(null);
 
+  /** Clear expired containers and append a retry hint to the message */
+  function handleContainerError(msg: string): string {
+    if (/container|expired|not found/i.test(msg) && containerId.value) {
+      containerId.value = null;
+      return `${msg} (container cleared — try again)`;
+    }
+    return msg;
+  }
+
   /**
    * Execute code or a prompt in the artifact container.
    * If `prompt` is provided, Claude decides what code to run.
@@ -97,7 +106,7 @@ export function useArtifact(options: UseArtifactOptions = {}) {
         status.value = 'idle';
         return;
       }
-      const msg = err instanceof Error ? err.message : 'Unknown error';
+      const msg = handleContainerError(err instanceof Error ? err.message : 'Unknown error');
       error.value = msg;
       status.value = 'error';
       options.onError?.(msg);
@@ -115,7 +124,6 @@ export function useArtifact(options: UseArtifactOptions = {}) {
         executedCode.value += event.code;
         break;
       case 'artifact_execution_start':
-        // Execution is running in the container
         break;
       case 'artifact_execution_result':
         execution.value = {
@@ -133,11 +141,13 @@ export function useArtifact(options: UseArtifactOptions = {}) {
       case 'artifact_done':
         status.value = 'complete';
         break;
-      case 'artifact_error':
-        error.value = event.error;
+      case 'artifact_error': {
+        const errMsg = handleContainerError(event.error);
+        error.value = errMsg;
         status.value = 'error';
-        options.onError?.(event.error);
+        options.onError?.(errMsg);
         break;
+      }
     }
   }
 
