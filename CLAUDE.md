@@ -29,12 +29,14 @@ pnpm gcp:staging:deploy # Build container + deploy to GCP staging
 ## Printable Worksheets
 
 HTML sources in `packages/blog/public/downloads/kids/`. Generate PDFs:
+
 ```bash
 cd packages/blog/public/downloads/kids
 for f in *.html; do google-chrome --headless=new --print-to-pdf="${f%.html}.pdf" --print-to-pdf-no-header --no-pdf-header-footer --disable-gpu "$f"; done
 ```
 
 Hero image screenshots (use CLI, not DevTools — avoids dark mode issues):
+
 ```bash
 google-chrome --headless=new --screenshot=output.png --window-size=1200,800 --default-background-color=ffffffff file.html
 ```
