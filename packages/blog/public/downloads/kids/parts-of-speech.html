@@ -1,381 +1,516 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Parts of Speech &amp; Punctuation (Front &amp; Back)</title>
-<style>
-  @page {
-    margin: 0;
-    size: letter portrait;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
+  <head>
+    <meta charset="UTF-8" />
+    <title>Parts of Speech &amp; Punctuation (Front &amp; Back)</title>
+    <style>
+      @page {
+        margin: 0;
+        size: letter portrait;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
 
-  .page {
-    width: 100%;
-    height: 100vh;
-    padding: 0.3in 0.35in;
-    display: flex;
-    flex-direction: column;
-    page-break-after: always;
-  }
-  .page:last-child { page-break-after: avoid; }
+      .page {
+        width: 100%;
+        height: 100vh;
+        padding: 0.3in 0.35in;
+        display: flex;
+        flex-direction: column;
+        page-break-after: always;
+      }
+      .page:last-child {
+        page-break-after: avoid;
+      }
 
-  h1 {
-    text-align: center;
-    font-size: 24px;
-    margin-bottom: 6px;
-    flex-shrink: 0;
-  }
+      h1 {
+        text-align: center;
+        font-size: 24px;
+        margin-bottom: 6px;
+        flex-shrink: 0;
+      }
 
-  /* Parts of Speech Cards */
-  .pos-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-    flex-grow: 1;
-  }
-  .pos-card {
-    border: 3px solid;
-    border-radius: 10px;
-    padding: 8px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-  .pos-name {
-    font-size: 18px;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-  .pos-def {
-    font-size: 12px;
-    color: #444;
-    font-style: italic;
-  }
-  .pos-examples {
-    font-size: 13px;
-    font-weight: bold;
-    margin-top: 2px;
-  }
-  .pos-examples span {
-    display: inline-block;
-    padding: 1px 6px;
-    border-radius: 4px;
-    margin: 1px 2px;
-    font-size: 12px;
-  }
-  .pos-sentence {
-    font-size: 12px;
-    margin-top: 2px;
-    color: #333;
-  }
-  .pos-sentence b {
-    padding: 0 2px;
-    border-radius: 3px;
-  }
+      /* Parts of Speech Cards */
+      .pos-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        flex-grow: 1;
+      }
+      .pos-card {
+        border: 3px solid;
+        border-radius: 10px;
+        padding: 8px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .pos-name {
+        font-size: 18px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .pos-def {
+        font-size: 12px;
+        color: #444;
+        font-style: italic;
+      }
+      .pos-examples {
+        font-size: 13px;
+        font-weight: bold;
+        margin-top: 2px;
+      }
+      .pos-examples span {
+        display: inline-block;
+        padding: 1px 6px;
+        border-radius: 4px;
+        margin: 1px 2px;
+        font-size: 12px;
+      }
+      .pos-sentence {
+        font-size: 12px;
+        margin-top: 2px;
+        color: #333;
+      }
+      .pos-sentence b {
+        padding: 0 2px;
+        border-radius: 3px;
+      }
 
-  /* Color themes */
-  .pos-noun { border-color: #2980b9; background: #eaf2f8; }
-  .pos-noun .pos-name { color: #2980b9; }
-  .pos-noun .pos-examples span { background: #d4e6f1; color: #1a4d6e; }
-  .pos-noun .pos-sentence b { background: #d4e6f1; }
+      /* Color themes */
+      .pos-noun {
+        border-color: #2980b9;
+        background: #eaf2f8;
+      }
+      .pos-noun .pos-name {
+        color: #2980b9;
+      }
+      .pos-noun .pos-examples span {
+        background: #d4e6f1;
+        color: #1a4d6e;
+      }
+      .pos-noun .pos-sentence b {
+        background: #d4e6f1;
+      }
 
-  .pos-verb { border-color: #c0392b; background: #fdedec; }
-  .pos-verb .pos-name { color: #c0392b; }
-  .pos-verb .pos-examples span { background: #fadbd8; color: #78281f; }
-  .pos-verb .pos-sentence b { background: #fadbd8; }
+      .pos-verb {
+        border-color: #c0392b;
+        background: #fdedec;
+      }
+      .pos-verb .pos-name {
+        color: #c0392b;
+      }
+      .pos-verb .pos-examples span {
+        background: #fadbd8;
+        color: #78281f;
+      }
+      .pos-verb .pos-sentence b {
+        background: #fadbd8;
+      }
 
-  .pos-adj { border-color: #27ae60; background: #eafaf1; }
-  .pos-adj .pos-name { color: #27ae60; }
-  .pos-adj .pos-examples span { background: #d5f5e3; color: #1a5c32; }
-  .pos-adj .pos-sentence b { background: #d5f5e3; }
+      .pos-adj {
+        border-color: #27ae60;
+        background: #eafaf1;
+      }
+      .pos-adj .pos-name {
+        color: #27ae60;
+      }
+      .pos-adj .pos-examples span {
+        background: #d5f5e3;
+        color: #1a5c32;
+      }
+      .pos-adj .pos-sentence b {
+        background: #d5f5e3;
+      }
 
-  .pos-adv { border-color: #e67e22; background: #fef5ec; }
-  .pos-adv .pos-name { color: #e67e22; }
-  .pos-adv .pos-examples span { background: #fdebd0; color: #7e4510; }
-  .pos-adv .pos-sentence b { background: #fdebd0; }
+      .pos-adv {
+        border-color: #e67e22;
+        background: #fef5ec;
+      }
+      .pos-adv .pos-name {
+        color: #e67e22;
+      }
+      .pos-adv .pos-examples span {
+        background: #fdebd0;
+        color: #7e4510;
+      }
+      .pos-adv .pos-sentence b {
+        background: #fdebd0;
+      }
 
-  .pos-pron { border-color: #8e44ad; background: #f5eef8; }
-  .pos-pron .pos-name { color: #8e44ad; }
-  .pos-pron .pos-examples span { background: #e8daef; color: #5b2c6f; }
-  .pos-pron .pos-sentence b { background: #e8daef; }
+      .pos-pron {
+        border-color: #8e44ad;
+        background: #f5eef8;
+      }
+      .pos-pron .pos-name {
+        color: #8e44ad;
+      }
+      .pos-pron .pos-examples span {
+        background: #e8daef;
+        color: #5b2c6f;
+      }
+      .pos-pron .pos-sentence b {
+        background: #e8daef;
+      }
 
-  .pos-prep { border-color: #16a085; background: #eafaf6; }
-  .pos-prep .pos-name { color: #16a085; }
-  .pos-prep .pos-examples span { background: #d1f2eb; color: #0e6655; }
-  .pos-prep .pos-sentence b { background: #d1f2eb; }
+      .pos-prep {
+        border-color: #16a085;
+        background: #eafaf6;
+      }
+      .pos-prep .pos-name {
+        color: #16a085;
+      }
+      .pos-prep .pos-examples span {
+        background: #d1f2eb;
+        color: #0e6655;
+      }
+      .pos-prep .pos-sentence b {
+        background: #d1f2eb;
+      }
 
-  .pos-conj { border-color: #e84393; background: #fef0f5; }
-  .pos-conj .pos-name { color: #e84393; }
-  .pos-conj .pos-examples span { background: #fce4ec; color: #880e4f; }
-  .pos-conj .pos-sentence b { background: #fce4ec; }
+      .pos-conj {
+        border-color: #e84393;
+        background: #fef0f5;
+      }
+      .pos-conj .pos-name {
+        color: #e84393;
+      }
+      .pos-conj .pos-examples span {
+        background: #fce4ec;
+        color: #880e4f;
+      }
+      .pos-conj .pos-sentence b {
+        background: #fce4ec;
+      }
 
-  .pos-interj { border-color: #f39c12; background: #fef9e7; }
-  .pos-interj .pos-name { color: #b7950b; }
-  .pos-interj .pos-examples span { background: #fcf3cf; color: #7d6608; }
-  .pos-interj .pos-sentence b { background: #fcf3cf; }
+      .pos-interj {
+        border-color: #f39c12;
+        background: #fef9e7;
+      }
+      .pos-interj .pos-name {
+        color: #b7950b;
+      }
+      .pos-interj .pos-examples span {
+        background: #fcf3cf;
+        color: #7d6608;
+      }
+      .pos-interj .pos-sentence b {
+        background: #fcf3cf;
+      }
 
-  /* Page 2: Punctuation & Sentence Types */
-  .section-header {
-    font-size: 20px;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 6px;
-    flex-shrink: 0;
-  }
+      /* Page 2: Punctuation & Sentence Types */
+      .section-header {
+        font-size: 20px;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 6px;
+        flex-shrink: 0;
+      }
 
-  .punct-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 5px;
-    margin-bottom: 10px;
-    flex-shrink: 0;
-  }
-  .punct-card {
-    border: 2px solid #bbb;
-    border-radius: 8px;
-    padding: 6px 8px;
-    background: #fafafa;
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-  }
-  .punct-symbol {
-    font-size: 32px;
-    font-weight: bold;
-    color: #2c3e50;
-    flex-shrink: 0;
-    width: 36px;
-    text-align: center;
-    line-height: 1;
-  }
-  .punct-info {
-    flex-grow: 1;
-  }
-  .punct-name {
-    font-size: 13px;
-    font-weight: bold;
-    color: #2c3e50;
-  }
-  .punct-desc {
-    font-size: 11px;
-    color: #666;
-  }
-  .punct-ex {
-    font-size: 12px;
-    color: #333;
-    margin-top: 2px;
-    font-style: italic;
-  }
+      .punct-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 5px;
+        margin-bottom: 10px;
+        flex-shrink: 0;
+      }
+      .punct-card {
+        border: 2px solid #bbb;
+        border-radius: 8px;
+        padding: 6px 8px;
+        background: #fafafa;
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .punct-symbol {
+        font-size: 32px;
+        font-weight: bold;
+        color: #2c3e50;
+        flex-shrink: 0;
+        width: 36px;
+        text-align: center;
+        line-height: 1;
+      }
+      .punct-info {
+        flex-grow: 1;
+      }
+      .punct-name {
+        font-size: 13px;
+        font-weight: bold;
+        color: #2c3e50;
+      }
+      .punct-desc {
+        font-size: 11px;
+        color: #666;
+      }
+      .punct-ex {
+        font-size: 12px;
+        color: #333;
+        margin-top: 2px;
+        font-style: italic;
+      }
 
-  .sent-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-    flex-grow: 1;
-  }
-  .sent-card {
-    border: 3px solid;
-    border-radius: 10px;
-    padding: 10px 12px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 3px;
-  }
-  .sent-type {
-    font-size: 16px;
-    font-weight: bold;
-    text-transform: uppercase;
-  }
-  .sent-aka {
-    font-size: 12px;
-    color: #666;
-    font-style: italic;
-  }
-  .sent-example {
-    font-size: 14px;
-    font-weight: bold;
-    margin-top: 4px;
-  }
-  .sent-punct {
-    font-size: 28px;
-    font-weight: bold;
-    float: right;
-    opacity: 0.3;
-  }
+      .sent-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        flex-grow: 1;
+      }
+      .sent-card {
+        border: 3px solid;
+        border-radius: 10px;
+        padding: 10px 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 3px;
+      }
+      .sent-type {
+        font-size: 16px;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+      .sent-aka {
+        font-size: 12px;
+        color: #666;
+        font-style: italic;
+      }
+      .sent-example {
+        font-size: 14px;
+        font-weight: bold;
+        margin-top: 4px;
+      }
+      .sent-punct {
+        font-size: 28px;
+        font-weight: bold;
+        float: right;
+        opacity: 0.3;
+      }
 
-  .sent-decl { border-color: #2980b9; background: #eaf2f8; }
-  .sent-decl .sent-type { color: #2980b9; }
-  .sent-inter { border-color: #27ae60; background: #eafaf1; }
-  .sent-inter .sent-type { color: #27ae60; }
-  .sent-imper { border-color: #e67e22; background: #fef5ec; }
-  .sent-imper .sent-type { color: #e67e22; }
-  .sent-exclam { border-color: #c0392b; background: #fdedec; }
-  .sent-exclam .sent-type { color: #c0392b; }
+      .sent-decl {
+        border-color: #2980b9;
+        background: #eaf2f8;
+      }
+      .sent-decl .sent-type {
+        color: #2980b9;
+      }
+      .sent-inter {
+        border-color: #27ae60;
+        background: #eafaf1;
+      }
+      .sent-inter .sent-type {
+        color: #27ae60;
+      }
+      .sent-imper {
+        border-color: #e67e22;
+        background: #fef5ec;
+      }
+      .sent-imper .sent-type {
+        color: #e67e22;
+      }
+      .sent-exclam {
+        border-color: #c0392b;
+        background: #fdedec;
+      }
+      .sent-exclam .sent-type {
+        color: #c0392b;
+      }
 
-  .footer {
-    text-align: center;
-    font-size: 10px;
-    color: #999;
-    margin-top: 4px;
-    flex-shrink: 0;
-  }
+      .footer {
+        text-align: center;
+        font-size: 10px;
+        color: #999;
+        margin-top: 4px;
+        flex-shrink: 0;
+      }
 
-  @media print {
-    .page { height: 100vh; }
-  }
-</style>
-</head>
-<body>
+      @media print {
+        .page {
+          height: 100vh;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- PAGE 1: Parts of Speech -->
+    <div class="page">
+      <h1>The 8 Parts of Speech</h1>
 
-<!-- PAGE 1: Parts of Speech -->
-<div class="page">
-<h1>The 8 Parts of Speech</h1>
+      <div class="pos-grid">
+        <div class="pos-card pos-noun">
+          <div class="pos-name">Noun</div>
+          <div class="pos-def">A person, place, thing, or idea</div>
+          <div class="pos-examples">
+            <span>dog</span><span>school</span><span>happiness</span><span>Texas</span>
+          </div>
+          <div class="pos-sentence">The <b>dog</b> ran to <b>school</b>.</div>
+        </div>
+        <div class="pos-card pos-verb">
+          <div class="pos-name">Verb</div>
+          <div class="pos-def">An action or state of being</div>
+          <div class="pos-examples">
+            <span>run</span><span>jump</span><span>is</span><span>think</span>
+          </div>
+          <div class="pos-sentence">She <b>runs</b> fast and <b>jumps</b> high.</div>
+        </div>
+        <div class="pos-card pos-adj">
+          <div class="pos-name">Adjective</div>
+          <div class="pos-def">Describes a noun</div>
+          <div class="pos-examples">
+            <span>big</span><span>happy</span><span>three</span><span>red</span>
+          </div>
+          <div class="pos-sentence">The <b>big</b>, <b>red</b> ball bounced.</div>
+        </div>
+        <div class="pos-card pos-adv">
+          <div class="pos-name">Adverb</div>
+          <div class="pos-def">Describes a verb, adjective, or adverb</div>
+          <div class="pos-examples">
+            <span>quickly</span><span>very</span><span>always</span><span>well</span>
+          </div>
+          <div class="pos-sentence">He ran <b>quickly</b> and played <b>well</b>.</div>
+        </div>
+        <div class="pos-card pos-pron">
+          <div class="pos-name">Pronoun</div>
+          <div class="pos-def">Takes the place of a noun</div>
+          <div class="pos-examples">
+            <span>he</span><span>she</span><span>it</span><span>they</span>
+          </div>
+          <div class="pos-sentence"><b>She</b> gave <b>it</b> to <b>them</b>.</div>
+        </div>
+        <div class="pos-card pos-prep">
+          <div class="pos-name">Preposition</div>
+          <div class="pos-def">Shows position or direction</div>
+          <div class="pos-examples">
+            <span>in</span><span>on</span><span>under</span><span>between</span>
+          </div>
+          <div class="pos-sentence">The cat hid <b>under</b> the bed.</div>
+        </div>
+        <div class="pos-card pos-conj">
+          <div class="pos-name">Conjunction</div>
+          <div class="pos-def">Connects words or phrases</div>
+          <div class="pos-examples">
+            <span>and</span><span>but</span><span>or</span><span>because</span>
+          </div>
+          <div class="pos-sentence">I like cats <b>and</b> dogs, <b>but</b> not bugs.</div>
+        </div>
+        <div class="pos-card pos-interj">
+          <div class="pos-name">Interjection</div>
+          <div class="pos-def">Expresses strong emotion</div>
+          <div class="pos-examples">
+            <span>wow!</span><span>ouch!</span><span>yay!</span><span>oh!</span>
+          </div>
+          <div class="pos-sentence"><b>Wow!</b> That was amazing!</div>
+        </div>
+      </div>
 
-<div class="pos-grid">
-  <div class="pos-card pos-noun">
-    <div class="pos-name">Noun</div>
-    <div class="pos-def">A person, place, thing, or idea</div>
-    <div class="pos-examples"><span>dog</span><span>school</span><span>happiness</span><span>Texas</span></div>
-    <div class="pos-sentence">The <b>dog</b> ran to <b>school</b>.</div>
-  </div>
-  <div class="pos-card pos-verb">
-    <div class="pos-name">Verb</div>
-    <div class="pos-def">An action or state of being</div>
-    <div class="pos-examples"><span>run</span><span>jump</span><span>is</span><span>think</span></div>
-    <div class="pos-sentence">She <b>runs</b> fast and <b>jumps</b> high.</div>
-  </div>
-  <div class="pos-card pos-adj">
-    <div class="pos-name">Adjective</div>
-    <div class="pos-def">Describes a noun</div>
-    <div class="pos-examples"><span>big</span><span>happy</span><span>three</span><span>red</span></div>
-    <div class="pos-sentence">The <b>big</b>, <b>red</b> ball bounced.</div>
-  </div>
-  <div class="pos-card pos-adv">
-    <div class="pos-name">Adverb</div>
-    <div class="pos-def">Describes a verb, adjective, or adverb</div>
-    <div class="pos-examples"><span>quickly</span><span>very</span><span>always</span><span>well</span></div>
-    <div class="pos-sentence">He ran <b>quickly</b> and played <b>well</b>.</div>
-  </div>
-  <div class="pos-card pos-pron">
-    <div class="pos-name">Pronoun</div>
-    <div class="pos-def">Takes the place of a noun</div>
-    <div class="pos-examples"><span>he</span><span>she</span><span>it</span><span>they</span></div>
-    <div class="pos-sentence"><b>She</b> gave <b>it</b> to <b>them</b>.</div>
-  </div>
-  <div class="pos-card pos-prep">
-    <div class="pos-name">Preposition</div>
-    <div class="pos-def">Shows position or direction</div>
-    <div class="pos-examples"><span>in</span><span>on</span><span>under</span><span>between</span></div>
-    <div class="pos-sentence">The cat hid <b>under</b> the bed.</div>
-  </div>
-  <div class="pos-card pos-conj">
-    <div class="pos-name">Conjunction</div>
-    <div class="pos-def">Connects words or phrases</div>
-    <div class="pos-examples"><span>and</span><span>but</span><span>or</span><span>because</span></div>
-    <div class="pos-sentence">I like cats <b>and</b> dogs, <b>but</b> not bugs.</div>
-  </div>
-  <div class="pos-card pos-interj">
-    <div class="pos-name">Interjection</div>
-    <div class="pos-def">Expresses strong emotion</div>
-    <div class="pos-examples"><span>wow!</span><span>ouch!</span><span>yay!</span><span>oh!</span></div>
-    <div class="pos-sentence"><b>Wow!</b> That was amazing!</div>
-  </div>
-</div>
-
-<div class="footer">chris.towles.dev — Free Printable Parts of Speech</div>
-</div>
-
-<!-- PAGE 2: Punctuation & Sentence Types -->
-<div class="page">
-<div class="section-header">Punctuation Guide</div>
-
-<div class="punct-grid">
-  <div class="punct-card">
-    <div class="punct-symbol">.</div>
-    <div class="punct-info">
-      <div class="punct-name">Period</div>
-      <div class="punct-desc">Ends a statement</div>
-      <div class="punct-ex">I like to read books<b>.</b></div>
+      <div class="footer">chris.towles.dev — Free Printable Parts of Speech</div>
     </div>
-  </div>
-  <div class="punct-card">
-    <div class="punct-symbol">?</div>
-    <div class="punct-info">
-      <div class="punct-name">Question Mark</div>
-      <div class="punct-desc">Ends a question</div>
-      <div class="punct-ex">What is your name<b>?</b></div>
-    </div>
-  </div>
-  <div class="punct-card">
-    <div class="punct-symbol">!</div>
-    <div class="punct-info">
-      <div class="punct-name">Exclamation Point</div>
-      <div class="punct-desc">Shows strong feeling</div>
-      <div class="punct-ex">Watch out<b>!</b></div>
-    </div>
-  </div>
-  <div class="punct-card">
-    <div class="punct-symbol">,</div>
-    <div class="punct-info">
-      <div class="punct-name">Comma</div>
-      <div class="punct-desc">Separates items or adds a pause</div>
-      <div class="punct-ex">I need eggs<b>,</b> milk<b>,</b> and bread.</div>
-    </div>
-  </div>
-  <div class="punct-card">
-    <div class="punct-symbol">&rsquo;</div>
-    <div class="punct-info">
-      <div class="punct-name">Apostrophe</div>
-      <div class="punct-desc">Contractions &amp; possession</div>
-      <div class="punct-ex">That<b>'</b>s Sara<b>'</b>s book.</div>
-    </div>
-  </div>
-  <div class="punct-card">
-    <div class="punct-symbol">&ldquo; &rdquo;</div>
-    <div class="punct-info">
-      <div class="punct-name">Quotation Marks</div>
-      <div class="punct-desc">Someone's exact words</div>
-      <div class="punct-ex"><b>&ldquo;</b>Let's go!<b>&rdquo;</b> she said.</div>
-    </div>
-  </div>
-</div>
 
-<div class="section-header">4 Types of Sentences</div>
+    <!-- PAGE 2: Punctuation & Sentence Types -->
+    <div class="page">
+      <div class="section-header">Punctuation Guide</div>
 
-<div class="sent-grid">
-  <div class="sent-card sent-decl">
-    <div><span class="sent-punct">.</span><div class="sent-type">Declarative</div></div>
-    <div class="sent-aka">Makes a statement</div>
-    <div class="sent-example">&ldquo;The cat sat on the mat.&rdquo;</div>
-  </div>
-  <div class="sent-card sent-inter">
-    <div><span class="sent-punct">?</span><div class="sent-type">Interrogative</div></div>
-    <div class="sent-aka">Asks a question</div>
-    <div class="sent-example">&ldquo;Where is the cat?&rdquo;</div>
-  </div>
-  <div class="sent-card sent-imper">
-    <div><span class="sent-punct">.</span><div class="sent-type">Imperative</div></div>
-    <div class="sent-aka">Gives a command</div>
-    <div class="sent-example">&ldquo;Sit down, please.&rdquo;</div>
-  </div>
-  <div class="sent-card sent-exclam">
-    <div><span class="sent-punct">!</span><div class="sent-type">Exclamatory</div></div>
-    <div class="sent-aka">Shows excitement</div>
-    <div class="sent-example">&ldquo;What a beautiful day!&rdquo;</div>
-  </div>
-</div>
+      <div class="punct-grid">
+        <div class="punct-card">
+          <div class="punct-symbol">.</div>
+          <div class="punct-info">
+            <div class="punct-name">Period</div>
+            <div class="punct-desc">Ends a statement</div>
+            <div class="punct-ex">I like to read books<b>.</b></div>
+          </div>
+        </div>
+        <div class="punct-card">
+          <div class="punct-symbol">?</div>
+          <div class="punct-info">
+            <div class="punct-name">Question Mark</div>
+            <div class="punct-desc">Ends a question</div>
+            <div class="punct-ex">What is your name<b>?</b></div>
+          </div>
+        </div>
+        <div class="punct-card">
+          <div class="punct-symbol">!</div>
+          <div class="punct-info">
+            <div class="punct-name">Exclamation Point</div>
+            <div class="punct-desc">Shows strong feeling</div>
+            <div class="punct-ex">Watch out<b>!</b></div>
+          </div>
+        </div>
+        <div class="punct-card">
+          <div class="punct-symbol">,</div>
+          <div class="punct-info">
+            <div class="punct-name">Comma</div>
+            <div class="punct-desc">Separates items or adds a pause</div>
+            <div class="punct-ex">I need eggs<b>,</b> milk<b>,</b> and bread.</div>
+          </div>
+        </div>
+        <div class="punct-card">
+          <div class="punct-symbol">&rsquo;</div>
+          <div class="punct-info">
+            <div class="punct-name">Apostrophe</div>
+            <div class="punct-desc">Contractions &amp; possession</div>
+            <div class="punct-ex">That<b>'</b>s Sara<b>'</b>s book.</div>
+          </div>
+        </div>
+        <div class="punct-card">
+          <div class="punct-symbol">&ldquo; &rdquo;</div>
+          <div class="punct-info">
+            <div class="punct-name">Quotation Marks</div>
+            <div class="punct-desc">Someone's exact words</div>
+            <div class="punct-ex"><b>&ldquo;</b>Let's go!<b>&rdquo;</b> she said.</div>
+          </div>
+        </div>
+      </div>
 
-<div class="footer">chris.towles.dev — Free Printable Punctuation &amp; Sentence Types</div>
-</div>
+      <div class="section-header">4 Types of Sentences</div>
 
-</body>
+      <div class="sent-grid">
+        <div class="sent-card sent-decl">
+          <div>
+            <span class="sent-punct">.</span>
+            <div class="sent-type">Declarative</div>
+          </div>
+          <div class="sent-aka">Makes a statement</div>
+          <div class="sent-example">&ldquo;The cat sat on the mat.&rdquo;</div>
+        </div>
+        <div class="sent-card sent-inter">
+          <div>
+            <span class="sent-punct">?</span>
+            <div class="sent-type">Interrogative</div>
+          </div>
+          <div class="sent-aka">Asks a question</div>
+          <div class="sent-example">&ldquo;Where is the cat?&rdquo;</div>
+        </div>
+        <div class="sent-card sent-imper">
+          <div>
+            <span class="sent-punct">.</span>
+            <div class="sent-type">Imperative</div>
+          </div>
+          <div class="sent-aka">Gives a command</div>
+          <div class="sent-example">&ldquo;Sit down, please.&rdquo;</div>
+        </div>
+        <div class="sent-card sent-exclam">
+          <div>
+            <span class="sent-punct">!</span>
+            <div class="sent-type">Exclamatory</div>
+          </div>
+          <div class="sent-aka">Shows excitement</div>
+          <div class="sent-example">&ldquo;What a beautiful day!&rdquo;</div>
+        </div>
+      </div>
+
+      <div class="footer">chris.towles.dev — Free Printable Punctuation &amp; Sentence Types</div>
+    </div>
+  </body>
 </html>

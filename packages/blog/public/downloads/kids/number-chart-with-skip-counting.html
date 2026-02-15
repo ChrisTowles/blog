@@ -1,240 +1,373 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Number Chart 1–120 (Front &amp; Back)</title>
-<style>
-  @page {
-    margin: 0;
-    size: letter portrait;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
+  <head>
+    <meta charset="UTF-8" />
+    <title>Number Chart 1–120 (Front &amp; Back)</title>
+    <style>
+      @page {
+        margin: 0;
+        size: letter portrait;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
 
-  /* === PAGE 1: Number Chart === */
-  .page1 {
-    height: 100vh;
-    padding: 0.4in;
-    display: flex;
-    flex-direction: column;
-    page-break-after: always;
-  }
-  .page1 h1 {
-    text-align: center;
-    font-size: 26px;
-    margin-bottom: 8px;
-    flex-shrink: 0;
-  }
-  .legend {
-    display: flex;
-    justify-content: center;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-bottom: 8px;
-    font-size: 13px;
-    flex-shrink: 0;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .legend-swatch {
-    width: 16px;
-    height: 16px;
-    border: 1px solid #999;
-    border-radius: 3px;
-    display: inline-block;
-  }
-  .num-table {
-    border-collapse: collapse;
-    width: 100%;
-    table-layout: fixed;
-    flex-grow: 1;
-  }
-  .num-table td {
-    border: 2px solid #555;
-    text-align: center;
-    font-size: 22px;
-    font-weight: bold;
-    width: 10%;
-    vertical-align: middle;
-    color: #222;
-  }
-  .num-table tr:nth-of-type(1)  td { background: #fee2e2; }
-  .num-table tr:nth-of-type(2)  td { background: #ffedd5; }
-  .num-table tr:nth-of-type(3)  td { background: #fef9c3; }
-  .num-table tr:nth-of-type(4)  td { background: #dcfce7; }
-  .num-table tr:nth-of-type(5)  td { background: #dbeafe; }
-  .num-table tr:nth-of-type(6)  td { background: #fee2e2; }
-  .num-table tr:nth-of-type(7)  td { background: #ffedd5; }
-  .num-table tr:nth-of-type(8)  td { background: #fef9c3; }
-  .num-table tr:nth-of-type(9)  td { background: #dcfce7; }
-  .num-table tr:nth-of-type(10) td { background: #dbeafe; }
-  .num-table tr:nth-of-type(11) td { background: #fee2e2; }
-  .num-table tr:nth-of-type(12) td { background: #ffedd5; }
-  .num-table td.even { filter: brightness(0.92); }
-  .num-table td.mult5 { border-left: 3px solid #b45309; border-right: 3px solid #b45309; font-style: italic; }
-  .num-table td.mult10 { color: #fff !important; font-size: 23px; filter: none; }
-  .num-table tr:nth-of-type(1)  td.mult10 { background: #e57373 !important; }
-  .num-table tr:nth-of-type(2)  td.mult10 { background: #e8a050 !important; }
-  .num-table tr:nth-of-type(3)  td.mult10 { background: #c4a820 !important; }
-  .num-table tr:nth-of-type(4)  td.mult10 { background: #66bb6a !important; }
-  .num-table tr:nth-of-type(5)  td.mult10 { background: #5c9be6 !important; }
-  .num-table tr:nth-of-type(6)  td.mult10 { background: #e57373 !important; }
-  .num-table tr:nth-of-type(7)  td.mult10 { background: #e8a050 !important; }
-  .num-table tr:nth-of-type(8)  td.mult10 { background: #c4a820 !important; }
-  .num-table tr:nth-of-type(9)  td.mult10 { background: #66bb6a !important; }
-  .num-table tr:nth-of-type(10) td.mult10 { background: #5c9be6 !important; }
-  .num-table tr:nth-of-type(11) td.mult10 { background: #e57373 !important; }
-  .num-table tr:nth-of-type(12) td.mult10 { background: #e8a050 !important; }
+      /* === PAGE 1: Number Chart === */
+      .page1 {
+        height: 100vh;
+        padding: 0.4in;
+        display: flex;
+        flex-direction: column;
+        page-break-after: always;
+      }
+      .page1 h1 {
+        text-align: center;
+        font-size: 26px;
+        margin-bottom: 8px;
+        flex-shrink: 0;
+      }
+      .legend {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+        font-size: 13px;
+        flex-shrink: 0;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .legend-swatch {
+        width: 16px;
+        height: 16px;
+        border: 1px solid #999;
+        border-radius: 3px;
+        display: inline-block;
+      }
+      .num-table {
+        border-collapse: collapse;
+        width: 100%;
+        table-layout: fixed;
+        flex-grow: 1;
+      }
+      .num-table td {
+        border: 2px solid #555;
+        text-align: center;
+        font-size: 22px;
+        font-weight: bold;
+        width: 10%;
+        vertical-align: middle;
+        color: #222;
+      }
+      .num-table tr:nth-of-type(1) td {
+        background: #fee2e2;
+      }
+      .num-table tr:nth-of-type(2) td {
+        background: #ffedd5;
+      }
+      .num-table tr:nth-of-type(3) td {
+        background: #fef9c3;
+      }
+      .num-table tr:nth-of-type(4) td {
+        background: #dcfce7;
+      }
+      .num-table tr:nth-of-type(5) td {
+        background: #dbeafe;
+      }
+      .num-table tr:nth-of-type(6) td {
+        background: #fee2e2;
+      }
+      .num-table tr:nth-of-type(7) td {
+        background: #ffedd5;
+      }
+      .num-table tr:nth-of-type(8) td {
+        background: #fef9c3;
+      }
+      .num-table tr:nth-of-type(9) td {
+        background: #dcfce7;
+      }
+      .num-table tr:nth-of-type(10) td {
+        background: #dbeafe;
+      }
+      .num-table tr:nth-of-type(11) td {
+        background: #fee2e2;
+      }
+      .num-table tr:nth-of-type(12) td {
+        background: #ffedd5;
+      }
+      .num-table td.even {
+        filter: brightness(0.92);
+      }
+      .num-table td.mult5 {
+        border-left: 3px solid #b45309;
+        border-right: 3px solid #b45309;
+        font-style: italic;
+      }
+      .num-table td.mult10 {
+        color: #fff !important;
+        font-size: 23px;
+        filter: none;
+      }
+      .num-table tr:nth-of-type(1) td.mult10 {
+        background: #e57373 !important;
+      }
+      .num-table tr:nth-of-type(2) td.mult10 {
+        background: #e8a050 !important;
+      }
+      .num-table tr:nth-of-type(3) td.mult10 {
+        background: #c4a820 !important;
+      }
+      .num-table tr:nth-of-type(4) td.mult10 {
+        background: #66bb6a !important;
+      }
+      .num-table tr:nth-of-type(5) td.mult10 {
+        background: #5c9be6 !important;
+      }
+      .num-table tr:nth-of-type(6) td.mult10 {
+        background: #e57373 !important;
+      }
+      .num-table tr:nth-of-type(7) td.mult10 {
+        background: #e8a050 !important;
+      }
+      .num-table tr:nth-of-type(8) td.mult10 {
+        background: #c4a820 !important;
+      }
+      .num-table tr:nth-of-type(9) td.mult10 {
+        background: #66bb6a !important;
+      }
+      .num-table tr:nth-of-type(10) td.mult10 {
+        background: #5c9be6 !important;
+      }
+      .num-table tr:nth-of-type(11) td.mult10 {
+        background: #e57373 !important;
+      }
+      .num-table tr:nth-of-type(12) td.mult10 {
+        background: #e8a050 !important;
+      }
 
-  /* === PAGE 2: Skip Counting === */
-  .page2 {
-    height: 100vh;
-    padding: 0.3in 0.4in;
-    display: flex;
-    flex-direction: column;
-  }
-  .page2 h1 {
-    text-align: center;
-    font-size: 24px;
-    margin-bottom: 6px;
-    flex-shrink: 0;
-  }
-  .section {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 6px;
-  }
-  .section:last-child { margin-bottom: 0; }
-  .section-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 4px;
-  }
-  .section-header h2 { font-size: 16px; white-space: nowrap; }
-  .section-header .hint { font-size: 12px; color: #666; font-weight: normal; }
-  .skip-table {
-    border-collapse: collapse;
-    width: 100%;
-    table-layout: fixed;
-    flex-grow: 1;
-  }
-  .skip-table td {
-    border: 2px solid #999;
-    text-align: center;
-    font-size: 17px;
-    font-weight: bold;
-    width: 10%;
-    vertical-align: middle;
-    color: #bbb;
-    background: #f9f9f9;
-  }
-  /* Single highlights */
-  .skip-table td.by2 { background: #dbeafe !important; color: #1e40af !important; border-color: #93c5fd; }
-  .skip-table td.by3 { background: #ede9fe !important; color: #5b21b6 !important; border-color: #a78bfa; }
-  .skip-table td.by5 { background: #dcfce7 !important; color: #166534 !important; border-color: #86efac; }
-  /* Double overlaps */
-  .skip-table td.by23 { background: linear-gradient(135deg, #dbeafe 40%, #ede9fe 60%) !important; color: #312e81 !important; border: 2.5px solid #7c3aed; }
-  .skip-table td.by25 { background: linear-gradient(135deg, #dbeafe 40%, #dcfce7 60%) !important; color: #065f46 !important; border: 2.5px solid #059669; }
-  .skip-table td.by35 { background: linear-gradient(135deg, #ede9fe 40%, #dcfce7 60%) !important; color: #3b0764 !important; border: 2.5px solid #7c3aed; }
-  /* Triple overlap (multiples of 30) */
-  .skip-table td.all3 { background: linear-gradient(135deg, #dbeafe 25%, #ede9fe 50%, #dcfce7 75%) !important; color: #1e1b4b !important; border: 3px solid #f59e0b; font-size: 19px; }
-  .legend2 {
-    display: flex;
-    justify-content: center;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-bottom: 8px;
-    font-size: 13px;
-    flex-shrink: 0;
-  }
-  .legend2-item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .legend2-swatch {
-    width: 16px;
-    height: 16px;
-    border: 1px solid #999;
-    border-radius: 3px;
-    display: inline-block;
-  }
-</style>
-</head>
-<body>
+      /* === PAGE 2: Skip Counting === */
+      .page2 {
+        height: 100vh;
+        padding: 0.3in 0.4in;
+        display: flex;
+        flex-direction: column;
+      }
+      .page2 h1 {
+        text-align: center;
+        font-size: 24px;
+        margin-bottom: 6px;
+        flex-shrink: 0;
+      }
+      .section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 6px;
+      }
+      .section:last-child {
+        margin-bottom: 0;
+      }
+      .section-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+      .section-header h2 {
+        font-size: 16px;
+        white-space: nowrap;
+      }
+      .section-header .hint {
+        font-size: 12px;
+        color: #666;
+        font-weight: normal;
+      }
+      .skip-table {
+        border-collapse: collapse;
+        width: 100%;
+        table-layout: fixed;
+        flex-grow: 1;
+      }
+      .skip-table td {
+        border: 2px solid #999;
+        text-align: center;
+        font-size: 17px;
+        font-weight: bold;
+        width: 10%;
+        vertical-align: middle;
+        color: #bbb;
+        background: #f9f9f9;
+      }
+      /* Single highlights */
+      .skip-table td.by2 {
+        background: #dbeafe !important;
+        color: #1e40af !important;
+        border-color: #93c5fd;
+      }
+      .skip-table td.by3 {
+        background: #ede9fe !important;
+        color: #5b21b6 !important;
+        border-color: #a78bfa;
+      }
+      .skip-table td.by5 {
+        background: #dcfce7 !important;
+        color: #166534 !important;
+        border-color: #86efac;
+      }
+      /* Double overlaps */
+      .skip-table td.by23 {
+        background: linear-gradient(135deg, #dbeafe 40%, #ede9fe 60%) !important;
+        color: #312e81 !important;
+        border: 2.5px solid #7c3aed;
+      }
+      .skip-table td.by25 {
+        background: linear-gradient(135deg, #dbeafe 40%, #dcfce7 60%) !important;
+        color: #065f46 !important;
+        border: 2.5px solid #059669;
+      }
+      .skip-table td.by35 {
+        background: linear-gradient(135deg, #ede9fe 40%, #dcfce7 60%) !important;
+        color: #3b0764 !important;
+        border: 2.5px solid #7c3aed;
+      }
+      /* Triple overlap (multiples of 30) */
+      .skip-table td.all3 {
+        background: linear-gradient(135deg, #dbeafe 25%, #ede9fe 50%, #dcfce7 75%) !important;
+        color: #1e1b4b !important;
+        border: 3px solid #f59e0b;
+        font-size: 19px;
+      }
+      .legend2 {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+        font-size: 13px;
+        flex-shrink: 0;
+      }
+      .legend2-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .legend2-swatch {
+        width: 16px;
+        height: 16px;
+        border: 1px solid #999;
+        border-radius: 3px;
+        display: inline-block;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- PAGE 1: Number Chart -->
+    <div class="page1">
+      <h1>Number Chart 1&ndash;120</h1>
+      <div class="legend">
+        <div class="legend-item">
+          <span class="legend-swatch" style="background: #fee2e2"></span
+          ><span class="legend-swatch" style="background: #ffedd5"></span
+          ><span class="legend-swatch" style="background: #fef9c3"></span
+          ><span class="legend-swatch" style="background: #dcfce7"></span
+          ><span class="legend-swatch" style="background: #dbeafe"></span> Rainbow Rows
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch" style="background: #ddd; filter: brightness(0.92)"></span>
+          Even
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch" style="background: #e57373"></span> Multiple of 10
+        </div>
+      </div>
+      <table class="num-table">
+        <tbody>
+          <script>
+            for (let row = 0; row < 12; row++) {
+              let tr = '<tr>';
+              for (let col = 1; col <= 10; col++) {
+                const n = row * 10 + col;
+                let cls = '';
+                if (n % 10 === 0) cls = 'mult10';
+                else if (n % 5 === 0) cls = 'mult5';
+                else if (n % 2 === 0) cls = 'even';
+                tr += '<td class="' + cls + '">' + n + '</td>';
+              }
+              tr += '</tr>';
+              document.write(tr);
+            }
+          </script>
+        </tbody>
+      </table>
+    </div>
 
-<!-- PAGE 1: Number Chart -->
-<div class="page1">
-<h1>Number Chart 1&ndash;120</h1>
-<div class="legend">
-  <div class="legend-item"><span class="legend-swatch" style="background:#fee2e2"></span><span class="legend-swatch" style="background:#ffedd5"></span><span class="legend-swatch" style="background:#fef9c3"></span><span class="legend-swatch" style="background:#dcfce7"></span><span class="legend-swatch" style="background:#dbeafe"></span> Rainbow Rows</div>
-  <div class="legend-item"><span class="legend-swatch" style="background:#ddd;filter:brightness(0.92)"></span> Even</div>
-  <div class="legend-item"><span class="legend-swatch" style="background:#e57373"></span> Multiple of 10</div>
-</div>
-<table class="num-table"><tbody>
-<script>
-for (let row = 0; row < 12; row++) {
-  let tr = '<tr>';
-  for (let col = 1; col <= 10; col++) {
-    const n = row * 10 + col;
-    let cls = '';
-    if (n % 10 === 0) cls = 'mult10';
-    else if (n % 5 === 0) cls = 'mult5';
-    else if (n % 2 === 0) cls = 'even';
-    tr += '<td class="' + cls + '">' + n + '</td>';
-  }
-  tr += '</tr>';
-  document.write(tr);
-}
-</script>
-</tbody></table>
-</div>
-
-<!-- PAGE 2: Skip Counting -->
-<div class="page2">
-<h1>Skip Counting 1&ndash;120</h1>
-<div class="legend2">
-  <div class="legend2-item"><span class="legend2-swatch" style="background:#dbeafe; border-color:#93c5fd"></span> Count by 2s</div>
-  <div class="legend2-item"><span class="legend2-swatch" style="background:#ede9fe; border-color:#a78bfa"></span> Count by 3s</div>
-  <div class="legend2-item"><span class="legend2-swatch" style="background:#dcfce7; border-color:#86efac"></span> Count by 5s</div>
-  <div class="legend2-item"><span class="legend2-swatch" style="background:linear-gradient(135deg,#dbeafe 25%,#ede9fe 50%,#dcfce7 75%); border:2px solid #f59e0b"></span> All three!</div>
-</div>
-<table class="skip-table"><tbody>
-<script>
-(function(){
-  for (var row = 0; row < 12; row++) {
-    var tr = '<tr>';
-    for (var col = 1; col <= 10; col++) {
-      var n = row * 10 + col;
-      var is2 = n % 2 === 0;
-      var is3 = n % 3 === 0;
-      var is5 = n % 5 === 0;
-      var cls = '';
-      if (is2 && is3 && is5) cls = 'all3';
-      else if (is2 && is3) cls = 'by23';
-      else if (is2 && is5) cls = 'by25';
-      else if (is3 && is5) cls = 'by35';
-      else if (is2) cls = 'by2';
-      else if (is3) cls = 'by3';
-      else if (is5) cls = 'by5';
-      tr += '<td class="' + cls + '">' + n + '</td>';
-    }
-    tr += '</tr>';
-    document.write(tr);
-  }
-})();
-</script>
-</tbody></table>
-</div>
-</body>
+    <!-- PAGE 2: Skip Counting -->
+    <div class="page2">
+      <h1>Skip Counting 1&ndash;120</h1>
+      <div class="legend2">
+        <div class="legend2-item">
+          <span class="legend2-swatch" style="background: #dbeafe; border-color: #93c5fd"></span>
+          Count by 2s
+        </div>
+        <div class="legend2-item">
+          <span class="legend2-swatch" style="background: #ede9fe; border-color: #a78bfa"></span>
+          Count by 3s
+        </div>
+        <div class="legend2-item">
+          <span class="legend2-swatch" style="background: #dcfce7; border-color: #86efac"></span>
+          Count by 5s
+        </div>
+        <div class="legend2-item">
+          <span
+            class="legend2-swatch"
+            style="
+              background: linear-gradient(135deg, #dbeafe 25%, #ede9fe 50%, #dcfce7 75%);
+              border: 2px solid #f59e0b;
+            "
+          ></span>
+          All three!
+        </div>
+      </div>
+      <table class="skip-table">
+        <tbody>
+          <script>
+            (function () {
+              for (var row = 0; row < 12; row++) {
+                var tr = '<tr>';
+                for (var col = 1; col <= 10; col++) {
+                  var n = row * 10 + col;
+                  var is2 = n % 2 === 0;
+                  var is3 = n % 3 === 0;
+                  var is5 = n % 5 === 0;
+                  var cls = '';
+                  if (is2 && is3 && is5) cls = 'all3';
+                  else if (is2 && is3) cls = 'by23';
+                  else if (is2 && is5) cls = 'by25';
+                  else if (is3 && is5) cls = 'by35';
+                  else if (is2) cls = 'by2';
+                  else if (is3) cls = 'by3';
+                  else if (is5) cls = 'by5';
+                  tr += '<td class="' + cls + '">' + n + '</td>';
+                }
+                tr += '</tr>';
+                document.write(tr);
+              }
+            })();
+          </script>
+        </tbody>
+      </table>
+    </div>
+  </body>
 </html>
