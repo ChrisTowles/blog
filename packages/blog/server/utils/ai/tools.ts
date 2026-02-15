@@ -104,6 +104,41 @@ export const chatTools: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'create_artifact',
+    description: `Create a rich artifact (code, HTML, SVG, Mermaid diagram, or markdown document) that will be rendered in a preview panel. Use this when the user asks you to create, write, or generate:
+- Code snippets or full files (use type "code" with appropriate language)
+- Interactive HTML pages or demos (use type "html")
+- SVG graphics or illustrations (use type "svg")
+- Mermaid diagrams (use type "mermaid")
+- Long-form documents or formatted text (use type "markdown")
+
+Do NOT use this for short inline code examples or brief explanations - just use regular text for those.`,
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        type: {
+          type: 'string',
+          enum: ['code', 'html', 'svg', 'mermaid', 'markdown'],
+          description: 'The type of artifact to create',
+        },
+        title: {
+          type: 'string',
+          description: 'A short descriptive title for the artifact',
+        },
+        language: {
+          type: 'string',
+          description:
+            'Programming language (for code type). e.g., "python", "typescript", "javascript", "rust", "go"',
+        },
+        content: {
+          type: 'string',
+          description: 'The full content of the artifact',
+        },
+      },
+      required: ['type', 'title', 'content'],
+    },
+  },
+  {
     name: 'rollDice',
     description:
       'Roll dice for tabletop gaming (D&D, etc). Use when users want to roll dice. Supports standard notation like "2d6", "1d20+5", "4d6 drop lowest".',
@@ -206,6 +241,11 @@ export async function executeTool(name: string, args?: Record<string, unknown>):
         return { error: 'Dice notation is required' };
       }
       return rollDice(notation, label);
+    }
+    case 'create_artifact': {
+      // Artifact tool is handled specially by the SSE stream handler
+      // This should not normally be called directly
+      return { success: true };
     }
     default:
       throw new Error(`Unknown tool: ${name}`);

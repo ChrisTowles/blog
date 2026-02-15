@@ -1,6 +1,6 @@
 import type { MessageParam } from '@anthropic-ai/sdk/resources/messages';
 import { z } from 'zod';
-import type { ChatMessage, MessagePart, SSEEvent } from '~~/shared/chat-types';
+import type { ArtifactType, ChatMessage, MessagePart, SSEEvent } from '~~/shared/chat-types';
 
 defineRouteMeta({
   openAPI: {
@@ -25,12 +25,36 @@ You have access to tools that let you search the blog for relevant content. Use 
 - Break down complex topics into digestible parts
 - Maintain a friendly, professional tone`;
 
-function convertToAnthropicMessages(messages: ChatMessage[]): MessageParam[] {
-  return messages.map((msg) => {
+function convertToAnthropicMessages(
+  messages: ChatMessage[],
+  images?: Array<{ type: 'image'; media_type: string; data: string }>,
+): MessageParam[] {
+  return messages.map((msg, idx) => {
     const textContent = msg.parts
       .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
       .map((p) => p.text)
       .join('\n');
+
+    // Attach images to the last user message
+    if (images?.length && idx === messages.length - 1 && msg.role === 'user') {
+      type ImageMediaType = 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
+      const content: Array<
+        | { type: 'image'; source: { type: 'base64'; media_type: ImageMediaType; data: string } }
+        | { type: 'text'; text: string }
+      > = [];
+      for (const img of images) {
+        content.push({
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: img.media_type as ImageMediaType,
+            data: img.data,
+          },
+        });
+      }
+      content.push({ type: 'text', text: textContent || ' ' });
+      return { role: msg.role, content };
+    }
 
     return {
       role: msg.role,
@@ -55,11 +79,20 @@ export default defineEventHandler(async (event) => {
     }).parse,
   );
 
-  const { model, messages } = await readValidatedBody(
+  const { model, messages, images } = await readValidatedBody(
     event,
     z.object({
       model: z.string(),
       messages: z.array(z.custom<ChatMessage>()),
+      images: z
+        .array(
+          z.object({
+            type: z.literal('image'),
+            media_type: z.string(),
+            data: z.string(),
+          }),
+        )
+        .optional(),
     }).parse,
   );
 
@@ -122,7 +155,7 @@ export default defineEventHandler(async (event) => {
         }
 
         const client = getAnthropicClient();
-        const anthropicMessages = convertToAnthropicMessages(messages);
+        const anthropicMessages = convertToAnthropicMessages(messages, images);
 
         let fullText = '';
         let reasoningText = '';
@@ -130,6 +163,13 @@ export default defineEventHandler(async (event) => {
         let currentToolUseId: string | null = null;
         let currentToolName: string | null = null;
         let _toolInputJson = '';
+        const savedArtifacts: Array<{
+          artifactId: string;
+          artifactType: ArtifactType;
+          title: string;
+          language?: string;
+          content: string;
+        }> = [];
 
         // Run up to 5 turns for tool use
         let turnCount = 0;
@@ -215,29 +255,72 @@ export default defineEventHandler(async (event) => {
                   input: toolArgs,
                 });
 
-                // Notify client tool is starting with full args
-                sendSSE(controller, {
-                  type: 'tool_start',
-                  tool: currentToolName,
-                  toolCallId: currentToolUseId,
-                  args: toolArgs,
-                });
+                if (currentToolName === 'create_artifact') {
+                  // Handle artifact tool specially - emit artifact SSE events
+                  const artifactId = crypto.randomUUID();
+                  const artifactType = (toolArgs.type as ArtifactType) || 'code';
+                  const artifactTitle = (toolArgs.title as string) || 'Artifact';
+                  const artifactLanguage = toolArgs.language as string | undefined;
+                  const artifactContent = (toolArgs.content as string) || '';
 
-                // Execute the tool
-                const toolResult = await executeTool(currentToolName, toolArgs);
-                toolResults.push({
-                  type: 'tool_result',
-                  tool_use_id: currentToolUseId,
-                  content: JSON.stringify(toolResult),
-                });
+                  sendSSE(controller, {
+                    type: 'artifact_start',
+                    artifactId,
+                    artifactType,
+                    title: artifactTitle,
+                    language: artifactLanguage,
+                  });
 
-                // Notify client of tool result
-                sendSSE(controller, {
-                  type: 'tool_end',
-                  tool: currentToolName,
-                  toolCallId: currentToolUseId,
-                  result: toolResult,
-                });
+                  // Stream content in chunks for progressive rendering
+                  const chunkSize = 100;
+                  for (let i = 0; i < artifactContent.length; i += chunkSize) {
+                    sendSSE(controller, {
+                      type: 'artifact_delta',
+                      artifactId,
+                      content: artifactContent.slice(i, i + chunkSize),
+                    });
+                  }
+
+                  sendSSE(controller, { type: 'artifact_end', artifactId });
+
+                  savedArtifacts.push({
+                    artifactId,
+                    artifactType,
+                    title: artifactTitle,
+                    language: artifactLanguage,
+                    content: artifactContent,
+                  });
+
+                  toolResults.push({
+                    type: 'tool_result',
+                    tool_use_id: currentToolUseId!,
+                    content: JSON.stringify({ success: true, artifactId }),
+                  });
+                } else {
+                  // Notify client tool is starting with full args
+                  sendSSE(controller, {
+                    type: 'tool_start',
+                    tool: currentToolName,
+                    toolCallId: currentToolUseId,
+                    args: toolArgs,
+                  });
+
+                  // Execute the tool
+                  const toolResult = await executeTool(currentToolName, toolArgs);
+                  toolResults.push({
+                    type: 'tool_result',
+                    tool_use_id: currentToolUseId,
+                    content: JSON.stringify(toolResult),
+                  });
+
+                  // Notify client of tool result
+                  sendSSE(controller, {
+                    type: 'tool_end',
+                    tool: currentToolName,
+                    toolCallId: currentToolUseId,
+                    result: toolResult,
+                  });
+                }
 
                 currentToolUseId = null;
                 currentToolName = null;
@@ -299,6 +382,17 @@ export default defineEventHandler(async (event) => {
         const messageParts: MessagePart[] = [];
         if (reasoningText) {
           messageParts.push({ type: 'reasoning', text: reasoningText, state: 'done' });
+        }
+        for (const artifact of savedArtifacts) {
+          messageParts.push({
+            type: 'artifact',
+            artifactId: artifact.artifactId,
+            artifactType: artifact.artifactType,
+            title: artifact.title,
+            language: artifact.language,
+            content: artifact.content,
+            state: 'done',
+          });
         }
         if (fullText) {
           messageParts.push({ type: 'text', text: fullText });

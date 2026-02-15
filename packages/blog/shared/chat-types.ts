@@ -29,7 +29,19 @@ export interface ToolResultPart {
   result: unknown;
 }
 
-export type MessagePart = TextPart | ReasoningPart | ToolUsePart | ToolResultPart;
+export type ArtifactType = 'code' | 'html' | 'svg' | 'markdown' | 'mermaid';
+
+export interface ArtifactPart {
+  type: 'artifact';
+  artifactId: string;
+  artifactType: ArtifactType;
+  title: string;
+  language?: string;
+  content: string;
+  state: 'streaming' | 'done';
+}
+
+export type MessagePart = TextPart | ReasoningPart | ToolUsePart | ToolResultPart | ArtifactPart;
 
 export interface ChatMessage {
   id: string;
@@ -88,6 +100,25 @@ export interface SSEToolEndEvent {
   result: unknown;
 }
 
+export interface SSEArtifactStartEvent {
+  type: 'artifact_start';
+  artifactId: string;
+  artifactType: ArtifactType;
+  title: string;
+  language?: string;
+}
+
+export interface SSEArtifactDeltaEvent {
+  type: 'artifact_delta';
+  artifactId: string;
+  content: string;
+}
+
+export interface SSEArtifactEndEvent {
+  type: 'artifact_end';
+  artifactId: string;
+}
+
 export type SSEEvent =
   | SSETextEvent
   | SSEReasoningEvent
@@ -95,4 +126,7 @@ export type SSEEvent =
   | SSEErrorEvent
   | SSETitleEvent
   | SSEToolStartEvent
-  | SSEToolEndEvent;
+  | SSEToolEndEvent
+  | SSEArtifactStartEvent
+  | SSEArtifactDeltaEvent
+  | SSEArtifactEndEvent;

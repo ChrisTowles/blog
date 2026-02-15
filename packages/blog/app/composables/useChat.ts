@@ -1,4 +1,5 @@
 import type {
+  ArtifactPart,
   ChatMessage,
   ChatStatus,
   MessagePart,
@@ -29,14 +30,35 @@ export function useChat(options: UseChatOptions) {
   const error = ref<Error | null>(null);
   const abortController = ref<AbortController | null>(null);
 
+  const pendingFiles = ref<File[]>([]);
+
   async function sendMessage(text: string) {
     if (status.value === 'streaming') return;
+
+    // Build user message parts
+    const userParts: MessagePart[] = [];
+
+    // Convert pending files to base64 image parts for display
+    const filesToSend: Array<{ type: 'image'; media_type: string; data: string }> = [];
+    for (const file of pendingFiles.value) {
+      if (file.type.startsWith('image/')) {
+        const base64 = await fileToBase64(file);
+        filesToSend.push({
+          type: 'image',
+          media_type: file.type,
+          data: base64,
+        });
+      }
+    }
+    pendingFiles.value = [];
+
+    userParts.push({ type: 'text', text });
 
     // Add user message
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
-      parts: [{ type: 'text', text }],
+      parts: userParts,
     };
     messages.value = [...messages.value, userMessage];
 
@@ -62,6 +84,7 @@ export function useChat(options: UseChatOptions) {
         body: JSON.stringify({
           model: options.model.value,
           messages: messages.value.slice(0, -1), // Don't send the placeholder
+          images: filesToSend.length > 0 ? filesToSend : undefined,
         }),
         signal: abortController.value.signal,
       });
@@ -82,6 +105,7 @@ export function useChat(options: UseChatOptions) {
         state: 'streaming' | 'done';
       } | null = null;
       const toolInvocations: ToolInvocation[] = [];
+      const artifacts: Map<string, ArtifactPart> = new Map();
 
       while (true) {
         const { done, value } = await reader.read();
@@ -109,6 +133,7 @@ export function useChat(options: UseChatOptions) {
                   currentReasoningPart,
                   currentTextPart,
                   toolInvocations,
+                  artifacts,
                 );
               } else if (event.type === 'reasoning') {
                 if (!currentReasoningPart) {
@@ -122,6 +147,7 @@ export function useChat(options: UseChatOptions) {
                   currentReasoningPart,
                   currentTextPart,
                   toolInvocations,
+                  artifacts,
                 );
               } else if (event.type === 'tool_start') {
                 toolInvocations.push({
@@ -135,6 +161,7 @@ export function useChat(options: UseChatOptions) {
                   currentReasoningPart,
                   currentTextPart,
                   toolInvocations,
+                  artifacts,
                 );
               } else if (event.type === 'tool_end') {
                 const invocation = toolInvocations.find((t) => t.toolCallId === event.toolCallId);
@@ -147,7 +174,50 @@ export function useChat(options: UseChatOptions) {
                   currentReasoningPart,
                   currentTextPart,
                   toolInvocations,
+                  artifacts,
                 );
+              } else if (event.type === 'artifact_start') {
+                const artifact: ArtifactPart = {
+                  type: 'artifact',
+                  artifactId: event.artifactId,
+                  artifactType: event.artifactType,
+                  title: event.title,
+                  language: event.language,
+                  content: '',
+                  state: 'streaming',
+                };
+                artifacts.set(event.artifactId, artifact);
+                updateAssistantMessage(
+                  assistantMessageId,
+                  currentReasoningPart,
+                  currentTextPart,
+                  toolInvocations,
+                  artifacts,
+                );
+              } else if (event.type === 'artifact_delta') {
+                const artifact = artifacts.get(event.artifactId);
+                if (artifact) {
+                  artifact.content += event.content;
+                  updateAssistantMessage(
+                    assistantMessageId,
+                    currentReasoningPart,
+                    currentTextPart,
+                    toolInvocations,
+                    artifacts,
+                  );
+                }
+              } else if (event.type === 'artifact_end') {
+                const artifact = artifacts.get(event.artifactId);
+                if (artifact) {
+                  artifact.state = 'done';
+                  updateAssistantMessage(
+                    assistantMessageId,
+                    currentReasoningPart,
+                    currentTextPart,
+                    toolInvocations,
+                    artifacts,
+                  );
+                }
               } else if (event.type === 'title') {
                 options.onTitleUpdate?.();
               } else if (event.type === 'done') {
@@ -159,6 +229,7 @@ export function useChat(options: UseChatOptions) {
                   currentReasoningPart,
                   currentTextPart,
                   toolInvocations,
+                  artifacts,
                 );
               } else if (event.type === 'error') {
                 throw new Error(event.error);
@@ -190,6 +261,7 @@ export function useChat(options: UseChatOptions) {
     reasoning: { type: 'reasoning'; text: string; state: 'streaming' | 'done' } | null,
     text: { type: 'text'; text: string } | null,
     tools: ToolInvocation[] = [],
+    artifactsMap: Map<string, ArtifactPart> = new Map(),
   ) {
     const parts: MessagePart[] = [];
     if (reasoning) parts.push(reasoning);
@@ -212,6 +284,11 @@ export function useChat(options: UseChatOptions) {
         };
         parts.push(toolResultPart);
       }
+    }
+
+    // Add artifacts
+    for (const artifact of artifactsMap.values()) {
+      parts.push({ ...artifact });
     }
 
     if (text) parts.push(text);
@@ -253,8 +330,23 @@ export function useChat(options: UseChatOptions) {
     messages: computed(() => messages.value),
     status: computed(() => status.value),
     error: computed(() => error.value ?? undefined),
+    pendingFiles,
     sendMessage,
     stop,
     regenerate,
   };
+}
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      // Remove the data:...;base64, prefix
+      const base64 = result.split(',')[1] || '';
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { DefineComponent } from 'vue';
 import { useClipboard } from '@vueuse/core';
-import type { ChatMessage, ToolUsePart, ToolResultPart } from '~~/shared/chat-types';
+import type { ChatMessage, ToolUsePart, ToolResultPart, ArtifactPart } from '~~/shared/chat-types';
 import ProsePre from '../../components/prose/ProsePre.vue';
 
 definePageMeta({
@@ -86,6 +86,14 @@ function getToolResult(message: ChatMessage, toolUse: ToolUsePart): ToolResultPa
   );
 }
 
+function onFileSelect(e: Event) {
+  const target = e.target as HTMLInputElement;
+  if (target.files) {
+    chat.pendingFiles.value = [...chat.pendingFiles.value, ...Array.from(target.files)];
+    target.value = ''; // Reset input
+  }
+}
+
 onMounted(() => {
   if (data.value?.messages?.length === 1) {
     chat.regenerate();
@@ -149,6 +157,10 @@ onMounted(() => {
                   :tool-use="part"
                   :tool-result="getToolResult(message, part)"
                 />
+                <ArtifactPanel
+                  v-else-if="part.type === 'artifact'"
+                  :artifact="part as ArtifactPart"
+                />
                 <MDCCached
                   v-else-if="part.type === 'text'"
                   :value="part.text"
@@ -172,6 +184,36 @@ onMounted(() => {
           <template #footer>
             <div class="flex items-center gap-4 w-full">
               <ModelSelect v-model="model" />
+              <input
+                ref="fileInput"
+                type="file"
+                accept="image/*"
+                multiple
+                class="hidden"
+                @change="onFileSelect"
+              />
+              <UButton
+                icon="i-lucide-paperclip"
+                size="xs"
+                color="neutral"
+                variant="ghost"
+                title="Attach image"
+                @click="($refs.fileInput as HTMLInputElement)?.click()"
+              />
+              <div
+                v-if="chat.pendingFiles.value.length"
+                class="flex items-center gap-1 text-xs text-[var(--ui-text-muted)]"
+              >
+                <UIcon name="i-lucide-image" />
+                {{ chat.pendingFiles.value.length }} file(s)
+                <UButton
+                  icon="i-lucide-x"
+                  size="xs"
+                  color="neutral"
+                  variant="ghost"
+                  @click="chat.pendingFiles.value = []"
+                />
+              </div>
             </div>
             <UChatPromptSubmit
               :status="chat.status.value"
