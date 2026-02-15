@@ -92,6 +92,7 @@
       "oxfmt --write"
     ]
   },
+  "packageManager": "pnpm@10.28.1",
   "pnpm": {
     "onlyBuiltDependencies": [
       "@parcel/watcher",
