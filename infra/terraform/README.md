@@ -327,28 +327,27 @@ terraform force-unlock LOCK_ID
 
 ## CI/CD Integration
 
-Create service account for deployments:
+GitHub Actions deploys automatically on push to `main` using Workload Identity Federation (no long-lived keys).
 
-```bash
-gcloud iam service-accounts create ci-cd \
-  --project=PROJECT_ID \
-  --display-name="CI/CD Service Account"
+The `github_oidc` Terraform module creates:
+- Workload Identity Pool + OIDC Provider for GitHub Actions
+- `github-actions-ci` service account with Cloud Run, Artifact Registry, and actAs permissions
+- WIF binding scoped to the `ChrisTowles/blog` repository
 
-# Grant necessary roles
-gcloud projects add-iam-policy-binding PROJECT_ID \
-  --member="serviceAccount:ci-cd@PROJECT_ID.iam.gserviceaccount.com" \
-  --role="roles/run.admin"
+### Setup
 
-gcloud projects add-iam-policy-binding PROJECT_ID \
-  --member="serviceAccount:ci-cd@PROJECT_ID.iam.gserviceaccount.com" \
-  --role="roles/iam.serviceAccountUser"
-```
+1. Apply Terraform in `environments/prod/`:
+   ```bash
+   terraform init && terraform apply
+   ```
 
-Add to `terraform.tfvars`:
+2. Set GitHub repo variables from terraform output:
+   ```bash
+   gh variable set GCP_WIF_PROVIDER --body "$(terraform output -raw wif_provider)"
+   gh variable set GCP_WIF_SERVICE_ACCOUNT --body "$(terraform output -raw ci_service_account_email)"
+   ```
 
-```
-ci_service_account_email = "ci-cd@PROJECT_ID.iam.gserviceaccount.com"
-```
+3. Push to `main` — the Deploy workflow triggers automatically.
 
 ## Migration from Cloudflare
 

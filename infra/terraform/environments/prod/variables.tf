@@ -20,10 +20,3 @@ variable "site_url" {
   type        = string
   default     = "https://chris.towles.dev"
 }
-
-variable "ci_service_account_email" {
-  description = "Service account for CI/CD"
-  type        = string
-  default     = ""
-}
-

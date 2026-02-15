@@ -22,9 +22,4 @@ variable "site_url" {
 
 }
 
-variable "ci_service_account_email" {
-  description = "Service account for CI/CD"
-  type        = string
-  default     = ""
-}
 

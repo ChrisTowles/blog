@@ -9,8 +9,3 @@ variable "region" {
   default     = "us-central1"
 }
 
-variable "ci_service_account_email" {
-  description = "Service account email for CI/CD to push images"
-  type        = string
-  default     = ""
-}

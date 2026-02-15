@@ -22,9 +22,8 @@ provider "google" {
 module "shared" {
   source = "../../modules/shared"
 
-  project_id               = var.project_id
-  region                   = var.region
-  ci_service_account_email = var.ci_service_account_email
+  project_id = var.project_id
+  region     = var.region
 }
 
 module "cloud_sql" {

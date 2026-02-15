@@ -6,5 +6,7 @@ region           = "us-central1"
 database_password = "generate-secure-password"
 site_url         = "https://yourdomain.com"
 
-# Optional: if using CI/CD service account
-# ci_service_account_email = "ci-cd@your-project.iam.gserviceaccount.com"
+# GitHub Actions WIF is configured via the github_oidc module
+# After terraform apply, set GitHub repo variables:
+#   gh variable set GCP_WIF_PROVIDER --body "$(terraform output -raw wif_provider)"
+#   gh variable set GCP_WIF_SERVICE_ACCOUNT --body "$(terraform output -raw ci_service_account_email)"

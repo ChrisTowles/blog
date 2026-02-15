@@ -5,6 +5,3 @@ project_id       = "blog-towles-staging"
 region           = "us-central1"
 database_password = "generate-secure-password"
 site_url         = "https://staging.yourdomain.com"
-
-# Optional: if using CI/CD service account
-# ci_service_account_email = "ci-cd@your-project.iam.gserviceaccount.com"

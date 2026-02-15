@@ -47,17 +47,6 @@ resource "google_artifact_registry_repository" "containers" {
   depends_on = [google_project_service.required_apis]
 }
 
-# Grant service account access to push to Artifact Registry (for CI/CD)
-resource "google_artifact_registry_repository_iam_member" "ci_writer" {
-  count = var.ci_service_account_email != "" ? 1 : 0
-
-  project    = var.project_id
-  location   = google_artifact_registry_repository.containers.location
-  repository = google_artifact_registry_repository.containers.name
-  role       = "roles/artifactregistry.writer"
-  member     = "serviceAccount:${var.ci_service_account_email}"
-}
-
 # Reference existing secrets from GCP Secret Manager
 data "google_secret_manager_secret" "anthropic_api_key" {
   secret_id = "anthropic-api-key"
