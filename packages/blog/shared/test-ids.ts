@@ -48,6 +48,14 @@ export const TEST_IDS = {
     LOGIN_BUTTON: 'login-button',
     THEME_TOGGLE: 'theme-toggle',
   },
+  SEARCH: {
+    PAGE: 'search-page',
+    FORM: 'search-form',
+    INPUT: 'search-input',
+    SUBMIT: 'search-submit',
+    RESULTS: 'search-results',
+    RESULT_CARD: 'search-result-card',
+  },
   SHARED: {
     MODEL_SELECT: 'model-select',
     SEARCH_BUTTON: 'search-button',
