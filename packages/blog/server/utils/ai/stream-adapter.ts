@@ -253,10 +253,8 @@ function processMessage(message: AgentMessage, state: StreamState): SSEEvent[] {
   return events;
 }
 
-/**
- * Send SSE event to stream controller
- */
+const encoder = new TextEncoder();
+
 export function sendSSE(controller: ReadableStreamDefaultController, event: SSEEvent) {
-  const encoder = new TextEncoder();
   controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
 }

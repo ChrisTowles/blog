@@ -32,8 +32,6 @@
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.1.76",
     "@anthropic-ai/sdk": "^0.52.0",
-    "@iconify-json/logos": "^1.2.10",
-    "@iconify-json/lucide": "^1.2.82",
     "@iconify-json/simple-icons": "^1.2.64",
     "@nuxt/ui": "^4.3.0",
     "@nuxtjs/mdc": "^0.19.2",
@@ -55,6 +53,7 @@
   },
   "devDependencies": {
     "@iconify-json/heroicons": "^1.2.3",
+    "@iconify-json/heroicons-outline": "^1.2.1",
     "@iconify-json/logos": "^1.2.10",
     "@iconify-json/lucide": "^1.2.82",
     "@iconify-json/simple-icons": "^1.2.64",
