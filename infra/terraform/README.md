@@ -330,6 +330,7 @@ terraform force-unlock LOCK_ID
 GitHub Actions deploys automatically on push to `main` using Workload Identity Federation (no long-lived keys).
 
 The `github_oidc` Terraform module creates:
+
 - Workload Identity Pool + OIDC Provider for GitHub Actions
 - `github-actions-ci` service account with Cloud Run, Artifact Registry, and actAs permissions
 - WIF binding scoped to the `ChrisTowles/blog` repository
@@ -337,11 +338,13 @@ The `github_oidc` Terraform module creates:
 ### Setup
 
 1. Apply Terraform in `environments/prod/`:
+
    ```bash
    terraform init && terraform apply
    ```
 
 2. Set GitHub repo variables from terraform output:
+
    ```bash
    gh variable set GCP_WIF_PROVIDER --body "$(terraform output -raw wif_provider)"
    gh variable set GCP_WIF_SERVICE_ACCOUNT --body "$(terraform output -raw ci_service_account_email)"
