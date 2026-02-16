@@ -111,6 +111,34 @@ Some content here.`;
     expect(result.slug).toBe('my-blog-slug');
   });
 
+  it('keeps hyphenated prefix in slug to match Nuxt Content paths', () => {
+    const markdown = '---\ntitle: Test\n---\nContent';
+
+    // Nuxt Content only strips pure numeric prefixes, not "20250803-1."
+    const result = parseBlogMarkdown(markdown, '20250803-1.my-context-engineering-journey.md');
+    expect(result.slug).toBe('20250803-1.my-context-engineering-journey');
+  });
+
+  it('lowercases slug to match Nuxt Content paths', () => {
+    const markdown = '---\ntitle: Test\n---\nContent';
+
+    const result = parseBlogMarkdown(
+      markdown,
+      '20240630.Why-you-should-make-a-toolbox-repository.md',
+    );
+    expect(result.slug).toBe('why-you-should-make-a-toolbox-repository');
+  });
+
+  it('replaces spaces with hyphens in slug', () => {
+    const markdown = '---\ntitle: Test\n---\nContent';
+
+    const result = parseBlogMarkdown(
+      markdown,
+      '20250422.debugging local-packages-with-pnpm-link.md',
+    );
+    expect(result.slug).toBe('debugging-local-packages-with-pnpm-link');
+  });
+
   it('handles markdown without frontmatter', () => {
     const markdown = '# Just a heading\n\nSome content';
     const result = parseBlogMarkdown(markdown, 'simple.md');
