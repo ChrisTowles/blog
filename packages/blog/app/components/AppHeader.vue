@@ -26,6 +26,13 @@ const items = computed(() => [
     'data-testid': TEST_IDS.NAVIGATION.APPS_LINK,
   },
   {
+    label: 'Search',
+    to: '/search',
+    icon: 'i-heroicons-magnifying-glass',
+    active: route.path.startsWith('/search'),
+    'data-testid': TEST_IDS.SEARCH.PAGE,
+  },
+  {
     label: 'AI Chat',
     to: '/chat',
     icon: 'i-heroicons-chat-bubble-left-right',

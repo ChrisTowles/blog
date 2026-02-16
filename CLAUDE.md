@@ -23,7 +23,7 @@ infra/              # infrastructure
 pnpm dev          # Dev server (with remote storage)
 pnpm build        # Build all packages
 pnpm test         # Vitest
-pnpm lint         # ESLint
+pnpm lint         # oxlint
 pnpm typecheck    # TypeScript checks
 pnpm gcp:prod:deploy   # Build container + deploy to GCP prod (needs terraform & gcloud)
 pnpm gcp:staging:deploy # Build container + deploy to GCP staging

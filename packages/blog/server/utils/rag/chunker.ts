@@ -100,10 +100,13 @@ export function parseBlogMarkdown(markdown: string, filePath: string): ParsedMar
     };
   }
 
-  // Extract slug from filename: 20250713.tips-for-claude-code.md -> tips-for-claude-code
+  // Extract slug from filename, matching Nuxt Content v3 path generation:
+  // - Strip pure numeric prefix only (e.g., "20250713." but NOT "20250803-1.")
+  // - Nuxt Content keeps non-pure-numeric prefixes like "20250803-1." as part of the path
+  // - Lowercase and replace spaces with hyphens
   const filename = filePath.split('/').pop() || '';
   const slugMatch = filename.match(/^\d+\.(.+)\.md$/);
-  const slug = slugMatch?.[1] || filename.replace('.md', '');
+  const slug = (slugMatch?.[1] || filename.replace('.md', '')).toLowerCase().replace(/\s+/g, '-');
 
   return {
     frontmatter,
