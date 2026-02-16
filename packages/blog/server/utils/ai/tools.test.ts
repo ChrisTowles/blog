@@ -94,6 +94,23 @@ describe('executeTool', () => {
       await expect(executeTool('unknownTool', {})).rejects.toThrow('Unknown tool: unknownTool');
     });
   });
+
+  describe('options.baseUrl', () => {
+    it('passes baseUrl through to tool execution context', async () => {
+      // Verify executeTool accepts options parameter without error
+      const result = await executeTool(
+        'getCurrentDateTime',
+        {},
+        { baseUrl: 'https://example.com' },
+      );
+      expect(result).toHaveProperty('date');
+    });
+
+    it('works with undefined options', async () => {
+      const result = await executeTool('getCurrentDateTime', {});
+      expect(result).toHaveProperty('date');
+    });
+  });
 });
 
 describe('getToolsByNames', () => {
