@@ -46,7 +46,7 @@ title: 'Post Title'
 description: 'Brief summary for SEO'
 date: '2026-01-15'
 badge:
-  label: 'Category'        # e.g. AI Tools, Kids, Productivity
+  label: 'Category' # e.g. AI Tools, Kids, Productivity
 image:
   src: '/images/blog/image.png'
   alt: 'Description'

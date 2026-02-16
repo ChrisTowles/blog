@@ -8,10 +8,7 @@ defineRouteMeta({
 });
 
 export default defineEventHandler(async (event) => {
-  const {
-    query,
-    topK = 5,
-  } = await readValidatedBody(
+  const { query, topK = 5 } = await readValidatedBody(
     event,
     z.object({
       query: z.string().min(1).max(500),
@@ -24,7 +21,7 @@ export default defineEventHandler(async (event) => {
   const results = await retrieveRAG(query, { topK, skipRerank: false });
 
   // Deduplicate by document - keep highest scoring chunk per document
-  const seenSlugs = new Map<string, typeof dedupedResults[number]>();
+  const seenSlugs = new Map<string, (typeof dedupedResults)[number]>();
   const dedupedResults: Array<{
     title: string;
     url: string;
@@ -36,9 +33,7 @@ export default defineEventHandler(async (event) => {
 
   for (const r of results) {
     // Create a snippet from the content - take first meaningful portion
-    const snippet = r.content.length > 300
-      ? `${r.content.slice(0, 300).trimEnd()}...`
-      : r.content;
+    const snippet = r.content.length > 300 ? `${r.content.slice(0, 300).trimEnd()}...` : r.content;
 
     const entry = {
       title: r.documentTitle,

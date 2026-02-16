@@ -129,7 +129,11 @@ export const chatTools: Anthropic.Tool[] = [
  * Execute a tool by name
  * Some tools are async (like searchBlogContent)
  */
-export async function executeTool(name: string, args?: Record<string, unknown>): Promise<unknown> {
+export async function executeTool(
+  name: string,
+  args?: Record<string, unknown>,
+  options?: { baseUrl?: string },
+): Promise<unknown> {
   switch (name) {
     case 'searchBlogContent': {
       const query = args?.query as string;
@@ -139,13 +143,14 @@ export async function executeTool(name: string, args?: Record<string, unknown>):
       const results = await retrieveRAG(query, {
         topK: 5,
       });
+      const baseUrl = options?.baseUrl || '';
       return {
         results: results.map((r) => ({
           content: r.content,
           source: r.documentTitle,
-          url: r.documentUrl, // e.g., "/blog/tips-for-claude-code"
+          url: `${baseUrl}${r.documentUrl}`,
         })),
-        hint: 'When referencing these results, use markdown links like [Title](url) to cite sources.',
+        hint: 'When referencing these results, use markdown links like [Title](url) to cite sources. Always use the exact URLs provided.',
       };
     }
     case 'getCurrentDateTime': {

@@ -114,6 +114,11 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  // Derive base URL from request before entering the stream callback
+  // (where `event` gets shadowed by Anthropic SDK streaming events)
+  const requestUrl = getRequestURL(event);
+  const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+
   // Create SSE stream
   const stream = new ReadableStream({
     async start(controller) {
@@ -225,7 +230,7 @@ export default defineEventHandler(async (event) => {
                 });
 
                 // Execute the tool
-                const toolResult = await executeTool(currentToolName, toolArgs);
+                const toolResult = await executeTool(currentToolName, toolArgs, { baseUrl });
                 toolResults.push({
                   type: 'tool_result',
                   tool_use_id: currentToolUseId,

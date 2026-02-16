@@ -22,13 +22,15 @@ export const searchBlogContent = tool(
       });
     }
 
+    const config = useRuntimeConfig();
+    const baseUrl = (config.public.siteUrl as string) || '';
     return toolResult({
       results: results.map((r) => ({
         content: r.content,
         source: r.documentTitle,
-        url: r.documentUrl,
+        url: `${baseUrl}${r.documentUrl}`,
       })),
-      hint: 'When referencing these results, use markdown links like [Title](url) to cite sources.',
+      hint: 'When referencing these results, use markdown links like [Title](url) to cite sources. Always use the exact URLs provided.',
     });
   },
 );

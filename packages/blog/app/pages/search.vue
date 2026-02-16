@@ -127,11 +127,7 @@ function scoreColor(score: number): 'success' | 'info' | 'warning' | 'neutral' {
 
         <!-- Loading State -->
         <div v-if="searching" class="space-y-4">
-          <div
-            v-for="i in 3"
-            :key="i"
-            class="animate-pulse"
-          >
+          <div v-for="i in 3" :key="i" class="animate-pulse">
             <div class="h-6 bg-(--ui-bg-elevated) rounded w-2/3 mb-2" />
             <div class="h-4 bg-(--ui-bg-elevated) rounded w-full mb-1" />
             <div class="h-4 bg-(--ui-bg-elevated) rounded w-5/6" />
@@ -150,21 +146,19 @@ function scoreColor(score: number): 'success' | 'info' | 'warning' | 'neutral' {
         </UCard>
 
         <!-- Results -->
-        <div
-          v-else-if="searchResponse"
-          :data-testid="TEST_IDS.SEARCH.RESULTS"
-          class="space-y-6"
-        >
+        <div v-else-if="searchResponse" :data-testid="TEST_IDS.SEARCH.RESULTS" class="space-y-6">
           <!-- Results Header -->
           <div class="flex items-center justify-between">
             <p class="text-sm text-(--ui-text-muted)">
               <span v-if="searchResponse.results.length > 0">
                 Found <strong>{{ searchResponse.results.length }}</strong>
                 {{ searchResponse.results.length === 1 ? 'result' : 'results' }}
-                for "<strong>{{ searchResponse.query }}</strong>"
+                for "<strong>{{ searchResponse.query }}</strong
+                >"
               </span>
               <span v-else>
-                No results found for "<strong>{{ searchResponse.query }}</strong>"
+                No results found for "<strong>{{ searchResponse.query }}</strong
+                >"
               </span>
             </p>
             <UBadge v-if="searchResponse.totalMs" variant="subtle" color="neutral" size="xs">
@@ -174,7 +168,10 @@ function scoreColor(score: number): 'success' | 'info' | 'warning' | 'neutral' {
 
           <!-- No Results -->
           <div v-if="searchResponse.results.length === 0" class="text-center py-12">
-            <UIcon name="i-heroicons-magnifying-glass" class="w-12 h-12 text-(--ui-text-dimmed) mx-auto mb-4" />
+            <UIcon
+              name="i-heroicons-magnifying-glass"
+              class="w-12 h-12 text-(--ui-text-dimmed) mx-auto mb-4"
+            />
             <h3 class="text-lg font-medium mb-2">No results found</h3>
             <p class="text-(--ui-text-muted) max-w-md mx-auto">
               Try different keywords or rephrase your query. Semantic search understands concepts,
@@ -188,10 +185,7 @@ function scoreColor(score: number): 'success' | 'info' | 'warning' | 'neutral' {
             :key="result.slug"
             :data-testid="TEST_IDS.SEARCH.RESULT_CARD"
           >
-            <NuxtLink
-              :to="result.url"
-              class="block group"
-            >
+            <NuxtLink :to="result.url" class="block group">
               <UCard
                 :ui="{
                   root: 'hover:ring-(--ui-primary) transition-all duration-200',
@@ -204,7 +198,9 @@ function scoreColor(score: number): 'success' | 'info' | 'warning' | 'neutral' {
                       <span class="text-sm font-mono text-(--ui-text-dimmed) shrink-0">
                         {{ index + 1 }}.
                       </span>
-                      <h3 class="text-lg font-semibold group-hover:text-(--ui-primary) transition-colors truncate">
+                      <h3
+                        class="text-lg font-semibold group-hover:text-(--ui-primary) transition-colors truncate"
+                      >
                         {{ result.title }}
                       </h3>
                     </div>
@@ -249,8 +245,8 @@ function scoreColor(score: number): 'success' | 'info' | 'warning' | 'neutral' {
           />
           <h3 class="text-lg font-medium mb-2">Search the blog</h3>
           <p class="text-(--ui-text-muted) max-w-md mx-auto mb-6">
-            Ask a question or search for a topic. This search uses vector embeddings and
-            AI reranking to find the most semantically relevant content.
+            Ask a question or search for a topic. This search uses vector embeddings and AI
+            reranking to find the most semantically relevant content.
           </p>
 
           <!-- Example searches -->
@@ -266,7 +262,10 @@ function scoreColor(score: number): 'success' | 'info' | 'warning' | 'neutral' {
               variant="soft"
               color="neutral"
               size="sm"
-              @click="searchInput = example; runSearch()"
+              @click="
+                searchInput = example;
+                runSearch();
+              "
             >
               {{ example }}
             </UButton>
