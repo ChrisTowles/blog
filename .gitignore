@@ -150,9 +150,6 @@ dist
 .data/
 
 
-# cloudflare
-.wrangler/
-
 
 #playwright
 test-results/

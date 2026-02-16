@@ -7,8 +7,6 @@ This is just my personal blog at <https://Chris.Towles.dev>
 ## Quick Links
 
 - [Blog](https://chris.towles.dev)
-- [NuxtHub Admin](https://admin.hub.nuxt.com/)
-- [Cloudflare Dashboard](https://dash.cloudflare.com/)
 - [Nuxt UI Components](https://ui.nuxt.com/components#element)
 - [Google Search Console](https://search.google.com/search-console/)
 - [AWS Console](https://ctowles.awsapps.com/start/#/?tab=accounts)
@@ -82,20 +80,12 @@ packages/claude-plugins/
   - Paid for [Nuxt UI Pro](https://ui.nuxt.com/) ($249)
     - First, any time I spend doing CSS and even Tailwind is time wasted.
     - Happy to give back to NuxtLabs, I've used so much from [Anthfu](https://github.com/antfu), [Daniel Roe](https://github.com/danielroe) and Vue and Nuxt core members.
-- Cloudflare
-  - Paid for Cloudflare ($5 Monthly)
-  - can likely go back to free but ran over the 1mb file limit.
-- [NuxtHub](https://hub.nuxt.com/)
-  - this switched hosting to cloudflare workers from cloudflare pages.
-  - AI
-    - hubAI() is disabled: link a project with `npx nuxthub link` to run AI models in development mode.
+- [GCP Cloud Run](https://cloud.google.com/run) — Production hosting with Cloud SQL (PostgreSQL)
 - [Nuxt Chat](https://github.com/nuxt-ui-pro/chat)
   - using the Nuxt UI Pro Chat Template
 - Icons
   - <https://heroicons.com/>
   - <https://simpleicons.org/>
-
-- [@ai-sdk/vue](https://sdk.vercel.ai/docs/getting-started/nuxt)
 
 - GitHub OAuth client ID - Setup
 - https://github.com/settings/developers
@@ -120,8 +110,7 @@ pnpm build
 ## Deployment
 
 ```bash
-
-nr deploy 2>&1 | tail -n 50
+pnpm gcp:prod:deploy
 ```
 
 ## Content Management

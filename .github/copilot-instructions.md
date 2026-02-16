@@ -1,13 +1,13 @@
 # Copilot Instructions
 
-This project is a web application of a personal blog. The application is built using Typescript; NuxtJs, NuxtJs UI PRO and hosted on cloudflare. Tests are in vitest.
+This project is a web application of a personal blog. The application is built using Typescript; NuxtJs, NuxtJs UI PRO and hosted on GCP Cloud Run. Tests are in vitest.
 
 ## Project Structure
 
 This is a personal blog built with:
 
 - **Nuxt 3** with Nuxt UI Pro
-- **NuxtHub** for Cloudflare Workers deployment
+- **GCP Cloud Run** with Docker containers
 - **Vitest** for testing
 - **pnpm** workspace monorepo structure
 
@@ -22,15 +22,13 @@ pnpm dev:no-remote # Start dev server without remote storage
 
 # Building & Testing
 pnpm build        # Build all packages
-pnpm lint         # ESLint all packages
+pnpm lint         # Lint all packages
 pnpm typecheck    # TypeScript checking all packages
 pnpm test         # Run tests in all packages
 
-# Single package commands (run from packages/blog/)
-nuxt dev --remote --envName development
-nuxt build
-vitest
-nuxt typecheck
+# Deployment
+pnpm gcp:prod:deploy    # Deploy to GCP production
+pnpm gcp:staging:deploy # Deploy to GCP staging
 ```
 
 ## Architecture Overview
@@ -38,18 +36,18 @@ nuxt typecheck
 - **Monorepo**: Uses pnpm workspace with packages in `packages/`
 - **Main App**: `packages/blog/` contains the Nuxt application
 - **Content**: Blog posts and pages in `packages/blog/content/` using Nuxt Content
-- **Database**: Uses Drizzle ORM with NuxtHub database
-- **AI Integration**: Uses AI SDK with Anthropic for chat functionality
+- **Database**: Drizzle ORM with PostgreSQL (Cloud SQL)
+- **AI Integration**: Anthropic SDK for chat functionality
 - **Authentication**: GitHub OAuth via nuxt-auth-utils
-- **Hosting**: Cloudflare Workers via NuxtHub
+- **Hosting**: GCP Cloud Run
 
 ## Key Technologies
 
 - **Nuxt Content**: For markdown blog posts and content management
 - **Nuxt UI Pro**: Paid component library for styling
 - **Drizzle ORM**: Database operations with schema in `server/database/schema.ts`
-- **AI SDK**: Chat functionality with streaming responses
-- **NuxtHub**: Cloudflare integration for database, AI, and deployment
+- **Anthropic SDK**: Chat functionality with streaming responses
+- **GCP**: Cloud Run deployment, Cloud SQL database
 
 ## Coding Standards
 
@@ -68,4 +66,4 @@ When working with files >300 lines or complex changes:
 3. Show order of changes and dependencies
 4. Format as "PROPOSED EDIT PLAN" with edit sequence
 5. Wait for user confirmation before proceeding
-6. Show progress after each edit: "✅ Completed edit [#] of [total]"
+6. Show progress after each edit: "Completed edit [#] of [total]"

@@ -14,7 +14,6 @@
     "kill-port": "bash -c '. .env 2>/dev/null; fuser -k ${UI_PORT:-3000}/tcp 2>/dev/null; exit 0'",
     "dev": "pnpm docker:up && pnpm db:migrate && pnpm kill-port && pnpm --filter @chris-towles/blog dev",
     "dev:no-remote": "pnpm docker:up && pnpm db:migrate && pnpm kill-port && pnpm --filter @chris-towles/blog dev:no-remote",
-    "deploy": "pnpm --filter @chris-towles/blog deploy:nuxthub",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "changeset tag",

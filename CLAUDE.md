@@ -17,6 +17,12 @@ infra/              # infrastructure
     terraform/          # GCP Cloud Run and Cloud SQL
 ```
 
+## Hosting
+
+- **GCP Cloud Run** — production hosting, Cloud SQL (PostgreSQL)
+- **Cloudflare** — DNS only (no longer used for Workers/hosting)
+- Deploy: `pnpm gcp:prod:deploy` / `pnpm gcp:staging:deploy`
+
 ## Commands
 
 ```bash

@@ -38,6 +38,9 @@ logos:
     - label: Cloudflare
       to: 'https://www.cloudflare.com'
       icon: i-simple-icons-cloudflare
+    - label: Google Cloud
+      to: 'https://cloud.google.com'
+      icon: i-simple-icons-googlecloud
 
     - label: Typescript
       to: 'https://www.typescriptlang.org'

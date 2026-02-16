@@ -4,7 +4,6 @@
   "search.exclude": {
     "**/node_modules": true,
     "**/.nuxt": true,
-    "**/.wrangler": true,
     "**/.output": true,
     "**/.dist": true
   },
