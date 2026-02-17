@@ -63,10 +63,10 @@ export function getSkillsForAPI(): Array<{
 }> {
   // Pre-built Anthropic document generation skills
   const prebuiltSkills = [
-    { type: 'anthropic', skill_id: 'create-pdf', version: 'latest' },
-    { type: 'anthropic', skill_id: 'create-pptx', version: 'latest' },
-    { type: 'anthropic', skill_id: 'create-xlsx', version: 'latest' },
-    { type: 'anthropic', skill_id: 'create-docx', version: 'latest' },
+    { type: 'anthropic', skill_id: 'pdf', version: 'latest' },
+    { type: 'anthropic', skill_id: 'pptx', version: 'latest' },
+    { type: 'anthropic', skill_id: 'xlsx', version: 'latest' },
+    { type: 'anthropic', skill_id: 'docx', version: 'latest' },
   ];
 
   const customSkills = loadCustomSkills().map((skill) => ({

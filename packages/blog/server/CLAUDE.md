@@ -42,13 +42,20 @@ Event types are defined in `shared/chat-types.ts` and `shared/artifact-types.ts`
 - **Tools**: Defined in `utils/ai/tools.ts` (Anthropic SDK format) and `utils/ai/tools/*.ts` (Agent SDK format)
 - **Thread safety**: Tool execution must be stateless. No module-level mutable state — pass context as parameters.
 
-### Artifact Execution
+### Beta Streaming (Chat + Artifacts)
 
-Uses Anthropic beta APIs — the beta headers and response shapes may change:
+Both chat and artifacts use Anthropic beta APIs. Chat uses `beta.messages.stream()` (not `client.messages.stream()`) for streaming with code execution.
 
+- Beta headers: `code-execution-2025-08-25`, `files-api-2025-04-14`, `skills-2025-10-02`
 - `code_execution_20250825` tool type for sandboxed execution
+- `server_tool_use` blocks are server-side (code execution) — do NOT add to client tool loop
+- `tool_use` blocks are client-side (our tools like weather, dice) — execute locally and loop
 - `bash_code_execution_tool_result` / `text_editor_code_execution_tool_result` content blocks for stdout/stderr
+- Code execution results (`*_tool_result` blocks) are processed inline during streaming via `content_block_start` for fast UI updates
 - Files referenced by `file_id`, downloaded via Files API beta — metadata via `client.beta.files.retrieveMetadata()` (NOT `retrieve`)
+- Container ID persisted in `chats.containerId` for reuse across turns
+- Skills loaded from `.claude/skills/*/SKILL.md` via `utils/ai/skills-loader.ts` (cached at startup)
+- Pre-built Anthropic skills: `pdf`, `pptx`, `xlsx`, `docx` (NOT `create-pdf` — see https://platform.claude.com/docs/en/build-with-claude/skills-guide)
 - Beta response types are unstable — typed interfaces in `utils/ai/anthropic-beta-types.ts` use `any` for `content` fields where union narrowing is impractical
 - Hoist `TextEncoder` to module scope (not per-function call) in SSE streaming handlers
 
@@ -58,7 +65,7 @@ PostgreSQL with Drizzle ORM.
 
 - **Schema**: `database/schema.ts`
 - **Access**: `useDrizzle()` from `utils/drizzle.ts` (creates connection per call)
-- **Tables**: `tables.chats`, `tables.messages`, `tables.users`, `tables.documents`, `tables.documentChunks`
+- **Tables**: `tables.chats` (with `containerId` for container reuse), `tables.messages`, `tables.users`, `tables.documents`, `tables.documentChunks`
 - **Migrations**: `pnpm db:generate` → `pnpm db:migrate`
 
 UUID primary keys generated via `crypto.randomUUID()`. All tables have `createdAt` timestamp.

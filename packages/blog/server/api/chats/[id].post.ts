@@ -158,6 +158,7 @@ export default defineEventHandler(async (event) => {
         // Track code executions and files for message persistence
         const codeExecutions: CodeExecutionPart[] = [];
         const fileParts: FilePart[] = [];
+        const seenFileIds = new Set<string>();
 
         // Run up to 5 turns for tool use
         let turnCount = 0;
@@ -226,6 +227,66 @@ export default defineEventHandler(async (event) => {
                 currentServerToolName = block.name || null;
                 currentServerToolInput = '';
                 isServerToolBlock = true;
+              } else if (
+                block.type === 'bash_code_execution_tool_result' ||
+                block.type === 'text_editor_code_execution_tool_result'
+              ) {
+                // Code execution result — process inline for fast UI update
+                const result = block.content;
+                const stdout = result?.stdout || '';
+                const stderr = result?.stderr || '';
+                const exitCode = result?.return_code ?? 0;
+
+                // Collect files from this result block
+                const resultFiles: FilePart[] = [];
+                if (Array.isArray(result?.content)) {
+                  for (const item of result.content) {
+                    if (item.file_id && !seenFileIds.has(item.file_id)) {
+                      seenFileIds.add(item.file_id);
+                      let fileName = 'output';
+                      let mediaType = 'application/octet-stream';
+                      try {
+                        const meta = await betaClient.beta.files.retrieveMetadata(item.file_id, {
+                          betas: ['files-api-2025-04-14'],
+                        });
+                        fileName = meta.filename || fileName;
+                        mediaType = meta.mime_type || mediaType;
+                      } catch (e) {
+                        console.warn(
+                          `[chat] Failed to fetch file metadata for ${item.file_id}:`,
+                          e,
+                        );
+                      }
+
+                      const filePart: FilePart = {
+                        type: 'file',
+                        fileId: item.file_id,
+                        fileName,
+                        mediaType,
+                        url: `/api/artifacts/files/${item.file_id}`,
+                      };
+                      resultFiles.push(filePart);
+                      fileParts.push(filePart);
+                    }
+                  }
+                }
+
+                // Update the last running code execution with results
+                const lastRunning = codeExecutions.findLast((ce) => ce.state === 'running');
+                if (lastRunning) {
+                  lastRunning.stdout = stdout;
+                  lastRunning.stderr = stderr;
+                  lastRunning.exitCode = exitCode;
+                  lastRunning.state = 'done';
+                }
+
+                sendSSE(controller, {
+                  type: 'code_result',
+                  stdout,
+                  stderr,
+                  exitCode,
+                  files: resultFiles,
+                });
               }
             } else if (streamEvent.type === 'content_block_delta') {
               const delta = streamEvent.delta;
@@ -346,80 +407,12 @@ export default defineEventHandler(async (event) => {
             }
           }
 
-          // After stream completes, process the final message for code execution results
+          // After stream completes, extract container ID from final message
           try {
             const finalMessage = await streamResponse.finalMessage();
-
-            // Extract container ID from final message too
             if (finalMessage.container?.id && finalMessage.container.id !== containerId) {
               containerId = finalMessage.container.id;
               sendSSE(controller, { type: 'container', containerId: finalMessage.container.id });
-            }
-
-            // Process code execution result blocks from the final message
-            const seenFileIds = new Set<string>();
-
-            for (const block of finalMessage.content) {
-              if (
-                block.type === 'bash_code_execution_tool_result' ||
-                block.type === 'text_editor_code_execution_tool_result'
-              ) {
-                const result = block.content;
-                const stdout = result?.stdout || '';
-                const stderr = result?.stderr || '';
-                const exitCode = result?.return_code ?? 0;
-
-                // Collect files from this result block
-                const resultFiles: FilePart[] = [];
-                if (Array.isArray(result?.content)) {
-                  for (const item of result.content) {
-                    if (item.file_id && !seenFileIds.has(item.file_id)) {
-                      seenFileIds.add(item.file_id);
-                      let fileName = 'output';
-                      let mediaType = 'application/octet-stream';
-                      try {
-                        const meta = await betaClient.beta.files.retrieveMetadata(item.file_id, {
-                          betas: ['files-api-2025-04-14'],
-                        });
-                        fileName = meta.filename || fileName;
-                        mediaType = meta.mime_type || mediaType;
-                      } catch (e) {
-                        console.warn(
-                          `[chat] Failed to fetch file metadata for ${item.file_id}:`,
-                          e,
-                        );
-                      }
-
-                      const filePart: FilePart = {
-                        type: 'file',
-                        fileId: item.file_id,
-                        fileName,
-                        mediaType,
-                        url: `/api/artifacts/files/${item.file_id}`,
-                      };
-                      resultFiles.push(filePart);
-                      fileParts.push(filePart);
-                    }
-                  }
-                }
-
-                // Update the last running code execution with results
-                const lastRunning = codeExecutions.findLast((ce) => ce.state === 'running');
-                if (lastRunning) {
-                  lastRunning.stdout = stdout;
-                  lastRunning.stderr = stderr;
-                  lastRunning.exitCode = exitCode;
-                  lastRunning.state = 'done';
-                }
-
-                sendSSE(controller, {
-                  type: 'code_result',
-                  stdout,
-                  stderr,
-                  exitCode,
-                  files: resultFiles,
-                });
-              }
             }
           } catch (e) {
             // finalMessage() may fail if the stream was incomplete — log and continue
