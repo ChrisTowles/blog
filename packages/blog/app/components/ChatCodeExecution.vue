@@ -1,11 +1,29 @@
 <script setup lang="ts">
+import { ShikiCachedRenderer } from 'shiki-stream/vue';
 import type { CodeExecutionPart } from '~~/shared/chat-types';
 
-defineProps<{
+const props = defineProps<{
   execution: CodeExecutionPart;
 }>();
 
+const colorMode = useColorMode();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- shiki version mismatch between shiki and shiki-stream
+const highlighter = (await useHighlighter()) as any;
 const showCode = ref(false);
+
+const LANG_MAP: Record<string, string> = {
+  python: 'python',
+  py: 'python',
+  bash: 'bash',
+  sh: 'bash',
+  javascript: 'js',
+  typescript: 'ts',
+};
+
+const lang = computed(() => LANG_MAP[props.execution.language] || props.execution.language);
+const theme = computed(() =>
+  colorMode.value === 'dark' ? 'material-theme-palenight' : 'material-theme-lighter',
+);
 </script>
 
 <template>
@@ -30,9 +48,15 @@ const showCode = ref(false);
         <span>{{ execution.language }} code executed</span>
       </button>
       <div v-if="showCode" class="mt-2">
-        <pre
-          class="rounded-md bg-zinc-900 border border-zinc-800 p-3 text-xs overflow-x-auto"
-        ><code>{{ execution.code }}</code></pre>
+        <pre class="rounded-md border border-zinc-800 p-3 text-xs overflow-x-auto shiki-wrapper">
+          <ShikiCachedRenderer
+            :key="`${lang}-${colorMode.value}`"
+            :highlighter="highlighter"
+            :code="execution.code.trim()"
+            :lang="lang"
+            :theme="theme"
+          />
+        </pre>
       </div>
     </div>
 
