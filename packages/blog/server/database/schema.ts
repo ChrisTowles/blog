@@ -48,6 +48,7 @@ export const chats = pgTable(
       .$defaultFn(() => crypto.randomUUID()),
     title: varchar({ length: 200 }),
     userId: varchar({ length: 36 }).notNull(),
+    containerId: varchar({ length: 100 }),
     ...timestamps,
   },
   (table) => [index('chats_user_id_idx').on(table.userId)],

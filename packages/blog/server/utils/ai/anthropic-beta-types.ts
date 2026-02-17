@@ -52,11 +52,58 @@ export interface StreamableResponse {
   body?: ReadableStream | null;
 }
 
+/** Stream event types from the beta messages.stream() API */
+export interface BetaContentBlockStart {
+  type: 'content_block_start';
+  index: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  content_block: { type: string; id?: string; name?: string; [key: string]: any };
+}
+
+export interface BetaContentBlockDelta {
+  type: 'content_block_delta';
+  index: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  delta: { type: string; [key: string]: any };
+}
+
+export interface BetaContentBlockStop {
+  type: 'content_block_stop';
+  index: number;
+}
+
+export interface BetaMessageStart {
+  type: 'message_start';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  message: { container?: { id: string }; [key: string]: any };
+}
+
+export interface BetaMessageDelta {
+  type: 'message_delta';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  delta: { [key: string]: any };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  usage?: { [key: string]: any };
+}
+
+export type BetaStreamEvent =
+  | BetaContentBlockStart
+  | BetaContentBlockDelta
+  | BetaContentBlockStop
+  | BetaMessageStart
+  | BetaMessageDelta;
+
+/** Stream response from beta.messages.stream() */
+export interface BetaStreamResponse extends AsyncIterable<BetaStreamEvent> {
+  finalMessage(): Promise<CodeExecutionResponse>;
+}
+
 /** Typed wrapper for the Anthropic beta client methods we use */
 export interface AnthropicBetaClient {
   beta: {
     messages: {
       create(params: Record<string, unknown>): Promise<CodeExecutionResponse>;
+      stream(params: Record<string, unknown>): BetaStreamResponse;
     };
     files: {
       download(

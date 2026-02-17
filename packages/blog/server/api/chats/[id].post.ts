@@ -1,6 +1,14 @@
 import type { MessageParam } from '@anthropic-ai/sdk/resources/messages';
 import { z } from 'zod';
-import type { ChatMessage, MessagePart, SSEEvent } from '~~/shared/chat-types';
+import type {
+  ChatMessage,
+  CodeExecutionPart,
+  FilePart,
+  MessagePart,
+  SSEEvent,
+} from '~~/shared/chat-types';
+import type { AnthropicBetaClient, BetaStreamEvent } from '~~/server/utils/ai/anthropic-beta-types';
+import { getSkillsForAPI, getSkillsSystemPrompt } from '~~/server/utils/ai/skills-loader';
 
 defineRouteMeta({
   openAPI: {
@@ -119,6 +127,11 @@ export default defineEventHandler(async (event) => {
   const requestUrl = getRequestURL(event);
   const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
 
+  // Load skills config for container
+  const skills = getSkillsForAPI();
+  const skillsPrompt = getSkillsSystemPrompt();
+  const fullSystemPrompt = `${SYSTEM_PROMPT}\n\n${skillsPrompt}`;
+
   // Create SSE stream
   const stream = new ReadableStream({
     async start(controller) {
@@ -128,6 +141,7 @@ export default defineEventHandler(async (event) => {
         }
 
         const client = getAnthropicClient();
+        const betaClient = client as unknown as AnthropicBetaClient;
         const anthropicMessages = convertToAnthropicMessages(messages);
 
         let fullText = '';
@@ -136,21 +150,45 @@ export default defineEventHandler(async (event) => {
         let currentToolUseId: string | null = null;
         let currentToolName: string | null = null;
         let _toolInputJson = '';
+        // Track server-side tool use blocks (code execution)
+        let currentServerToolName: string | null = null;
+        let currentServerToolInput = '';
+        let isServerToolBlock = false;
+
+        // Track code executions and files for message persistence
+        const codeExecutions: CodeExecutionPart[] = [];
+        const fileParts: FilePart[] = [];
 
         // Run up to 5 turns for tool use
         let turnCount = 0;
         const maxTurns = 5;
         let currentMessages = [...anthropicMessages];
 
+        // Container config — reuse from previous turns in this chat
+        let containerId = chat.containerId || undefined;
+
         while (turnCount < maxTurns) {
           turnCount++;
 
-          const streamResponse = await client.messages.stream({
+          const streamResponse = betaClient.beta.messages.stream({
             model,
             max_tokens: 16000,
-            system: SYSTEM_PROMPT,
+            system: fullSystemPrompt,
             messages: currentMessages,
-            tools: chatTools,
+            betas: ['code-execution-2025-08-25', 'files-api-2025-04-14', 'skills-2025-10-02'],
+            tools: [
+              // Client-side tools (we execute these)
+              ...chatTools,
+              // Server-side code execution tool (Anthropic executes this)
+              {
+                type: 'code_execution_20250825',
+                name: 'code_execution',
+              },
+            ],
+            container: {
+              ...(containerId ? { id: containerId } : {}),
+              skills,
+            },
             thinking: {
               type: 'enabled',
               budget_tokens: 4096,
@@ -158,39 +196,99 @@ export default defineEventHandler(async (event) => {
           });
 
           let hasToolUse = false;
-          let turnThinking = ''; // Track thinking for this turn only
-          let turnThinkingSignature = ''; // Track signature for this turn's thinking
+          let turnThinking = '';
+          let turnThinkingSignature = '';
           const toolResults: { type: 'tool_result'; tool_use_id: string; content: string }[] = [];
           const toolUses: { id: string; name: string; input: Record<string, unknown> }[] = [];
 
-          for await (const event of streamResponse) {
-            if (event.type === 'content_block_start') {
-              if (event.content_block.type === 'thinking') {
+          for await (const streamEvent of streamResponse as AsyncIterable<BetaStreamEvent>) {
+            if (streamEvent.type === 'message_start') {
+              // Extract container ID from message_start for reuse
+              const msgContainerId = streamEvent.message?.container?.id;
+              if (msgContainerId && msgContainerId !== containerId) {
+                containerId = msgContainerId;
+                sendSSE(controller, { type: 'container', containerId: msgContainerId });
+              }
+            } else if (streamEvent.type === 'content_block_start') {
+              const block = streamEvent.content_block;
+
+              if (block.type === 'thinking') {
                 // Extended thinking block starting
-              } else if (event.content_block.type === 'tool_use') {
-                currentToolUseId = event.content_block.id;
-                currentToolName = event.content_block.name;
+              } else if (block.type === 'tool_use') {
+                // Client-side tool use (our custom tools)
+                currentToolUseId = block.id || null;
+                currentToolName = block.name || null;
                 _toolInputJson = '';
                 hasToolUse = true;
-                // Will send tool_start after we have full args
+                isServerToolBlock = false;
+              } else if (block.type === 'server_tool_use') {
+                // Server-side tool use (code execution — handled by Anthropic)
+                currentServerToolName = block.name || null;
+                currentServerToolInput = '';
+                isServerToolBlock = true;
               }
-            } else if (event.type === 'content_block_delta') {
-              if (event.delta.type === 'thinking_delta') {
-                reasoningText += event.delta.thinking;
-                turnThinking += event.delta.thinking;
-                sendSSE(controller, { type: 'reasoning', text: event.delta.thinking });
-              } else if (event.delta.type === 'signature_delta') {
-                // Capture signature for thinking block (required when passing back to API)
-                turnThinkingSignature += event.delta.signature;
-              } else if (event.delta.type === 'text_delta') {
-                fullText += event.delta.text;
-                sendSSE(controller, { type: 'text', text: event.delta.text });
-              } else if (event.delta.type === 'input_json_delta') {
-                _toolInputJson += event.delta.partial_json;
+            } else if (streamEvent.type === 'content_block_delta') {
+              const delta = streamEvent.delta;
+
+              if (delta.type === 'thinking_delta') {
+                reasoningText += delta.thinking;
+                turnThinking += delta.thinking;
+                sendSSE(controller, { type: 'reasoning', text: delta.thinking });
+              } else if (delta.type === 'signature_delta') {
+                turnThinkingSignature += delta.signature;
+              } else if (delta.type === 'text_delta') {
+                fullText += delta.text;
+                sendSSE(controller, { type: 'text', text: delta.text });
+              } else if (delta.type === 'input_json_delta') {
+                if (isServerToolBlock) {
+                  currentServerToolInput += delta.partial_json;
+                } else {
+                  _toolInputJson += delta.partial_json;
+                }
               }
-            } else if (event.type === 'content_block_stop') {
-              if (currentToolUseId && currentToolName) {
-                // Parse tool input and execute tool
+            } else if (streamEvent.type === 'content_block_stop') {
+              if (isServerToolBlock && currentServerToolName) {
+                // Server tool use block completed — send code_start SSE
+                let code = '';
+                let language = 'bash';
+                try {
+                  const input = currentServerToolInput ? JSON.parse(currentServerToolInput) : {};
+                  if (
+                    currentServerToolName === 'bash_code_execution' ||
+                    currentServerToolName === 'bash'
+                  ) {
+                    code = input.command || '';
+                    language = 'bash';
+                  } else if (
+                    currentServerToolName === 'text_editor_code_execution' ||
+                    currentServerToolName === 'text_editor'
+                  ) {
+                    code = input.file_text || '';
+                    language = (input.path as string)?.split('.').pop() || 'python';
+                  }
+                } catch {
+                  // Input parsing failed — still send what we have
+                }
+
+                if (code) {
+                  sendSSE(controller, { type: 'code_start', code, language });
+                  // Track for message persistence
+                  codeExecutions.push({
+                    type: 'code-execution',
+                    code,
+                    language,
+                    stdout: '',
+                    stderr: '',
+                    exitCode: 0,
+                    state: 'running',
+                  });
+                }
+
+                currentServerToolName = null;
+                currentServerToolInput = '';
+                isServerToolBlock = false;
+              } else if (currentToolUseId && currentToolName) {
+                // Client-side tool block completed — parse and execute
                 let toolArgs: Record<string, unknown> = {};
                 try {
                   if (_toolInputJson) {
@@ -214,14 +312,12 @@ export default defineEventHandler(async (event) => {
                   continue;
                 }
 
-                // Track the tool use for message history
                 toolUses.push({
                   id: currentToolUseId,
                   name: currentToolName,
                   input: toolArgs,
                 });
 
-                // Notify client tool is starting with full args
                 sendSSE(controller, {
                   type: 'tool_start',
                   tool: currentToolName,
@@ -229,7 +325,6 @@ export default defineEventHandler(async (event) => {
                   args: toolArgs,
                 });
 
-                // Execute the tool
                 const toolResult = await executeTool(currentToolName, toolArgs, { baseUrl });
                 toolResults.push({
                   type: 'tool_result',
@@ -237,7 +332,6 @@ export default defineEventHandler(async (event) => {
                   content: JSON.stringify(toolResult),
                 });
 
-                // Notify client of tool result
                 sendSSE(controller, {
                   type: 'tool_end',
                   tool: currentToolName,
@@ -252,15 +346,93 @@ export default defineEventHandler(async (event) => {
             }
           }
 
-          // If tool was used, continue the conversation
+          // After stream completes, process the final message for code execution results
+          try {
+            const finalMessage = await streamResponse.finalMessage();
+
+            // Extract container ID from final message too
+            if (finalMessage.container?.id && finalMessage.container.id !== containerId) {
+              containerId = finalMessage.container.id;
+              sendSSE(controller, { type: 'container', containerId: finalMessage.container.id });
+            }
+
+            // Process code execution result blocks from the final message
+            const seenFileIds = new Set<string>();
+
+            for (const block of finalMessage.content) {
+              if (
+                block.type === 'bash_code_execution_tool_result' ||
+                block.type === 'text_editor_code_execution_tool_result'
+              ) {
+                const result = block.content;
+                const stdout = result?.stdout || '';
+                const stderr = result?.stderr || '';
+                const exitCode = result?.return_code ?? 0;
+
+                // Collect files from this result block
+                const resultFiles: FilePart[] = [];
+                if (Array.isArray(result?.content)) {
+                  for (const item of result.content) {
+                    if (item.file_id && !seenFileIds.has(item.file_id)) {
+                      seenFileIds.add(item.file_id);
+                      let fileName = 'output';
+                      let mediaType = 'application/octet-stream';
+                      try {
+                        const meta = await betaClient.beta.files.retrieveMetadata(item.file_id, {
+                          betas: ['files-api-2025-04-14'],
+                        });
+                        fileName = meta.filename || fileName;
+                        mediaType = meta.mime_type || mediaType;
+                      } catch (e) {
+                        console.warn(
+                          `[chat] Failed to fetch file metadata for ${item.file_id}:`,
+                          e,
+                        );
+                      }
+
+                      const filePart: FilePart = {
+                        type: 'file',
+                        fileId: item.file_id,
+                        fileName,
+                        mediaType,
+                        url: `/api/artifacts/files/${item.file_id}`,
+                      };
+                      resultFiles.push(filePart);
+                      fileParts.push(filePart);
+                    }
+                  }
+                }
+
+                // Update the last running code execution with results
+                const lastRunning = codeExecutions.findLast((ce) => ce.state === 'running');
+                if (lastRunning) {
+                  lastRunning.stdout = stdout;
+                  lastRunning.stderr = stderr;
+                  lastRunning.exitCode = exitCode;
+                  lastRunning.state = 'done';
+                }
+
+                sendSSE(controller, {
+                  type: 'code_result',
+                  stdout,
+                  stderr,
+                  exitCode,
+                  files: resultFiles,
+                });
+              }
+            }
+          } catch (e) {
+            // finalMessage() may fail if the stream was incomplete — log and continue
+            console.warn('[chat] Failed to process final message:', e);
+          }
+
+          // If client-side tool was used, continue the conversation
           if (hasToolUse && toolResults.length > 0) {
-            // Add assistant's response to messages - must include thinking block with signature when extended thinking is enabled
             const assistantContent: Array<
               | { type: 'thinking'; thinking: string; signature: string }
               | { type: 'text'; text: string }
               | { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> }
             > = [];
-            // Thinking must come first in the content array (with signature for API verification)
             if (turnThinking && turnThinkingSignature) {
               assistantContent.push({
                 type: 'thinking',
@@ -271,7 +443,6 @@ export default defineEventHandler(async (event) => {
             if (fullText) {
               assistantContent.push({ type: 'text', text: fullText });
             }
-            // Add actual tool uses with correct names and inputs
             for (const toolUse of toolUses) {
               assistantContent.push({
                 type: 'tool_use',
@@ -296,15 +467,28 @@ export default defineEventHandler(async (event) => {
             // Reset for next turn
             fullText = '';
           } else {
-            // No tool use, we're done
+            // No client-side tool use, we're done
             break;
           }
+        }
+
+        // Save container ID for reuse in future turns
+        if (containerId && containerId !== chat.containerId) {
+          await db.update(tables.chats).set({ containerId }).where(eq(tables.chats.id, chat.id));
         }
 
         // Save assistant message to database
         const messageParts: MessagePart[] = [];
         if (reasoningText) {
           messageParts.push({ type: 'reasoning', text: reasoningText, state: 'done' });
+        }
+        // Add code execution parts
+        for (const ce of codeExecutions) {
+          messageParts.push(ce);
+        }
+        // Add file parts
+        for (const fp of fileParts) {
+          messageParts.push(fp);
         }
         if (fullText) {
           messageParts.push({ type: 'text', text: fullText });

@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import type { DefineComponent } from 'vue';
 import { useClipboard } from '@vueuse/core';
-import type { ChatMessage, ToolUsePart, ToolResultPart } from '~~/shared/chat-types';
+import type {
+  ChatMessage,
+  CodeExecutionPart,
+  FilePart,
+  ToolUsePart,
+  ToolResultPart,
+} from '~~/shared/chat-types';
 import ProsePre from '../../components/prose/ProsePre.vue';
 
 definePageMeta({
@@ -155,6 +161,11 @@ onMounted(() => {
                   :tool-use="part"
                   :tool-result="getToolResult(message, part)"
                 />
+                <ChatCodeExecution
+                  v-else-if="part.type === 'code-execution'"
+                  :execution="part as CodeExecutionPart"
+                />
+                <ChatFile v-else-if="part.type === 'file'" :file="part as FilePart" />
                 <MDCCached
                   v-else-if="part.type === 'text'"
                   :value="part.text"

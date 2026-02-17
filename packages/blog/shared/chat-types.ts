@@ -29,7 +29,31 @@ export interface ToolResultPart {
   result: unknown;
 }
 
-export type MessagePart = TextPart | ReasoningPart | ToolUsePart | ToolResultPart;
+export interface CodeExecutionPart {
+  type: 'code-execution';
+  code: string;
+  language: string;
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+  state: 'running' | 'done';
+}
+
+export interface FilePart {
+  type: 'file';
+  fileId: string;
+  fileName: string;
+  mediaType: string;
+  url: string;
+}
+
+export type MessagePart =
+  | TextPart
+  | ReasoningPart
+  | ToolUsePart
+  | ToolResultPart
+  | CodeExecutionPart
+  | FilePart;
 
 export interface ChatMessage {
   id: string;
@@ -88,6 +112,25 @@ export interface SSEToolEndEvent {
   result: unknown;
 }
 
+export interface SSECodeStartEvent {
+  type: 'code_start';
+  code: string;
+  language: string;
+}
+
+export interface SSECodeResultEvent {
+  type: 'code_result';
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+  files: FilePart[];
+}
+
+export interface SSEContainerEvent {
+  type: 'container';
+  containerId: string;
+}
+
 export type SSEEvent =
   | SSETextEvent
   | SSEReasoningEvent
@@ -95,4 +138,7 @@ export type SSEEvent =
   | SSEErrorEvent
   | SSETitleEvent
   | SSEToolStartEvent
-  | SSEToolEndEvent;
+  | SSEToolEndEvent
+  | SSECodeStartEvent
+  | SSECodeResultEvent
+  | SSEContainerEvent;

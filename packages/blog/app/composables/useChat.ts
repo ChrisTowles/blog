@@ -1,6 +1,8 @@
 import type {
   ChatMessage,
   ChatStatus,
+  CodeExecutionPart,
+  FilePart,
   MessagePart,
   SSEEvent,
   ToolUsePart,
@@ -21,6 +23,16 @@ interface ToolInvocation {
   args: Record<string, unknown>;
   state: 'pending' | 'complete';
   result?: unknown;
+}
+
+interface CodeExecution {
+  code: string;
+  language: string;
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+  state: 'running' | 'done';
+  files: FilePart[];
 }
 
 export function useChat(options: UseChatOptions) {
@@ -82,6 +94,7 @@ export function useChat(options: UseChatOptions) {
         state: 'streaming' | 'done';
       } | null = null;
       const toolInvocations: ToolInvocation[] = [];
+      const codeExecutions: CodeExecution[] = [];
 
       while (true) {
         const { done, value } = await reader.read();
@@ -109,6 +122,7 @@ export function useChat(options: UseChatOptions) {
                   currentReasoningPart,
                   currentTextPart,
                   toolInvocations,
+                  codeExecutions,
                 );
               } else if (event.type === 'reasoning') {
                 if (!currentReasoningPart) {
@@ -122,6 +136,7 @@ export function useChat(options: UseChatOptions) {
                   currentReasoningPart,
                   currentTextPart,
                   toolInvocations,
+                  codeExecutions,
                 );
               } else if (event.type === 'tool_start') {
                 toolInvocations.push({
@@ -135,6 +150,7 @@ export function useChat(options: UseChatOptions) {
                   currentReasoningPart,
                   currentTextPart,
                   toolInvocations,
+                  codeExecutions,
                 );
               } else if (event.type === 'tool_end') {
                 const invocation = toolInvocations.find((t) => t.toolCallId === event.toolCallId);
@@ -147,7 +163,43 @@ export function useChat(options: UseChatOptions) {
                   currentReasoningPart,
                   currentTextPart,
                   toolInvocations,
+                  codeExecutions,
                 );
+              } else if (event.type === 'code_start') {
+                codeExecutions.push({
+                  code: event.code,
+                  language: event.language,
+                  stdout: '',
+                  stderr: '',
+                  exitCode: 0,
+                  state: 'running',
+                  files: [],
+                });
+                updateAssistantMessage(
+                  assistantMessageId,
+                  currentReasoningPart,
+                  currentTextPart,
+                  toolInvocations,
+                  codeExecutions,
+                );
+              } else if (event.type === 'code_result') {
+                const lastExecution = codeExecutions[codeExecutions.length - 1];
+                if (lastExecution) {
+                  lastExecution.stdout = event.stdout;
+                  lastExecution.stderr = event.stderr;
+                  lastExecution.exitCode = event.exitCode;
+                  lastExecution.state = 'done';
+                  lastExecution.files = event.files;
+                }
+                updateAssistantMessage(
+                  assistantMessageId,
+                  currentReasoningPart,
+                  currentTextPart,
+                  toolInvocations,
+                  codeExecutions,
+                );
+              } else if (event.type === 'container') {
+                // Container ID received — stored server-side, no client action needed
               } else if (event.type === 'title') {
                 options.onTitleUpdate?.();
               } else if (event.type === 'done') {
@@ -159,6 +211,7 @@ export function useChat(options: UseChatOptions) {
                   currentReasoningPart,
                   currentTextPart,
                   toolInvocations,
+                  codeExecutions,
                 );
               } else if (event.type === 'error') {
                 throw new Error(event.error);
@@ -190,6 +243,7 @@ export function useChat(options: UseChatOptions) {
     reasoning: { type: 'reasoning'; text: string; state: 'streaming' | 'done' } | null,
     text: { type: 'text'; text: string } | null,
     tools: ToolInvocation[] = [],
+    executions: CodeExecution[] = [],
   ) {
     const parts: MessagePart[] = [];
     if (reasoning) parts.push(reasoning);
@@ -211,6 +265,25 @@ export function useChat(options: UseChatOptions) {
           result: tool.result,
         };
         parts.push(toolResultPart);
+      }
+    }
+
+    // Add code execution parts
+    for (const exec of executions) {
+      const cePart: CodeExecutionPart = {
+        type: 'code-execution',
+        code: exec.code,
+        language: exec.language,
+        stdout: exec.stdout,
+        stderr: exec.stderr,
+        exitCode: exec.exitCode,
+        state: exec.state,
+      };
+      parts.push(cePart);
+
+      // Add file parts from this execution
+      for (const file of exec.files) {
+        parts.push(file);
       }
     }
 
