@@ -41,10 +41,9 @@ export function useChat(options: UseChatOptions) {
   const error = ref<Error | null>(null);
   const abortController = ref<AbortController | null>(null);
 
-  async function sendMessage(text: string) {
+  async function sendMessage(text: string): Promise<void> {
     if (status.value === 'streaming') return;
 
-    // Add user message
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
@@ -52,14 +51,8 @@ export function useChat(options: UseChatOptions) {
     };
     messages.value = [...messages.value, userMessage];
 
-    // Add placeholder assistant message
     const assistantMessageId = crypto.randomUUID();
-    const assistantMessage: ChatMessage = {
-      id: assistantMessageId,
-      role: 'assistant',
-      parts: [],
-    };
-    messages.value = [...messages.value, assistantMessage];
+    messages.value = [...messages.value, { id: assistantMessageId, role: 'assistant', parts: [] }];
 
     status.value = 'streaming';
     error.value = null;
@@ -106,119 +99,78 @@ export function useChat(options: UseChatOptions) {
         buffer = lines.pop() || '';
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const event: SSEEvent = JSON.parse(line.slice(6));
+          if (!line.startsWith('data: ')) continue;
 
-              if (event.type === 'text') {
-                if (!currentTextPart) {
-                  currentTextPart = { type: 'text', text: '' };
-                }
-                currentTextPart.text += event.text;
+          try {
+            const event: SSEEvent = JSON.parse(line.slice(6));
+            let shouldUpdateMessage = true;
 
-                // Update message parts
-                updateAssistantMessage(
-                  assistantMessageId,
-                  currentReasoningPart,
-                  currentTextPart,
-                  toolInvocations,
-                  codeExecutions,
-                );
-              } else if (event.type === 'reasoning') {
-                if (!currentReasoningPart) {
-                  currentReasoningPart = { type: 'reasoning', text: '', state: 'streaming' };
-                }
-                currentReasoningPart.text += event.text;
-
-                // Update message parts
-                updateAssistantMessage(
-                  assistantMessageId,
-                  currentReasoningPart,
-                  currentTextPart,
-                  toolInvocations,
-                  codeExecutions,
-                );
-              } else if (event.type === 'tool_start') {
-                toolInvocations.push({
-                  toolCallId: event.toolCallId,
-                  toolName: event.tool,
-                  args: event.args,
-                  state: 'pending',
-                });
-                updateAssistantMessage(
-                  assistantMessageId,
-                  currentReasoningPart,
-                  currentTextPart,
-                  toolInvocations,
-                  codeExecutions,
-                );
-              } else if (event.type === 'tool_end') {
-                const invocation = toolInvocations.find((t) => t.toolCallId === event.toolCallId);
-                if (invocation) {
-                  invocation.state = 'complete';
-                  invocation.result = event.result;
-                }
-                updateAssistantMessage(
-                  assistantMessageId,
-                  currentReasoningPart,
-                  currentTextPart,
-                  toolInvocations,
-                  codeExecutions,
-                );
-              } else if (event.type === 'code_start') {
-                codeExecutions.push({
-                  code: event.code,
-                  language: event.language,
-                  stdout: '',
-                  stderr: '',
-                  exitCode: 0,
-                  state: 'running',
-                  files: [],
-                });
-                updateAssistantMessage(
-                  assistantMessageId,
-                  currentReasoningPart,
-                  currentTextPart,
-                  toolInvocations,
-                  codeExecutions,
-                );
-              } else if (event.type === 'code_result') {
-                const lastExecution = codeExecutions[codeExecutions.length - 1];
-                if (lastExecution) {
-                  lastExecution.stdout = event.stdout;
-                  lastExecution.stderr = event.stderr;
-                  lastExecution.exitCode = event.exitCode;
-                  lastExecution.state = 'done';
-                  lastExecution.files = event.files;
-                }
-                updateAssistantMessage(
-                  assistantMessageId,
-                  currentReasoningPart,
-                  currentTextPart,
-                  toolInvocations,
-                  codeExecutions,
-                );
-              } else if (event.type === 'container') {
-                // Container ID received — stored server-side, no client action needed
-              } else if (event.type === 'title') {
-                options.onTitleUpdate?.();
-              } else if (event.type === 'done') {
-                if (currentReasoningPart) {
-                  currentReasoningPart.state = 'done';
-                }
-                updateAssistantMessage(
-                  assistantMessageId,
-                  currentReasoningPart,
-                  currentTextPart,
-                  toolInvocations,
-                  codeExecutions,
-                );
-              } else if (event.type === 'error') {
-                throw new Error(event.error);
+            if (event.type === 'text') {
+              if (!currentTextPart) {
+                currentTextPart = { type: 'text', text: '' };
               }
-            } catch (e) {
-              console.error('Error parsing SSE event:', e, line);
+              currentTextPart.text += event.text;
+            } else if (event.type === 'reasoning') {
+              if (!currentReasoningPart) {
+                currentReasoningPart = { type: 'reasoning', text: '', state: 'streaming' };
+              }
+              currentReasoningPart.text += event.text;
+            } else if (event.type === 'tool_start') {
+              toolInvocations.push({
+                toolCallId: event.toolCallId,
+                toolName: event.tool,
+                args: event.args,
+                state: 'pending',
+              });
+            } else if (event.type === 'tool_end') {
+              const invocation = toolInvocations.find((t) => t.toolCallId === event.toolCallId);
+              if (invocation) {
+                invocation.state = 'complete';
+                invocation.result = event.result;
+              }
+            } else if (event.type === 'code_start') {
+              codeExecutions.push({
+                code: event.code,
+                language: event.language,
+                stdout: '',
+                stderr: '',
+                exitCode: 0,
+                state: 'running',
+                files: [],
+              });
+            } else if (event.type === 'code_result') {
+              const lastExecution = codeExecutions[codeExecutions.length - 1];
+              if (lastExecution) {
+                lastExecution.stdout = event.stdout;
+                lastExecution.stderr = event.stderr;
+                lastExecution.exitCode = event.exitCode;
+                lastExecution.state = 'done';
+                lastExecution.files = event.files;
+              }
+            } else if (event.type === 'done') {
+              if (currentReasoningPart) {
+                currentReasoningPart.state = 'done';
+              }
+            } else if (event.type === 'title') {
+              options.onTitleUpdate?.();
+              shouldUpdateMessage = false;
+            } else if (event.type === 'container') {
+              shouldUpdateMessage = false;
+            } else if (event.type === 'error') {
+              throw new Error(event.error);
             }
+
+            if (shouldUpdateMessage) {
+              updateAssistantMessage(
+                assistantMessageId,
+                currentReasoningPart,
+                currentTextPart,
+                toolInvocations,
+                codeExecutions,
+              );
+            }
+          } catch (e) {
+            console.error('Error parsing SSE event:', e, line);
           }
         }
       }
@@ -242,35 +194,31 @@ export function useChat(options: UseChatOptions) {
     messageId: string,
     reasoning: { type: 'reasoning'; text: string; state: 'streaming' | 'done' } | null,
     text: { type: 'text'; text: string } | null,
-    tools: ToolInvocation[] = [],
-    executions: CodeExecution[] = [],
-  ) {
+    tools: ToolInvocation[],
+    executions: CodeExecution[],
+  ): void {
     const parts: MessagePart[] = [];
     if (reasoning) parts.push(reasoning);
 
-    // Add tool use and result parts
     for (const tool of tools) {
-      const toolUsePart: ToolUsePart = {
+      parts.push({
         type: 'tool-use',
         toolName: tool.toolName,
         toolCallId: tool.toolCallId,
         args: tool.args,
-      };
-      parts.push(toolUsePart);
+      } satisfies ToolUsePart);
 
       if (tool.state === 'complete' && tool.result !== undefined) {
-        const toolResultPart: ToolResultPart = {
+        parts.push({
           type: 'tool-result',
           toolCallId: tool.toolCallId,
           result: tool.result,
-        };
-        parts.push(toolResultPart);
+        } satisfies ToolResultPart);
       }
     }
 
-    // Add code execution parts
     for (const exec of executions) {
-      const cePart: CodeExecutionPart = {
+      parts.push({
         type: 'code-execution',
         code: exec.code,
         language: exec.language,
@@ -278,43 +226,30 @@ export function useChat(options: UseChatOptions) {
         stderr: exec.stderr,
         exitCode: exec.exitCode,
         state: exec.state,
-      };
-      parts.push(cePart);
-
-      // Add file parts from this execution
-      for (const file of exec.files) {
-        parts.push(file);
-      }
+      } satisfies CodeExecutionPart);
+      parts.push(...exec.files);
     }
 
     if (text) parts.push(text);
 
-    messages.value = messages.value.map((msg) => {
-      if (msg.id === messageId) {
-        return { ...msg, parts };
-      }
-      return msg;
-    });
+    messages.value = messages.value.map((msg) => (msg.id === messageId ? { ...msg, parts } : msg));
   }
 
-  function stop() {
+  function stop(): void {
     abortController.value?.abort();
     status.value = 'ready';
   }
 
-  async function regenerate() {
+  async function regenerate(): Promise<void> {
     if (messages.value.length === 0) return;
 
-    // If last message is from assistant, remove it
     if (messages.value[messages.value.length - 1]?.role === 'assistant') {
       messages.value = messages.value.slice(0, -1);
     }
 
-    // Get the last user message
     const lastUserMsg = messages.value.findLast((m) => m.role === 'user');
     if (!lastUserMsg) return;
 
-    // Remove the last user message and re-send it
     messages.value = messages.value.slice(0, -1);
     const textPart = lastUserMsg.parts.find((p) => p.type === 'text');
     if (textPart && 'text' in textPart) {

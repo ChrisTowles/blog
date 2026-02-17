@@ -5,11 +5,7 @@ const props = defineProps<{
   file: FilePart;
 }>();
 
-function isImage(): boolean {
-  return props.file.mediaType.startsWith('image/');
-}
-
-const fileTypeIcons: Record<string, string> = {
+const FILE_TYPE_ICONS: Record<string, string> = {
   'application/pdf': 'i-lucide-file-text',
   'application/vnd.openxmlformats-officedocument.presentationml.presentation':
     'i-lucide-presentation',
@@ -17,15 +13,13 @@ const fileTypeIcons: Record<string, string> = {
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'i-lucide-file-text',
 };
 
-function getIcon(): string {
-  return fileTypeIcons[props.file.mediaType] || 'i-lucide-file';
-}
+const isImage = computed(() => props.file.mediaType.startsWith('image/'));
+const icon = computed(() => FILE_TYPE_ICONS[props.file.mediaType] || 'i-lucide-file');
 </script>
 
 <template>
   <div class="my-2">
-    <!-- Image preview -->
-    <div v-if="isImage()" class="rounded-md overflow-hidden border border-zinc-700">
+    <div v-if="isImage" class="rounded-md overflow-hidden border border-zinc-700">
       <img :src="file.url" :alt="file.fileName" class="w-full" loading="lazy" />
       <div class="flex items-center justify-between px-3 py-1.5 bg-zinc-900 text-xs text-zinc-500">
         <span>{{ file.fileName }}</span>
@@ -35,9 +29,8 @@ function getIcon(): string {
       </div>
     </div>
 
-    <!-- Document download -->
     <div v-else class="flex items-center gap-3 rounded-md border border-zinc-700 bg-zinc-900 p-3">
-      <UIcon :name="getIcon()" class="size-5 text-sky-400 shrink-0" />
+      <UIcon :name="icon" class="size-5 text-sky-400 shrink-0" />
       <div class="flex-1 min-w-0">
         <div class="text-sm text-zinc-200 truncate">{{ file.fileName }}</div>
         <div class="text-xs text-zinc-500">{{ file.mediaType }}</div>

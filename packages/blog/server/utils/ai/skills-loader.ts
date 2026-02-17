@@ -17,15 +17,16 @@ let cachedSkills: CustomSkill[] | null = null;
 export function loadCustomSkills(): CustomSkill[] {
   if (cachedSkills) return cachedSkills;
 
-  const skills: CustomSkill[] = [];
   const skillsDir = join(getProjectRoot(), '.claude', 'skills');
 
   if (!existsSync(skillsDir)) {
-    cachedSkills = skills;
-    return skills;
+    cachedSkills = [];
+    return cachedSkills;
   }
 
   const entries = readdirSync(skillsDir, { withFileTypes: true });
+  const skills: CustomSkill[] = [];
+
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
 
@@ -33,14 +34,9 @@ export function loadCustomSkills(): CustomSkill[] {
     if (!existsSync(skillFile)) continue;
 
     try {
-      const content = readFileSync(skillFile, 'utf-8');
-      const parsed = parseFrontmatter(content);
+      const parsed = parseFrontmatter(readFileSync(skillFile, 'utf-8'));
       if (parsed.name && parsed.description) {
-        skills.push({
-          name: parsed.name,
-          description: parsed.description,
-          body: parsed.body,
-        });
+        skills.push(parsed);
       }
     } catch (e) {
       console.warn(`[skills-loader] Failed to parse ${skillFile}:`, e);
@@ -48,7 +44,7 @@ export function loadCustomSkills(): CustomSkill[] {
   }
 
   cachedSkills = skills;
-  return skills;
+  return cachedSkills;
 }
 
 /**
@@ -82,25 +78,28 @@ export function getSkillsForAPI(): Array<{
  * Get a system prompt snippet describing available skills.
  */
 export function getSkillsSystemPrompt(): string {
+  const lines = [
+    '**CAPABILITIES:**',
+    'You have code execution in a sandboxed container. You can:',
+    '- Generate PDF, PPTX, XLSX, DOCX documents',
+    '- Execute Python code for data analysis and visualization',
+    '- Create charts, diagrams, and data exports',
+  ];
+
   const skills = loadCustomSkills();
-  const skillList = skills.map((s) => `- ${s.name}: ${s.description}`).join('\n');
+  if (skills.length > 0) {
+    lines.push('');
+    lines.push('Custom skills available:');
+    for (const s of skills) {
+      lines.push(`- ${s.name}: ${s.description}`);
+    }
+  }
 
-  return `
-**CAPABILITIES:**
-You have code execution in a sandboxed container. You can:
-- Generate PDF, PPTX, XLSX, DOCX documents
-- Execute Python code for data analysis and visualization
-- Create charts, diagrams, and data exports
-
-${skillList ? `Custom skills available:\n${skillList}` : ''}`.trim();
+  return lines.join('\n');
 }
 
 /** Simple YAML frontmatter parser for SKILL.md files */
-function parseFrontmatter(content: string): {
-  name: string;
-  description: string;
-  body: string;
-} {
+function parseFrontmatter(content: string): CustomSkill {
   const match = content.match(/^---\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/);
   if (!match) return { name: '', description: '', body: content };
 

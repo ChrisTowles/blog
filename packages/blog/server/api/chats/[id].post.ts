@@ -49,8 +49,33 @@ function convertToAnthropicMessages(messages: ChatMessage[]): MessageParam[] {
 
 const encoder = new TextEncoder();
 
-function sendSSE(controller: ReadableStreamDefaultController, event: SSEEvent) {
+function sendSSE(controller: ReadableStreamDefaultController, event: SSEEvent): void {
   controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+}
+
+async function resolveFileMetadata(
+  betaClient: AnthropicBetaClient,
+  fileId: string,
+): Promise<FilePart> {
+  let fileName = 'output';
+  let mediaType = 'application/octet-stream';
+  try {
+    const meta = await betaClient.beta.files.retrieveMetadata(fileId, {
+      betas: ['files-api-2025-04-14'],
+    });
+    fileName = meta.filename || fileName;
+    mediaType = meta.mime_type || mediaType;
+  } catch (e) {
+    console.warn(`[chat] Failed to fetch file metadata for ${fileId}:`, e);
+  }
+
+  return {
+    type: 'file',
+    fileId,
+    fileName,
+    mediaType,
+    url: `/api/artifacts/files/${fileId}`,
+  };
 }
 
 export default defineEventHandler(async (event) => {
@@ -122,17 +147,14 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // Derive base URL from request before entering the stream callback
-  // (where `event` gets shadowed by Anthropic SDK streaming events)
+  // Hoist base URL before stream callback (where `event` gets shadowed)
   const requestUrl = getRequestURL(event);
   const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
 
-  // Load skills config for container
   const skills = getSkillsForAPI();
   const skillsPrompt = getSkillsSystemPrompt();
   const fullSystemPrompt = `${SYSTEM_PROMPT}\n\n${skillsPrompt}`;
 
-  // Create SSE stream
   const stream = new ReadableStream({
     async start(controller) {
       try {
@@ -149,18 +171,15 @@ export default defineEventHandler(async (event) => {
         const messageId = crypto.randomUUID();
         let currentToolUseId: string | null = null;
         let currentToolName: string | null = null;
-        let _toolInputJson = '';
-        // Track server-side tool use blocks (code execution)
+        let toolInputJson = '';
         let currentServerToolName: string | null = null;
         let currentServerToolInput = '';
         let isServerToolBlock = false;
 
-        // Track code executions and files for message persistence
         const codeExecutions: CodeExecutionPart[] = [];
         const fileParts: FilePart[] = [];
         const seenFileIds = new Set<string>();
 
-        // Run up to 5 turns for tool use
         let turnCount = 0;
         const maxTurns = 5;
         let currentMessages = [...anthropicMessages];
@@ -178,9 +197,7 @@ export default defineEventHandler(async (event) => {
             messages: currentMessages,
             betas: ['code-execution-2025-08-25', 'files-api-2025-04-14', 'skills-2025-10-02'],
             tools: [
-              // Client-side tools (we execute these)
               ...chatTools,
-              // Server-side code execution tool (Anthropic executes this)
               {
                 type: 'code_execution_20250825',
                 name: 'code_execution',
@@ -204,7 +221,6 @@ export default defineEventHandler(async (event) => {
 
           for await (const streamEvent of streamResponse as AsyncIterable<BetaStreamEvent>) {
             if (streamEvent.type === 'message_start') {
-              // Extract container ID from message_start for reuse
               const msgContainerId = streamEvent.message?.container?.id;
               if (msgContainerId && msgContainerId !== containerId) {
                 containerId = msgContainerId;
@@ -213,17 +229,13 @@ export default defineEventHandler(async (event) => {
             } else if (streamEvent.type === 'content_block_start') {
               const block = streamEvent.content_block;
 
-              if (block.type === 'thinking') {
-                // Extended thinking block starting
-              } else if (block.type === 'tool_use') {
-                // Client-side tool use (our custom tools)
+              if (block.type === 'tool_use') {
                 currentToolUseId = block.id || null;
                 currentToolName = block.name || null;
-                _toolInputJson = '';
+                toolInputJson = '';
                 hasToolUse = true;
                 isServerToolBlock = false;
               } else if (block.type === 'server_tool_use') {
-                // Server-side tool use (code execution — handled by Anthropic)
                 currentServerToolName = block.name || null;
                 currentServerToolInput = '';
                 isServerToolBlock = true;
@@ -231,47 +243,23 @@ export default defineEventHandler(async (event) => {
                 block.type === 'bash_code_execution_tool_result' ||
                 block.type === 'text_editor_code_execution_tool_result'
               ) {
-                // Code execution result — process inline for fast UI update
                 const result = block.content;
                 const stdout = result?.stdout || '';
                 const stderr = result?.stderr || '';
                 const exitCode = result?.return_code ?? 0;
 
-                // Collect files from this result block
                 const resultFiles: FilePart[] = [];
                 if (Array.isArray(result?.content)) {
                   for (const item of result.content) {
                     if (item.file_id && !seenFileIds.has(item.file_id)) {
                       seenFileIds.add(item.file_id);
-                      let fileName = 'output';
-                      let mediaType = 'application/octet-stream';
-                      try {
-                        const meta = await betaClient.beta.files.retrieveMetadata(item.file_id, {
-                          betas: ['files-api-2025-04-14'],
-                        });
-                        fileName = meta.filename || fileName;
-                        mediaType = meta.mime_type || mediaType;
-                      } catch (e) {
-                        console.warn(
-                          `[chat] Failed to fetch file metadata for ${item.file_id}:`,
-                          e,
-                        );
-                      }
-
-                      const filePart: FilePart = {
-                        type: 'file',
-                        fileId: item.file_id,
-                        fileName,
-                        mediaType,
-                        url: `/api/artifacts/files/${item.file_id}`,
-                      };
+                      const filePart = await resolveFileMetadata(betaClient, item.file_id);
                       resultFiles.push(filePart);
                       fileParts.push(filePart);
                     }
                   }
                 }
 
-                // Update the last running code execution with results
                 const lastRunning = codeExecutions.findLast((ce) => ce.state === 'running');
                 if (lastRunning) {
                   lastRunning.stdout = stdout;
@@ -304,12 +292,11 @@ export default defineEventHandler(async (event) => {
                 if (isServerToolBlock) {
                   currentServerToolInput += delta.partial_json;
                 } else {
-                  _toolInputJson += delta.partial_json;
+                  toolInputJson += delta.partial_json;
                 }
               }
             } else if (streamEvent.type === 'content_block_stop') {
               if (isServerToolBlock && currentServerToolName) {
-                // Server tool use block completed — send code_start SSE
                 let code = '';
                 let language = 'bash';
                 try {
@@ -333,7 +320,6 @@ export default defineEventHandler(async (event) => {
 
                 if (code) {
                   sendSSE(controller, { type: 'code_start', code, language });
-                  // Track for message persistence
                   codeExecutions.push({
                     type: 'code-execution',
                     code,
@@ -349,17 +335,16 @@ export default defineEventHandler(async (event) => {
                 currentServerToolInput = '';
                 isServerToolBlock = false;
               } else if (currentToolUseId && currentToolName) {
-                // Client-side tool block completed — parse and execute
                 let toolArgs: Record<string, unknown> = {};
                 try {
-                  if (_toolInputJson) {
-                    toolArgs = JSON.parse(_toolInputJson);
+                  if (toolInputJson) {
+                    toolArgs = JSON.parse(toolInputJson);
                   }
                 } catch (parseError) {
                   console.error('Failed to parse tool input JSON:', {
                     toolName: currentToolName,
                     toolUseId: currentToolUseId,
-                    rawInput: _toolInputJson?.substring(0, 200),
+                    rawInput: toolInputJson?.substring(0, 200),
                     error: parseError,
                   });
                   toolResults.push({
@@ -369,7 +354,7 @@ export default defineEventHandler(async (event) => {
                   });
                   currentToolUseId = null;
                   currentToolName = null;
-                  _toolInputJson = '';
+                  toolInputJson = '';
                   continue;
                 }
 
@@ -402,12 +387,11 @@ export default defineEventHandler(async (event) => {
 
                 currentToolUseId = null;
                 currentToolName = null;
-                _toolInputJson = '';
+                toolInputJson = '';
               }
             }
           }
 
-          // After stream completes, extract container ID from final message
           try {
             const finalMessage = await streamResponse.finalMessage();
             if (finalMessage.container?.id && finalMessage.container.id !== containerId) {
@@ -419,73 +403,60 @@ export default defineEventHandler(async (event) => {
             console.warn('[chat] Failed to process final message:', e);
           }
 
-          // If client-side tool was used, continue the conversation
-          if (hasToolUse && toolResults.length > 0) {
-            const assistantContent: Array<
-              | { type: 'thinking'; thinking: string; signature: string }
-              | { type: 'text'; text: string }
-              | { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> }
-            > = [];
-            if (turnThinking && turnThinkingSignature) {
-              assistantContent.push({
-                type: 'thinking',
-                thinking: turnThinking,
-                signature: turnThinkingSignature,
-              });
-            }
-            if (fullText) {
-              assistantContent.push({ type: 'text', text: fullText });
-            }
-            for (const toolUse of toolUses) {
-              assistantContent.push({
-                type: 'tool_use',
-                id: toolUse.id,
-                name: toolUse.name,
-                input: toolUse.input,
-              });
-            }
-
-            currentMessages = [
-              ...currentMessages,
-              {
-                role: 'assistant' as const,
-                content:
-                  assistantContent.length > 0
-                    ? assistantContent
-                    : [{ type: 'text' as const, text: ' ' }],
-              },
-              { role: 'user' as const, content: toolResults },
-            ];
-
-            // Reset for next turn
-            fullText = '';
-          } else {
-            // No client-side tool use, we're done
+          if (!hasToolUse || toolResults.length === 0) {
             break;
           }
+
+          const assistantContent: Array<
+            | { type: 'thinking'; thinking: string; signature: string }
+            | { type: 'text'; text: string }
+            | { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> }
+          > = [
+            ...(turnThinking && turnThinkingSignature
+              ? [
+                  {
+                    type: 'thinking' as const,
+                    thinking: turnThinking,
+                    signature: turnThinkingSignature,
+                  },
+                ]
+              : []),
+            ...(fullText ? [{ type: 'text' as const, text: fullText }] : []),
+            ...toolUses.map((t) => ({
+              type: 'tool_use' as const,
+              id: t.id,
+              name: t.name,
+              input: t.input,
+            })),
+          ];
+
+          currentMessages = [
+            ...currentMessages,
+            {
+              role: 'assistant' as const,
+              content:
+                assistantContent.length > 0
+                  ? assistantContent
+                  : [{ type: 'text' as const, text: ' ' }],
+            },
+            { role: 'user' as const, content: toolResults },
+          ];
+
+          fullText = '';
         }
 
-        // Save container ID for reuse in future turns
         if (containerId && containerId !== chat.containerId) {
           await db.update(tables.chats).set({ containerId }).where(eq(tables.chats.id, chat.id));
         }
 
-        // Save assistant message to database
-        const messageParts: MessagePart[] = [];
-        if (reasoningText) {
-          messageParts.push({ type: 'reasoning', text: reasoningText, state: 'done' });
-        }
-        // Add code execution parts
-        for (const ce of codeExecutions) {
-          messageParts.push(ce);
-        }
-        // Add file parts
-        for (const fp of fileParts) {
-          messageParts.push(fp);
-        }
-        if (fullText) {
-          messageParts.push({ type: 'text', text: fullText });
-        }
+        const messageParts: MessagePart[] = [
+          ...(reasoningText
+            ? [{ type: 'reasoning' as const, text: reasoningText, state: 'done' as const }]
+            : []),
+          ...codeExecutions,
+          ...fileParts,
+          ...(fullText ? [{ type: 'text' as const, text: fullText }] : []),
+        ];
 
         await db.insert(tables.messages).values({
           chatId: chat.id,
