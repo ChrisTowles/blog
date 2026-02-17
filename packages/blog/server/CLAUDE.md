@@ -74,6 +74,7 @@ UUID primary keys generated via `crypto.randomUUID()`. All tables have `createdA
 ### Custom SQL Migrations
 
 Drizzle can't express `tsvector` columns, triggers, or GIN indexes. For these:
+
 1. Create SQL file manually in `database/migrations/` (e.g. `0002_fix_name.sql`)
 2. Add entry to `meta/_journal.json` with next `idx`
 3. Copy previous snapshot as new `meta/NNNN_snapshot.json` (update `id`/`prevId` UUIDs)
