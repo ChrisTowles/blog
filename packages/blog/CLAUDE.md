@@ -187,3 +187,4 @@ Test files live next to source: `foo.ts` → `foo.test.ts`
 - **Syntax highlighting** — use `useHighlighter()` composable with `material-theme-palenight` theme (Shiki).
 - **Model config** — use `useRuntimeConfig().public.model` instead of hardcoding model strings.
 - **Debugging beta APIs** — beta client methods cast via `AnthropicBetaClient` can silently fail in try/catch. Check `tail /tmp/nuxt-dev.log | grep -i warn` for swallowed errors.
+- **Dev server startup** — always use `pnpm dev` from repo root (runs `docker:up`, `db:migrate`, `kill-port`). Using `pnpm --filter @chris-towles/blog dev` skips those steps and can leave stale servers on other ports.

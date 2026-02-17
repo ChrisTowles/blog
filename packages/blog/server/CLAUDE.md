@@ -52,6 +52,7 @@ Both chat and artifacts use Anthropic beta APIs. Chat uses `beta.messages.stream
 - `tool_use` blocks are client-side (our tools like weather, dice) — execute locally and loop
 - `bash_code_execution_tool_result` / `text_editor_code_execution_tool_result` content blocks for stdout/stderr
 - Code execution results (`*_tool_result` blocks) are processed inline during streaming via `content_block_start` for fast UI updates
+- `content_block_start` for `*_tool_result` blocks contains full result in `content_block.content` (stdout, stderr, return_code, content[].file_id) — no deltas needed
 - Files referenced by `file_id`, downloaded via Files API beta — metadata via `client.beta.files.retrieveMetadata()` (NOT `retrieve`)
 - Container ID persisted in `chats.containerId` for reuse across turns
 - Skills loaded from `.claude/skills/*/SKILL.md` via `utils/ai/skills-loader.ts` (cached at startup)
@@ -69,6 +70,16 @@ PostgreSQL with Drizzle ORM.
 - **Migrations**: `pnpm db:generate` → `pnpm db:migrate`
 
 UUID primary keys generated via `crypto.randomUUID()`. All tables have `createdAt` timestamp.
+
+### Custom SQL Migrations
+
+Drizzle can't express `tsvector` columns, triggers, or GIN indexes. For these:
+1. Create SQL file manually in `database/migrations/` (e.g. `0002_fix_name.sql`)
+2. Add entry to `meta/_journal.json` with next `idx`
+3. Copy previous snapshot as new `meta/NNNN_snapshot.json` (update `id`/`prevId` UUIDs)
+4. Keep Drizzle schema using `text().$type<string>()` workaround — don't change it
+
+The `document_chunks.searchVector` column is `text()` in Drizzle but `tsvector` in PostgreSQL (via custom migration). A trigger auto-populates it from `content` + `contextualContent`.
 
 ## RAG (Retrieval-Augmented Generation)
 
