@@ -8,13 +8,12 @@ export default defineConfig({
     projects: [
       await defineVitestProject({
         test: {
-          name: 'nuxt',
+          name: 'integration',
           testTimeout: 60_000,
           globals: true,
-          // Setup file provides Nitro server auto-imports as globals
           setupFiles: ['./vitest.setup.ts'],
-          include: ['**/*.{test,spec}.ts'],
-          exclude: ['**/node_modules/**', '**/e2e/**', '**/*.integration.test.ts'],
+          include: ['**/*.integration.test.ts'],
+          exclude: ['**/node_modules/**', '**/e2e/**'],
           environment: 'nuxt',
           environmentOptions: {
             nuxt: {
