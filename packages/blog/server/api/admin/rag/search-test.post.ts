@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { sql } from 'drizzle-orm';
-// retrieveRAG, embedText auto-imported from server/utils/**
 
 interface SemanticRow {
   id: string;

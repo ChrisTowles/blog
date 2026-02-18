@@ -7,7 +7,7 @@ let highlighter: HighlighterGeneric<any, any> | null = null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let promise: Promise<HighlighterGeneric<any, any>> | null = null;
 
-export const useHighlighter = async () => {
+export async function useHighlighter() {
   if (!promise) {
     promise = createHighlighter({
       // note: mermaid is not supported in shiki web bundle, and issue with full bundle.
@@ -21,4 +21,4 @@ export const useHighlighter = async () => {
   }
 
   return highlighter;
-};
+}

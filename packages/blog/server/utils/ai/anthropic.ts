@@ -21,8 +21,6 @@ export function getBraintrustLogger() {
 
 export function getAnthropicClient(): Anthropic {
   if (!_client) {
-    // const config = useRuntimeConfig()
-    // had issues with useRuntimeConfig in this file, so parse from env directly
     const result = envSchema.parse(process.env);
     const rawClient = new Anthropic({
       apiKey: result.ANTHROPIC_API_KEY,

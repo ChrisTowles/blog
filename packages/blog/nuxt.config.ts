@@ -23,8 +23,6 @@ export default defineNuxtConfig({
     '@nuxt/test-utils/module',
   ],
 
-  ssr: true,
-
   devtools: {
     enabled: true,
 
@@ -140,11 +138,6 @@ export default defineNuxtConfig({
       },
     },
   },
-
-  vite: {},
-
-  // nitro: {
-  //   prerender: {
 
   typescript: {
     // Note: Test files are checked by vitest, not nuxt typecheck

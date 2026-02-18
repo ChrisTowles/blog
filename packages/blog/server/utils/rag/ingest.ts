@@ -64,7 +64,7 @@ export async function generateContextualDescription(
   });
 
   const textBlock = response.content.find((c) => c.type === 'text');
-  return textBlock?.type === 'text' ? textBlock.text : '';
+  return textBlock?.text ?? '';
 }
 
 /**
