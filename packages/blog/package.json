@@ -20,6 +20,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "test": "NODE_OPTIONS='--import ./vitest.preload.mjs' vitest",
+    "test:integration": "NODE_OPTIONS='--import ./vitest.preload.mjs' vitest -c vitest.integration.config.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",

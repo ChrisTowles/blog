@@ -95,20 +95,12 @@ watch(() => colorMode.value, renderMermaid);
 const trimmedCode = computed(() => {
   return props.code.trim().replace(/`+$/, '');
 });
-const lang = computed(() => {
-  switch (props.language) {
-    case 'vue':
-      return 'vue';
-    case 'javascript':
-      return 'js';
-    case 'typescript':
-      return 'ts';
-    case 'css':
-      return 'css';
-    default:
-      return props.language;
-  }
-});
+const LANG_MAP: Record<string, string> = {
+  javascript: 'js',
+  typescript: 'ts',
+};
+
+const lang = computed(() => LANG_MAP[props.language] || props.language);
 const key = computed(() => {
   return `${lang.value}-${colorMode.value}`;
 });

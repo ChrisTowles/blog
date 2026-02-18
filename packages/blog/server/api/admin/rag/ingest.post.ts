@@ -1,5 +1,4 @@
 import { z } from 'zod';
-// ingestBlogPosts, ingestDocument auto-imported from server/utils/**
 
 defineRouteMeta({
   openAPI: {
@@ -9,7 +8,6 @@ defineRouteMeta({
 });
 
 export default defineEventHandler(async (event) => {
-  // Check for admin access (you may want to add proper auth here)
   const session = await getUserSession(event);
   if (!session.user) {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized' });
@@ -26,14 +24,10 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody(event).catch(() => ({}));
 
-  // If slug provided, ingest single document
   if (body?.slug) {
     const { slug } = z.object({ slug: z.string() }).parse(body);
-    const result = await ingestDocument(slug);
-    return result;
+    return ingestDocument(slug);
   }
 
-  // Otherwise, ingest all blog posts
-  const result = await ingestBlogPosts();
-  return result;
+  return ingestBlogPosts();
 });

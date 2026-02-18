@@ -3,13 +3,13 @@ import { TEST_IDS } from '~~/shared/test-ids';
 
 const { model, models } = useModels();
 
-const model_icon = 'anthropic'; // now hardcoded to anthropic since only model available
+const modelIcon = 'anthropic';
 
 const items = computed(() =>
   models.map((model) => ({
     label: model,
     value: model,
-    icon: `i-simple-icons-${model_icon}`,
+    icon: `i-simple-icons-${modelIcon}`,
   })),
 );
 </script>
@@ -18,7 +18,7 @@ const items = computed(() =>
   <USelectMenu
     v-model="model"
     :items="items"
-    :icon="`i-simple-icons-${model_icon}`"
+    :icon="`i-simple-icons-${modelIcon}`"
     variant="ghost"
     value-key="value"
     :data-testid="TEST_IDS.SHARED.MODEL_SELECT"

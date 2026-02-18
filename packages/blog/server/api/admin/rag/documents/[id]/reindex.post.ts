@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { readFile } from 'node:fs/promises';
-// Utils auto-imported from server/utils/** via nitro config
 
 defineRouteMeta({
   openAPI: {

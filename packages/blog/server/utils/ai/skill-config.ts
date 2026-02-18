@@ -33,17 +33,11 @@ export const defaultSkillConfig: SkillConfig = {
  * Returns array of sources based on configuration
  */
 export function getSkillSources(config: SkillConfig = defaultSkillConfig): ('project' | 'user')[] {
-  const sources: ('project' | 'user')[] = [];
-
-  if (config.enabled.project) {
-    sources.push('project');
-  }
-
-  if (config.enabled.global) {
-    sources.push('user');
-  }
-
-  return sources;
+  const mapping: Array<{ enabled: boolean; source: 'project' | 'user' }> = [
+    { enabled: config.enabled.project, source: 'project' },
+    { enabled: config.enabled.global, source: 'user' },
+  ];
+  return mapping.filter((m) => m.enabled).map((m) => m.source);
 }
 
 /**

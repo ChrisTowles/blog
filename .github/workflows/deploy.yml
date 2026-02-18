@@ -20,8 +20,12 @@ env:
   IMAGE_BASE: us-central1-docker.pkg.dev/blog-towles-production/containers/blog
 
 jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+
   deploy:
     name: Build & Deploy
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

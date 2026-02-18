@@ -165,11 +165,14 @@ Required env vars (see `server/utils/env-config.ts`):
 ## Testing
 
 ```bash
-pnpm test           # Vitest unit tests
-pnpm test:e2e       # Playwright E2E tests
+pnpm test                # Unit tests (excludes *.integration.test.ts)
+pnpm test:integration    # Integration tests (needs DATABASE_URL / docker)
+pnpm test:e2e            # Playwright E2E tests
 ```
 
 Test files live next to source: `foo.ts` → `foo.test.ts`
+Integration tests use `.integration.test.ts` suffix and separate config (`vitest.integration.config.ts`).
+DB test helpers in `server/test-utils/db-helper.ts`: `cleanupDatabase()`, `createTestUser()`, `createTestChat()`, `createTestMessage()`.
 
 ## Key Patterns
 
@@ -177,6 +180,8 @@ Test files live next to source: `foo.ts` → `foo.test.ts`
 - Shared test IDs in `shared/test-ids.ts` — used by both Vue components and Playwright E2E tests
 - UI components from `@nuxt/ui` (`UCard`, `UButton`, `UBlogPost`, `UPageHeader`, etc.)
 - Route rules in `nuxt.config.ts`: `/` prerendered, `/chat/**` SSR disabled
+- Top-level exported functions use `function` keyword (not arrow functions): `export async function useHighlighter()` not `export const useHighlighter = async () =>`
+- Prefer database-level sorting (`orderBy(desc(...))`) over JS `.sort()` on query results
 
 ## Gotchas
 
@@ -185,6 +190,8 @@ Test files live next to source: `foo.ts` → `foo.test.ts`
 - **Vue ref unwrapping** — nested refs in objects returned from composables are NOT auto-unwrapped in templates. Destructure to top-level: `const { status, code } = useMyComposable()`.
 - **Auth pattern** — every AI-calling route must call `await getUserSession(event)` at the top of the handler.
 - **Syntax highlighting** — use `useHighlighter()` composable with `material-theme-palenight` theme (Shiki).
+- **Shiki in custom components** — use `ShikiCachedRenderer` from `shiki-stream/vue` with `await useHighlighter()`. See `ChatCodeExecution.vue` and `ProsePre.vue` for the pattern.
 - **Model config** — use `useRuntimeConfig().public.model` instead of hardcoding model strings.
 - **Debugging beta APIs** — beta client methods cast via `AnthropicBetaClient` can silently fail in try/catch. Check `tail /tmp/nuxt-dev.log | grep -i warn` for swallowed errors.
 - **Dev server startup** — always use `pnpm dev` from repo root (runs `docker:up`, `db:migrate`, `kill-port`). Using `pnpm --filter @chris-towles/blog dev` skips those steps and can leave stale servers on other ports.
+- **Vitest 4 has no `--include` CLI flag** — use a separate config file with `-c` flag for different test subsets, not CLI include/exclude.
