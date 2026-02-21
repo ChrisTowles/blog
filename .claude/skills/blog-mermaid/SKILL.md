@@ -1,6 +1,8 @@
 ---
 name: blog-mermaid
 description: Create mermaid diagrams for blog posts using the blog's sky/zinc color theme. Use when adding flowcharts, sequence diagrams, or other mermaid visualizations to blog content.
+chatPrompt: 'Create a mermaid diagram for: '
+icon: i-lucide-git-fork
 ---
 
 # Blog Mermaid Diagrams

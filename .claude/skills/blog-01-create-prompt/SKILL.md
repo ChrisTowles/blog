@@ -1,6 +1,8 @@
 ---
 name: blog-01-create-prompt
 description: Create a detailed prompt for generating high-quality blog posts
+chatPrompt: 'Create a blog post prompt about: '
+icon: i-lucide-file-text
 ---
 
 ## Context

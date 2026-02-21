@@ -6,6 +6,10 @@ export interface CustomSkill {
   name: string;
   description: string;
   body: string;
+  /** Optional prompt template shown in the chat UI. Skills with this field appear as quick actions. */
+  chatPrompt?: string;
+  /** Optional icon class for the chat UI (e.g., 'i-lucide-image'). */
+  icon?: string;
 }
 
 let cachedSkills: CustomSkill[] | null = null;
@@ -98,6 +102,15 @@ export function getSkillsSystemPrompt(): string {
   return lines.join('\n');
 }
 
+/**
+ * Get custom skills that have chat prompts defined (for display in the chat UI).
+ */
+export function getChatSkills(): Array<Pick<CustomSkill, 'name' | 'description' | 'chatPrompt' | 'icon'>> {
+  return loadCustomSkills()
+    .filter((s) => s.chatPrompt)
+    .map(({ name, description, chatPrompt, icon }) => ({ name, description, chatPrompt, icon }));
+}
+
 /** Simple YAML frontmatter parser for SKILL.md files */
 function parseFrontmatter(content: string): CustomSkill {
   const match = content.match(/^---\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/);
@@ -108,6 +121,8 @@ function parseFrontmatter(content: string): CustomSkill {
 
   let name = '';
   let description = '';
+  let chatPrompt: string | undefined;
+  let icon: string | undefined;
 
   for (const line of frontmatter.split('\n')) {
     const nameMatch = line.match(/^name:\s*(.+)$/);
@@ -115,7 +130,13 @@ function parseFrontmatter(content: string): CustomSkill {
 
     const descMatch = line.match(/^description:\s*(.+)$/);
     if (descMatch) description = descMatch[1]!.trim();
+
+    const chatPromptMatch = line.match(/^chatPrompt:\s*(.+)$/);
+    if (chatPromptMatch) chatPrompt = chatPromptMatch[1]!.trim().replace(/^['"]|['"]$/g, '');
+
+    const iconMatch = line.match(/^icon:\s*(.+)$/);
+    if (iconMatch) icon = iconMatch[1]!.trim();
   }
 
-  return { name, description, body };
+  return { name, description, body, chatPrompt, icon };
 }

@@ -1,6 +1,8 @@
 ---
 name: blog-02-write-post
 description: Create a new technical blog post with deep educational value and professional quality
+chatPrompt: 'Write a blog post about: '
+icon: i-lucide-pen-line
 ---
 
 Use the `blog-content-architect` agent to create high-quality technical blog content.

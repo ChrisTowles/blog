@@ -47,6 +47,10 @@ function onSubmit() {
   createChat(input.value);
 }
 
+const { data: chatSkills } = await useFetch('/api/chat-skills', {
+  default: () => [],
+});
+
 const quickChats = [
   {
     label: 'What posts do you have about dark matter developer?',
@@ -110,6 +114,24 @@ const quickChats = [
             </div>
           </template>
         </UChatPrompt>
+
+        <div v-if="chatSkills.length" class="flex flex-col gap-2">
+          <span class="text-xs font-medium text-muted uppercase tracking-wide">Skills</span>
+          <div class="flex flex-wrap gap-2">
+            <UButton
+              v-for="skill in chatSkills"
+              :key="skill.name"
+              :icon="skill.icon || 'i-lucide-sparkles'"
+              :label="skill.description"
+              size="sm"
+              color="primary"
+              variant="soft"
+              class="rounded-full"
+              :disabled="loading"
+              @click="setPrompt(skill.chatPrompt ?? '')"
+            />
+          </div>
+        </div>
 
         <div class="flex flex-wrap gap-2" :data-testid="TEST_IDS.CHAT.QUICK_ACTIONS">
           <UButton

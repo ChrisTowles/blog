@@ -1,6 +1,8 @@
 ---
 name: blog-04-image-prompt
 description: Generate optimized AI image prompts for blog post hero images
+chatPrompt: 'Generate a hero image prompt for my blog post about: '
+icon: i-lucide-image
 ---
 
 Generate a compelling, detailed prompt for AI image generation that captures the essence of the blog post while maintaining consistent brand aesthetics.

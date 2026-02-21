@@ -1,6 +1,8 @@
 ---
 name: blog-03-review
 description: 'Review and improve the blog post draft for clarity, engagement, and authentic voice.'
+chatPrompt: 'Review my blog post draft: '
+icon: i-lucide-scan-search
 ---
 
 # Blog Post Review Command
