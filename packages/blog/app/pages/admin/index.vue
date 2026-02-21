@@ -7,6 +7,12 @@ const { data: configData, status } = await useFetch('/api/admin/config');
 
 const adminPages = [
   {
+    title: 'GitHub Dashboard',
+    description: 'Issue analytics - time to close, labels, monthly trends, and more',
+    to: '/admin/github',
+    icon: 'i-simple-icons-github',
+  },
+  {
     title: 'RAG Admin',
     description: 'Contextual Hybrid Search System - manage documents, test search, run ingestion',
     to: '/admin/rag',
