@@ -69,6 +69,8 @@ export default defineNuxtConfig({
     // Note: There's a pre-existing Vite 8 beta + debug ESM issue affecting chat pages
     '/chat': { ssr: false },
     '/chat/**': { ssr: false },
+    // Admin pages are authenticated, no SSR needed
+    '/admin/**': { ssr: false },
   },
 
   future: {
