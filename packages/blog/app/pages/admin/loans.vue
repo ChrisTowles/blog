@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { LoanApplicationData, LoanStatus } from '~~/shared/loan-types';
 import { REVIEWERS } from '~~/shared/loan-types';
+import { extractErrorMessage } from '~~/shared/error-util';
 
 definePageMeta({
   middleware: 'auth',
@@ -28,9 +29,31 @@ interface LoanApplication {
   };
 }
 
-const { data, status } = await useFetch<{ applications: LoanApplication[] }>('/api/admin/loans');
+const { data, status, refresh } = await useFetch<{ applications: LoanApplication[] }>(
+  '/api/admin/loans',
+);
 
 const applications = computed(() => data.value?.applications ?? []);
+
+const creating = ref(false);
+const toast = useToast();
+
+async function createLoan() {
+  creating.value = true;
+  try {
+    const result = await $fetch<{ id: string }>('/api/loan', { method: 'POST' });
+    await navigateTo(`/loan/${result.id}`);
+  } catch (err) {
+    toast.add({
+      title: 'Failed to create loan',
+      description: extractErrorMessage(err),
+      icon: 'i-heroicons-exclamation-triangle',
+      color: 'error',
+    });
+  } finally {
+    creating.value = false;
+  }
+}
 
 const totalCount = computed(() => applications.value.length);
 
@@ -65,10 +88,16 @@ const columns = [
       <!-- Header -->
       <div class="flex items-center gap-3">
         <UIcon name="i-lucide-building-2" class="w-8 h-8 text-primary" />
-        <div>
+        <div class="flex-1">
           <h1 class="text-2xl font-bold">Loan Applications</h1>
           <p class="text-sm text-muted">All loan applications and review status</p>
         </div>
+        <UButton
+          icon="i-heroicons-plus"
+          label="New Application"
+          :loading="creating"
+          @click="createLoan"
+        />
       </div>
 
       <!-- Loading -->
@@ -172,8 +201,10 @@ const columns = [
                   <td class="py-3 px-3">
                     <UButton
                       size="xs"
-                      variant="ghost"
+                      variant="soft"
+                      label="Review"
                       icon="i-heroicons-arrow-right"
+                      trailing
                       :to="`/loan/${app.id}/review`"
                     />
                   </td>

@@ -99,6 +99,7 @@ export function useLoanReview(options: UseLoanReviewOptions) {
         review.status = 'complete';
         review.decision = event.decision;
         review.flags = event.flags;
+        review.text = event.analysis;
       }
     } else if (event.type === 'all_reviews_complete') {
       status.value = 'complete';

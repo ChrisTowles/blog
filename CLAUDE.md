@@ -72,6 +72,8 @@ After implementing features, verify with the full stack — not just unit tests:
 
 Don't claim a feature works without steps 4-6. Automated tests miss rendering issues, broken layouts, and SSE streaming bugs that only surface in a real browser.
 
+**Always self-verify with Playwright screenshots.** After starting the dev server, use `npx playwright screenshot` to check pages yourself — don't rely on the user to confirm visually. If Nuxt Content shows no blog posts (`_content_posts` table missing), delete `.nuxt` and `.data` directories and restart.
+
 **Never accept pre-existing test failures.** When E2E, integration, or unit tests fail — even if the failures appear unrelated to your current work — fix them immediately. Every test in the suite must pass. Broken tests are not "pre-existing conditions" to work around; they are bugs to fix as soon as discovered.
 
 ## Pre-commit Hooks
