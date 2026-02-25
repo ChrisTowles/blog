@@ -12,6 +12,12 @@ const adminPages = [
     to: '/admin/rag',
     icon: 'i-heroicons-cpu-chip',
   },
+  {
+    title: 'Loan Applications',
+    description: 'View all loan applications and their review status',
+    to: '/admin/loans',
+    icon: 'i-lucide-building-2',
+  },
 ];
 </script>
 
