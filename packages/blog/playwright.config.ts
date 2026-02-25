@@ -1,11 +1,17 @@
 import dotenv from 'dotenv';
+import { dirname, join } from 'path';
 import { defineConfig, devices } from '@playwright/test';
 import { findUpSync } from 'find-up';
 
-dotenv.config({
-  path: findUpSync('.env')!,
-  override: true,
-});
+// Load package .env, then root .env (root values fill in missing vars)
+const packageEnv = findUpSync('.env');
+if (packageEnv) {
+  dotenv.config({ path: packageEnv });
+  const rootEnv = findUpSync('.env', { cwd: join(dirname(packageEnv), '..') });
+  if (rootEnv && rootEnv !== packageEnv) {
+    dotenv.config({ path: rootEnv });
+  }
+}
 
 export default defineConfig({
   testDir: './e2e',

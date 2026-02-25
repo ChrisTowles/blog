@@ -7,7 +7,7 @@ test.describe('AI Chat', () => {
 
     // Verify chat page loaded (may redirect to login, so just check it's accessible)
     const url = page.url();
-    expect(url).toContain('localhost:3001');
+    expect(url).toContain('/chat');
   });
 
   test('displays chat interface elements', async ({ page }) => {
@@ -68,7 +68,7 @@ test.describe('AI Chat', () => {
 
     // Verify page is accessible (may require auth, so just check it loads)
     const url = page.url();
-    expect(url).toContain('localhost:3001');
+    expect(url).toContain('/chat');
   });
 
   test.skip('can submit message and get AI response', async ({ page }) => {
