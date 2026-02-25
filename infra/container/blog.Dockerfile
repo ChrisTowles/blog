@@ -61,6 +61,11 @@ COPY --from=builder /app/packages/blog/.output /app/.output
 # Copy content directory for Nuxt Content (raw markdown files needed at runtime)
 COPY --from=builder /app/packages/blog/content /app/content
 
+# Copy loan reviewer skill files (system prompts for AI review agents)
+COPY .claude/skills/loan-the-bank/SKILL.md /app/.claude/skills/loan-the-bank/SKILL.md
+COPY .claude/skills/loan-market/SKILL.md /app/.claude/skills/loan-market/SKILL.md
+COPY .claude/skills/loan-background/SKILL.md /app/.claude/skills/loan-background/SKILL.md
+
 # Copy entrypoint
 COPY infra/container/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
