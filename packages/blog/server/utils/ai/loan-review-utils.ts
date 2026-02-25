@@ -2,12 +2,6 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import type { LoanApplicationData, ReviewerName, ReviewDecision } from '~~/shared/loan-types';
 
-export const REVIEWER_DISPLAY_NAMES: Record<ReviewerName, string> = {
-  'the-bank': 'The Bank — Financial Risk',
-  'loan-market': 'Loan Market — Deal Structure',
-  'background-checks': 'Background Checks — Fraud Detection',
-};
-
 export const REVIEWER_SKILL_DIRS: Record<ReviewerName, string> = {
   'the-bank': 'loan-the-bank',
   'loan-market': 'loan-market',

@@ -65,6 +65,12 @@ export type LoanStatus = (typeof LOAN_STATUSES)[number];
 export const REVIEWERS = ['the-bank', 'loan-market', 'background-checks'] as const;
 export type ReviewerName = (typeof REVIEWERS)[number];
 
+export const REVIEWER_DISPLAY_NAMES: Record<ReviewerName, string> = {
+  'the-bank': 'The Bank — Financial Risk',
+  'loan-market': 'Loan Market — Deal Structure',
+  'background-checks': 'Background Checks — Fraud Detection',
+};
+
 // --- Review decisions ---
 
 export const REVIEW_DECISIONS = ['approved', 'denied', 'flagged'] as const;

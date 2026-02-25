@@ -1,8 +1,7 @@
 import { z } from 'zod';
 import type { LoanApplicationData, ReviewDecision, LoanReviewSSEEvent } from '~~/shared/loan-types';
-import { REVIEWERS, isApplicationComplete } from '~~/shared/loan-types';
+import { REVIEWERS, REVIEWER_DISPLAY_NAMES, isApplicationComplete } from '~~/shared/loan-types';
 import {
-  REVIEWER_DISPLAY_NAMES,
   loadApproverPrompt,
   formatApplicationForReview,
   parseApproverResponse,
