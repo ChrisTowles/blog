@@ -15,8 +15,8 @@ definePageMeta({
 });
 
 useSeoMeta({
-  title: 'Loan Review',
-  description: 'AI-powered multi-agent loan review',
+  title: 'Agentic Loan Workflow — Review',
+  description: 'Demo: three independent AI agents review, human makes final decision',
 });
 
 const route = useRoute();
@@ -147,8 +147,14 @@ onMounted(() => {
   <div class="h-full overflow-y-auto">
     <UContainer class="py-8 max-w-4xl">
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-highlighted">Loan Review</h1>
-        <p class="text-muted mt-2">Multi-agent review of your loan application</p>
+        <div class="flex items-center gap-2 mb-1">
+          <UBadge color="warning" variant="subtle" label="Demo" size="sm" />
+          <h1 class="text-3xl font-bold text-highlighted">Agentic Loan Review</h1>
+        </div>
+        <p class="text-muted mt-1 text-sm">
+          Step 2: Three independent AI agents review the application. A human makes the final
+          decision.
+        </p>
       </div>
 
       <!-- Application Data Summary -->
