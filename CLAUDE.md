@@ -59,6 +59,19 @@ Hero image screenshots (use CLI, not DevTools — avoids dark mode issues):
 google-chrome --headless=new --screenshot=output.png --window-size=1200,800 --default-background-color=ffffffff file.html
 ```
 
+## Verification
+
+After implementing features, verify with the full stack — not just unit tests:
+
+1. `pnpm test` — unit tests pass
+2. `pnpm lint` + `pnpm typecheck` — no errors
+3. `pnpm test:integration` — integration tests pass (needs `DATABASE_URL`)
+4. **Start dev server** (`pnpm dev`) and verify the feature works in a real browser
+5. `UI_PORT=3000 pnpm test:e2e` — E2E Playwright tests pass against the running dev server
+6. Take a screenshot (`npx playwright screenshot http://localhost:3000/<page> /tmp/screenshot.png`) to visually confirm
+
+Don't claim a feature works without steps 4-6. Automated tests miss rendering issues, broken layouts, and SSE streaming bugs that only surface in a real browser.
+
 ## Pre-commit Hooks
 
 - Image compression requires `pngquant` (`sudo apt-get install pngquant`)
