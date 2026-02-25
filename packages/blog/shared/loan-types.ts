@@ -95,6 +95,7 @@ export interface LoanReviewCompleteEvent {
   reviewer: ReviewerName;
   decision: ReviewDecision;
   flags: string[];
+  analysis: string;
 }
 
 export interface LoanAllReviewsCompleteEvent {

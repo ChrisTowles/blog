@@ -107,6 +107,7 @@ export default defineEventHandler(async (event) => {
             reviewer,
             decision: parsed.decision,
             flags: parsed.flags,
+            analysis: parsed.analysis,
           });
         }
 

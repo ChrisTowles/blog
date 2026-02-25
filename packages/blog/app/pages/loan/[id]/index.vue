@@ -3,14 +3,14 @@ import type { DefineComponent } from 'vue';
 import type { LoanApplicationData } from '~~/shared/loan-types';
 import { isApplicationComplete } from '~~/shared/loan-types';
 import { TEST_IDS } from '~~/shared/test-ids';
-import ProsePre from '../../components/prose/ProsePre.vue';
+import ProsePre from '../../../components/prose/ProsePre.vue';
 
 const components = {
   pre: ProsePre as unknown as DefineComponent,
 };
 
 definePageMeta({
-  layout: 'default',
+  layout: 'loan',
   middleware: 'auth',
 });
 
@@ -65,39 +65,51 @@ function submitForReview() {
 </script>
 
 <template>
-  <UContainer :data-testid="TEST_IDS.LOAN.PAGE" class="py-8 max-w-4xl">
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-highlighted">Home Loan Application</h1>
-      <p class="text-muted mt-2">AI-powered loan application with multi-agent approval workflow</p>
+  <div :data-testid="TEST_IDS.LOAN.PAGE" class="flex flex-col h-full">
+    <!-- Fixed header -->
+    <div class="shrink-0 border-b border-default px-4 py-4">
+      <UContainer class="max-w-4xl">
+        <div class="mb-4">
+          <h1 class="text-3xl font-bold text-highlighted">Home Loan Application</h1>
+          <p class="text-muted mt-2">
+            AI-powered loan application with multi-agent approval workflow
+          </p>
+        </div>
+        <LoanProgress :application-data="applicationData" />
+      </UContainer>
     </div>
 
-    <div class="space-y-6">
-      <LoanProgress :application-data="applicationData" />
+    <!-- Scrollable chat messages -->
+    <div class="flex-1 overflow-y-auto">
+      <UContainer class="max-w-4xl">
+        <UChatMessages
+          should-auto-scroll
+          :data-testid="TEST_IDS.LOAN.CHAT_MESSAGES"
+          :messages="loanChat.messages.value"
+          :status="loanChat.status.value"
+          class="pb-4"
+        >
+          <template #content="{ message }">
+            <div class="*:first:mt-0 *:last:mb-0">
+              <template v-for="(part, index) in message.parts" :key="`${message.id}-${index}`">
+                <MDCCached
+                  v-if="part.type === 'text'"
+                  :value="part.text"
+                  :cache-key="`${message.id}-${index}`"
+                  :components="components"
+                  :parser-options="{ highlight: false }"
+                  class="*:first:mt-0 *:last:mb-0"
+                />
+              </template>
+            </div>
+          </template>
+        </UChatMessages>
+      </UContainer>
+    </div>
 
-      <UChatMessages
-        should-auto-scroll
-        :data-testid="TEST_IDS.LOAN.CHAT_MESSAGES"
-        :messages="loanChat.messages.value"
-        :status="loanChat.status.value"
-        class="min-h-[400px] pb-4"
-      >
-        <template #content="{ message }">
-          <div class="*:first:mt-0 *:last:mb-0">
-            <template v-for="(part, index) in message.parts" :key="`${message.id}-${index}`">
-              <MDCCached
-                v-if="part.type === 'text'"
-                :value="part.text"
-                :cache-key="`${message.id}-${index}`"
-                :components="components"
-                :parser-options="{ highlight: false }"
-                class="*:first:mt-0 *:last:mb-0"
-              />
-            </template>
-          </div>
-        </template>
-      </UChatMessages>
-
-      <div class="sticky bottom-0 z-10 space-y-3">
+    <!-- Fixed chat input -->
+    <div class="shrink-0 border-t border-default px-4 pb-4 pt-2">
+      <UContainer class="max-w-4xl">
         <UChatPrompt
           :data-testid="TEST_IDS.LOAN.CHAT_INPUT"
           v-model="input"
@@ -127,7 +139,7 @@ function submitForReview() {
             </div>
           </template>
         </UChatPrompt>
-      </div>
+      </UContainer>
     </div>
-  </UContainer>
+  </div>
 </template>

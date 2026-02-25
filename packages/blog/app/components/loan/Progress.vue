@@ -26,7 +26,12 @@ const progress = computed(() => {
       <span class="text-muted">Application Progress</span>
       <span class="font-medium">{{ progress }}%</span>
     </div>
-    <UProgress :data-testid="TEST_IDS.LOAN.PROGRESS_BAR" :value="progress" color="primary" />
+    <UProgress
+      :data-testid="TEST_IDS.LOAN.PROGRESS_BAR"
+      :value="progress"
+      color="primary"
+      class="no-animate-progress"
+    />
     <div class="flex flex-wrap gap-1.5">
       <UBadge
         v-for="field in fields"
@@ -39,3 +44,9 @@ const progress = computed(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.no-animate-progress :deep([role='progressbar'] > *) {
+  transition: none !important;
+}
+</style>
