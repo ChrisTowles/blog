@@ -115,15 +115,7 @@ export default defineEventHandler(async (event) => {
         if (decisions.includes('denied')) overallDecision = 'denied';
         else if (decisions.includes('flagged')) overallDecision = 'flagged';
 
-        const statusMap: Record<ReviewDecision, 'approved' | 'denied' | 'flagged'> = {
-          approved: 'approved',
-          denied: 'denied',
-          flagged: 'flagged',
-        };
-        await db
-          .update(tables.loanApplications)
-          .set({ status: statusMap[overallDecision] })
-          .where(eq(tables.loanApplications.id, id));
+        // Status stays 'reviewing' — AI recommendation is advisory, human makes final decision
 
         const summaryParts: string[] = [];
         if (overallDecision === 'approved')

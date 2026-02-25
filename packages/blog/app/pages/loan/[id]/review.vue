@@ -63,10 +63,11 @@ const staticReviews: ReviewState[] = hasExistingReviews
       }))
   : [];
 
-const staticOverallDecision: ReviewDecision | null = hasExistingReviews
-  ? REVIEW_DECISIONS.includes(data.value.status as ReviewDecision)
-    ? (data.value.status as ReviewDecision)
-    : null
+// Human decision: only if status is a final decision (not reviewing/intake)
+const humanDecision: ReviewDecision | null = REVIEW_DECISIONS.includes(
+  data.value.status as ReviewDecision,
+)
+  ? (data.value.status as ReviewDecision)
   : null;
 
 // Mode 1: Fresh review via SSE streaming
@@ -83,10 +84,21 @@ const loanReview = !hasExistingReviews
 const reviews = computed(() =>
   hasExistingReviews ? staticReviews : (loanReview?.reviews.value ?? []),
 );
-const overallDecision = computed(() =>
-  hasExistingReviews ? staticOverallDecision : (loanReview?.overallDecision.value ?? null),
-);
+
+// AI recommendation computed from individual review decisions
+const aiRecommendation = computed<ReviewDecision | null>(() => {
+  const completedReviews = reviews.value.filter((r) => r.decision);
+  if (completedReviews.length === 0) return null;
+  if (completedReviews.some((r) => r.decision === 'denied')) return 'denied';
+  if (completedReviews.some((r) => r.decision === 'flagged')) return 'flagged';
+  return 'approved';
+});
+
 const summaryText = computed(() => (hasExistingReviews ? '' : (loanReview?.summary.value ?? '')));
+
+const allReviewsComplete = computed(
+  () => reviews.value.length > 0 && reviews.value.every((r) => r.status === 'complete'),
+);
 
 const rereviewing = ref(false);
 
@@ -184,22 +196,73 @@ onMounted(() => {
         />
       </div>
 
+      <!-- AI Recommendation (shown once all reviews complete, before human decides) -->
       <div
-        v-if="overallDecision"
+        v-if="aiRecommendation && !humanDecision && allReviewsComplete"
+        class="mt-8 p-6 rounded-xl border-2 border-primary-500 bg-primary-50 dark:bg-primary-950"
+      >
+        <div class="flex items-center gap-3 mb-2">
+          <UIcon name="i-lucide-bot" class="text-2xl" />
+          <h2 class="text-xl font-bold">
+            AI Recommendation:
+            {{
+              aiRecommendation === 'approved'
+                ? 'Approve'
+                : aiRecommendation === 'denied'
+                  ? 'Deny'
+                  : 'Flag for Review'
+            }}
+          </h2>
+        </div>
+        <p v-if="summaryText">{{ summaryText }}</p>
+        <p class="text-sm text-muted mt-2">
+          A human decision is required to finalize this application.
+        </p>
+
+        <div class="mt-4 flex items-center gap-3">
+          <UButton
+            color="success"
+            label="Approve"
+            icon="i-lucide-check"
+            :loading="updatingStatus"
+            @click="setStatus('approved')"
+          />
+          <UButton
+            color="error"
+            variant="soft"
+            label="Deny"
+            icon="i-lucide-x"
+            :loading="updatingStatus"
+            @click="setStatus('denied')"
+          />
+          <UButton
+            color="warning"
+            variant="soft"
+            label="Flag"
+            icon="i-lucide-flag"
+            :loading="updatingStatus"
+            @click="setStatus('flagged')"
+          />
+        </div>
+      </div>
+
+      <!-- Final human decision -->
+      <div
+        v-if="humanDecision"
         :data-testid="TEST_IDS.LOAN.OVERALL_RESULT"
         class="mt-8 p-6 rounded-xl border-2"
         :class="{
-          'border-success-500 bg-success-50 dark:bg-success-950': overallDecision === 'approved',
-          'border-error-500 bg-error-50 dark:bg-error-950': overallDecision === 'denied',
-          'border-warning-500 bg-warning-50 dark:bg-warning-950': overallDecision === 'flagged',
+          'border-success-500 bg-success-50 dark:bg-success-950': humanDecision === 'approved',
+          'border-error-500 bg-error-50 dark:bg-error-950': humanDecision === 'denied',
+          'border-warning-500 bg-warning-50 dark:bg-warning-950': humanDecision === 'flagged',
         }"
       >
         <div class="flex items-center gap-3 mb-2">
           <UIcon
             :name="
-              overallDecision === 'approved'
+              humanDecision === 'approved'
                 ? 'i-lucide-check-circle-2'
-                : overallDecision === 'denied'
+                : humanDecision === 'denied'
                   ? 'i-lucide-x-circle'
                   : 'i-lucide-alert-triangle'
             "
@@ -207,21 +270,23 @@ onMounted(() => {
           />
           <h2 class="text-xl font-bold">
             {{
-              overallDecision === 'approved'
+              humanDecision === 'approved'
                 ? 'Application Approved'
-                : overallDecision === 'denied'
+                : humanDecision === 'denied'
                   ? 'Application Denied'
                   : 'Application Flagged for Review'
             }}
           </h2>
         </div>
-        <p>{{ summaryText }}</p>
+        <p v-if="aiRecommendation" class="text-sm text-muted">
+          AI recommended: {{ aiRecommendation }}
+        </p>
 
-        <!-- Manual override controls -->
+        <!-- Override controls -->
         <div class="mt-4 flex items-center gap-2">
-          <span class="text-sm text-muted mr-1">Override:</span>
+          <span class="text-sm text-muted mr-1">Change decision:</span>
           <UButton
-            v-if="overallDecision !== 'approved'"
+            v-if="humanDecision !== 'approved'"
             size="xs"
             variant="soft"
             color="success"
@@ -231,7 +296,7 @@ onMounted(() => {
             @click="setStatus('approved')"
           />
           <UButton
-            v-if="overallDecision !== 'denied'"
+            v-if="humanDecision !== 'denied'"
             size="xs"
             variant="soft"
             color="error"
@@ -241,7 +306,7 @@ onMounted(() => {
             @click="setStatus('denied')"
           />
           <UButton
-            v-if="overallDecision !== 'flagged'"
+            v-if="humanDecision !== 'flagged'"
             size="xs"
             variant="soft"
             color="warning"
@@ -256,7 +321,7 @@ onMounted(() => {
       <div class="mt-8 flex items-center gap-3">
         <UButton label="Back to Loans" variant="ghost" icon="i-lucide-arrow-left" to="/loan" />
         <UButton
-          v-if="overallDecision"
+          v-if="humanDecision || allReviewsComplete"
           label="Re-review"
           variant="soft"
           color="warning"
