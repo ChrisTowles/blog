@@ -72,6 +72,8 @@ After implementing features, verify with the full stack — not just unit tests:
 
 Don't claim a feature works without steps 4-6. Automated tests miss rendering issues, broken layouts, and SSE streaming bugs that only surface in a real browser.
 
+**Never accept pre-existing test failures.** When E2E, integration, or unit tests fail — even if the failures appear unrelated to your current work — fix them immediately. Every test in the suite must pass. Broken tests are not "pre-existing conditions" to work around; they are bugs to fix as soon as discovered.
+
 ## Pre-commit Hooks
 
 - Image compression requires `pngquant` (`sudo apt-get install pngquant`)

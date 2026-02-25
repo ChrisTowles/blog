@@ -1,10 +1,17 @@
 <script setup lang="ts">
+import type { DefineComponent } from 'vue';
 import type { LoanApplicationData } from '~~/shared/loan-types';
 import { isApplicationComplete } from '~~/shared/loan-types';
 import { TEST_IDS } from '~~/shared/test-ids';
+import ProsePre from '../components/prose/ProsePre.vue';
+
+const components = {
+  pre: ProsePre as unknown as DefineComponent,
+};
 
 definePageMeta({
   layout: 'default',
+  middleware: 'auth',
 });
 
 useSeoMeta({
@@ -115,7 +122,14 @@ function submitForReview() {
           <template #content="{ message }">
             <div class="*:first:mt-0 *:last:mb-0">
               <template v-for="(part, index) in message.parts" :key="`${message.id}-${index}`">
-                <div v-if="part.type === 'text'" class="whitespace-pre-wrap">{{ part.text }}</div>
+                <MDCCached
+                  v-if="part.type === 'text'"
+                  :value="part.text"
+                  :cache-key="`${message.id}-${index}`"
+                  :components="components"
+                  :parser-options="{ highlight: false }"
+                  class="*:first:mt-0 *:last:mb-0"
+                />
               </template>
             </div>
           </template>

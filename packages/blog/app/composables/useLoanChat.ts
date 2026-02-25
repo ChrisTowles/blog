@@ -9,7 +9,17 @@ interface UseLoanChatOptions {
 }
 
 export function useLoanChat(options: UseLoanChatOptions) {
-  const messages = ref<ChatMessage[]>([]);
+  const welcomeMessage: ChatMessage = {
+    id: 'welcome',
+    role: 'assistant',
+    parts: [
+      {
+        type: 'text',
+        text: "Welcome! I'm your AI loan officer. I'll walk you through your home loan application step by step.\n\nLet's start — **what's your full name?**",
+      },
+    ],
+  };
+  const messages = ref<ChatMessage[]>([welcomeMessage]);
   const status = ref<ChatStatus>('ready');
   const error = ref<Error | null>(null);
   const abortController = ref<AbortController | null>(null);
@@ -94,7 +104,10 @@ export function useLoanChat(options: UseLoanChatOptions) {
     }
   }
 
-  function updateAssistantMessage(messageId: string, text: { type: 'text'; text: string } | null): void {
+  function updateAssistantMessage(
+    messageId: string,
+    text: { type: 'text'; text: string } | null,
+  ): void {
     const parts: MessagePart[] = [];
     if (text) parts.push(text);
     messages.value = messages.value.map((msg) => (msg.id === messageId ? { ...msg, parts } : msg));
