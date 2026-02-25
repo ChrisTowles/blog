@@ -1,18 +1,22 @@
 <script setup lang="ts">
 import type { ReviewState } from '~/composables/useLoanReview';
+import { TEST_IDS } from '~~/shared/test-ids';
 
 const props = defineProps<{
   review: ReviewState;
 }>();
 
 const decisionColor = computed(() => {
-  if (!props.review.decision) return 'neutral';
-  return { approved: 'success', denied: 'error', flagged: 'warning' }[props.review.decision] || 'neutral';
+  if (!props.review.decision) return 'neutral' as const;
+  const map = { approved: 'success', denied: 'error', flagged: 'warning' } as const;
+  return map[props.review.decision] ?? ('neutral' as const);
 });
 
 const decisionLabel = computed(() => {
   if (!props.review.decision) return '';
-  return { approved: 'Approved', denied: 'Denied', flagged: 'Flagged' }[props.review.decision] || '';
+  return (
+    { approved: 'Approved', denied: 'Denied', flagged: 'Flagged' }[props.review.decision] || ''
+  );
 });
 
 const statusIcon = computed(() => {
@@ -30,16 +34,22 @@ const statusIcon = computed(() => {
           <UIcon :name="statusIcon" :class="{ 'animate-spin': review.status === 'streaming' }" />
           <span class="font-semibold">{{ review.displayName }}</span>
         </div>
-        <UBadge v-if="review.decision" :color="decisionColor" :label="decisionLabel" />
+        <UBadge
+          v-if="review.decision"
+          :data-testid="TEST_IDS.LOAN.REVIEW_DECISION"
+          :color="decisionColor"
+          :label="decisionLabel"
+        />
       </div>
     </template>
 
-    <div v-if="review.status === 'pending'" class="text-muted text-sm">
-      Waiting...
-    </div>
+    <div v-if="review.status === 'pending'" class="text-muted text-sm">Waiting...</div>
 
     <div v-else>
-      <div v-if="review.text" class="prose prose-sm dark:prose-invert max-w-none mb-4 whitespace-pre-wrap">
+      <div
+        v-if="review.text"
+        class="prose prose-sm dark:prose-invert max-w-none mb-4 whitespace-pre-wrap"
+      >
         {{ review.text }}
       </div>
 

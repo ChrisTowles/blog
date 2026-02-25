@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { LOAN_APPLICATION_FIELDS, type LoanApplicationData } from '~~/shared/loan-types';
+import { TEST_IDS } from '~~/shared/test-ids';
 
 const props = defineProps<{
   applicationData: LoanApplicationData;
@@ -20,12 +21,12 @@ const progress = computed(() => {
 </script>
 
 <template>
-  <div class="space-y-3">
+  <div :data-testid="TEST_IDS.LOAN.PROGRESS" class="space-y-3">
     <div class="flex items-center justify-between text-sm">
       <span class="text-muted">Application Progress</span>
       <span class="font-medium">{{ progress }}%</span>
     </div>
-    <UProgress :value="progress" color="primary" />
+    <UProgress :data-testid="TEST_IDS.LOAN.PROGRESS_BAR" :value="progress" color="primary" />
     <div class="flex flex-wrap gap-1.5">
       <UBadge
         v-for="field in fields"

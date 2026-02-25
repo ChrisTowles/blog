@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { LoanApplicationData } from '~~/shared/loan-types';
 import { isApplicationComplete } from '~~/shared/loan-types';
+import { TEST_IDS } from '~~/shared/test-ids';
 
 definePageMeta({
   layout: 'default',
@@ -78,22 +79,21 @@ function submitForReview() {
 </script>
 
 <template>
-  <UContainer class="py-8 max-w-4xl">
+  <UContainer :data-testid="TEST_IDS.LOAN.PAGE" class="py-8 max-w-4xl">
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-highlighted">Home Loan Application</h1>
-      <p class="text-muted mt-2">
-        AI-powered loan application with multi-agent approval workflow
-      </p>
+      <p class="text-muted mt-2">AI-powered loan application with multi-agent approval workflow</p>
     </div>
 
     <!-- Phase: Start -->
     <div v-if="phase === 'start'" class="flex flex-col items-center gap-6 py-16">
       <UIcon name="i-lucide-building-2" class="text-6xl text-primary" />
       <p class="text-lg text-center max-w-md">
-        Start a conversation with our AI loan officer to apply for a home loan.
-        Three independent reviewers will evaluate your application.
+        Start a conversation with our AI loan officer to apply for a home loan. Three independent
+        reviewers will evaluate your application.
       </p>
       <UButton
+        :data-testid="TEST_IDS.LOAN.START_BUTTON"
         label="Start Application"
         size="lg"
         :loading="loading"
@@ -107,6 +107,7 @@ function submitForReview() {
 
       <div v-if="loanChat">
         <UChatMessages
+          :data-testid="TEST_IDS.LOAN.CHAT_MESSAGES"
           :messages="loanChat.messages.value"
           :status="loanChat.status.value"
           class="min-h-[400px] pb-4"
@@ -122,6 +123,7 @@ function submitForReview() {
 
         <div class="sticky bottom-0 z-10 space-y-3">
           <UChatPrompt
+            :data-testid="TEST_IDS.LOAN.CHAT_INPUT"
             v-model="input"
             variant="subtle"
             placeholder="Type your answer..."
@@ -133,6 +135,7 @@ function submitForReview() {
                 <div class="flex items-center gap-2">
                   <UButton
                     v-if="canSubmit"
+                    :data-testid="TEST_IDS.LOAN.SUBMIT_REVIEW_BUTTON"
                     label="Submit for Review"
                     color="success"
                     variant="soft"
@@ -155,26 +158,43 @@ function submitForReview() {
           <LoanReviewCard
             v-for="r in loanReview.reviews.value"
             :key="r.reviewer"
+            :data-testid="TEST_IDS.LOAN.REVIEW_CARD"
             :review="r"
           />
         </div>
 
         <div
           v-if="loanReview.status.value === 'complete'"
+          :data-testid="TEST_IDS.LOAN.OVERALL_RESULT"
           class="mt-8 p-6 rounded-xl border-2"
           :class="{
-            'border-success-500 bg-success-50 dark:bg-success-950': loanReview.overallDecision.value === 'approved',
-            'border-error-500 bg-error-50 dark:bg-error-950': loanReview.overallDecision.value === 'denied',
-            'border-warning-500 bg-warning-50 dark:bg-warning-950': loanReview.overallDecision.value === 'flagged',
+            'border-success-500 bg-success-50 dark:bg-success-950':
+              loanReview.overallDecision.value === 'approved',
+            'border-error-500 bg-error-50 dark:bg-error-950':
+              loanReview.overallDecision.value === 'denied',
+            'border-warning-500 bg-warning-50 dark:bg-warning-950':
+              loanReview.overallDecision.value === 'flagged',
           }"
         >
           <div class="flex items-center gap-3 mb-2">
             <UIcon
-              :name="loanReview.overallDecision.value === 'approved' ? 'i-lucide-check-circle-2' : loanReview.overallDecision.value === 'denied' ? 'i-lucide-x-circle' : 'i-lucide-alert-triangle'"
+              :name="
+                loanReview.overallDecision.value === 'approved'
+                  ? 'i-lucide-check-circle-2'
+                  : loanReview.overallDecision.value === 'denied'
+                    ? 'i-lucide-x-circle'
+                    : 'i-lucide-alert-triangle'
+              "
               class="text-2xl"
             />
             <h2 class="text-xl font-bold">
-              {{ loanReview.overallDecision.value === 'approved' ? 'Application Approved' : loanReview.overallDecision.value === 'denied' ? 'Application Denied' : 'Application Flagged for Review' }}
+              {{
+                loanReview.overallDecision.value === 'approved'
+                  ? 'Application Approved'
+                  : loanReview.overallDecision.value === 'denied'
+                    ? 'Application Denied'
+                    : 'Application Flagged for Review'
+              }}
             </h2>
           </div>
           <p>{{ loanReview.summary.value }}</p>
