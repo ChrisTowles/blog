@@ -69,6 +69,9 @@ export default defineNuxtConfig({
     // Note: There's a pre-existing Vite 8 beta + debug ESM issue affecting chat pages
     '/chat': { ssr: false },
     '/chat/**': { ssr: false },
+    // Loan pages don't need SSR (authenticated feature)
+    '/loan': { ssr: false },
+    '/loan/**': { ssr: false },
   },
 
   future: {
