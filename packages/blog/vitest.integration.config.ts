@@ -11,6 +11,7 @@ export default defineConfig({
           name: 'integration',
           testTimeout: 60_000,
           globals: true,
+          fileParallelism: false,
           setupFiles: ['./vitest.setup.ts'],
           include: ['**/*.integration.test.ts'],
           exclude: ['**/node_modules/**', '**/e2e/**'],
