@@ -140,3 +140,86 @@ export const documentChunksRelations = relations(documentChunks, ({ one }) => ({
     references: [documents.id],
   }),
 }));
+
+// --- Loan workflow tables ---
+
+export const loanStatusEnum = pgEnum('loan_status', [
+  'intake',
+  'reviewing',
+  'approved',
+  'denied',
+  'flagged',
+]);
+export const reviewerEnum = pgEnum('reviewer', ['the-bank', 'loan-market', 'background-checks']);
+export const reviewDecisionEnum = pgEnum('review_decision', ['approved', 'denied', 'flagged']);
+
+export const loanApplications = pgTable(
+  'loan_applications',
+  {
+    id: varchar({ length: 36 })
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: varchar({ length: 36 }).notNull(),
+    status: loanStatusEnum().default('intake'),
+    applicationData: json().$type<import('~~/shared/loan-types').LoanApplicationData>().default({}),
+    ...timestamps,
+  },
+  (table) => [index('loan_applications_user_id_idx').on(table.userId)],
+);
+
+export const loanApplicationsRelations = relations(loanApplications, ({ one, many }) => ({
+  user: one(users, {
+    fields: [loanApplications.userId],
+    references: [users.id],
+  }),
+  reviews: many(loanReviews),
+  messages: many(loanMessages),
+}));
+
+export const loanReviews = pgTable(
+  'loan_reviews',
+  {
+    id: varchar({ length: 36 })
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    applicationId: varchar({ length: 36 })
+      .notNull()
+      .references(() => loanApplications.id, { onDelete: 'cascade' }),
+    reviewer: reviewerEnum(),
+    decision: reviewDecisionEnum(),
+    analysis: text(),
+    flags: json().$type<string[]>().default([]),
+    ...timestamps,
+  },
+  (table) => [index('loan_reviews_application_id_idx').on(table.applicationId)],
+);
+
+export const loanReviewsRelations = relations(loanReviews, ({ one }) => ({
+  application: one(loanApplications, {
+    fields: [loanReviews.applicationId],
+    references: [loanApplications.id],
+  }),
+}));
+
+export const loanMessages = pgTable(
+  'loan_messages',
+  {
+    id: varchar({ length: 36 })
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    applicationId: varchar({ length: 36 })
+      .notNull()
+      .references(() => loanApplications.id, { onDelete: 'cascade' }),
+    role: roleEnum(),
+    parts: json(),
+    ...timestamps,
+  },
+  (table) => [index('loan_messages_application_id_idx').on(table.applicationId)],
+);
+
+export const loanMessagesRelations = relations(loanMessages, ({ one }) => ({
+  application: one(loanApplications, {
+    fields: [loanMessages.applicationId],
+    references: [loanApplications.id],
+  }),
+}));
