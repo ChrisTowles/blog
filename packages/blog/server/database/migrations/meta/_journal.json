@@ -22,6 +22,13 @@
       "when": 1739721600000,
       "tag": "0002_fix_search_vector_tsvector",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1771979118831,
+      "tag": "0003_illegal_molly_hayes",
+      "breakpoints": true
     }
   ]
 }
