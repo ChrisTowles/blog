@@ -62,8 +62,8 @@ export type LoanStatus = (typeof LOAN_STATUSES)[number];
 
 // --- Reviewers ---
 
-export const REVIEWER_NAMES = ['the-bank', 'loan-market', 'background-checks'] as const;
-export type ReviewerName = (typeof REVIEWER_NAMES)[number];
+export const REVIEWERS = ['the-bank', 'loan-market', 'background-checks'] as const;
+export type ReviewerName = (typeof REVIEWERS)[number];
 
 // --- Review decisions ---
 
@@ -75,6 +75,7 @@ export type ReviewDecision = (typeof REVIEW_DECISIONS)[number];
 export interface LoanReviewStartEvent {
   type: 'review_start';
   reviewer: ReviewerName;
+  displayName: string;
 }
 
 export interface LoanReviewTextEvent {
@@ -87,12 +88,13 @@ export interface LoanReviewCompleteEvent {
   type: 'review_complete';
   reviewer: ReviewerName;
   decision: ReviewDecision;
-  summary: string;
+  flags: string[];
 }
 
 export interface LoanAllReviewsCompleteEvent {
   type: 'all_reviews_complete';
-  finalStatus: LoanStatus;
+  overallDecision: ReviewDecision;
+  summary: string;
 }
 
 export interface LoanReviewErrorEvent {
