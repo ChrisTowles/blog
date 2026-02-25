@@ -22,7 +22,10 @@ export interface ApproverResponse {
 
 export function loadApproverPrompt(reviewer: ReviewerName): string {
   const skillDir = REVIEWER_SKILL_DIRS[reviewer];
-  const skillPath = join(process.cwd(), '.claude', 'skills', skillDir, 'SKILL.md');
+  // Skills live at repo root (.claude/skills/), not in packages/blog/
+  const cwd = process.cwd();
+  const base = cwd.endsWith('packages/blog') ? join(cwd, '..', '..') : cwd;
+  const skillPath = join(base, '.claude', 'skills', skillDir, 'SKILL.md');
 
   if (!existsSync(skillPath)) {
     throw new Error(`Skill file not found for reviewer ${reviewer}: ${skillPath}`);

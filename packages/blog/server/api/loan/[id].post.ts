@@ -33,7 +33,10 @@ function sendSSE(
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event);
-  const userId = session.user?.id || session.id;
+  if (!session.user?.id) {
+    throw createError({ statusCode: 401, statusMessage: 'Login required' });
+  }
+  const userId = session.user.id;
 
   const { id } = await getValidatedRouterParams(event, z.object({ id: z.string() }).parse);
   const { model, messages } = await readValidatedBody(
@@ -54,7 +57,10 @@ export default defineEventHandler(async (event) => {
   }
 
   if (application.status !== 'intake') {
-    throw createError({ statusCode: 400, statusMessage: 'Application is no longer accepting input' });
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Application is no longer accepting input',
+    });
   }
 
   // Save user message
@@ -67,7 +73,8 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  let applicationData: LoanApplicationData = (application.applicationData as LoanApplicationData) || {};
+  let applicationData: LoanApplicationData =
+    (application.applicationData as LoanApplicationData) || {};
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -147,12 +154,18 @@ export default defineEventHandler(async (event) => {
                 const toolResult = executeLoanTool(currentToolName, toolArgs, { applicationData });
 
                 if (currentToolName === 'updateApplication' && toolResult.updated) {
-                  applicationData = { ...applicationData, ...(toolResult.updated as LoanApplicationData) };
+                  applicationData = {
+                    ...applicationData,
+                    ...(toolResult.updated as LoanApplicationData),
+                  };
                   await db
                     .update(tables.loanApplications)
                     .set({ applicationData })
                     .where(eq(tables.loanApplications.id, id));
-                  sendSSE(controller, { type: 'application_update', data: applicationData } as never);
+                  sendSSE(controller, {
+                    type: 'application_update',
+                    data: applicationData,
+                  } as never);
                 }
 
                 toolResults.push({

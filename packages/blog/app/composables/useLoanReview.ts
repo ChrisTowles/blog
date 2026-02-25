@@ -17,9 +17,27 @@ interface UseLoanReviewOptions {
 
 export function useLoanReview(options: UseLoanReviewOptions) {
   const reviews = ref<ReviewState[]>([
-    { reviewer: 'the-bank', displayName: 'The Bank — Financial Risk', status: 'pending', text: '', flags: [] },
-    { reviewer: 'loan-market', displayName: 'Loan Market — Deal Structure', status: 'pending', text: '', flags: [] },
-    { reviewer: 'background-checks', displayName: 'Background Checks — Fraud Detection', status: 'pending', text: '', flags: [] },
+    {
+      reviewer: 'the-bank',
+      displayName: 'The Bank — Financial Risk',
+      status: 'pending',
+      text: '',
+      flags: [],
+    },
+    {
+      reviewer: 'loan-market',
+      displayName: 'Loan Market — Deal Structure',
+      status: 'pending',
+      text: '',
+      flags: [],
+    },
+    {
+      reviewer: 'background-checks',
+      displayName: 'Background Checks — Fraud Detection',
+      status: 'pending',
+      text: '',
+      flags: [],
+    },
   ]);
   const status = ref<'idle' | 'reviewing' | 'complete'>('idle');
   const overallDecision = ref<ReviewDecision | null>(null);

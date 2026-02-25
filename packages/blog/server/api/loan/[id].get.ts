@@ -9,7 +9,10 @@ defineRouteMeta({
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event);
-  const userId = session.user?.id || session.id;
+  if (!session.user?.id) {
+    throw createError({ statusCode: 401, statusMessage: 'Login required' });
+  }
+  const userId = session.user.id;
 
   const { id } = await getValidatedRouterParams(event, z.object({ id: z.string() }).parse);
 
