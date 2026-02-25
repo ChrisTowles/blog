@@ -15,8 +15,8 @@ definePageMeta({
 });
 
 useSeoMeta({
-  title: 'Home Loan Application',
-  description: 'AI-powered home loan intake chat',
+  title: 'Agentic Loan Workflow — Intake',
+  description: 'Demo: AI-powered conversational data collection for loan applications',
 });
 
 const route = useRoute();
@@ -70,9 +70,13 @@ function submitForReview() {
     <div class="shrink-0 border-b border-default px-4 py-4">
       <UContainer class="max-w-4xl">
         <div class="mb-4">
-          <h1 class="text-3xl font-bold text-highlighted">Home Loan Application</h1>
-          <p class="text-muted mt-2">
-            AI-powered loan application with multi-agent approval workflow
+          <div class="flex items-center gap-2 mb-1">
+            <UBadge color="warning" variant="subtle" label="Demo" size="sm" />
+            <h1 class="text-3xl font-bold text-highlighted">Agentic Loan Workflow</h1>
+          </div>
+          <p class="text-muted mt-1 text-sm">
+            Step 1: AI collects your application via chat. Answer naturally — the agent extracts
+            structured data.
           </p>
         </div>
         <LoanProgress :application-data="applicationData" />

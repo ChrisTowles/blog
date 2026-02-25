@@ -35,6 +35,7 @@ ENV NUXT_CONTENT_DATABASE=false
 ENV NITRO_PRESET=node-server
 
 # Build the Nuxt application
+ENV NODE_OPTIONS="--max-old-space-size=8192"
 RUN cd /app && pnpm --filter @chris-towles/blog exec nuxt build
 
 # Production stage - use Node for runtime stability
