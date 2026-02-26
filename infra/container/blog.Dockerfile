@@ -34,6 +34,10 @@ WORKDIR /app/packages/blog
 ENV NUXT_CONTENT_DATABASE=false
 ENV NITRO_PRESET=node-server
 
+# Google Analytics measurement ID — needed at build time for prerendered pages
+ARG NUXT_PUBLIC_GTAG_ID=""
+ENV NUXT_PUBLIC_GTAG_ID=$NUXT_PUBLIC_GTAG_ID
+
 # Build the Nuxt application
 ENV NODE_OPTIONS="--max-old-space-size=8192"
 RUN cd /app && pnpm --filter @chris-towles/blog exec nuxt build

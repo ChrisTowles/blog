@@ -67,6 +67,7 @@ jobs:
           build-args: |
             GIT_SHA=${{ steps.tags.outputs.sha_tag }}
             BUILD_TAG=${{ steps.tags.outputs.date_tag }}
+            NUXT_PUBLIC_GTAG_ID=G-PH525YF11W
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
