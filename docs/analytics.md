@@ -27,7 +27,6 @@ Both properties live under the **Chris Towles** GA account (19124393).
 
 ```ts
 gtag: {
-  enabled: !!process.env.NUXT_PUBLIC_GTAG_ID,
   id: process.env.NUXT_PUBLIC_GTAG_ID,
   initCommands: [
     ['consent', 'default', {
@@ -40,7 +39,7 @@ gtag: {
 },
 ```
 
-Analytics is **disabled** when `NUXT_PUBLIC_GTAG_ID` is unset. Consent Mode v2 defaults all consent categories to `denied` — no cookies until the user opts in.
+The module is always enabled (default `true`) so it registers its runtime config and plugin at build time. The actual gtag script only loads when `NUXT_PUBLIC_GTAG_ID` is set at runtime — this is critical because Docker builds don't have the env var (Cloud Run injects it). Consent Mode v2 defaults all consent categories to `denied` — no cookies until the user opts in.
 
 ### Per-environment wiring
 
