@@ -146,7 +146,7 @@ async function deployContainer() {
     process.exit(1);
   }
 
-  const terraformDir = `infra/terraform/environments/${environment}`;
+  const terraformDir = `infra/terraform/environments`;
 
   if (!fs.existsSync(terraformDir)) {
     console.error(chalk.red(`❌ Terraform directory not found: ${terraformDir}`));
@@ -170,13 +170,13 @@ async function deployContainer() {
   // Step 1: Get artifact registry URL from terraform output
   console.log(chalk.yellow('\n📦 Getting registry URL from Terraform...'));
   cd(terraformDir);
+  await $`terraform init -backend-config=${environment}.backend.tfvars -reconfigure`.quiet();
   let registry = '';
   try {
     registry = (await $`terraform output -raw container_image_base`).stdout.trim();
   } catch {
-    console.log(chalk.yellow('⚠️  Could not get registry URL. Initializing infrastructure...'));
-    await $`terraform init`;
-    await $`terraform apply -target=module.shared -auto-approve -lock=false`; // setting -lock=false to avoid lock issues every single time.
+    console.log(chalk.yellow('⚠️  Could not get registry URL. Bootstrapping shared module...'));
+    await $`terraform apply -target=module.shared -auto-approve -var-file=${environment}.tfvars -lock=false`; // setting -lock=false to avoid lock issues every single time.
     registry = (await $`terraform output -raw container_image_base`).stdout.trim();
   }
   cd(rootDir);
@@ -212,7 +212,7 @@ async function deployContainer() {
   console.log(chalk.yellow(`\n☁️  Updating Cloud Run with new image...`));
   cd(terraformDir);
   $.verbose = true;
-  await $`terraform apply -auto-approve -var="container_image=${imageWithDateTag}"`;
+  await $`terraform apply -auto-approve -var-file=${environment}.tfvars -var="container_image=${imageWithDateTag}"`;
   $.verbose = false;
   cd(rootDir);
 

@@ -13,6 +13,12 @@ crash.*.log
 *.tfvars
 *.tfvars.json
 
+# But track our per-environment tfvars (no secrets, just config)
+!environments/staging.tfvars
+!environments/prod.tfvars
+!environments/staging.backend.tfvars
+!environments/prod.backend.tfvars
+
 # Ignore override files as they are usually used to override resources locally
 override.tf
 override.tf.json

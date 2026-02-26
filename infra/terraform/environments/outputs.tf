@@ -17,3 +17,13 @@ output "container_image_base" {
   description = "Base URL for container images"
   value       = module.shared.container_image_base
 }
+
+output "wif_provider" {
+  description = "Workload Identity Provider for GitHub Actions"
+  value       = var.environment == "prod" ? module.github_oidc[0].workload_identity_provider : null
+}
+
+output "ci_service_account_email" {
+  description = "CI service account email for GitHub Actions"
+  value       = var.environment == "prod" ? module.github_oidc[0].ci_service_account_email : null
+}
