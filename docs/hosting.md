@@ -36,15 +36,23 @@ nr gcp:prod:logs         # tail logs
 ```
 infra/terraform/
 ├── modules/
-│   ├── cloud-run/    # Container hosting
-│   ├── cloud-sql/    # PostgreSQL database
-│   └── shared/       # IAM, service accounts, registry
+│   ├── cloud-run/       # Container hosting
+│   ├── cloud-sql/       # PostgreSQL database
+│   ├── shared/          # IAM, service accounts, registry
+│   ├── github-oidc/     # Workload Identity Federation (prod only)
+│   └── cost-scheduler/  # Cloud Function to stop SQL nightly (staging only)
 └── environments/
-    ├── staging/
-    └── prod/
+    ├── main.tf               # Unified config with conditional modules
+    ├── variables.tf          # Variable definitions
+    ├── staging.tfvars        # Staging values
+    └── prod.tfvars           # Production values
 ```
 
 Full terraform docs: [infra/terraform/README.md](../infra/terraform/README.md)
+
+## Analytics
+
+Google Analytics 4 via `nuxt-gtag`. Measurement ID set per environment via Terraform `gtag_id` variable. See [Analytics docs](analytics.md) for property/stream details and custom events.
 
 ## Cost
 

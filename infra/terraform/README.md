@@ -14,13 +14,24 @@ Uses simplified architecture with Cloud SQL public IP + Auth Proxy (no VPC) to m
 ```
 infra/terraform/
 ├── modules/
-│   ├── cloud-sql/      # PostgreSQL database (public IP)
-│   ├── cloud-run/      # Container hosting
-│   └── shared/         # IAM, service accounts, Artifact Registry
+│   ├── cloud-sql/        # PostgreSQL database (public IP)
+│   ├── cloud-run/        # Container hosting
+│   ├── shared/           # IAM, service accounts, Artifact Registry
+│   ├── github-oidc/      # Workload Identity Federation (prod only)
+│   └── cost-scheduler/   # Cloud Function + Scheduler to stop SQL nightly (staging only)
 └── environments/
-    ├── staging/        # Staging environment
-    └── prod/           # Production environment
+    ├── main.tf               # Unified config with conditional modules
+    ├── variables.tf          # Single variable definition set
+    ├── outputs.tf            # Merged outputs
+    ├── staging.tfvars        # Staging values
+    ├── prod.tfvars           # Production values
+    ├── staging.backend.tfvars  # Staging state bucket
+    └── prod.backend.tfvars     # Production state bucket
 ```
+
+Single root module with per-environment `.tfvars` files. Environment-specific modules use `count` conditionals:
+- `github_oidc` — prod only
+- `cost_scheduler` — staging only
 
 ## Prerequisites
 
@@ -45,18 +56,13 @@ infra/terraform/
 4. **Authenticate**
 
    ```bash
-
-   # test
-   gcloud config set project blog-towles-staging
-
-   gcloud config set project blog-towles-production
-
-
    gcloud auth login
-
-
-
    gcloud auth application-default login
+
+   # Set active project
+   gcloud config set project blog-towles-staging
+   # or
+   gcloud config set project blog-towles-production
    ```
 
 5. **Enable billing** on both projects
@@ -65,20 +71,16 @@ infra/terraform/
 
 ### 1. Create state buckets
 
-For each environment:
-
 ```bash
 # Staging
-ENV_STAGING_PROJECT_ID="blog-towles-staging"
-gcloud storage buckets create gs://$ENV_STAGING_PROJECT_ID-tfstate \
-  --project=$ENV_STAGING_PROJECT_ID \
+gcloud storage buckets create gs://blog-towles-staging-tfstate \
+  --project=blog-towles-staging \
   --location=us-central1 \
   --uniform-bucket-level-access
 
 # Prod
-ENV_PROD_PROJECT_ID="blog-towles-production"
-gcloud storage buckets create gs://$ENV_PROD_PROJECT_ID-tfstate \
-  --project=$ENV_PROD_PROJECT_ID \
+gcloud storage buckets create gs://blog-towles-production-tfstate \
+  --project=blog-towles-production \
   --location=us-central1 \
   --uniform-bucket-level-access
 ```
@@ -86,31 +88,17 @@ gcloud storage buckets create gs://$ENV_PROD_PROJECT_ID-tfstate \
 ### 2. Enable versioning (recommended)
 
 ```bash
-gcloud storage buckets update "gs://$ENV_STAGING_PROJECT_ID-tfstate" --versioning
-gcloud storage buckets update "gs://$ENV_PROD_PROJECT_ID-tfstate" --versioning
+gcloud storage buckets update "gs://blog-towles-staging-tfstate" --versioning
+gcloud storage buckets update "gs://blog-towles-production-tfstate" --versioning
 ```
 
 ### 3. Create secrets in GCP Secret Manager
 
 Terraform references existing secrets rather than creating them. Secret names are the same in each project (project provides environment isolation).
 
-#### Staging
-
 ```bash
-export PROJECT=blog-towles-staging
-export DB_PASSWORD="$(openssl rand -base64 16)"
-
-# Create secrets (first time only)
-echo -n "REPLACE_ME" | gcloud secrets create anthropic-api-key --data-file=- --project=$PROJECT
-echo -n "$(openssl rand -base64 32)" | gcloud secrets create session-password --data-file=- --project=$PROJECT
-echo "DB_PASSWORD: $DB_PASSWORD"
-echo -n "$DB_PASSWORD" | gcloud secrets create database-password --data-file=- --project=$PROJECT
-```
-
-#### Production
-
-```bash
-export PROJECT=blog-towles-production
+# Set PROJECT to staging or production
+export PROJECT=blog-towles-staging  # or blog-towles-production
 export DB_PASSWORD="$(openssl rand -base64 16)"
 
 # Create secrets (first time only)
@@ -123,9 +111,6 @@ echo -n "$DB_PASSWORD" | gcloud secrets create database-password --data-file=- -
 #### AWS Bedrock credentials (for RAG embeddings)
 
 ```bash
-# Set PROJECT to staging or production
-export PROJECT=blog-towles-staging  # or blog-towles-production
-
 echo -n "AKIAXXXXXXXX" | gcloud secrets create aws-access-key-id --data-file=- --project=$PROJECT
 echo -n "xxxxxxxxxx" | gcloud secrets create aws-secret-access-key --data-file=- --project=$PROJECT
 ```
@@ -140,9 +125,6 @@ Callback URLs:
 - Production: `https://chris.towles.dev/api/auth/github`
 
 ```bash
-# Set PROJECT to staging or production
-export PROJECT=blog-towles-staging  # or blog-towles-production
-
 echo -n "YOUR_CLIENT_ID" | gcloud secrets create github-oauth-client-id --data-file=- --project=$PROJECT
 echo -n "YOUR_CLIENT_SECRET" | gcloud secrets create github-oauth-client-secret --data-file=- --project=$PROJECT
 ```
@@ -150,52 +132,30 @@ echo -n "YOUR_CLIENT_SECRET" | gcloud secrets create github-oauth-client-secret 
 #### Update secrets
 
 ```bash
-# Set PROJECT to staging or production
-export PROJECT=blog-towles-staging  # or blog-towles-production
-
-echo -n "NEW_VALUE" | gcloud secrets versions add anthropic-api-key --data-file=- --project=$PROJECT
-echo -n "NEW_VALUE" | gcloud secrets versions add session-password --data-file=- --project=$PROJECT
-echo -n "NEW_VALUE" | gcloud secrets versions add database-password --data-file=- --project=$PROJECT
-echo -n "NEW_VALUE" | gcloud secrets versions add aws-access-key-id --data-file=- --project=$PROJECT
-echo -n "NEW_VALUE" | gcloud secrets versions add aws-secret-access-key --data-file=- --project=$PROJECT
-echo -n "NEW_VALUE" | gcloud secrets versions add github-oauth-client-id --data-file=- --project=$PROJECT
-echo -n "NEW_VALUE" | gcloud secrets versions add github-oauth-client-secret --data-file=- --project=$PROJECT
+echo -n "NEW_VALUE" | gcloud secrets versions add SECRET_NAME --data-file=- --project=$PROJECT
 ```
 
 #### View secrets
 
 ```bash
-# Set PROJECT to staging or production
-export PROJECT=blog-towles-staging  # or blog-towles-production
-
-gcloud secrets versions access latest --secret=anthropic-api-key --project=$PROJECT
-gcloud secrets versions access latest --secret=session-password --project=$PROJECT
-gcloud secrets versions access latest --secret=database-password --project=$PROJECT
-gcloud secrets versions access latest --secret=github-oauth-client-id --project=$PROJECT
-gcloud secrets versions access latest --secret=github-oauth-client-secret --project=$PROJECT
+gcloud secrets versions access latest --secret=SECRET_NAME --project=$PROJECT
 ```
 
-### 4. Configure environment
+### 4. Initialize and apply
 
 ```bash
-cd terraform/environments/staging
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars with your values
+cd infra/terraform/environments
+
+# Staging
+terraform init -backend-config=staging.backend.tfvars
+terraform plan -var-file=staging.tfvars
+terraform apply -var-file=staging.tfvars
+
+# Prod (switch backend)
+terraform init -backend-config=prod.backend.tfvars -reconfigure
+terraform plan -var-file=prod.tfvars
+terraform apply -var-file=prod.tfvars
 ```
-
-### 5. Uncomment backend config
-
-In `main.tf`, uncomment the backend block and update bucket name.
-
-### 6. Initialize and apply
-
-```bash
-terraform init
-terraform plan
-terraform apply
-```
-
-Repeat for prod environment.
 
 ## Common Operations
 
@@ -227,45 +187,25 @@ To apply infrastructure changes only (no container build):
 pnpm gcp:prod:apply
 ```
 
-### Update container image
+### Plan changes
 
 ```bash
-terraform apply -var='container_image=us-central1-docker.pkg.dev/PROJECT/REPO/blog:v1.2.3'
+pnpm gcp:staging:plan
+pnpm gcp:prod:plan
 ```
-
-Or update in terraform.tfvars and run `terraform apply`.
 
 ### View outputs
 
 ```bash
+cd infra/terraform/environments
+terraform init -backend-config=staging.backend.tfvars -reconfigure
 terraform output
 ```
 
 ### Destroy staging (careful!)
 
 ```bash
-cd infra/terraform/environments/staging
-terraform destroy
-```
-
-## Container Build & Push
-
-After applying infrastructure, build and push images:
-
-```bash
-# Get artifact registry URL from terraform output
-REGISTRY=$(cd infra/terraform/environments/staging && terraform output -raw container_image_base)
-
-# Authenticate Docker
-gcloud auth configure-docker us-central1-docker.pkg.dev
-
-# Build and push
-docker build -t $REGISTRY/blog:latest .
-docker push $REGISTRY/blog:latest
-
-# Update Cloud Run with new image
-cd infra/terraform/environments/staging
-terraform apply -var="container_image=$REGISTRY/blog:latest"
+pnpm gcp:staging:destroy
 ```
 
 ## Environment Differences
@@ -275,13 +215,14 @@ terraform apply -var="container_image=$REGISTRY/blog:latest"
 | Cloud SQL Tier         | db-f1-micro | db-f1-micro |
 | Availability           | Zonal       | Zonal       |
 | Point-in-time Recovery | No          | No          |
-| Deletion Protection    | No          | Yes         |
+| Deletion Protection    | No          | No          |
 | Min Instances          | 0           | 0           |
 | Max Instances          | 2           | 2           |
-| CPU                    | 1           | 1           |
-| Memory                 | 512Mi       | 512Mi       |
+| GitHub OIDC            | No          | Yes         |
+| Cost Scheduler         | Yes         | No          |
+| Google Analytics       | `gtag_id` in staging.tfvars | `gtag_id` in prod.tfvars |
 
-_Prod has same resource allocation as staging to minimize costs. Only difference is deletion protection._
+The `gtag_id` variable sets `NUXT_PUBLIC_GTAG_ID` on Cloud Run. See [Analytics docs](../../docs/analytics.md) for measurement IDs and GA4 property details.
 
 ## Cost Estimates
 
@@ -293,8 +234,6 @@ Both environments use same resource tiers to minimize costs:
 
 **Both staging + prod: ~$20-30/month**
 
-_Can upgrade prod to db-g1-small regional HA (~$50/mo) + min instance (+ $15/mo) if traffic/uptime requirements increase._
-
 ## Security
 
 - Database credentials stored in Secret Manager
@@ -302,7 +241,35 @@ _Can upgrade prod to db-g1-small regional HA (~$50/mo) + min instance (+ $15/mo)
 - Service accounts with minimal permissions (cloudsql.client role required)
 - SSL required for all database connections
 - No IP allowlisting needed - authentication via IAM
-- `terraform.tfvars` in `.gitignore` (never commit secrets)
+
+## CI/CD Integration
+
+GitHub Actions deploys automatically on push to `main` using Workload Identity Federation (no long-lived keys).
+
+The `github_oidc` Terraform module creates:
+
+- Workload Identity Pool + OIDC Provider for GitHub Actions
+- `github-actions-ci` service account with Cloud Run, Artifact Registry, and actAs permissions
+- WIF binding scoped to the `ChrisTowles/blog` repository
+
+### Setup
+
+1. Apply Terraform for prod:
+
+   ```bash
+   pnpm gcp:prod:apply
+   ```
+
+2. Set GitHub repo variables from terraform output:
+
+   ```bash
+   cd infra/terraform/environments
+   terraform init -backend-config=prod.backend.tfvars -reconfigure
+   gh variable set GCP_WIF_PROVIDER --body "$(terraform output -raw wif_provider)"
+   gh variable set GCP_WIF_SERVICE_ACCOUNT --body "$(terraform output -raw ci_service_account_email)"
+   ```
+
+3. Push to `main` — the Deploy workflow triggers automatically.
 
 ## Troubleshooting
 
@@ -324,41 +291,3 @@ gcloud services enable SERVICE_NAME.googleapis.com --project=PROJECT_ID
 ```bash
 terraform force-unlock LOCK_ID
 ```
-
-## CI/CD Integration
-
-GitHub Actions deploys automatically on push to `main` using Workload Identity Federation (no long-lived keys).
-
-The `github_oidc` Terraform module creates:
-
-- Workload Identity Pool + OIDC Provider for GitHub Actions
-- `github-actions-ci` service account with Cloud Run, Artifact Registry, and actAs permissions
-- WIF binding scoped to the `ChrisTowles/blog` repository
-
-### Setup
-
-1. Apply Terraform in `environments/prod/`:
-
-   ```bash
-   terraform init && terraform apply
-   ```
-
-2. Set GitHub repo variables from terraform output:
-
-   ```bash
-   gh variable set GCP_WIF_PROVIDER --body "$(terraform output -raw wif_provider)"
-   gh variable set GCP_WIF_SERVICE_ACCOUNT --body "$(terraform output -raw ci_service_account_email)"
-   ```
-
-3. Push to `main` — the Deploy workflow triggers automatically.
-
-## Migration from Cloudflare
-
-1. Apply Terraform to create GCP infrastructure
-2. Build and push container image
-3. Run database migrations against Cloud SQL
-4. Test staging deployment
-5. Update DNS to point to Cloud Run URL
-6. Apply prod Terraform
-7. Deploy to prod
-8. Verify and decommission Cloudflare resources
