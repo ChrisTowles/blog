@@ -14,10 +14,7 @@ permissions:
   id-token: write
 
 env:
-  GCP_PROJECT: blog-towles-production
-  GCP_REGION: us-central1
   CLOUD_RUN_SERVICE: blog
-  IMAGE_BASE: us-central1-docker.pkg.dev/blog-towles-production/containers/blog
 
 jobs:
   test:
@@ -31,6 +28,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Parse prod.tfvars
+        id: tfvars
+        run: |
+          TFVARS="infra/terraform/environments/prod.tfvars"
+          get() { grep "^$1" "$TFVARS" | sed 's/.*= *"\(.*\)"/\1/'; }
+          CONTAINER_IMAGE=$(get container_image)
+          echo "project_id=$(get project_id)" >> "$GITHUB_OUTPUT"
+          echo "site_url=$(get site_url)" >> "$GITHUB_OUTPUT"
+          echo "gtag_id=$(get gtag_id)" >> "$GITHUB_OUTPUT"
+          echo "region=$(echo "$CONTAINER_IMAGE" | sed 's/-docker\.pkg\.dev.*//')" >> "$GITHUB_OUTPUT"
+          echo "image_base=$(echo "$CONTAINER_IMAGE" | sed 's/:[^/]*$//')" >> "$GITHUB_OUTPUT"
+
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
@@ -41,7 +50,7 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Authenticate Docker to Artifact Registry
-        run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+        run: gcloud auth configure-docker ${{ steps.tfvars.outputs.region }}-docker.pkg.dev --quiet
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -61,27 +70,27 @@ jobs:
           file: infra/container/blog.Dockerfile
           push: true
           tags: |
-            ${{ env.IMAGE_BASE }}:${{ steps.tags.outputs.date_tag }}
-            ${{ env.IMAGE_BASE }}:${{ steps.tags.outputs.sha_tag }}
-            ${{ env.IMAGE_BASE }}:latest
+            ${{ steps.tfvars.outputs.image_base }}:${{ steps.tags.outputs.date_tag }}
+            ${{ steps.tfvars.outputs.image_base }}:${{ steps.tags.outputs.sha_tag }}
+            ${{ steps.tfvars.outputs.image_base }}:latest
           build-args: |
             GIT_SHA=${{ steps.tags.outputs.sha_tag }}
             BUILD_TAG=${{ steps.tags.outputs.date_tag }}
-            NUXT_PUBLIC_GTAG_ID=G-PH525YF11W
+            NUXT_PUBLIC_GTAG_ID=${{ steps.tfvars.outputs.gtag_id }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Deploy to Cloud Run
         run: |
           gcloud run services update ${{ env.CLOUD_RUN_SERVICE }} \
-            --image=${{ env.IMAGE_BASE }}:${{ steps.tags.outputs.date_tag }} \
-            --region=${{ env.GCP_REGION }} \
-            --project=${{ env.GCP_PROJECT }}
+            --image=${{ steps.tfvars.outputs.image_base }}:${{ steps.tags.outputs.date_tag }} \
+            --region=${{ steps.tfvars.outputs.region }} \
+            --project=${{ steps.tfvars.outputs.project_id }}
 
       - name: Health check
         run: |
           sleep 10
-          STATUS=$(curl -s -o /dev/null -w '%{http_code}' https://chris.towles.dev)
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' ${{ steps.tfvars.outputs.site_url }})
           echo "Health check status: ${STATUS}"
           if [ "$STATUS" -ne 200 ]; then
             echo "::warning::Health check returned ${STATUS}, expected 200"
