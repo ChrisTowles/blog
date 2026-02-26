@@ -19,7 +19,10 @@ variable "site_url" {
   description = "Public URL for staging site"
   type        = string
   default     = "https://staging-chris.towles.dev/"
-
 }
 
-
+variable "gtag_id" {
+  description = "Google Analytics 4 Measurement ID"
+  type        = string
+  default     = ""
+}
