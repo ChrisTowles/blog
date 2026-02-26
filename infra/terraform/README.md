@@ -30,6 +30,7 @@ infra/terraform/
 ```
 
 Single root module with per-environment `.tfvars` files. Environment-specific modules use `count` conditionals:
+
 - `github_oidc` — prod only
 - `cost_scheduler` — staging only
 
@@ -210,16 +211,16 @@ pnpm gcp:staging:destroy
 
 ## Environment Differences
 
-| Feature                | Staging     | Prod        |
-| ---------------------- | ----------- | ----------- |
-| Cloud SQL Tier         | db-f1-micro | db-f1-micro |
-| Availability           | Zonal       | Zonal       |
-| Point-in-time Recovery | No          | No          |
-| Deletion Protection    | No          | No          |
-| Min Instances          | 0           | 0           |
-| Max Instances          | 2           | 2           |
-| GitHub OIDC            | No          | Yes         |
-| Cost Scheduler         | Yes         | No          |
+| Feature                | Staging                     | Prod                     |
+| ---------------------- | --------------------------- | ------------------------ |
+| Cloud SQL Tier         | db-f1-micro                 | db-f1-micro              |
+| Availability           | Zonal                       | Zonal                    |
+| Point-in-time Recovery | No                          | No                       |
+| Deletion Protection    | No                          | No                       |
+| Min Instances          | 0                           | 0                        |
+| Max Instances          | 2                           | 2                        |
+| GitHub OIDC            | No                          | Yes                      |
+| Cost Scheduler         | Yes                         | No                       |
 | Google Analytics       | `gtag_id` in staging.tfvars | `gtag_id` in prod.tfvars |
 
 The `gtag_id` variable sets `NUXT_PUBLIC_GTAG_ID` on Cloud Run. See [Analytics docs](../../docs/analytics.md) for measurement IDs and GA4 property details.
