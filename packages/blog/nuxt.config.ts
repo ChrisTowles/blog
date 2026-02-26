@@ -23,6 +23,23 @@ export default defineNuxtConfig({
     '@nuxt/test-utils/module',
   ],
 
+  gtag: {
+    enabled: !!process.env.NUXT_PUBLIC_GTAG_ID,
+    id: process.env.NUXT_PUBLIC_GTAG_ID,
+    initCommands: [
+      [
+        'consent',
+        'default',
+        {
+          ad_user_data: 'denied',
+          ad_personalization: 'denied',
+          ad_storage: 'denied',
+          analytics_storage: 'denied',
+        },
+      ],
+    ],
+  },
+
   devtools: {
     enabled: true,
 
