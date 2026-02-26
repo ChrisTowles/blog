@@ -45,10 +45,10 @@ The module is always enabled (default `true`) so it registers its runtime config
 
 ### Per-environment wiring
 
-| Environment | Where the ID is set                                                    |
-| ----------- | ---------------------------------------------------------------------- |
-| Local       | `.env` → `NUXT_PUBLIC_GTAG_ID=G-57YWQXB9F0`                          |
-| Staging     | `staging.tfvars` → build script reads `gtag_id` → Docker `--build-arg` |
+| Environment | Where the ID is set                                                      |
+| ----------- | ------------------------------------------------------------------------ |
+| Local       | `.env` → `NUXT_PUBLIC_GTAG_ID=G-57YWQXB9F0`                              |
+| Staging     | `staging.tfvars` → build script reads `gtag_id` → Docker `--build-arg`   |
 | Production  | `prod.tfvars` → CI/CD passes `--build-arg`, Terraform sets Cloud Run env |
 
 The ID flows through two paths:
