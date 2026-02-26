@@ -59,6 +59,10 @@ onMounted(() => {
 const isRunning = computed(() => status.value === 'executing' || status.value === 'streaming');
 
 function handleRun() {
+  const { gtag } = useGtag();
+  gtag('event', 'code_runner_execute', {
+    language: language.value,
+  });
   execute(props.prompt);
 }
 
