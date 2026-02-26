@@ -55,25 +55,26 @@ module "cloud_sql" {
 module "cloud_run" {
   source = "../../modules/cloud-run"
 
-  project_id    = var.project_id
-  region        = var.region
-  container_image               = var.container_image
-  service_account_email         = module.shared.service_account_email
-  database_connection_secret_id = module.cloud_sql.connection_string_secret_id
-  cloud_sql_connection_name     = module.cloud_sql.instance_connection_name
+  project_id                           = var.project_id
+  region                               = var.region
+  container_image                      = var.container_image
+  service_account_email                = module.shared.service_account_email
+  database_connection_secret_id        = module.cloud_sql.connection_string_secret_id
+  cloud_sql_connection_name            = module.cloud_sql.instance_connection_name
   anthropic_api_key_secret_id          = module.shared.anthropic_api_key_secret_id
   session_password_secret_id           = module.shared.session_password_secret_id
   aws_access_key_id_secret_id          = module.shared.aws_access_key_id_secret_id
   aws_secret_access_key_secret_id      = module.shared.aws_secret_access_key_secret_id
-  github_oauth_client_id_secret_id      = module.shared.github_oauth_client_id_secret_id
-  github_oauth_client_secret_secret_id  = module.shared.github_oauth_client_secret_secret_id
-  braintrust_api_key_secret_id          = module.shared.braintrust_api_key_secret_id
-  braintrust_project_name               = "blog-prod"
-  site_url                              = var.site_url
-  cpu_limit                     = "1"
-  memory_limit                  = "512Mi"
-  min_instances                 = 0
-  max_instances                 = 2
+  github_oauth_client_id_secret_id     = module.shared.github_oauth_client_id_secret_id
+  github_oauth_client_secret_secret_id = module.shared.github_oauth_client_secret_secret_id
+  braintrust_api_key_secret_id         = module.shared.braintrust_api_key_secret_id
+  braintrust_project_name              = "blog-prod"
+  site_url                             = var.site_url
+  cpu_limit                            = "1"
+  memory_limit                         = "512Mi"
+  min_instances                        = 0
+  max_instances                        = 2
+  additional_env_vars                  = { NUXT_PUBLIC_GTAG_ID = var.gtag_id }
 
   depends_on = [module.cloud_sql]
 }

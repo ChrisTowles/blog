@@ -20,3 +20,9 @@ variable "site_url" {
   type        = string
   default     = "https://chris.towles.dev"
 }
+
+variable "gtag_id" {
+  description = "Google Analytics 4 Measurement ID"
+  type        = string
+  default     = ""
+}
