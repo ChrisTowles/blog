@@ -30,6 +30,14 @@ if (post.value.image?.src) {
     headline: 'Blog',
   });
 }
+
+onMounted(() => {
+  const { gtag } = useGtag();
+  gtag('event', 'blog_post_read', {
+    post_title: post.value?.title,
+    post_slug: route.params.slug,
+  });
+});
 </script>
 
 <template>
