@@ -39,17 +39,22 @@ gtag: {
 },
 ```
 
-The module is always enabled (default `true`) so it registers its runtime config and plugin at build time. The actual gtag script only loads when `NUXT_PUBLIC_GTAG_ID` is set at runtime — this is critical because Docker builds don't have the env var (Cloud Run injects it). Consent Mode v2 defaults all consent categories to `denied` — no cookies until the user opts in.
+The module is always enabled (default `true`) so it registers its runtime config and plugin at build time. Consent Mode v2 defaults all consent categories to `denied` — no cookies until the user opts in.
+
+**Important:** `NUXT_PUBLIC_GTAG_ID` must be set at **build time** (not just runtime) because Nuxt prerenderers bake runtime config into static HTML. The Dockerfile accepts it as a build arg, and both CI/CD and the deploy script pass it automatically.
 
 ### Per-environment wiring
 
-| Environment | Where the ID is set                                        |
-| ----------- | ---------------------------------------------------------- |
-| Local       | `.env` → `NUXT_PUBLIC_GTAG_ID=G-57YWQXB9F0`                |
-| Staging     | Terraform `staging.tfvars` → `gtag_id` → Cloud Run env var |
-| Production  | Terraform `prod.tfvars` → `gtag_id` → Cloud Run env var    |
+| Environment | Where the ID is set                                                    |
+| ----------- | ---------------------------------------------------------------------- |
+| Local       | `.env` → `NUXT_PUBLIC_GTAG_ID=G-57YWQXB9F0`                          |
+| Staging     | `staging.tfvars` → build script reads `gtag_id` → Docker `--build-arg` |
+| Production  | `prod.tfvars` → CI/CD passes `--build-arg`, Terraform sets Cloud Run env |
 
-Terraform passes the ID via `additional_env_vars` in the Cloud Run module:
+The ID flows through two paths:
+
+1. **Build time** — Docker `ARG NUXT_PUBLIC_GTAG_ID` so prerendered pages include the gtag script
+2. **Runtime** — Terraform `additional_env_vars` on Cloud Run for SSR pages
 
 ```hcl
 # infra/terraform/environments/main.tf

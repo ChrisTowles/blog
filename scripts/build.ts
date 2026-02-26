@@ -190,12 +190,18 @@ async function deployContainer() {
   // Step 3: Get git SHA
   const gitSha = (await $`git rev-parse --short HEAD`.quiet()).stdout.trim();
 
+  // Step 3b: Read gtag_id from tfvars for prerendered pages
+  const tfvarsContent = fs.readFileSync(`${terraformDir}/${environment}.tfvars`, 'utf-8');
+  const gtagMatch = tfvarsContent.match(/gtag_id\s*=\s*"([^"]*)"/);
+  const gtagId = gtagMatch?.[1] || '';
+
   // Step 4: Build the image with both date tag and latest
   const imageWithDateTag = `${registry}/blog:${dateTag}`;
   const imageWithLatest = `${registry}/blog:latest`;
   console.log(chalk.yellow(`\n🔨 Building Docker image: ${imageWithDateTag}`));
   console.log(chalk.gray(`   Git SHA: ${gitSha}`));
-  await $`docker build -f infra/container/blog.Dockerfile --build-arg GIT_SHA=${gitSha} --build-arg BUILD_TAG=${dateTag} -t ${imageWithDateTag} -t ${imageWithLatest} .`;
+  if (gtagId) console.log(chalk.gray(`   Gtag ID: ${gtagId}`));
+  await $`docker build -f infra/container/blog.Dockerfile --build-arg GIT_SHA=${gitSha} --build-arg BUILD_TAG=${dateTag} --build-arg NUXT_PUBLIC_GTAG_ID=${gtagId} -t ${imageWithDateTag} -t ${imageWithLatest} .`;
 
   // Step 5: Push both tags
   console.log(chalk.yellow(`\n📤 Pushing images to registry...`));
