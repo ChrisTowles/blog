@@ -29,6 +29,8 @@ async function createChat(prompt: string) {
     });
     console.log('chat', chat);
     refreshNuxtData('chats');
+    const { gtag } = useGtag();
+    gtag('event', 'chat_started');
     await navigateTo(`/chat/${chat.id}`);
     // no loading state to reset, because we are navigating away.
   } catch (error) {
