@@ -49,29 +49,22 @@ export function loadCustomSkills(): CustomSkill[] {
 
 /**
  * Format loaded skills as container skills config for the Anthropic API.
- * Returns pre-built Anthropic skills + custom skills from SKILL.md files.
+ * Returns pre-built Anthropic skills only. Custom skills from SKILL.md files
+ * are included in the system prompt via getSkillsSystemPrompt() instead,
+ * since the Skills API requires custom skills to be uploaded and referenced
+ * by generated skill_id — inline instructions are not supported.
  */
 export function getSkillsForAPI(): Array<{
   type: string;
   skill_id: string;
   version?: string;
-  instructions?: string;
 }> {
-  // Pre-built Anthropic document generation skills
-  const prebuiltSkills = [
+  return [
     { type: 'anthropic', skill_id: 'pdf', version: 'latest' },
     { type: 'anthropic', skill_id: 'pptx', version: 'latest' },
     { type: 'anthropic', skill_id: 'xlsx', version: 'latest' },
     { type: 'anthropic', skill_id: 'docx', version: 'latest' },
   ];
-
-  const customSkills = loadCustomSkills().map((skill) => ({
-    type: 'custom' as const,
-    skill_id: skill.name,
-    instructions: skill.body,
-  }));
-
-  return [...prebuiltSkills, ...customSkills];
 }
 
 /**
