@@ -92,6 +92,22 @@ function getToolResult(message: ChatMessage, toolUse: ToolUsePart): ToolResultPa
   );
 }
 
+// UChatMessages expects UIMessage[] but we use our own ChatMessage type — runtime-compatible
+const chatMessages = computed(() => chat.messages.value as unknown as ChatMessage[]);
+const chatAssistantProps = computed(() =>
+  chat.status.value !== 'streaming'
+    ? {
+        actions: [
+          {
+            label: 'Copy',
+            icon: copied.value ? 'i-lucide-copy-check' : 'i-lucide-copy',
+            onClick: copy as (...args: unknown[]) => void,
+          },
+        ],
+      }
+    : { actions: [] },
+);
+
 onMounted(() => {
   if (data.value?.messages?.length === 1) {
     chat.regenerate();
@@ -111,21 +127,9 @@ onMounted(() => {
       <UContainer>
         <UChatMessages
           should-auto-scroll
-          :messages="chat.messages.value"
+          :messages="chatMessages as any"
           :status="chat.status.value"
-          :assistant="
-            chat.status.value !== 'streaming'
-              ? {
-                  actions: [
-                    {
-                      label: 'Copy',
-                      icon: copied ? 'i-lucide-copy-check' : 'i-lucide-copy',
-                      onClick: copy,
-                    },
-                  ],
-                }
-              : { actions: [] }
-          "
+          :assistant="chatAssistantProps as any"
           class="lg:pt-(--ui-header-height) pb-4 sm:pb-6"
           :spacing-offset="160"
         >
@@ -135,11 +139,11 @@ onMounted(() => {
               <span>Thinking...</span>
             </div>
           </template>
-          <template #content="{ message }">
+          <template #content="{ message: _msg }">
             <div class="*:first:mt-0 *:last:mb-0">
               <template
-                v-for="(part, index) in message.parts"
-                :key="getPartKey(message.id, part, index)"
+                v-for="(part, index) in (_msg as unknown as ChatMessage).parts"
+                :key="getPartKey(_msg.id, part, index)"
               >
                 <Reasoning
                   v-if="part.type === 'reasoning'"
@@ -149,17 +153,17 @@ onMounted(() => {
                 <ToolWeather
                   v-else-if="part.type === 'tool-use' && part.toolName === 'getWeather'"
                   :tool-use="part"
-                  :tool-result="getToolResult(message, part)"
+                  :tool-result="getToolResult(_msg as unknown as ChatMessage, part)"
                 />
                 <ToolDice
                   v-else-if="part.type === 'tool-use' && part.toolName === 'rollDice'"
                   :tool-use="part"
-                  :tool-result="getToolResult(message, part)"
+                  :tool-result="getToolResult(_msg as unknown as ChatMessage, part)"
                 />
                 <ToolInvocation
                   v-else-if="part.type === 'tool-use'"
                   :tool-use="part"
-                  :tool-result="getToolResult(message, part)"
+                  :tool-result="getToolResult(_msg as unknown as ChatMessage, part)"
                 />
                 <ChatCodeExecution
                   v-else-if="part.type === 'code-execution'"
@@ -169,7 +173,7 @@ onMounted(() => {
                 <MDCCached
                   v-else-if="part.type === 'text'"
                   :value="part.text"
-                  :cache-key="`${message.id}-${index}`"
+                  :cache-key="`${_msg.id}-${index}`"
                   :components="components"
                   :parser-options="{ highlight: false }"
                   class="*:first:mt-0 *:last:mb-0"
