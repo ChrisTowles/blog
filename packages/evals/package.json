@@ -1,0 +1,27 @@
+{
+  "name": "@chris-towles/evals",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "eval": "tsx run-eval.ts eval -c promptfooconfig.yaml",
+    "eval:title": "tsx run-eval.ts eval -c promptfooconfig.title.yaml",
+    "eval:artifacts": "tsx run-eval.ts eval -c promptfooconfig.artifacts.yaml",
+    "eval:loan": "tsx run-eval.ts eval -c promptfooconfig.loan.yaml",
+    "eval:redteam": "tsx run-eval.ts eval -c promptfooconfig.redteam.yaml",
+    "eval:all": "tsx run-eval.ts eval -c promptfooconfig.yaml && tsx run-eval.ts eval -c promptfooconfig.title.yaml && tsx run-eval.ts eval -c promptfooconfig.artifacts.yaml && tsx run-eval.ts eval -c promptfooconfig.loan.yaml",
+    "eval:watch": "tsx run-eval.ts eval -c promptfooconfig.yaml --watch",
+    "eval:view": "tsx run-eval.ts view",
+    "eval:ci": "tsx run-eval.ts eval -c promptfooconfig.yaml --output outputs/results.json --no-progress-bar",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
+    "promptfoo": "^0.120.25"
+  },
+  "devDependencies": {
+    "dotenv": "^17.2.3",
+    "tsx": "^4.21.0",
+    "vitest": "^4.0.16"
+  }
+}
