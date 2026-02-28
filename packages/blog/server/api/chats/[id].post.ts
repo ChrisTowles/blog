@@ -14,6 +14,13 @@ import {
   TITLE_GENERATION_PROMPT,
 } from '~~/server/utils/ai/chat-prompts';
 
+defineRouteMeta({
+  openAPI: {
+    description: 'Chat with AI.',
+    tags: ['ai'],
+  },
+});
+
 function convertToAnthropicMessages(messages: ChatMessage[]): MessageParam[] {
   return messages.map((msg) => {
     const textContent = msg.parts
