@@ -17,7 +17,14 @@ defineRouteMeta({
   },
 });
 
-const SYSTEM_PROMPT = `You are a helpful AI assistant on Chris Towles's blog. You can help with questions about the blog content, programming, AI/ML, Vue/Nuxt, DevOps, and general topics.
+export const TITLE_GENERATION_PROMPT = `You are a title generator for a chat:
+- Generate a short title based on the first user's message
+- The title should be less than 30 characters long
+- The title should be a summary of the user's message
+- Do not use quotes (' or ") or colons (:) or any other punctuation
+- Do not use markdown, just plain text`;
+
+export const SYSTEM_PROMPT = `You are a helpful AI assistant on Chris Towles's blog. You can help with questions about the blog content, programming, AI/ML, Vue/Nuxt, DevOps, and general topics.
 
 You have access to tools that let you search the blog for relevant content. Use these when the user asks about topics that might be covered in blog posts.
 
@@ -118,12 +125,7 @@ export default defineEventHandler(async (event) => {
     const titleResponse = await client.messages.create({
       model: config.public.model_fast as string,
       max_tokens: 50,
-      system: `You are a title generator for a chat:
-- Generate a short title based on the first user's message
-- The title should be less than 30 characters long
-- The title should be a summary of the user's message
-- Do not use quotes (' or ") or colons (:) or any other punctuation
-- Do not use markdown, just plain text`,
+      system: TITLE_GENERATION_PROMPT,
       messages: [{ role: 'user', content: JSON.stringify(messages[0]?.parts ?? '') }],
     });
 
