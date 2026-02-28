@@ -1,0 +1,15 @@
+description: 'Loan intake conversational agent evaluation'
+
+providers:
+  - id: file://providers/loan-provider.ts
+    label: 'Loan Agent (Haiku 4.5)'
+    config:
+      model: 'claude-haiku-4-5-20251001'
+      max_tokens: 1024
+
+prompts:
+  - file://prompts/loan-intake.txt
+
+tests: file://test-cases/loan-intake.yaml
+
+outputPath: outputs/loan-results.json

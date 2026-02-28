@@ -7,12 +7,11 @@ import { getAnthropicClient } from '../ai/anthropic';
 
 const BLOG_CONTENT_PATH = 'content/2.blog';
 
-// Prompt for generating contextual descriptions
-const DOCUMENT_CONTEXT_PROMPT = `<document title="{title}" url="{url}">
+export const DOCUMENT_CONTEXT_PROMPT = `<document title="{title}" url="{url}">
 {doc_content}
 </document>`;
 
-const CHUNK_CONTEXT_PROMPT = `Here is a chunk from the document above:
+export const CHUNK_CONTEXT_PROMPT = `Here is a chunk from the document above:
 <chunk>
 {chunk_content}
 </chunk>

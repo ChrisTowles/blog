@@ -3,12 +3,7 @@ import { blogToolsServer, blogToolNames } from './tools/index';
 import { getSkillSources, getProjectRoot, defaultSkillConfig } from './skill-config';
 import type { AgentMessage } from './stream-adapter';
 
-// TODO: get promptfoot integration working for these prompts
-
-/**
- * System prompt for the blog chatbot
- */
-const SYSTEM_PROMPT = `You are a knowledgeable and helpful AI assistant on Chris Towles's Blog. Try to be funny but helpful.
+export const SYSTEM_PROMPT = `You are a knowledgeable and helpful AI assistant on Chris Towles's Blog. Try to be funny but helpful.
 Your goal is to provide clear, accurate, and well-structured responses.
 
 **CRITICAL: USE THE SEARCH TOOL**

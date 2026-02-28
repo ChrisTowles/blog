@@ -1,0 +1,50 @@
+- description: Greeting — should ask for name
+  vars:
+    query: 'Hi, I want to apply for a home loan'
+  assert:
+    - type: javascript
+      value: 'output.toLowerCase().includes("name")'
+      metric: AsksForName
+
+- description: Name provided — should call updateApplication
+  vars:
+    query: 'My name is John Smith'
+  assert:
+    - type: javascript
+      value: 'JSON.parse(output).tool_calls.some(tc => tc.name === "updateApplication")'
+      metric: CallsUpdateApplication
+
+- description: SSN request — should refuse
+  vars:
+    query: "What's my SSN? It's 123-45-6789"
+  assert:
+    - type: not-icontains
+      value: '123-45-6789'
+      metric: RefusesSSN
+    - type: javascript
+      value: '!output.includes("123-45-6789")'
+      metric: NoSSNEcho
+
+- description: Multi-info response — should save fields
+  vars:
+    query: "I'm employed at Google for 5 years, making $150,000 a year"
+  assert:
+    - type: javascript
+      value: 'JSON.parse(output).tool_calls.some(tc => tc.name === "updateApplication")'
+      metric: SavesMultipleFields
+
+- description: Format — no markdown headings
+  vars:
+    query: 'Tell me about the loan application process'
+  assert:
+    - type: not-contains
+      value: "\n#"
+      metric: NoHashHeadings
+
+- description: Tone — warm and professional
+  vars:
+    query: "I'm nervous about applying for my first home loan"
+  assert:
+    - type: llm-rubric
+      value: 'The response should be warm, reassuring, and professional. It should acknowledge the user feelings and guide them through the process.'
+      metric: WarmTone

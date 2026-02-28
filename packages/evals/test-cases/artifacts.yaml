@@ -1,0 +1,34 @@
+- description: Bar chart visualization request
+  vars:
+    query: 'Create a bar chart showing sales data for Q1 through Q4'
+  assert:
+    - type: contains
+      value: '```'
+      metric: ContainsCodeBlock
+    - type: icontains
+      value: 'matplotlib'
+      metric: UseMatplotlib
+
+- description: Hello world print
+  vars:
+    query: 'Print hello world in Python'
+  assert:
+    - type: icontains
+      value: 'print'
+      metric: ContainsPrint
+
+- description: CSV file generation
+  vars:
+    query: 'Generate a CSV file with sample employee data'
+  assert:
+    - type: javascript
+      value: 'output.toLowerCase().includes("csv") || output.toLowerCase().includes("file")'
+      metric: MentionsFile
+
+- description: Vague prompt handled gracefully
+  vars:
+    query: 'Do something cool'
+  assert:
+    - type: javascript
+      value: 'output.length > 10'
+      metric: NonEmptyResponse

@@ -1,129 +1,93 @@
 # Blog Prompts Evaluation Suite
 
-Promptfoo-based evaluation suite for testing AI prompts used in the blog.
+Promptfoo-based evaluation suite for testing all AI prompts used in the blog.
 
-## Quick Start with UI
-
-Promptfoo has a built-in web UI for interactive test viewing and iteration:
+## Quick Start
 
 ```bash
-# Terminal 1: Run tests in watch mode (auto-runs on file changes)
-pnpm eval:watch
-
-# Terminal 2: View results in browser UI
-pnpm eval:view
-```
-
-The UI provides:
-
-- ✅ Interactive test results with pass/fail status
-- 📊 Full prompt/response pairs for each test
-- 📈 Token usage stats and cost tracking
-- 🔍 Side-by-side comparisons across model versions
-- 📝 Detailed assertion results
-
-**Workflow**: Edit prompts or tests → watch auto-runs → refresh browser to see results
-
-## Usage
-
-### Run evaluations
-
-```bash
-# From packages/evals
+# Run chatbot eval
 pnpm eval
 
-# Or from root
-pnpm --filter @chris-towles/evals eval
-```
+# Run a specific eval
+pnpm eval:title
+pnpm eval:artifacts
+pnpm eval:loan
+pnpm eval:redteam
 
-### Watch mode (auto-run on changes)
+# Run all evals
+pnpm eval:all
 
-```bash
-pnpm eval:watch
-```
+# Watch mode + UI
+pnpm eval:watch   # Terminal 1
+pnpm eval:view    # Terminal 2
 
-### CI mode (outputs JSON)
-
-```bash
-pnpm eval:ci
-```
-
-### View results
-
-```bash
-pnpm eval:view
+# Run sync tests (no API key needed)
+pnpm test
 ```
 
 ## Structure
 
 ```
 packages/evals/
-├── promptfooconfig.yaml    # Main configuration
+├── promptfooconfig.yaml           # Chatbot eval (main)
+├── promptfooconfig.title.yaml     # Title generation eval
+├── promptfooconfig.artifacts.yaml # Code execution eval
+├── promptfooconfig.loan.yaml      # Loan intake eval
+├── promptfooconfig.redteam.yaml   # Red-team security eval
+├── promptfooconfig.test.yaml      # Echo smoke test (no API key)
 ├── prompts/
-│   └── chatbot-system.txt  # Chatbot system prompt
-├── test-cases/             # Test case definitions (YAML)
-├── tools/                  # Tool implementations for testing
-└── outputs/                # Test results (gitignored)
+│   ├── chatbot-system.txt         # Blog chatbot system prompt
+│   ├── title-gen.txt              # Title generation prompt (sync source)
+│   ├── title-gen-eval.txt         # Title gen with {{query}} for eval
+│   ├── artifacts.txt              # Artifacts prompt (sync source)
+│   ├── artifacts-eval.txt         # Artifacts with {{query}} for eval
+│   └── loan-intake.txt            # Loan intake prompt (sync source)
+├── providers/
+│   └── loan-provider.ts           # Custom provider with loan tool calling
+├── provider-anthropic.ts          # Custom provider with blog tool calling
+├── tools/
+│   ├── blog-tools.ts              # Blog search, weather, dice tools
+│   └── loan-tools.ts              # Loan updateApplication, checkCompleteness
+├── test-cases/
+│   ├── chatbot-functional.yaml    # Chatbot behavior tests
+│   ├── chatbot-regression.yaml    # Chatbot regression tests
+│   ├── title-gen.yaml             # Title generation tests
+│   ├── artifacts.yaml             # Code execution tests
+│   └── loan-intake.yaml           # Loan intake tests
+├── prompt-sync.test.ts            # Vitest: prompt file ↔ source sync
+├── run-eval.ts                    # Eval runner with .env loading
+└── outputs/                       # Results (gitignored)
 ```
 
-## Prompts
+## Prompt Sync Tests
 
-### Chatbot System Prompt
+Each prompt text file has a corresponding sync test that verifies it matches the source module. Run `pnpm test` to check — no API key required.
 
-**Source**: `packages/blog/server/utils/ai/agent.ts:11-38`
-**Version**: 2026-01-03
-**File**: `prompts/chatbot-system.txt`
+| Prompt file | Source module |
+|---|---|
+| `chatbot-system.txt` | `server/utils/ai/agent.ts` → `SYSTEM_PROMPT` |
+| `title-gen.txt` | `server/utils/ai/chat-prompts.ts` → `TITLE_GENERATION_PROMPT` |
+| `artifacts.txt` | `server/utils/ai/artifacts-prompts.ts` → `ARTIFACTS_SYSTEM_PROMPT` |
+| `loan-intake.txt` | `server/utils/ai/loan-system-prompt.ts` → `LOAN_INTAKE_SYSTEM_PROMPT` |
 
-Key requirements:
+## Eval Configs
 
-- ALWAYS use searchBlogContent tool first
-- NO markdown headings (#, ##, etc.)
-- Use **bold** for emphasis instead
-- Friendly, professional tone
+| Config | Provider | Tests | Description |
+|---|---|---|---|
+| `promptfooconfig.yaml` | Custom (blog tools) | Functional + regression | Main chatbot eval |
+| `promptfooconfig.title.yaml` | Built-in Haiku 4.5 | 5 deterministic | Title ≤30 chars, no punctuation |
+| `promptfooconfig.artifacts.yaml` | Built-in Haiku 4.5 | 4 deterministic | Code blocks, print, file output |
+| `promptfooconfig.loan.yaml` | Custom (loan tools) | 6 mixed | Tool calls, SSN refusal, tone |
+| `promptfooconfig.redteam.yaml` | Custom (blog tools) | Auto-generated | Security: jailbreak, PII, injection |
 
-## Test Cases
+## CI
 
-Test cases are defined in `test-cases/*.yaml` and cover:
-
-- **Functional behavior**: Tool calling accuracy, format validation
-- **Regression tests**: Real user queries, edge cases
-- **Quality checks**: Response relevance, coherence
-
-## Phase 1 Status: ✅ COMPLETE
-
-- [x] Package structure created
-- [x] Dependencies installed (promptfoo, @anthropic-ai/sdk)
-- [x] Promptfoo configured for Claude Haiku 4.5
-- [x] Chatbot system prompt extracted
-- [x] Basic test case added
-- [x] Can run `pnpm eval` (requires API key)
-
-## Next Steps (Phase 2)
-
-- [ ] Create comprehensive test suite (`test-cases/chatbot-functional.yaml`)
-- [ ] Add regression test dataset
-- [ ] Implement real tool execution for testing
-- [ ] Add LLM-as-judge quality assertions
-
-## Model Configuration
-
-**Baseline**: Claude Haiku 4.5 (cost-optimized)
-**Comparison**: Sonnet 4.5, Opus 4.5 (for quality benchmarking)
-
-See `promptfooconfig.yaml` for provider configuration.
+The `prompt-eval.yml` workflow runs:
+- **sync-check** on PRs touching evals or prompt source files
+- **full-eval** weekly (Monday 6am UTC) and on manual dispatch
 
 ## Troubleshooting
 
-### API Key not found
+**API Key not found**: Set `ANTHROPIC_API_KEY` in `.env` at repo root.
 
-Make sure `ANTHROPIC_API_KEY` is set in your environment or `.env` file.
-
-### Promptfoo command not found
-
-Run `pnpm install` to install dependencies including promptfoo CLI.
-
-## Resources
-
-- [Promptfoo Documentation](https://www.promptfoo.dev/)
-- [Anthropic API Docs](https://docs.anthropic.com/)
-- [Project Plan](../../docs/tasks/2026-01-03-promptfoo-integration/plan.md)
+**Promptfoo not found**: Run `pnpm install`.
