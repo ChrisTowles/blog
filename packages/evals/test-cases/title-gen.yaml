@@ -1,0 +1,69 @@
+- description: Simple greeting query
+  vars:
+    query: 'Hello, how are you?'
+  assert:
+    - type: javascript
+      value: 'output.length <= 30'
+      metric: TitleLength
+    - type: not-contains
+      value: '"'
+      metric: NoQuotes
+    - type: not-contains
+      value: ':'
+      metric: NoColons
+    - type: not-contains
+      value: '#'
+      metric: NoHashes
+
+- description: Long technical query
+  vars:
+    query: 'Can you explain the difference between server-side rendering and client-side rendering in Nuxt 4 with examples of when to use each approach?'
+  assert:
+    - type: javascript
+      value: 'output.length <= 30'
+      metric: TitleLength
+    - type: not-contains
+      value: '"'
+      metric: NoQuotes
+    - type: not-contains
+      value: ':'
+      metric: NoColons
+
+- description: Technical debugging query
+  vars:
+    query: 'My TypeScript build is failing with TS2322 errors'
+  assert:
+    - type: javascript
+      value: 'output.length <= 30'
+      metric: TitleLength
+    - type: not-contains
+      value: '"'
+      metric: NoQuotes
+    - type: not-contains
+      value: ':'
+      metric: NoColons
+
+- description: Simple one-word greeting
+  vars:
+    query: 'Hi'
+  assert:
+    - type: javascript
+      value: 'output.length <= 30'
+      metric: TitleLength
+    - type: not-contains
+      value: '"'
+      metric: NoQuotes
+
+- description: Multi-topic query
+  vars:
+    query: 'Tell me about Vue composables and also how to deploy to GCP Cloud Run'
+  assert:
+    - type: javascript
+      value: 'output.length <= 30'
+      metric: TitleLength
+    - type: not-contains
+      value: '"'
+      metric: NoQuotes
+    - type: not-contains
+      value: ':'
+      metric: NoColons

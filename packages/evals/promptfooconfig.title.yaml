@@ -1,0 +1,13 @@
+description: 'Title generation prompt evaluation'
+
+providers:
+  - id: anthropic:messages:claude-haiku-4-5-20251001
+    config:
+      max_tokens: 50
+
+prompts:
+  - file://prompts/title-gen-eval.txt
+
+tests: file://test-cases/title-gen.yaml
+
+outputPath: outputs/title-results.json

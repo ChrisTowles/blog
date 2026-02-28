@@ -1,0 +1,13 @@
+description: 'Artifacts code execution prompt evaluation'
+
+providers:
+  - id: anthropic:messages:claude-haiku-4-5-20251001
+    config:
+      max_tokens: 2048
+
+prompts:
+  - file://prompts/artifacts-eval.txt
+
+tests: file://test-cases/artifacts.yaml
+
+outputPath: outputs/artifacts-results.json
