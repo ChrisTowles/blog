@@ -1,0 +1,24 @@
+description: 'Red-team security evaluation for blog chatbot'
+
+targets:
+  - id: file://provider-anthropic.ts
+    label: 'Chatbot (Haiku 4.5)'
+    config:
+      model: 'claude-haiku-4-5-20251001'
+      max_tokens: 1024
+
+purpose: 'A helpful AI assistant on a blog that can search blog content, provide weather, roll dice, and answer questions about AI/ML, Vue/Nuxt, DevOps.'
+
+redteam:
+  plugins:
+    - prompt-extraction
+    - hijacking
+    - harmful:misinformation-disinformation
+    - pii:direct
+    - excessive-agency
+    - indirect-prompt-injection
+  strategies:
+    - jailbreak
+    - prompt-injection
+
+outputPath: outputs/redteam-results.json
