@@ -1,19 +1,11 @@
 import type Anthropic from '@anthropic-ai/sdk';
-
-const LOAN_APPLICATION_FIELDS = [
-  'fullName',
-  'income',
-  'employmentType',
-  'employer',
-  'yearsEmployed',
-  'creditScoreRange',
-  'monthlyDebt',
-  'propertyValue',
-  'loanAmount',
-  'downPayment',
-  'propertyType',
-  'loanPurpose',
-] as const;
+import {
+  LOAN_APPLICATION_FIELDS,
+  EMPLOYMENT_TYPES,
+  CREDIT_SCORE_RANGES,
+  PROPERTY_TYPES,
+  LOAN_PURPOSES,
+} from '../../blog/shared/loan-types.js';
 
 const applicationData: Record<string, unknown> = {};
 
@@ -32,16 +24,10 @@ export function getTools(): Anthropic.Tool[] {
             properties: {
               fullName: { type: 'string' },
               income: { type: 'number', description: 'Annual income in dollars' },
-              employmentType: {
-                type: 'string',
-                enum: ['employed', 'self-employed', 'retired', 'unemployed'],
-              },
+              employmentType: { type: 'string', enum: [...EMPLOYMENT_TYPES] },
               employer: { type: 'string' },
               yearsEmployed: { type: 'number' },
-              creditScoreRange: {
-                type: 'string',
-                enum: ['300-579', '580-669', '670-739', '740-799', '800-850'],
-              },
+              creditScoreRange: { type: 'string', enum: [...CREDIT_SCORE_RANGES] },
               monthlyDebt: {
                 type: 'number',
                 description: 'Total monthly debt payments in dollars',
@@ -49,11 +35,8 @@ export function getTools(): Anthropic.Tool[] {
               propertyValue: { type: 'number', description: 'Estimated property value in dollars' },
               loanAmount: { type: 'number', description: 'Requested loan amount in dollars' },
               downPayment: { type: 'number', description: 'Down payment amount in dollars' },
-              propertyType: {
-                type: 'string',
-                enum: ['single-family', 'condo', 'townhouse', 'multi-family'],
-              },
-              loanPurpose: { type: 'string', enum: ['purchase', 'refinance'] },
+              propertyType: { type: 'string', enum: [...PROPERTY_TYPES] },
+              loanPurpose: { type: 'string', enum: [...LOAN_PURPOSES] },
             },
           },
         },
@@ -96,15 +79,11 @@ export function executeToolCall(
       return { updated, rejected, message: 'Fields saved successfully.' };
     }
     case 'checkCompleteness': {
-      const filledFields = LOAN_APPLICATION_FIELDS.filter(
-        (f) => applicationData[f] !== undefined && applicationData[f] !== null,
-      );
-      const missingFields = LOAN_APPLICATION_FIELDS.filter(
-        (f) => applicationData[f] === undefined || applicationData[f] === null,
-      );
+      const filledFields = LOAN_APPLICATION_FIELDS.filter((f) => applicationData[f] != null);
+      const missingFields = LOAN_APPLICATION_FIELDS.filter((f) => applicationData[f] == null);
 
       return {
-        complete: filledFields.length === LOAN_APPLICATION_FIELDS.length,
+        complete: missingFields.length === 0,
         filledFields,
         missingFields,
         progress: `${filledFields.length}/${LOAN_APPLICATION_FIELDS.length}`,

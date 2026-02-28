@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { getTools, executeToolCall } from '../tools/loan-tools';
+import { getTools, executeToolCall } from '../tools/loan-tools.js';
 
 class LoanProvider {
   private client: Anthropic;
@@ -7,10 +7,6 @@ class LoanProvider {
   private maxTokens: number;
 
   constructor(options: { id?: string; config?: { model?: string; max_tokens?: number } }) {
-    this.client = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
-
     if (!options?.config?.model) {
       throw new Error('Model must be specified in provider config');
     }
@@ -18,22 +14,26 @@ class LoanProvider {
       throw new Error('max_tokens must be specified in provider config');
     }
 
+    this.client = new Anthropic();
     this.model = options.config.model;
     this.maxTokens = options.config.max_tokens;
   }
 
-  id() {
+  id(): string {
     return 'loan-provider';
   }
 
-  async callApi(prompt: string, context?: { vars?: Record<string, string> }) {
+  async callApi(
+    prompt: string,
+    context?: { vars?: Record<string, string> },
+  ): Promise<{
+    output: string;
+    tokenUsage: { total: number; prompt: number; completion: number };
+  }> {
     const tools = getTools();
 
     const messages: Anthropic.MessageParam[] = [
-      {
-        role: 'user',
-        content: context?.vars?.query || prompt,
-      },
+      { role: 'user', content: context?.vars?.query || prompt },
     ];
 
     let response = await this.client.messages.create({
@@ -49,25 +49,17 @@ class LoanProvider {
         (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use',
       );
 
-      messages.push({
-        role: 'assistant',
-        content: response.content,
-      });
+      messages.push({ role: 'assistant', content: response.content });
 
-      const toolResultBlocks = [];
-      for (const toolUse of toolUseBlocks) {
-        const result = executeToolCall(toolUse.name, toolUse.input as Record<string, unknown>);
-        toolResultBlocks.push({
-          type: 'tool_result' as const,
-          tool_use_id: toolUse.id,
-          content: JSON.stringify(result),
-        });
-      }
+      const toolResultBlocks = toolUseBlocks.map((toolUse) => ({
+        type: 'tool_result' as const,
+        tool_use_id: toolUse.id,
+        content: JSON.stringify(
+          executeToolCall(toolUse.name, toolUse.input as Record<string, unknown>),
+        ),
+      }));
 
-      messages.push({
-        role: 'user',
-        content: toolResultBlocks,
-      });
+      messages.push({ role: 'user', content: toolResultBlocks });
 
       response = await this.client.messages.create({
         model: this.model,
@@ -78,20 +70,18 @@ class LoanProvider {
       });
     }
 
-    const textBlocks = response.content.filter(
-      (block): block is Anthropic.TextBlock => block.type === 'text',
-    );
-    const textOutput = textBlocks.map((block) => block.text).join('\n\n');
+    const textOutput = response.content
+      .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+      .map((block) => block.text)
+      .join('\n\n');
 
-    const allToolCalls: Anthropic.ToolUseBlock[] = [];
-    for (const msg of messages) {
-      if (msg.role === 'assistant' && Array.isArray(msg.content)) {
-        const toolUses = (msg.content as Anthropic.ContentBlock[]).filter(
-          (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use',
-        );
-        allToolCalls.push(...toolUses);
-      }
-    }
+    const allToolCalls = messages.flatMap((msg) =>
+      msg.role === 'assistant' && Array.isArray(msg.content)
+        ? (msg.content as Anthropic.ContentBlock[]).filter(
+            (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use',
+          )
+        : [],
+    );
 
     const output = JSON.stringify({
       text: textOutput,
