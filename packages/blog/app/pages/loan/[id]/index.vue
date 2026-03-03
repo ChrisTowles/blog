@@ -89,7 +89,7 @@ function submitForReview() {
         <UChatMessages
           should-auto-scroll
           :data-testid="TEST_IDS.LOAN.CHAT_MESSAGES"
-          :messages="loanChat.messages.value"
+          :messages="loanChat.messages.value as any"
           :status="loanChat.status.value"
           class="pb-4"
         >

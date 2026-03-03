@@ -1,0 +1,1259 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Agent SDK — Feature Matrix</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0c0e14;
+        --surface: #141722;
+        --surface2: #1a1e2e;
+        --border: #2a2f42;
+        --text: #c8cdd8;
+        --text-bright: #eef0f6;
+        --text-dim: #6b7280;
+        --accent: #38bdf8;
+        --green: #34d399;
+        --yellow: #fbbf24;
+        --red: #f87171;
+        --pink: #f472b6;
+        --purple: #a78bfa;
+        --orange: #fb923c;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Source Sans 3', system-ui, sans-serif;
+        font-size: 13px;
+        line-height: 1.5;
+        padding: 32px 24px;
+        min-height: 100vh;
+      }
+
+      h1 {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--text-bright);
+        margin-bottom: 6px;
+        letter-spacing: -0.5px;
+      }
+
+      .subtitle {
+        color: var(--text-dim);
+        font-size: 13px;
+        margin-bottom: 24px;
+        max-width: 800px;
+      }
+
+      .legend {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        color: var(--text-dim);
+      }
+      .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1600px;
+        table-layout: fixed;
+      }
+
+      col.feature {
+        width: 110px;
+      }
+      col.data {
+        width: 180px;
+      }
+
+      thead th {
+        background: var(--surface2);
+        color: var(--text-bright);
+        font-weight: 700;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 12px 10px;
+        text-align: left;
+        border-bottom: 2px solid var(--border);
+        position: sticky;
+        top: 0;
+        z-index: 2;
+      }
+
+      thead th:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 3;
+      }
+
+      tbody td {
+        padding: 10px 10px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      tbody td:first-child {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        font-size: 11px;
+        color: var(--accent);
+        background: var(--surface);
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        border-right: 1px solid var(--border);
+        letter-spacing: 0.3px;
+      }
+
+      tbody tr:hover td {
+        background: rgba(56, 189, 248, 0.04);
+      }
+      tbody tr:hover td:first-child {
+        background: var(--surface2);
+      }
+
+      .cell-title {
+        font-weight: 600;
+        color: var(--text-bright);
+        display: block;
+        margin-bottom: 3px;
+      }
+
+      .cell-detail {
+        color: var(--text-dim);
+        font-size: 11px;
+      }
+
+      a.src {
+        color: var(--accent);
+        text-decoration: none;
+        font-size: 10px;
+        font-family: 'JetBrains Mono', monospace;
+        opacity: 0.7;
+        display: inline-block;
+        margin-top: 4px;
+        border-bottom: 1px dotted var(--accent);
+      }
+      a.src:hover {
+        opacity: 1;
+      }
+
+      .tag {
+        display: inline-block;
+        padding: 1px 6px;
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: 600;
+        font-family: 'JetBrains Mono', monospace;
+        letter-spacing: 0.3px;
+      }
+      .tag-green {
+        background: rgba(52, 211, 153, 0.15);
+        color: var(--green);
+      }
+      .tag-yellow {
+        background: rgba(251, 191, 36, 0.15);
+        color: var(--yellow);
+      }
+      .tag-red {
+        background: rgba(248, 113, 113, 0.15);
+        color: var(--red);
+      }
+      .tag-purple {
+        background: rgba(167, 139, 250, 0.15);
+        color: var(--purple);
+      }
+      .tag-pink {
+        background: rgba(244, 114, 182, 0.15);
+        color: var(--pink);
+      }
+      .tag-blue {
+        background: rgba(56, 189, 248, 0.15);
+        color: var(--accent);
+      }
+
+      .footer {
+        margin-top: 20px;
+        font-size: 11px;
+        color: var(--text-dim);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>AI Agent SDK — Feature Matrix</h1>
+    <p class="subtitle">
+      9 frameworks × 9 dimensions. Every cell links to its primary source. Updated March 2026.
+    </p>
+
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background: var(--green)"></div>
+        Yes / Native
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: var(--yellow)"></div>
+        Partial / Via Partner
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: var(--red)"></div>
+        No / N/A
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: var(--purple)"></div>
+        Adapter / Package
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: var(--pink)"></div>
+        Proprietary
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <colgroup>
+          <col class="feature" />
+          <col class="data" />
+          <col class="data" />
+          <col class="data" />
+          <col class="data" />
+          <col class="data" />
+          <col class="data" />
+          <col class="data" />
+          <col class="data" />
+          <col class="data" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Anthropic</th>
+            <th>OpenAI</th>
+            <th>Google ADK</th>
+            <th>AWS Bedrock</th>
+            <th>Microsoft</th>
+            <th>LangChain</th>
+            <th>CrewAI</th>
+            <th>Databricks<br />Agent Bricks</th>
+            <th>Palantir AIP</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- FedRAMP High -->
+          <tr>
+            <td>FedRAMP High</td>
+            <td>
+              <span class="tag tag-yellow">Via Partners</span>
+              <span class="cell-detail"
+                >AWS GovCloud, Google Vertex AI, + Claude for Government (C4G) direct auth</span
+              >
+              <a
+                class="src"
+                href="https://support.claude.com/en/articles/13756069-public-sector-faqs"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-yellow">Via Azure</span>
+              <span class="cell-detail"
+                >Azure OpenAI Service in Azure Gov + Commercial; not via api.openai.com
+                directly</span
+              >
+              <a
+                class="src"
+                href="https://devblogs.microsoft.com/azuregov/azure-openai-fedramp-high-for-government/"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >Google Cloud P-ATO covers 150+ services incl. Vertex AI & Generative AI</span
+              >
+              <a
+                class="src"
+                href="https://docs.cloud.google.com/architecture/fedramp-implementation-guide"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >Bedrock in GovCloud (US-West) — FedRAMP High + DoD IL-4/5 for Claude, Llama
+                models</span
+              >
+              <a
+                class="src"
+                href="https://aws.amazon.com/about-aws/whats-new/2025/05/amazon-bedrock-models-fedramp-high-dod-il-4-5-govcloud/"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >Azure Commercial + Gov both FedRAMP High; extends to DoD IL-6 (Secret) and Top
+                Secret</span
+              >
+              <a
+                class="src"
+                href="https://learn.microsoft.com/en-us/azure/azure-government/compliance/azure-services-in-fedramp-auditscope"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-red">No*</span>
+              <span class="cell-detail"
+                >OSS library — deploy on FedRAMP clouds to inherit auth; LangSmith SaaS not
+                certified</span
+              >
+              <a class="src" href="https://docs.langchain.com/langsmith/pricing-faq" target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-red">No*</span>
+              <span class="cell-detail"
+                >OSS — deployable on FedRAMP infra but no certification of its own</span
+              >
+              <a class="src" href="https://crewai.com/open-source" target="_blank">source ↗</a>
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >Direct FedRAMP High (Feb 2025) on AWS GovCloud + Azure Gov; DoD IL-5</span
+              >
+              <a
+                class="src"
+                href="https://www.databricks.com/company/newsroom/press-releases/databricks-achieves-fedramp-high-authorization-aws-govcloud"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >Direct FedRAMP High (Dec 2024) for full product suite incl. AIP; builds on DoD
+                IL-5/IL-6</span
+              >
+              <a
+                class="src"
+                href="https://www.nasdaq.com/press-release/palantir-granted-fedramp-high-baseline-authorization-2024-12-03"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+          </tr>
+
+          <!-- Native Tools -->
+          <tr>
+            <td>Native Tools</td>
+            <td>
+              <span class="cell-title">18+ built-in</span>
+              <span class="cell-detail"
+                >Bash, Read/Write/Edit, Glob, Grep, WebSearch, WebFetch, Todo, Notebook, Task, MCP
+                introspection</span
+              >
+              <a
+                class="src"
+                href="https://github.com/anthropics/claude-agent-sdk-python"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="cell-title">9+ built-in</span>
+              <span class="cell-detail"
+                >WebSearch, FileSearch, CodeInterpreter, ImageGen, ShellTool, ComputerTool,
+                ApplyPatch, HostedMCP, Codex</span
+              >
+              <a
+                class="src"
+                href="https://openai.github.io/openai-agents-python/tools/"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="cell-title">10+ built-in</span>
+              <span class="cell-detail"
+                >Google Search, Code Execution, Computer Use, BigQuery, GKE, Cloud Trace, Apigee,
+                App Integration</span
+              >
+              <a class="src" href="https://google.github.io/adk-docs/skills/" target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="cell-title">5 action groups</span>
+              <span class="cell-detail"
+                >Code Interpreter, User Input, Computer Use, Bash, Text Editor + Knowledge Bases +
+                Lambda</span
+              >
+              <a
+                class="src"
+                href="https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent_CreateAgentActionGroup.html"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="cell-title">15+ built-in</span>
+              <span class="cell-detail"
+                >Code Interp, File Search, Bing, Azure AI Search, Functions, Logic Apps, Fabric,
+                Deep Research, Browser</span
+              >
+              <a
+                class="src"
+                href="https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/tools-classic/overview"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="cell-title">1,000+ integrations</span>
+              <span class="cell-detail"
+                >Dozens core + 700+ community packages across tools, models, vector stores</span
+              >
+              <a class="src" href="https://github.com/langchain-ai/langchain" target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="cell-title">30+ in crewai-tools</span>
+              <span class="cell-detail"
+                >Search, scrape, file, PDF, CSV, GitHub, YouTube, code interpreter, RAG, DALL-E,
+                vision</span
+              >
+              <a class="src" href="https://github.com/crewAIInc/crewAI" target="_blank">source ↗</a>
+            </td>
+            <td>
+              <span class="cell-title">10+ platform tools</span>
+              <span class="cell-detail"
+                >python_exec sandbox, Genie (NL→SQL), Vector Search, UC Functions, AI Gateway,
+                Pipeline Builder, doc parsing</span
+              >
+              <a
+                class="src"
+                href="https://docs.databricks.com/aws/en/generative-ai/tutorials/agent-framework-notebook"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="cell-title">Platform-integrated</span>
+              <span class="cell-detail"
+                >AIP Logic, Agent Studio, Pipeline Builder, Ontology actions, Functions, Transforms,
+                Jupyter, Workshop widgets</span
+              >
+              <a
+                class="src"
+                href="https://www.palantir.com/docs/foundry/aip/aip-features"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+          </tr>
+
+          <!-- Skills -->
+          <tr>
+            <td>Skills</td>
+            <td>
+              <span class="tag tag-green">Yes (beta)</span>
+              <span class="cell-detail"
+                >.claude/skills/SKILL.md folders w/ instructions + scripts; pre-built for
+                Office/PDF; custom via API</span
+              >
+              <a
+                class="src"
+                href="https://platform.claude.com/docs/en/release-notes/overview"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >First-class SKILL.md bundles; /v1/skills API; mounted into hosted shell
+                containers</span
+              >
+              <a
+                class="src"
+                href="https://venturebeat.com/orchestration/openai-upgrades-its-responses-api-to-support-agent-skills-and-a-complete"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-yellow">Experimental</span>
+              <span class="cell-detail"
+                >agentskills.io spec; 3-level progressive loading (metadata → instructions →
+                resources) via SkillToolset</span
+              >
+              <a class="src" href="https://google.github.io/adk-docs/skills/" target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-red">No</span>
+              <span class="cell-detail"
+                >No formal skills abstraction. Action Groups are reusable; AgentCore Gateway offers
+                1-click integrations</span
+              >
+              <a
+                class="src"
+                href="https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/gateway.html"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes (Plugins)</span>
+              <span class="cell-detail"
+                >Mature Plugin system; [KernelFunction] decorator; import from native code, OpenAPI,
+                or MCP servers</span
+              >
+              <a
+                class="src"
+                href="https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-yellow">Partial</span>
+              <span class="cell-detail"
+                >Skills as multi-agent pattern; Deep Agents supports SKILL.md; langchain-skills repo
+                w/ pre-built</span
+              >
+              <a
+                class="src"
+                href="https://blog.langchain.com/using-skills-with-deep-agents/"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-red">No</span>
+              <span class="cell-detail"
+                >No formal abstraction — tools and tasks are primitives; Crews function as reusable
+                composite units</span
+              >
+              <a class="src" href="https://github.com/crewAIInc/crewAI" target="_blank">source ↗</a>
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >Pre-built agent blueprints (Knowledge Assistant, Info Extraction, Custom LLM,
+                Supervisor); SKILL.md for custom agents; OpenAI Agents SDK scaffolding</span
+              >
+              <a
+                class="src"
+                href="https://www.databricks.com/blog/custom-agents-now-available-databricks"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-yellow">Implicit</span>
+              <span class="cell-detail"
+                >No "skills" abstraction per se — AIP Logic functions, Ontology-backed actions, and
+                Agent Studio tools serve similar role</span
+              >
+              <a
+                class="src"
+                href="https://www.palantir.com/docs/foundry/agent-studio/overview"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+          </tr>
+
+          <!-- MCP Support -->
+          <tr>
+            <td>MCP Support</td>
+            <td>
+              <span class="tag tag-green">Native</span>
+              <span class="cell-detail"
+                >Anthropic created MCP; custom tools run as in-process MCP servers; donated to Linux
+                Foundation AAIF</span
+              >
+              <a
+                class="src"
+                href="https://www.anthropic.com/news/donating-the-model-context-protocol-and-establishing-of-the-agentic-ai-foundation"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Native</span>
+              <span class="cell-detail"
+                >4 transports: HostedMCP (server-side), Streamable HTTP, Stdio, SSE; tool filtering
+                + approval workflows</span
+              >
+              <a
+                class="src"
+                href="https://openai.github.io/openai-agents-python/mcp/"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Native</span>
+              <span class="cell-detail"
+                >McpToolset class; ADK as MCP client and server; Stdio + SSE/HTTP; MCP Toolbox for
+                Databases</span
+              >
+              <a
+                class="src"
+                href="https://docs.cloud.google.com/mcp/supported-products"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >AgentCore Runtime (deploy MCP containers), AgentCore Gateway (protocol
+                translation), inline agents</span
+              >
+              <a
+                class="src"
+                href="https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/gateway.html"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Native</span>
+              <span class="cell-detail"
+                >MCPStdioPlugin, MCPSsePlugin, MCPStreamableHttpPlugin; SK as client and server; MCP
+                sampling support</span
+              >
+              <a
+                class="src"
+                href="https://devblogs.microsoft.com/semantic-kernel/semantic-kernel-adds-model-context-protocol-mcp-support-for-python/"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-purple">Adapter</span>
+              <span class="cell-detail"
+                >langchain-mcp-adapters package; MultiServerMCPClient; Stdio, SSE, Streamable HTTP;
+                protocol 2025-03</span
+              >
+              <a
+                class="src"
+                href="https://changelog.langchain.com/announcements/mcp-adapters-for-langchain-and-langgraph"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Native</span>
+              <span class="cell-detail"
+                >MCPServerAdapter in crewai-tools + agent-level mcps field for DSL integration;
+                Stdio, SSE, HTTP</span
+              >
+              <a class="src" href="https://github.com/crewAIInc/crewAI" target="_blank">source ↗</a>
+            </td>
+            <td>
+              <span class="tag tag-green">Native</span>
+              <span class="cell-detail"
+                >Managed MCP servers (UC Functions, Genie, Vector Search) + external MCP via Unity
+                Catalog connections + Marketplace</span
+              >
+              <a
+                class="src"
+                href="https://docs.databricks.com/aws/en/generative-ai/mcp"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Native</span>
+              <span class="cell-detail"
+                >Palantir MCP + Ontology MCP; tools for ontology, data integration, code gen;
+                available GA July 2025</span
+              >
+              <a
+                class="src"
+                href="https://www.palantir.com/docs/foundry/palantir-mcp/overview"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+          </tr>
+
+          <!-- MCP Catalog -->
+          <tr>
+            <td>MCP Catalog</td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >Official MCP Registry (preview) + community catalogs (mcp.so, Smithery, Docker MCP
+                Catalog 200+ tools)</span
+              >
+              <a
+                class="src"
+                href="http://blog.modelcontextprotocol.io/posts/2025-09-08-mcp-registry-preview/"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-yellow">Partial</span>
+              <span class="cell-detail"
+                >Connectors (OpenAI-maintained MCP wrappers for Google, Dropbox, Gmail); per-org app
+                registry in ChatGPT</span
+              >
+              <a
+                class="src"
+                href="https://developers.openai.com/blog/openai-for-developers-2025/"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >Managed remote MCP servers (BigQuery, GKE, Maps) + ADK catalog + Cloud API Registry
+                / Apigee</span
+              >
+              <a
+                class="src"
+                href="https://docs.cloud.google.com/mcp/supported-products"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >66+ open-source MCP servers (awslabs.github.io/mcp) — infra, data, AI/ML, dev
+                tools, cost</span
+              >
+              <a class="src" href="https://awslabs.github.io/mcp/" target="_blank">source ↗</a>
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >Foundry Tool Catalog + microsoft/mcp GitHub (40+ Azure services) + MCP Center
+                (mcp.azure.com)</span
+              >
+              <a class="src" href="https://github.com/microsoft/mcp" target="_blank">source ↗</a>
+            </td>
+            <td>
+              <span class="tag tag-red">No</span>
+              <span class="cell-detail"
+                >References external MCP ecosystem; no LangChain-hosted catalog</span
+              >
+              <a class="src" href="https://pypi.org/project/langchain-mcp-tools/" target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-red">No</span>
+              <span class="cell-detail"
+                >No own catalog; relies on external MCP ecosystem + Composio</span
+              >
+              <a class="src" href="https://github.com/crewAIInc/crewAI" target="_blank">source ↗</a>
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >MCP Catalog (beta) in Unity Catalog for discovery/governance + MCP in Databricks
+                Marketplace (Public Preview)</span
+              >
+              <a
+                class="src"
+                href="https://www.databricks.com/blog/accelerate-ai-development-databricks-discover-govern-and-build-mcp-and-agent-bricks"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-yellow">Partial</span>
+              <span class="cell-detail"
+                >Ontology MCP + Palantir MCP server registered in community catalogs; no public
+                marketplace of its own</span
+              >
+              <a
+                class="src"
+                href="https://www.palantir.com/docs/foundry/palantir-mcp/overview"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+          </tr>
+
+          <!-- Code Sandbox -->
+          <tr>
+            <td>Code Sandbox</td>
+            <td>
+              <span class="tag tag-green">Yes (3-tier)</span>
+              <span class="cell-detail"
+                >sandbox-runtime (seccomp + proxy, no container) + recommended external (E2B, Modal,
+                Cloudflare, Daytona)</span
+              >
+              <a class="src" href="https://code.claude.com/docs/en/sandboxing" target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Hosted</span>
+              <span class="cell-detail"
+                >CodeInterpreter (Python sandbox) + ShellTool hosted Debian 12 (Python, Node, Java,
+                Go, Ruby)</span
+              >
+              <a
+                class="src"
+                href="https://openai.github.io/openai-agents-python/tools/"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >Gemini built-in exec + Agent Engine Sandbox (managed, 14-day state, 5GB) + GKE Code
+                Executor</span
+              >
+              <a
+                class="src"
+                href="https://docs.cloud.google.com/agent-builder/agent-engine/code-execution/overview"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >Bedrock Code Interpreter (Python, no net) + AgentCore Code Interpreter
+                (containerized, multi-lang, 8hr sessions)</span
+              >
+              <a
+                class="src"
+                href="https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/gateway.html"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >Azure AI Code Interpreter + Container Apps Dynamic Sessions (Hyper-V isolated,
+                subsecond, 400K+/day)</span
+              >
+              <a
+                class="src"
+                href="https://learn.microsoft.com/en-us/azure/container-apps/sessions"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >langchain-sandbox (Pyodide/Deno, local) + E2B (Firecracker microVMs) + Modal,
+                Daytona</span
+              >
+              <a class="src" href="https://github.com/langchain-ai/langchain" target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-yellow">Partial</span>
+              <span class="cell-detail"
+                >CodeInterpreterTool: Docker (primary) → restricted Python fallback → unsafe mode;
+                E2B as external option</span
+              >
+              <a
+                class="src"
+                href="https://docs.crewai.com/en/tools/ai-ml/codeinterpretertool"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >system.ai.python_exec built-in sandboxed environment; serverless compute; Jupyter
+                via Code Workspaces</span
+              >
+              <a
+                class="src"
+                href="https://docs.databricks.com/aws/en/generative-ai/tutorials/agent-framework-notebook"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >Sandboxed Ontology scenarios (branch of ontology); Code Workspaces (Jupyter);
+                Functions runtime; AIP Logic sandbox</span
+              >
+              <a
+                class="src"
+                href="https://www.palantir.com/docs/foundry/aip/overview"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+          </tr>
+
+          <!-- Multi-Model -->
+          <tr>
+            <td>Multi-Model</td>
+            <td>
+              <span class="tag tag-red">No</span>
+              <span class="cell-detail"
+                >Claude-only natively. Routes via Bedrock/Vertex/Foundry but always Claude; LiteLLM
+                as unofficial workaround</span
+              >
+              <a
+                class="src"
+                href="https://github.com/anthropics/claude-agent-sdk-python"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes (100+)</span>
+              <span class="cell-detail"
+                >Provider-agnostic; official LiteLLM extension for 100+ LLMs; hosted tools still
+                require OpenAI models</span
+              >
+              <a class="src" href="https://github.com/openai/openai-agents-python" target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >Optimized for Gemini but supports Claude, Ollama, vLLM, 200+ via LiteLLM; Vertex
+                Model Garden</span
+              >
+              <a class="src" href="https://pypi.org/project/google-adk/" target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes (100+)</span>
+              <span class="cell-detail"
+                >Fundamentally multi-model; 100+ from 15+ providers (Claude, Llama, Mistral,
+                DeepSeek, Qwen, Nova, etc.)</span
+              >
+              <a
+                class="src"
+                href="https://aws.amazon.com/about-aws/whats-new/2025/05/amazon-bedrock-models-fedramp-high-dod-il-4-5-govcloud/"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >10+ built-in connectors (OpenAI, Azure, Google, Mistral, HuggingFace, Ollama, ONNX,
+                Bedrock, NVIDIA)</span
+              >
+              <a
+                class="src"
+                href="https://raw.githubusercontent.com/microsoft/semantic-kernel/main/README.md"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >20+ dedicated provider packages; any OpenAI-compatible API; LiteLLM/OpenRouter
+                supported</span
+              >
+              <a class="src" href="https://github.com/langchain-ai/langchain" target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes (200+)</span>
+              <span class="cell-detail"
+                >Native OpenAI, Anthropic, Google, Azure, Bedrock; 200+ via LiteLLM; per-agent model
+                assignment</span
+              >
+              <a class="src" href="https://github.com/crewAIInc/crewAI" target="_blank">source ↗</a>
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >AI Gateway routes to any model; auto-optimizes across GPT, Claude, Llama,
+                open-source via Mosaic AI</span
+              >
+              <a
+                class="src"
+                href="https://docs.databricks.com/aws/en/generative-ai/agent-bricks/"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
+              <span class="cell-detail"
+                >xAI, OpenAI, Anthropic, Meta, Google + self-hosted open-source (Llama, Mixtral) +
+                BYOM for custom LLMs</span
+              >
+              <a
+                class="src"
+                href="https://www.palantir.com/docs/foundry/aip/supported-llms"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+          </tr>
+
+          <!-- Multi-Agent -->
+          <tr>
+            <td>Multi-Agent</td>
+            <td>
+              <span class="cell-title">Subagent</span>
+              <span class="cell-detail"
+                >File-based + programmatic subagents; parallel exec; supervisor pattern; session
+                forking; no native handoffs</span
+              >
+              <a
+                class="src"
+                href="https://github.com/anthropics/claude-agent-sdk-python"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="cell-title">Handoffs</span>
+              <span class="cell-detail"
+                >Handoffs (decentralized) + Agents-as-Tools (centralized manager); Runner loop,
+                guardrails, sessions</span
+              >
+              <a
+                class="src"
+                href="https://openai.com/index/new-tools-for-building-agents/"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="cell-title">Workflows</span>
+              <span class="cell-detail"
+                >Sequential, Parallel, Loop workflow agents (no LLM for flow) + LLM-driven routing +
+                A2A protocol</span
+              >
+              <a class="src" href="https://pypi.org/project/google-adk/" target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="cell-title">Supervisor</span>
+              <span class="cell-detail"
+                >Supervisor + Routing modes; hierarchical multi-agent; parallel sub-agent comms;
+                AgentCore Swarm via Strands</span
+              >
+              <a
+                class="src"
+                href="https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/gateway.html"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="cell-title">5+ patterns</span>
+              <span class="cell-detail"
+                >Sequential, Concurrent, GroupChat, Handoff, Magentic; Process Framework for
+                deterministic workflows; A2A</span
+              >
+              <a
+                class="src"
+                href="https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-types/bedrock-agent"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="cell-title">Graph</span>
+              <span class="cell-detail"
+                >Arbitrary graph topologies via StateGraph; langgraph-supervisor + langgraph-swarm;
+                cycles, conditionals</span
+              >
+              <a class="src" href="https://www.langchain.com/langgraph" target="_blank">source ↗</a>
+            </td>
+            <td>
+              <span class="cell-title">Crews + Flows</span>
+              <span class="cell-detail"
+                >Sequential + Hierarchical processes; Flows (event-driven @start, @listen, @router);
+                nested sub-crews</span
+              >
+              <a class="src" href="https://www.crewai.com/crewai-flows" target="_blank">source ↗</a>
+            </td>
+            <td>
+              <span class="cell-title">Supervisor</span>
+              <span class="cell-detail"
+                >Multi-Agent Supervisor (beta) orchestrates Genie, agent endpoints, UC functions,
+                MCP; OpenAI Agents SDK for custom</span
+              >
+              <a
+                class="src"
+                href="https://docs.databricks.com/aws/en/generative-ai/agent-bricks/multi-agent-supervisor"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="cell-title">Ontology-driven</span>
+              <span class="cell-detail"
+                >AIP Automate for autonomous workflows; Agent Studio delegation; Scenario branching;
+                Workshop integration</span
+              >
+              <a
+                class="src"
+                href="https://www.palantir.com/docs/foundry/agent-studio/overview"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+          </tr>
+
+          <!-- License -->
+          <tr>
+            <td>License</td>
+            <td>
+              <span class="tag tag-pink">Proprietary</span>
+              <span class="cell-detail"
+                >Anthropic Commercial Terms; public GitHub repos but not open-source</span
+              >
+              <a
+                class="src"
+                href="https://github.com/anthropics/claude-agent-sdk-python"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">MIT</span>
+              <span class="cell-detail"
+                >openai-agents-python + openai-agents-js both MIT licensed</span
+              >
+              <a class="src" href="https://github.com/openai/openai-agents-python" target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-blue">Apache 2.0</span>
+              <span class="cell-detail"
+                >All 4 language SDKs (Python, Java, Go, Node) Apache 2.0</span
+              >
+              <a class="src" href="https://pypi.org/project/google-adk/" target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-pink">Proprietary</span>
+              <span class="cell-detail"
+                >Managed service proprietary; Strands SDK + MCP servers are Apache 2.0</span
+              >
+              <a class="src" href="https://awslabs.github.io/mcp/" target="_blank">source ↗</a>
+            </td>
+            <td>
+              <span class="tag tag-green">MIT</span>
+              <span class="cell-detail">Semantic Kernel (C#, Python, Java) MIT licensed</span>
+              <a
+                class="src"
+                href="https://github.com/microsoft/semantic-kernel/blob/main/LICENSE"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">MIT</span>
+              <span class="cell-detail">LangChain + LangGraph MIT; LangSmith is commercial</span>
+              <a class="src" href="https://github.com/langchain-ai/langchain" target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">MIT</span>
+              <span class="cell-detail">CrewAI core framework MIT licensed</span>
+              <a class="src" href="https://pypi.org/project/crewai/" target="_blank">source ↗</a>
+            </td>
+            <td>
+              <span class="tag tag-pink">Proprietary</span>
+              <span class="cell-detail"
+                >Databricks platform proprietary; built on Apache Spark/MLflow (Apache 2.0
+                open-source foundations)</span
+              >
+              <a
+                class="src"
+                href="https://www.databricks.com/product/artificial-intelligence/agent-bricks"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+            <td>
+              <span class="tag tag-pink">Proprietary</span>
+              <span class="cell-detail"
+                >Fully proprietary platform; no open-source SDK; Ontology SDK available for customer
+                integrations</span
+              >
+              <a
+                class="src"
+                href="https://www.palantir.com/docs/foundry/aip/overview"
+                target="_blank"
+                >source ↗</a
+              >
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="footer">
+      Sources verified as of early 2026. Asterisks (*) indicate that the open-source library itself
+      carries no FedRAMP cert but can inherit authorization from the deployment environment.
+    </p>
+  </body>
+</html>

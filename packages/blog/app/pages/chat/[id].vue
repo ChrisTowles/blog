@@ -111,7 +111,7 @@ onMounted(() => {
       <UContainer>
         <UChatMessages
           should-auto-scroll
-          :messages="chat.messages.value"
+          :messages="chat.messages.value as any"
           :status="chat.status.value"
           :assistant="
             chat.status.value !== 'streaming'
@@ -120,7 +120,7 @@ onMounted(() => {
                     {
                       label: 'Copy',
                       icon: copied ? 'i-lucide-copy-check' : 'i-lucide-copy',
-                      onClick: copy,
+                      onClick: copy as any,
                     },
                   ],
                 }
@@ -135,11 +135,11 @@ onMounted(() => {
               <span>Thinking...</span>
             </div>
           </template>
-          <template #content="{ message }">
+          <template #content="{ message: rawMessage }">
             <div class="*:first:mt-0 *:last:mb-0">
               <template
-                v-for="(part, index) in message.parts"
-                :key="getPartKey(message.id, part, index)"
+                v-for="(part, index) in (rawMessage as unknown as ChatMessage).parts"
+                :key="getPartKey(rawMessage.id, part, index)"
               >
                 <Reasoning
                   v-if="part.type === 'reasoning'"
@@ -149,17 +149,17 @@ onMounted(() => {
                 <ToolWeather
                   v-else-if="part.type === 'tool-use' && part.toolName === 'getWeather'"
                   :tool-use="part"
-                  :tool-result="getToolResult(message, part)"
+                  :tool-result="getToolResult(rawMessage as unknown as ChatMessage, part)"
                 />
                 <ToolDice
                   v-else-if="part.type === 'tool-use' && part.toolName === 'rollDice'"
                   :tool-use="part"
-                  :tool-result="getToolResult(message, part)"
+                  :tool-result="getToolResult(rawMessage as unknown as ChatMessage, part)"
                 />
                 <ToolInvocation
                   v-else-if="part.type === 'tool-use'"
                   :tool-use="part"
-                  :tool-result="getToolResult(message, part)"
+                  :tool-result="getToolResult(rawMessage as unknown as ChatMessage, part)"
                 />
                 <ChatCodeExecution
                   v-else-if="part.type === 'code-execution'"
@@ -169,7 +169,7 @@ onMounted(() => {
                 <MDCCached
                   v-else-if="part.type === 'text'"
                   :value="part.text"
-                  :cache-key="`${message.id}-${index}`"
+                  :cache-key="`${rawMessage.id}-${index}`"
                   :components="components"
                   :parser-options="{ highlight: false }"
                   class="*:first:mt-0 *:last:mb-0"
