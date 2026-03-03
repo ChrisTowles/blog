@@ -286,6 +286,12 @@
                 target="_blank"
                 >source ↗</a
               >
+
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: C4G is not a direct auth pathway — it routes through partner platforms
+                (Bedrock, Vertex AI). No independent Anthropic FedRAMP ATO.</span
+              >
             </td>
             <td>
               <span class="tag tag-yellow">Via Azure</span>
@@ -336,6 +342,12 @@
                 href="https://learn.microsoft.com/en-us/azure/azure-government/compliance/azure-services-in-fedramp-auditscope"
                 target="_blank"
                 >source ↗</a
+              >
+
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: IL-6 (Secret) and Top Secret reside in separate Azure Government
+                Secret/Top Secret environments, not extensions of standard Azure.</span
               >
             </td>
             <td>
@@ -397,6 +409,13 @@
                 target="_blank"
                 >source ↗</a
               >
+
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: 9 built-in tools (Read, Write, Edit, Bash, Glob, Grep, WebSearch,
+                WebFetch, AskUserQuestion). Todo/Notebook/Task/MCP are Claude Code CLI tools, not
+                Agent SDK.</span
+              >
             </td>
             <td>
               <span class="cell-title">9+ built-in</span>
@@ -410,6 +429,13 @@
                 target="_blank"
                 >source ↗</a
               >
+
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: Codex is not a built-in tool class. Should be LocalShellTool. 9 tools:
+                WebSearch, FileSearch, CodeInterpreter, ImageGen, ShellTool, LocalShellTool,
+                ComputerTool, ApplyPatch, HostedMCP.</span
+              >
             </td>
             <td>
               <span class="cell-title">10+ built-in</span>
@@ -419,6 +445,12 @@
               >
               <a class="src" href="https://google.github.io/adk-docs/skills/" target="_blank"
                 >source ↗</a
+              >
+
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: 3 built-in tools (Google Search, Code Execution, Vertex AI Search).
+                BigQuery/GKE/etc. are integrations/plugins, not built-in.</span
               >
             </td>
             <td>
@@ -433,6 +465,12 @@
                 target="_blank"
                 >source ↗</a
               >
+
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: 5 built-in action groups only. Knowledge Bases and Lambda are separate
+                config — not action group types.</span
+              >
             </td>
             <td>
               <span class="cell-title">15+ built-in</span>
@@ -445,6 +483,11 @@
                 href="https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/tools-classic/overview"
                 target="_blank"
                 >source ↗</a
+              >
+
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: 12 tools (classic API) or 14 (new Foundry catalog). Not 15+.</span
               >
             </td>
             <td>
@@ -476,6 +519,12 @@
                 target="_blank"
                 >source ↗</a
               >
+
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: ~4 tool categories (python_exec, UC Functions, Vector Search, MCP).
+                Genie is an agent type, AI Gateway is infra, Pipeline Builder doesn't exist.</span
+              >
             </td>
             <td>
               <span class="cell-title">Platform-integrated</span>
@@ -506,6 +555,11 @@
                 href="https://platform.claude.com/docs/en/release-notes/overview"
                 target="_blank"
                 >source ↗</a
+              >
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: Skills are now GA (not beta). Available via filesystem
+                (.claude/skills/), /v1/skills API, and claude.ai.</span
               >
             </td>
             <td>
@@ -590,6 +644,13 @@
                 target="_blank"
                 >source ↗</a
               >
+
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: Blueprints exist but SKILL.md is for Databricks Assistant coding skills
+                (separate feature), not Agent Bricks. OpenAI Agents SDK not part of
+                blueprints.</span
+              >
             </td>
             <td>
               <span class="tag tag-yellow">Implicit</span>
@@ -634,6 +695,12 @@
                 target="_blank"
                 >source ↗</a
               >
+
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: 5 transport options: HostedMCP, Streamable HTTP, SSE, Stdio, MCP Server
+                Manager.</span
+              >
             </td>
             <td>
               <span class="tag tag-green">Native</span>
@@ -659,6 +726,11 @@
                 href="https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/gateway.html"
                 target="_blank"
                 >source ↗</a
+              >
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: "inline agents" is a Bedrock Agents concept, not AgentCore MCP. Should
+                be: AgentCore Runtime + AgentCore Gateway only.</span
               >
             </td>
             <td>
@@ -738,6 +810,10 @@
                 target="_blank"
                 >source ↗</a
               >
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: Docker MCP Catalog has 300+ servers, not 200+.</span
+              >
             </td>
             <td>
               <span class="tag tag-yellow">Partial</span>
@@ -764,6 +840,12 @@
                 target="_blank"
                 >source ↗</a
               >
+
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: No "ADK catalog" exists. Cloud API Registry not in MCP docs. Apigee is a
+                publishing mechanism, not a catalog entry.</span
+              >
             </td>
             <td>
               <span class="tag tag-green">Yes</span>
@@ -780,6 +862,11 @@
                 (mcp.azure.com)</span
               >
               <a class="src" href="https://github.com/microsoft/mcp" target="_blank">source ↗</a>
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: "MCP Center" and mcp.azure.com do not exist. microsoft/mcp has ~16
+                servers; Azure.Mcp.Server has 40+ Azure service tools.</span
+              >
             </td>
             <td>
               <span class="tag tag-red">No</span>
@@ -796,6 +883,12 @@
                 >No own catalog; relies on external MCP ecosystem + Composio</span
               >
               <a class="src" href="https://github.com/crewAIInc/crewAI" target="_blank">source ↗</a>
+
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: CrewAI has its own AMP (Agent Management Platform) marketplace with
+                "crewai-amp:" curated MCP services.</span
+              >
             </td>
             <td>
               <span class="tag tag-green">Yes</span>
@@ -836,6 +929,12 @@
               >
               <a class="src" href="https://code.claude.com/docs/en/sandboxing" target="_blank"
                 >source ↗</a
+              >
+
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: 2-component sandbox (bubblewrap/Seatbelt + proxy). No 3-tier.
+                E2B/Modal/etc. not recommended in docs.</span
               >
             </td>
             <td>
@@ -976,6 +1075,10 @@
               <a class="src" href="https://pypi.org/project/google-adk/" target="_blank"
                 >source ↗</a
               >
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: ADK docs say 100+ via LiteLLM, not 200+.</span
+              >
             </td>
             <td>
               <span class="tag tag-green">Yes (100+)</span>
@@ -1002,6 +1105,12 @@
                 target="_blank"
                 >source ↗</a
               >
+
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: ~7 connectors in README (OpenAI, Azure OpenAI, HuggingFace, Ollama,
+                ONNX, LMStudio, NVIDIA). Google/Mistral/Bedrock not listed.</span
+              >
             </td>
             <td>
               <span class="tag tag-green">Yes</span>
@@ -1011,6 +1120,11 @@
               >
               <a class="src" href="https://github.com/langchain-ai/langchain" target="_blank"
                 >source ↗</a
+              >
+
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: 40+ dedicated provider packages, not 20+.</span
               >
             </td>
             <td>
@@ -1032,6 +1146,12 @@
                 href="https://docs.databricks.com/aws/en/generative-ai/agent-bricks/"
                 target="_blank"
                 >source ↗</a
+              >
+
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: AI Gateway uses static traffic splitting (manual %), not automatic
+                cross-model optimization.</span
               >
             </td>
             <td>
@@ -1142,6 +1262,12 @@
                 target="_blank"
                 >source ↗</a
               >
+
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: Supervisor Agent is now GA (not beta). OpenAI Agents SDK is not part of
+                the Supervisor product.</span
+              >
             </td>
             <td>
               <span class="cell-title">Ontology-driven</span>
@@ -1171,6 +1297,12 @@
                 href="https://github.com/anthropics/claude-agent-sdk-python"
                 target="_blank"
                 >source ↗</a
+              >
+
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: The SDK is MIT licensed (open source). The repo LICENSE file is
+                MIT.</span
               >
             </td>
             <td>
@@ -1244,6 +1376,12 @@
                 href="https://www.palantir.com/docs/foundry/aip/overview"
                 target="_blank"
                 >source ↗</a
+              >
+
+              <span class="tag tag-red">INCORRECT</span>
+              <span class="cell-detail" style="color: var(--red)"
+                >Corrected: OSDK (TypeScript, Python) is open-source under Apache 2.0 on
+                GitHub.</span
               >
             </td>
           </tr>
