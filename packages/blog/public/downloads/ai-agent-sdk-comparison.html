@@ -263,7 +263,7 @@
             <th>Anthropic</th>
             <th>OpenAI</th>
             <th>Google ADK</th>
-            <th>AWS Bedrock</th>
+            <th>AWS Bedrock/AgentCore</th>
             <th>Microsoft</th>
             <th>LangChain</th>
             <th>CrewAI</th>
@@ -274,23 +274,17 @@
         <tbody>
           <!-- FedRAMP High -->
           <tr>
-            <td>FedRAMP High</td>
+            <td>
+              FedRAMP High<br /><span class="cell-detail"
+                >Has achieved or inherits FedRAMP High authorization for US government
+                workloads</span
+              >
+            </td>
             <td>
               <span class="tag tag-yellow">Via Partners</span>
               <span class="cell-detail"
-                >AWS GovCloud, Google Vertex AI, + Claude for Government (C4G) direct auth</span
-              >
-              <a
-                class="src"
-                href="https://support.claude.com/en/articles/13756069-public-sector-faqs"
-                target="_blank"
-                >source ↗</a
-              >
-
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: C4G is not a direct auth pathway — it routes through partner platforms
-                (Bedrock, Vertex AI). No independent Anthropic FedRAMP ATO.</span
+                >Via AWS GovCloud (Bedrock) and Google Vertex AI only; C4G routes through these
+                partner platforms, no independent Anthropic FedRAMP ATO</span
               >
               <a
                 class="src"
@@ -340,20 +334,8 @@
             <td>
               <span class="tag tag-green">Yes</span>
               <span class="cell-detail"
-                >Azure Commercial + Gov both FedRAMP High; extends to DoD IL-6 (Secret) and Top
-                Secret</span
-              >
-              <a
-                class="src"
-                href="https://learn.microsoft.com/en-us/azure/azure-government/compliance/azure-services-in-fedramp-auditscope"
-                target="_blank"
-                >source ↗</a
-              >
-
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: IL-6 (Secret) and Top Secret reside in separate Azure Government
-                Secret/Top Secret environments, not extensions of standard Azure.</span
+                >Azure Commercial + Gov FedRAMP High; DoD IL-6 (Secret) and Top Secret in separate
+                Azure Government Secret/Top Secret environments</span
               >
               <a
                 class="src"
@@ -408,38 +390,30 @@
 
           <!-- Native Tools -->
           <tr>
-            <td>Native Tools</td>
             <td>
-              <span class="cell-title">18+ built-in</span>
+              Native Tools<br /><span class="cell-detail"
+                >Built-in tools shipped with the SDK (search, code exec, file I/O, computer
+                use)</span
+              >
+            </td>
+            <td>
+              <span class="cell-title">11 built-in</span>
               <span class="cell-detail"
-                >Bash, Read/Write/Edit, Glob, Grep, WebSearch, WebFetch, Todo, Notebook, Task, MCP
-                introspection</span
+                >Bash, Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, AskUserQuestion + Code
+                Execution, Computer Use (API beta)</span
               >
               <a
                 class="src"
-                href="https://github.com/anthropics/claude-agent-sdk-python"
-                target="_blank"
-                >source ↗</a
-              >
-
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: 9 built-in tools (Read, Write, Edit, Bash, Glob, Grep, WebSearch,
-                WebFetch, AskUserQuestion). Todo/Notebook/Task/MCP are Claude Code CLI tools, not
-                Agent SDK.</span
-              >
-              <a
-                class="src"
-                href="https://docs.anthropic.com/en/docs/agents-and-tools/claude-agent/sdk-tools"
+                href="https://platform.claude.com/docs/en/agent-sdk/overview"
                 target="_blank"
                 >source ↗</a
               >
             </td>
             <td>
-              <span class="cell-title">9+ built-in</span>
+              <span class="cell-title">9 built-in</span>
               <span class="cell-detail"
-                >WebSearch, FileSearch, CodeInterpreter, ImageGen, ShellTool, ComputerTool,
-                ApplyPatch, HostedMCP, Codex</span
+                >WebSearch, FileSearch, CodeInterpreter, ImageGen, ShellTool, LocalShellTool,
+                ComputerTool, ApplyPatch, HostedMCP</span
               >
               <a
                 class="src"
@@ -447,80 +421,35 @@
                 target="_blank"
                 >source ↗</a
               >
-
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: Codex is not a built-in tool class. Should be LocalShellTool. 9 tools:
-                WebSearch, FileSearch, CodeInterpreter, ImageGen, ShellTool, LocalShellTool,
-                ComputerTool, ApplyPatch, HostedMCP.</span
-              >
-              <a
-                class="src"
-                href="https://openai.github.io/openai-agents-python/ref/tools/"
-                target="_blank"
-                >source ↗</a
-              >
             </td>
             <td>
-              <span class="cell-title">10+ built-in</span>
+              <span class="cell-title">3+ built-in</span>
               <span class="cell-detail"
-                >Google Search, Code Execution, Computer Use, BigQuery, GKE, Cloud Trace, Apigee,
-                App Integration</span
+                >Google Search, Code Execution, Vertex AI Search + Computer Use; extensions via
+                BigQuery, GKE, Apigee plugins</span
               >
-              <a class="src" href="https://google.github.io/adk-docs/skills/" target="_blank"
-                >source ↗</a
-              >
-
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: 3 built-in tools (Google Search, Code Execution, Vertex AI Search).
-                BigQuery/GKE/etc. are integrations/plugins, not built-in.</span
-              >
-              <a class="src" href="https://google.github.io/adk-docs/tools/" target="_blank"
+              <a class="src" href="https://google.github.io/adk-docs/integrations/" target="_blank"
                 >source ↗</a
               >
             </td>
             <td>
               <span class="cell-title">5 action groups</span>
               <span class="cell-detail"
-                >Code Interpreter, User Input, Computer Use, Bash, Text Editor + Knowledge Bases +
-                Lambda</span
+                >Code Interpreter, User Input, Computer Use, Bash, Text Editor (Knowledge Bases +
+                Lambda are separate config)</span
               >
               <a
                 class="src"
-                href="https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent_CreateAgentActionGroup.html"
-                target="_blank"
-                >source ↗</a
-              >
-
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: 5 built-in action groups only. Knowledge Bases and Lambda are separate
-                config — not action group types.</span
-              >
-              <a
-                class="src"
-                href="https://docs.aws.amazon.com/bedrock/latest/userguide/agents-action-group.html"
+                href="https://docs.aws.amazon.com/bedrock/latest/userguide/agents-action-create.html"
                 target="_blank"
                 >source ↗</a
               >
             </td>
             <td>
-              <span class="cell-title">15+ built-in</span>
+              <span class="cell-title">12–14 built-in</span>
               <span class="cell-detail"
                 >Code Interp, File Search, Bing, Azure AI Search, Functions, Logic Apps, Fabric,
-                Deep Research, Browser</span
-              >
-              <a
-                class="src"
-                href="https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/tools-classic/overview"
-                target="_blank"
-                >source ↗</a
-              >
-
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: 12 tools (classic API) or 14 (new Foundry catalog). Not 15+.</span
+                Deep Research, Browser (12 classic API, 14 Foundry catalog)</span
               >
               <a
                 class="src"
@@ -547,23 +476,8 @@
               <a class="src" href="https://github.com/crewAIInc/crewAI" target="_blank">source ↗</a>
             </td>
             <td>
-              <span class="cell-title">10+ platform tools</span>
-              <span class="cell-detail"
-                >python_exec sandbox, Genie (NL→SQL), Vector Search, UC Functions, AI Gateway,
-                Pipeline Builder, doc parsing</span
-              >
-              <a
-                class="src"
-                href="https://docs.databricks.com/aws/en/generative-ai/tutorials/agent-framework-notebook"
-                target="_blank"
-                >source ↗</a
-              >
-
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: ~4 tool categories (python_exec, UC Functions, Vector Search, MCP).
-                Genie is an agent type, AI Gateway is infra, Pipeline Builder doesn't exist.</span
-              >
+              <span class="cell-title">~4 tool categories</span>
+              <span class="cell-detail">python_exec sandbox, UC Functions, Vector Search, MCP</span>
               <a
                 class="src"
                 href="https://docs.databricks.com/en/generative-ai/agent-bricks/"
@@ -588,27 +502,21 @@
 
           <!-- Skills -->
           <tr>
-            <td>Skills</td>
             <td>
-              <span class="tag tag-green">Yes (beta)</span>
+              Skills<br /><span class="cell-detail"
+                >Supports SKILL.md — reusable, file-based instruction bundles that agents can load
+                and execute</span
+              >
+            </td>
+            <td>
+              <span class="tag tag-green">Yes</span>
               <span class="cell-detail"
-                >.claude/skills/SKILL.md folders w/ instructions + scripts; pre-built for
-                Office/PDF; custom via API</span
+                >.claude/skills/ folders w/ instructions + scripts; pre-built for Office/PDF; custom
+                via /v1/skills API and claude.ai</span
               >
               <a
                 class="src"
-                href="https://platform.claude.com/docs/en/release-notes/overview"
-                target="_blank"
-                >source ↗</a
-              >
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: Skills are now GA (not beta). Available via filesystem
-                (.claude/skills/), /v1/skills API, and claude.ai.</span
-              >
-              <a
-                class="src"
-                href="https://docs.anthropic.com/en/docs/agents-and-tools/claude-agent/skills"
+                href="https://platform.claude.com/docs/en/build-with-claude/skills-guide"
                 target="_blank"
                 >source ↗</a
               >
@@ -650,10 +558,10 @@
               >
             </td>
             <td>
-              <span class="tag tag-green">Yes (Plugins)</span>
+              <span class="tag tag-red">No</span>
               <span class="cell-detail"
-                >Mature Plugin system; [KernelFunction] decorator; import from native code, OpenAPI,
-                or MCP servers</span
+                >Semantic Kernel has Plugins ([KernelFunction] decorator, OpenAPI, MCP) but no
+                SKILL.md abstraction</span
               >
               <a
                 class="src"
@@ -684,27 +592,14 @@
               <a class="src" href="https://github.com/crewAIInc/crewAI" target="_blank">source ↗</a>
             </td>
             <td>
-              <span class="tag tag-green">Yes</span>
+              <span class="tag tag-red">No</span>
               <span class="cell-detail"
-                >Pre-built agent blueprints (Knowledge Assistant, Info Extraction, Custom LLM,
-                Supervisor); SKILL.md for custom agents; OpenAI Agents SDK scaffolding</span
+                >No skills abstraction for Agent Bricks; pre-built blueprints exist but are not
+                skills. SKILL.md is a separate Databricks Assistant feature</span
               >
               <a
                 class="src"
-                href="https://www.databricks.com/blog/custom-agents-now-available-databricks"
-                target="_blank"
-                >source ↗</a
-              >
-
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: Blueprints exist but SKILL.md is for Databricks Assistant coding skills
-                (separate feature), not Agent Bricks. OpenAI Agents SDK not part of
-                blueprints.</span
-              >
-              <a
-                class="src"
-                href="https://docs.databricks.com/en/generative-ai/agent-bricks/custom-agents.html"
+                href="https://docs.databricks.com/aws/en/generative-ai/agent-framework/create-agent"
                 target="_blank"
                 >source ↗</a
               >
@@ -726,7 +621,11 @@
 
           <!-- MCP Support -->
           <tr>
-            <td>MCP Support</td>
+            <td>
+              MCP Support<br /><span class="cell-detail"
+                >Can connect to MCP servers as a client to consume tools and resources</span
+              >
+            </td>
             <td>
               <span class="tag tag-green">Native</span>
               <span class="cell-detail"
@@ -743,20 +642,8 @@
             <td>
               <span class="tag tag-green">Native</span>
               <span class="cell-detail"
-                >4 transports: HostedMCP (server-side), Streamable HTTP, Stdio, SSE; tool filtering
-                + approval workflows</span
-              >
-              <a
-                class="src"
-                href="https://openai.github.io/openai-agents-python/mcp/"
-                target="_blank"
-                >source ↗</a
-              >
-
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: 5 transport options: HostedMCP, Streamable HTTP, SSE, Stdio, MCP Server
-                Manager.</span
+                >5 transports: HostedMCP (server-side), Streamable HTTP, SSE, Stdio, MCP Server
+                Manager; tool filtering + approval workflows</span
               >
               <a
                 class="src"
@@ -782,18 +669,7 @@
               <span class="tag tag-green">Yes</span>
               <span class="cell-detail"
                 >AgentCore Runtime (deploy MCP containers), AgentCore Gateway (protocol
-                translation), inline agents</span
-              >
-              <a
-                class="src"
-                href="https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/gateway.html"
-                target="_blank"
-                >source ↗</a
-              >
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: "inline agents" is a Bedrock Agents concept, not AgentCore MCP. Should
-                be: AgentCore Runtime + AgentCore Gateway only.</span
+                translation)</span
               >
               <a
                 class="src"
@@ -866,30 +742,26 @@
 
           <!-- MCP Catalog -->
           <tr>
-            <td>MCP Catalog</td>
             <td>
-              <span class="tag tag-green">Yes</span>
-              <span class="cell-detail"
-                >Official MCP Registry (preview) + community catalogs (mcp.so, Smithery, Docker MCP
-                Catalog 200+ tools)</span
+              MCP Catalog<br /><span class="cell-detail"
+                >Hosts and manages a catalog of MCP servers as a platform product</span
               >
-              <a
-                class="src"
-                href="http://blog.modelcontextprotocol.io/posts/2025-09-08-mcp-registry-preview/"
-                target="_blank"
-                >source ↗</a
-              >
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: Docker MCP Catalog has 300+ servers, not 200+.</span
-              >
-              <a class="src" href="https://hub.docker.com/u/mcp" target="_blank">source ↗</a>
             </td>
+            <!-- Anthropic -->
             <td>
-              <span class="tag tag-yellow">Partial</span>
+              <span class="tag tag-red">No</span>
               <span class="cell-detail"
-                >Connectors (OpenAI-maintained MCP wrappers for Google, Dropbox, Gmail); per-org app
-                registry in ChatGPT</span
+                >No hosted catalog; enterprise admin allowlists control which MCP servers agents can
+                use</span
+              >
+              <a class="src" href="https://modelcontextprotocol.io/" target="_blank">source ↗</a>
+            </td>
+            <!-- OpenAI -->
+            <td>
+              <span class="tag tag-red">No</span>
+              <span class="cell-detail"
+                >No hosted catalog; Connectors are OpenAI-maintained MCP wrappers but not a
+                browsable catalog product</span
               >
               <a
                 class="src"
@@ -898,11 +770,12 @@
                 >source ↗</a
               >
             </td>
+            <!-- Google ADK -->
             <td>
               <span class="tag tag-green">Yes</span>
               <span class="cell-detail"
-                >Managed remote MCP servers (BigQuery, GKE, Maps) + ADK catalog + Cloud API Registry
-                / Apigee</span
+                >Managed remote MCP servers hosted by Google Cloud (BigQuery, GKE, Maps, Spanner,
+                etc.)</span
               >
               <a
                 class="src"
@@ -910,70 +783,49 @@
                 target="_blank"
                 >source ↗</a
               >
-
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: No "ADK catalog" exists. Cloud API Registry not in MCP docs. Apigee is a
-                publishing mechanism, not a catalog entry.</span
-              >
-              <a
-                class="src"
-                href="https://google.github.io/adk-docs/tools/mcp-tools/"
-                target="_blank"
-                >source ↗</a
-              >
             </td>
-            <td>
-              <span class="tag tag-green">Yes</span>
-              <span class="cell-detail"
-                >66+ open-source MCP servers (awslabs.github.io/mcp) — infra, data, AI/ML, dev
-                tools, cost</span
-              >
-              <a class="src" href="https://awslabs.github.io/mcp/" target="_blank">source ↗</a>
-            </td>
-            <td>
-              <span class="tag tag-green">Yes</span>
-              <span class="cell-detail"
-                >Foundry Tool Catalog + microsoft/mcp GitHub (40+ Azure services) + MCP Center
-                (mcp.azure.com)</span
-              >
-              <a class="src" href="https://github.com/microsoft/mcp" target="_blank">source ↗</a>
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: "MCP Center" and mcp.azure.com do not exist. microsoft/mcp has ~16
-                servers; Azure.Mcp.Server has 40+ Azure service tools.</span
-              >
-              <a class="src" href="https://github.com/microsoft/mcp" target="_blank">source ↗</a>
-            </td>
+            <!-- AWS -->
             <td>
               <span class="tag tag-red">No</span>
               <span class="cell-detail"
-                >References external MCP ecosystem; no LangChain-hosted catalog</span
+                >66+ open-source MCP servers on GitHub (awslabs/mcp) but no hosted catalog
+                service</span
               >
+              <a class="src" href="https://awslabs.github.io/mcp/" target="_blank">source ↗</a>
+            </td>
+            <!-- Microsoft -->
+            <td>
+              <span class="tag tag-red">No</span>
+              <span class="cell-detail"
+                >Open-source microsoft/mcp repo (~16 servers) + Azure.Mcp.Server NuGet package; no
+                hosted catalog service</span
+              >
+              <a class="src" href="https://github.com/microsoft/mcp" target="_blank">source ↗</a>
+            </td>
+            <!-- LangChain -->
+            <td>
+              <span class="tag tag-red">No</span>
+              <span class="cell-detail">No hosted catalog; references external MCP ecosystem</span>
               <a class="src" href="https://pypi.org/project/langchain-mcp-tools/" target="_blank"
                 >source ↗</a
               >
             </td>
+            <!-- CrewAI -->
             <td>
-              <span class="tag tag-red">No</span>
+              <span class="tag tag-yellow">Partial</span>
               <span class="cell-detail"
-                >No own catalog; relies on external MCP ecosystem + Composio</span
-              >
-              <a class="src" href="https://github.com/crewAIInc/crewAI" target="_blank">source ↗</a>
-
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: CrewAI has its own AMP (Agent Management Platform) marketplace with
-                "crewai-amp:" curated MCP services.</span
+                >AMP (Agent Management Platform) marketplace hosts curated "crewai-amp:" MCP
+                services</span
               >
               <a class="src" href="https://docs.crewai.com/mcp/overview" target="_blank"
                 >source ↗</a
               >
             </td>
+            <!-- Databricks -->
             <td>
               <span class="tag tag-green">Yes</span>
               <span class="cell-detail"
-                >MCP Catalog (beta) in Unity Catalog for discovery/governance + MCP in Databricks
+                >MCP Catalog in Unity Catalog for discovery/governance + MCP in Databricks
                 Marketplace (Public Preview)</span
               >
               <a
@@ -983,11 +835,11 @@
                 >source ↗</a
               >
             </td>
+            <!-- Palantir -->
             <td>
-              <span class="tag tag-yellow">Partial</span>
+              <span class="tag tag-red">No</span>
               <span class="cell-detail"
-                >Ontology MCP + Palantir MCP server registered in community catalogs; no public
-                marketplace of its own</span
+                >No hosted MCP catalog; Palantir MCP server listed in community catalogs only</span
               >
               <a
                 class="src"
@@ -1000,7 +852,11 @@
 
           <!-- Code Sandbox -->
           <tr>
-            <td>Code Sandbox</td>
+            <td>
+              Code Sandbox<br /><span class="cell-detail"
+                >Provides isolated code execution environments for agent-generated code</span
+              >
+            </td>
             <td>
               <span class="tag tag-green">Yes (3-tier)</span>
               <span class="cell-detail"
@@ -1016,10 +872,7 @@
                 >Corrected: 2-component sandbox (bubblewrap/Seatbelt + proxy). No 3-tier.
                 E2B/Modal/etc. not recommended in docs.</span
               >
-              <a
-                class="src"
-                href="https://docs.anthropic.com/en/docs/agents-and-tools/claude-agent/sandboxing"
-                target="_blank"
+              <a class="src" href="https://code.claude.com/docs/en/sandboxing" target="_blank"
                 >source ↗</a
               >
             </td>
@@ -1128,7 +981,11 @@
 
           <!-- Multi-Model -->
           <tr>
-            <td>Multi-Model</td>
+            <td>
+              Multi-Model<br /><span class="cell-detail"
+                >Supports swapping or routing between multiple LLM providers natively</span
+              >
+            </td>
             <td>
               <span class="tag tag-red">No</span>
               <span class="cell-detail"
@@ -1278,7 +1135,12 @@
 
           <!-- Multi-Agent -->
           <tr>
-            <td>Multi-Agent</td>
+            <td>
+              Multi-Agent<br /><span class="cell-detail"
+                >Built-in patterns for orchestrating multiple agents (handoffs, supervisors,
+                graphs)</span
+              >
+            </td>
             <td>
               <span class="cell-title">Subagent</span>
               <span class="cell-detail"
@@ -1298,10 +1160,7 @@
                 >Handoffs (decentralized) + Agents-as-Tools (centralized manager); Runner loop,
                 guardrails, sessions</span
               >
-              <a
-                class="src"
-                href="https://openai.com/index/new-tools-for-building-agents/"
-                target="_blank"
+              <a class="src" href="https://openai.github.io/openai-agents-python/" target="_blank"
                 >source ↗</a
               >
             </td>
@@ -1399,7 +1258,11 @@
 
           <!-- License -->
           <tr>
-            <td>License</td>
+            <td>
+              License<br /><span class="cell-detail"
+                >Open-source license of the SDK itself (not the hosted platform)</span
+              >
+            </td>
             <td>
               <span class="tag tag-pink">Proprietary</span>
               <span class="cell-detail"
