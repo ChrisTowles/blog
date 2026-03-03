@@ -292,6 +292,12 @@
                 >Corrected: C4G is not a direct auth pathway — it routes through partner platforms
                 (Bedrock, Vertex AI). No independent Anthropic FedRAMP ATO.</span
               >
+              <a
+                class="src"
+                href="https://support.anthropic.com/en/articles/13756069-public-sector-faqs"
+                target="_blank"
+                >source ↗</a
+              >
             </td>
             <td>
               <span class="tag tag-yellow">Via Azure</span>
@@ -348,6 +354,12 @@
               <span class="cell-detail" style="color: var(--red)"
                 >Corrected: IL-6 (Secret) and Top Secret reside in separate Azure Government
                 Secret/Top Secret environments, not extensions of standard Azure.</span
+              >
+              <a
+                class="src"
+                href="https://learn.microsoft.com/en-us/azure/azure-government/documentation-government-overview-dod"
+                target="_blank"
+                >source ↗</a
               >
             </td>
             <td>
@@ -416,6 +428,12 @@
                 WebFetch, AskUserQuestion). Todo/Notebook/Task/MCP are Claude Code CLI tools, not
                 Agent SDK.</span
               >
+              <a
+                class="src"
+                href="https://docs.anthropic.com/en/docs/agents-and-tools/claude-agent/sdk-tools"
+                target="_blank"
+                >source ↗</a
+              >
             </td>
             <td>
               <span class="cell-title">9+ built-in</span>
@@ -436,6 +454,12 @@
                 WebSearch, FileSearch, CodeInterpreter, ImageGen, ShellTool, LocalShellTool,
                 ComputerTool, ApplyPatch, HostedMCP.</span
               >
+              <a
+                class="src"
+                href="https://openai.github.io/openai-agents-python/ref/tools/"
+                target="_blank"
+                >source ↗</a
+              >
             </td>
             <td>
               <span class="cell-title">10+ built-in</span>
@@ -451,6 +475,9 @@
               <span class="cell-detail" style="color: var(--red)"
                 >Corrected: 3 built-in tools (Google Search, Code Execution, Vertex AI Search).
                 BigQuery/GKE/etc. are integrations/plugins, not built-in.</span
+              >
+              <a class="src" href="https://google.github.io/adk-docs/tools/" target="_blank"
+                >source ↗</a
               >
             </td>
             <td>
@@ -471,6 +498,12 @@
                 >Corrected: 5 built-in action groups only. Knowledge Bases and Lambda are separate
                 config — not action group types.</span
               >
+              <a
+                class="src"
+                href="https://docs.aws.amazon.com/bedrock/latest/userguide/agents-action-group.html"
+                target="_blank"
+                >source ↗</a
+              >
             </td>
             <td>
               <span class="cell-title">15+ built-in</span>
@@ -488,6 +521,12 @@
               <span class="tag tag-red">INCORRECT</span>
               <span class="cell-detail" style="color: var(--red)"
                 >Corrected: 12 tools (classic API) or 14 (new Foundry catalog). Not 15+.</span
+              >
+              <a
+                class="src"
+                href="https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/tools/overview"
+                target="_blank"
+                >source ↗</a
               >
             </td>
             <td>
@@ -525,6 +564,12 @@
                 >Corrected: ~4 tool categories (python_exec, UC Functions, Vector Search, MCP).
                 Genie is an agent type, AI Gateway is infra, Pipeline Builder doesn't exist.</span
               >
+              <a
+                class="src"
+                href="https://docs.databricks.com/en/generative-ai/agent-bricks/"
+                target="_blank"
+                >source ↗</a
+              >
             </td>
             <td>
               <span class="cell-title">Platform-integrated</span>
@@ -560,6 +605,12 @@
               <span class="cell-detail" style="color: var(--red)"
                 >Corrected: Skills are now GA (not beta). Available via filesystem
                 (.claude/skills/), /v1/skills API, and claude.ai.</span
+              >
+              <a
+                class="src"
+                href="https://docs.anthropic.com/en/docs/agents-and-tools/claude-agent/skills"
+                target="_blank"
+                >source ↗</a
               >
             </td>
             <td>
@@ -651,6 +702,12 @@
                 (separate feature), not Agent Bricks. OpenAI Agents SDK not part of
                 blueprints.</span
               >
+              <a
+                class="src"
+                href="https://docs.databricks.com/en/generative-ai/agent-bricks/custom-agents.html"
+                target="_blank"
+                >source ↗</a
+              >
             </td>
             <td>
               <span class="tag tag-yellow">Implicit</span>
@@ -701,6 +758,12 @@
                 >Corrected: 5 transport options: HostedMCP, Streamable HTTP, SSE, Stdio, MCP Server
                 Manager.</span
               >
+              <a
+                class="src"
+                href="https://openai.github.io/openai-agents-python/mcp/"
+                target="_blank"
+                >source ↗</a
+              >
             </td>
             <td>
               <span class="tag tag-green">Native</span>
@@ -731,6 +794,12 @@
               <span class="cell-detail" style="color: var(--red)"
                 >Corrected: "inline agents" is a Bedrock Agents concept, not AgentCore MCP. Should
                 be: AgentCore Runtime + AgentCore Gateway only.</span
+              >
+              <a
+                class="src"
+                href="https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/gateway.html"
+                target="_blank"
+                >source ↗</a
               >
             </td>
             <td>
@@ -814,6 +883,7 @@
               <span class="cell-detail" style="color: var(--red)"
                 >Corrected: Docker MCP Catalog has 300+ servers, not 200+.</span
               >
+              <a class="src" href="https://hub.docker.com/u/mcp" target="_blank">source ↗</a>
             </td>
             <td>
               <span class="tag tag-yellow">Partial</span>
@@ -846,6 +916,12 @@
                 >Corrected: No "ADK catalog" exists. Cloud API Registry not in MCP docs. Apigee is a
                 publishing mechanism, not a catalog entry.</span
               >
+              <a
+                class="src"
+                href="https://google.github.io/adk-docs/tools/mcp-tools/"
+                target="_blank"
+                >source ↗</a
+              >
             </td>
             <td>
               <span class="tag tag-green">Yes</span>
@@ -867,6 +943,7 @@
                 >Corrected: "MCP Center" and mcp.azure.com do not exist. microsoft/mcp has ~16
                 servers; Azure.Mcp.Server has 40+ Azure service tools.</span
               >
+              <a class="src" href="https://github.com/microsoft/mcp" target="_blank">source ↗</a>
             </td>
             <td>
               <span class="tag tag-red">No</span>
@@ -888,6 +965,9 @@
               <span class="cell-detail" style="color: var(--red)"
                 >Corrected: CrewAI has its own AMP (Agent Management Platform) marketplace with
                 "crewai-amp:" curated MCP services.</span
+              >
+              <a class="src" href="https://docs.crewai.com/mcp/overview" target="_blank"
+                >source ↗</a
               >
             </td>
             <td>
@@ -935,6 +1015,12 @@
               <span class="cell-detail" style="color: var(--red)"
                 >Corrected: 2-component sandbox (bubblewrap/Seatbelt + proxy). No 3-tier.
                 E2B/Modal/etc. not recommended in docs.</span
+              >
+              <a
+                class="src"
+                href="https://docs.anthropic.com/en/docs/agents-and-tools/claude-agent/sandboxing"
+                target="_blank"
+                >source ↗</a
               >
             </td>
             <td>
@@ -1079,6 +1165,12 @@
               <span class="cell-detail" style="color: var(--red)"
                 >Corrected: ADK docs say 100+ via LiteLLM, not 200+.</span
               >
+              <a
+                class="src"
+                href="https://google.github.io/adk-docs/agents/llm-agents/"
+                target="_blank"
+                >source ↗</a
+              >
             </td>
             <td>
               <span class="tag tag-green">Yes (100+)</span>
@@ -1111,6 +1203,9 @@
                 >Corrected: ~7 connectors in README (OpenAI, Azure OpenAI, HuggingFace, Ollama,
                 ONNX, LMStudio, NVIDIA). Google/Mistral/Bedrock not listed.</span
               >
+              <a class="src" href="https://github.com/microsoft/semantic-kernel" target="_blank"
+                >source ↗</a
+              >
             </td>
             <td>
               <span class="tag tag-green">Yes</span>
@@ -1125,6 +1220,12 @@
               <span class="tag tag-red">INCORRECT</span>
               <span class="cell-detail" style="color: var(--red)"
                 >Corrected: 40+ dedicated provider packages, not 20+.</span
+              >
+              <a
+                class="src"
+                href="https://python.langchain.com/docs/integrations/providers/"
+                target="_blank"
+                >source ↗</a
               >
             </td>
             <td>
@@ -1152,6 +1253,12 @@
               <span class="cell-detail" style="color: var(--red)"
                 >Corrected: AI Gateway uses static traffic splitting (manual %), not automatic
                 cross-model optimization.</span
+              >
+              <a
+                class="src"
+                href="https://docs.databricks.com/en/generative-ai/ai-gateway/"
+                target="_blank"
+                >source ↗</a
               >
             </td>
             <td>
@@ -1268,6 +1375,12 @@
                 >Corrected: Supervisor Agent is now GA (not beta). OpenAI Agents SDK is not part of
                 the Supervisor product.</span
               >
+              <a
+                class="src"
+                href="https://docs.databricks.com/en/generative-ai/agent-bricks/multi-agent-supervisor.html"
+                target="_blank"
+                >source ↗</a
+              >
             </td>
             <td>
               <span class="cell-title">Ontology-driven</span>
@@ -1303,6 +1416,12 @@
               <span class="cell-detail" style="color: var(--red)"
                 >Corrected: The SDK is MIT licensed (open source). The repo LICENSE file is
                 MIT.</span
+              >
+              <a
+                class="src"
+                href="https://github.com/anthropics/claude-agent-sdk-python/blob/main/LICENSE"
+                target="_blank"
+                >source ↗</a
               >
             </td>
             <td>
@@ -1383,6 +1502,7 @@
                 >Corrected: OSDK (TypeScript, Python) is open-source under Apache 2.0 on
                 GitHub.</span
               >
+              <a class="src" href="https://github.com/palantir/osdk-ts" target="_blank">source ↗</a>
             </td>
           </tr>
         </tbody>
