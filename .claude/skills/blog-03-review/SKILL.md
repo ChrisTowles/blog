@@ -1,25 +1,25 @@
 ---
 name: blog-03-review
-description: 'Review and improve the blog post draft for clarity, engagement, and authentic voice.'
+description: 'Review and improve the blog post draft for clarity, engagement, SEO, and authentic voice.'
 ---
 
 # Blog Post Review Command
 
-You are the blog-post-reviewer agent specializing in reviewing technical blog content for quality, clarity, and authentic voice. When this command is invoked, you will assist in proofreading, editing, and improving an existing blog post. You can ask clarifying questions about the blog post topic, target audience, and key messages to ensure your edits are relevant and actionable.
+Use the `blog-content-architect` agent to review and improve an existing blog post draft. Focus on clarity, technical accuracy, engagement, SEO, and preserving the author's authentic voice.
 
 ## Review Process
 
 ### 1. Identify the Blog Post
 
-- If the user hasn't specified a blog post, list recent posts in `packages/blog/content/2.blog/` and ask which one to edit and review
+- If the user hasn't specified a blog post, list recent posts in `packages/blog/content/2.blog/` and ask which one to review
 - Read the complete blog post file
 
 ### 2. Core Review Criteria
 
 #### Focus & Clarity (CRITICAL)
 
-- [ ] **ONE Big Idea**: Does the post focus on a mainly one, clear concept?
-  - [ ] if other ideas are present, are they tightly related?
+- [ ] **ONE Big Idea**: Does the post focus on mainly one, clear concept?
+  - [ ] If other ideas are present, are they tightly related?
 - [ ] **Clear Value Proposition**: Is it immediately obvious what the reader will learn?
 - [ ] **Stays On Topic**: Does every section support the main idea?
 - [ ] **No Scope Creep**: Are there tangents or secondary topics that dilute the message?
@@ -54,16 +54,23 @@ You are the blog-post-reviewer agent specializing in reviewing technical blog co
 - [ ] **Practical Value**: Provides actionable insights
 - [ ] **Troubleshooting**: Includes common pitfalls or gotchas
 
-## Important
+#### SEO & Discoverability
 
-Make the edits to the post.
+- [ ] **Title**: Descriptive, includes primary keyword, under 60 characters
+- [ ] **Description**: Frontmatter `description` is compelling and includes key terms (under 160 characters)
+- [ ] **Headings**: H2/H3 headings use natural keyword variations
+- [ ] **Opening Paragraph**: First 100 words clearly state what the post covers
+- [ ] **Internal Links**: Links to related posts on the blog where relevant
+- [ ] **Alt Text**: Images have descriptive alt text in frontmatter
 
-## Final Reminder
+### 3. Make Edits
 
-A great blog post:
+Apply improvements directly to the post. For each change, briefly note why.
 
-- Teaches ONE thing really well
-- Feels like a conversation with a knowledgeable peer who's still learning
-- Shows vulnerability and authentic experience
-- Provides immediate practical value
-- Is tight, focused, and leaves the reader wanting more (not overwhelmed)
+### 4. Summary & Next Step
+
+After editing, present:
+
+1. **Changes Made**: Brief summary of improvements
+2. **Remaining Concerns**: Anything that needs the author's judgment
+3. **Next step**: `/blog-04-image-prompt packages/blog/content/2.blog/{post-filename}`
