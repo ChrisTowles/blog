@@ -11,7 +11,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { Eval } from 'braintrust';
 import { ClosedQA } from 'autoevals';
 import { chatbotDataset } from './datasets.ts';
-import { getTools, executeToolCall } from '../tools/blog-tools.ts';
+import { getTools } from '../tools/blog-tools.ts';
+import { runToolLoop } from '../utils/tool-loop.ts';
 import { loadSystemPrompt } from './utils.ts';
 
 interface ChatbotOutput {
@@ -31,70 +32,20 @@ async function runChatbot(input: string): Promise<ChatbotOutput> {
   const model = 'claude-haiku-4-5';
   const maxTokens = 1024;
 
-  const messages: Anthropic.MessageParam[] = [
-    { role: 'user', content: input || '(empty message)' },
-  ];
-
-  const allToolCalls: Array<{ name: string; input: Record<string, unknown> }> = [];
-  let totalInputTokens = 0;
-  let totalOutputTokens = 0;
-
-  let response = await client.messages.create({
+  const result = await runToolLoop({
+    client,
     model,
-    max_tokens: maxTokens,
+    maxTokens,
     system: systemPrompt,
-    messages,
+    userInput: input,
     tools: tools as Anthropic.Tool[],
   });
 
-  totalInputTokens += response.usage.input_tokens;
-  totalOutputTokens += response.usage.output_tokens;
-
-  // Tool use loop
-  while (response.stop_reason === 'tool_use') {
-    const toolUseBlocks = response.content.filter(
-      (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use',
-    );
-
-    messages.push({ role: 'assistant', content: response.content });
-
-    const toolResultBlocks = [];
-    for (const toolUse of toolUseBlocks) {
-      allToolCalls.push({
-        name: toolUse.name,
-        input: toolUse.input as Record<string, unknown>,
-      });
-      const result = await executeToolCall(toolUse.name, toolUse.input);
-      toolResultBlocks.push({
-        type: 'tool_result' as const,
-        tool_use_id: toolUse.id,
-        content: JSON.stringify(result),
-      });
-    }
-
-    messages.push({ role: 'user', content: toolResultBlocks });
-
-    response = await client.messages.create({
-      model,
-      max_tokens: maxTokens,
-      system: systemPrompt,
-      messages,
-      tools: tools as Anthropic.Tool[],
-    });
-
-    totalInputTokens += response.usage.input_tokens;
-    totalOutputTokens += response.usage.output_tokens;
-  }
-
-  const textBlocks = response.content.filter(
-    (block): block is Anthropic.TextBlock => block.type === 'text',
-  );
-
   return {
-    text: textBlocks.map((b) => b.text).join('\n\n'),
-    toolCalls: allToolCalls,
-    usage: { inputTokens: totalInputTokens, outputTokens: totalOutputTokens },
-    model: response.model,
+    text: result.text,
+    toolCalls: result.toolCalls,
+    usage: { inputTokens: result.usage.input, outputTokens: result.usage.output },
+    model: result.model,
   };
 }
 

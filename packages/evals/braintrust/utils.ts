@@ -5,13 +5,18 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+let _cachedPrompt: string | null = null;
 
 /**
  * Load the chatbot system prompt from the prompts directory.
+ * Caches the result to avoid repeated file reads across eval cases.
  */
 export function loadSystemPrompt(): string {
-  const promptPath = resolve(__dirname, '../prompts/chatbot-system.txt');
-  return readFileSync(promptPath, 'utf-8');
+  if (_cachedPrompt) return _cachedPrompt;
+  const promptPath = resolve(
+    dirname(fileURLToPath(import.meta.url)),
+    '../prompts/chatbot-system.txt',
+  );
+  _cachedPrompt = readFileSync(promptPath, 'utf-8');
+  return _cachedPrompt;
 }
