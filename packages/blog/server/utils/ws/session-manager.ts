@@ -40,6 +40,7 @@ export class SessionManager {
     session.pingTimer = setInterval(() => {
       try {
         peer.send(JSON.stringify({ type: 'pong' }));
+        this.touch(peer.id);
       } catch {
         this.removePeer(peer.id);
       }

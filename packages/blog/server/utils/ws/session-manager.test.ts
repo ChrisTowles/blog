@@ -187,17 +187,21 @@ describe('SessionManager', () => {
   });
 
   describe('stale session cleanup', () => {
-    it('removes sessions that exceed the stale timeout', () => {
+    it('removes sessions when pings fail and timeout elapses', () => {
       const peer = createMockPeer('peer-1');
       manager.addPeer(peer, 'user-123');
       manager.subscribe('peer-1', 'chat-abc');
 
-      // Advance past the 60s stale timeout + cleanup interval
-      vi.advanceTimersByTime(61_000);
+      // Make ping fail so touch() is never called
+      (peer.send as ReturnType<typeof vi.fn>).mockImplementation(() => {
+        throw new Error('connection reset');
+      });
+
+      // First ping at 30s removes the peer because send throws
+      vi.advanceTimersByTime(30_000);
 
       expect(manager.getSession('peer-1')).toBeUndefined();
       expect(manager.getPeerForChat('chat-abc')).toBeUndefined();
-      expect(peer.close).toHaveBeenCalledWith(1000, 'Session timeout');
     });
 
     it('does not remove active sessions', () => {
@@ -237,6 +241,30 @@ describe('SessionManager', () => {
       vi.advanceTimersByTime(30_000);
 
       expect(peer.send).toHaveBeenCalledWith(JSON.stringify({ type: 'pong' }));
+    });
+
+    it('extends session lastActivity on successful ping', () => {
+      const peer = createMockPeer('peer-1');
+      manager.addPeer(peer, 'user-123');
+
+      const before = manager.getSession('peer-1')?.lastActivityAt;
+
+      // Advance to trigger ping interval (30s)
+      vi.advanceTimersByTime(30_000);
+
+      const after = manager.getSession('peer-1')?.lastActivityAt;
+      expect(after!.getTime()).toBeGreaterThan(before!.getTime());
+    });
+
+    it('prevents stale eviction when pings are active', () => {
+      const peer = createMockPeer('peer-1');
+      manager.addPeer(peer, 'user-123');
+
+      // Advance past the 60s stale timeout — but pings fire at 30s intervals,
+      // keeping the session alive
+      vi.advanceTimersByTime(90_000);
+
+      expect(manager.getSession('peer-1')).toBeDefined();
     });
 
     it('removes peer if ping send fails', () => {
