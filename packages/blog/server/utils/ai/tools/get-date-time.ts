@@ -8,6 +8,7 @@ export const getCurrentDateTime = tool(
   'getCurrentDateTime',
   'Get the current date and time. Use when user asks about today, current time, or needs temporal context.',
   {},
+  // oxlint-disable-next-line typescript-eslint/require-await -- Agent SDK tool() requires async handler
   async () => {
     const now = new Date();
     return toolResult({

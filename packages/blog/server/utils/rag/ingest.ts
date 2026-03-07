@@ -86,7 +86,7 @@ export async function ingestBlogPosts(): Promise<IngestResult> {
   try {
     files = (await readdir(blogDir)).filter((f) => f.endsWith('.md'));
   } catch (error) {
-    result.errors.push(`Failed to read blog directory: ${error}`);
+    result.errors.push(`Failed to read blog directory: ${String(error)}`);
     return result;
   }
 
@@ -171,7 +171,7 @@ export async function ingestBlogPosts(): Promise<IngestResult> {
       result.documentsProcessed++;
       console.log(`Ingested: ${parsed.title} (${chunks.length} chunks)`);
     } catch (error) {
-      const errorMsg = `Failed to process ${file}: ${error}`;
+      const errorMsg = `Failed to process ${file}: ${String(error)}`;
       result.errors.push(errorMsg);
       console.error(errorMsg);
     }
@@ -197,7 +197,7 @@ export async function ingestDocument(slug: string): Promise<IngestResult> {
   try {
     files = (await readdir(blogDir)).filter((f) => f.endsWith('.md'));
   } catch (error) {
-    result.errors.push(`Failed to read blog directory: ${error}`);
+    result.errors.push(`Failed to read blog directory: ${String(error)}`);
     return result;
   }
 

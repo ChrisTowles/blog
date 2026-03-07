@@ -290,6 +290,7 @@ describe('stream-adapter', () => {
 });
 
 // Helper to create async iterator from array
+// oxlint-disable-next-line typescript-eslint/require-await -- async generator must be async
 async function* asyncIterator<T>(items: T[]): AsyncIterable<T> {
   for (const item of items) {
     yield item;

@@ -95,6 +95,7 @@ export const rollDice = tool(
       .optional()
       .describe('Optional label for the roll (e.g., "Attack roll", "Fireball damage")'),
   },
+  // oxlint-disable-next-line typescript-eslint/require-await -- Agent SDK tool() requires async handler
   async (args) => {
     // Normalize natural language to formal notation
     const normalized = normalizeNotation(args.notation);

@@ -41,8 +41,8 @@
     "slides:export": "pnpm --filter @chris-towles/slides export",
     "slides:upgrade": "pnpm --filter @chris-towles/slides slides:upgrade",
     "slides:no-brainer": "pnpm --filter @chris-towles/slides dev no-brainer-upgrade.slides.md",
-    "lint": "oxlint .",
-    "lint:fix": "oxlint --fix-dangerously .",
+    "lint": "oxlint --type-aware .",
+    "lint:fix": "oxlint --type-aware --fix-dangerously .",
     "format": "oxfmt --write",
     "format:check": "oxfmt --check",
     "typecheck": "pnpm --filter @chris-towles/blog typecheck",
@@ -73,6 +73,7 @@
     "lint-staged": "^15.5.1",
     "oxfmt": "^0.24.0",
     "oxlint": "^1.2.0",
+    "oxlint-tsgolint": "^0.16.0",
     "playwright-chromium": "^1.57.0",
     "simple-git-hooks": "^2.11.1",
     "strip-json-comments": "^5.0.3",
@@ -88,7 +89,7 @@
   "lint-staged": {
     "*.png": "pnpm tsx scripts/compress-images.ts",
     "*.{ts,tsx,mts,cts,js,cjs,mjs}": [
-      "oxlint --fix"
+      "oxlint --type-aware --fix"
     ],
     "*.{ts,tsx,mts,cts,js,cjs,mjs,json,css,html,vue,yaml,yml}": [
       "oxfmt --write"

@@ -159,7 +159,7 @@ async function executeSearchBlogContent(query: string) {
 /**
  * Get current date and time
  */
-async function executeGetCurrentDateTime() {
+function executeGetCurrentDateTime() {
   const now = new Date();
   return {
     date: now.toLocaleDateString('en-US', {
@@ -177,7 +177,7 @@ async function executeGetCurrentDateTime() {
 /**
  * Get author information
  */
-async function executeGetAuthorInfo() {
+function executeGetAuthorInfo() {
   return {
     name: 'Chris Towles',
     role: 'Software Engineer',
@@ -190,7 +190,7 @@ async function executeGetAuthorInfo() {
 /**
  * Get blog topics
  */
-async function executeGetBlogTopics() {
+function executeGetBlogTopics() {
   return {
     topics: [
       {
@@ -277,7 +277,7 @@ function getWeatherCondition(code: number): { icon: string; text: string } {
 /**
  * Roll dice
  */
-async function executeRollDice(notation: string, label?: string) {
+function executeRollDice(notation: string, label?: string) {
   // Simple implementation - just parse basic XdY format
   const match = notation.match(/^(\d+)d(\d+)([+-]\d+)?$/);
 
@@ -285,8 +285,8 @@ async function executeRollDice(notation: string, label?: string) {
     return { error: `Invalid dice notation: "${notation}"` };
   }
 
-  const count = parseInt(match[1]!);
-  const sides = parseInt(match[2]!);
+  const count = parseInt(match[1]);
+  const sides = parseInt(match[2]);
   const modifier = match[3] ? parseInt(match[3]) : 0;
 
   if (count < 1 || count > 100 || sides < 2 || sides > 100) {

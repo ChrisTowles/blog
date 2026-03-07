@@ -8,6 +8,7 @@ export const getAuthorInfo = tool(
   'getAuthorInfo',
   'Get information about Chris Towles, the blog author. Use when users ask about the author, his background, or expertise.',
   {},
+  // oxlint-disable-next-line typescript-eslint/require-await -- Agent SDK tool() requires async handler
   async () => {
     return toolResult({
       name: 'Chris Towles',

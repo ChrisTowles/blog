@@ -75,7 +75,7 @@ async function main() {
 
   // Kill the proxy
   console.log(chalk.yellow('\n🧹 Stopping Cloud SQL Proxy...'));
-  proxy.kill();
+  void proxy.kill();
 
   process.exit(0);
 }

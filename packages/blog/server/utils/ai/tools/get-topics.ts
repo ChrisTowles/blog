@@ -8,6 +8,7 @@ export const getBlogTopics = tool(
   'getBlogTopics',
   'Get a list of topics covered on the blog. Use to help users discover content areas.',
   {},
+  // oxlint-disable-next-line typescript-eslint/require-await -- Agent SDK tool() requires async handler
   async () => {
     return toolResult({
       topics: [
