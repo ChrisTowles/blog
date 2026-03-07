@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { ArtifactSSEEvent, ArtifactFile } from '~~/shared/artifact-types';
 import type { AnthropicBetaClient } from '~~/server/utils/ai/anthropic-beta-types';
+import { getTracer, aiSpanAttributes, SpanStatusCode } from '~~/server/utils/telemetry';
 
 defineRouteMeta({
   openAPI: {
@@ -58,6 +59,19 @@ export default defineEventHandler(async (event) => {
 
   const stream = new ReadableStream({
     async start(controller) {
+      const tracer = getTracer();
+      const artifactSpan = tracer.startSpan('artifact.execute', {
+        attributes: {
+          ...aiSpanAttributes({
+            model: config.public.model as string,
+            operation: 'code_execution',
+            maxTokens: 16000,
+            streaming: false,
+          }),
+          'artifact.language': language || 'python',
+          'artifact.has_code': !!code,
+        },
+      });
       try {
         const client = getAnthropicClient();
 
@@ -178,13 +192,25 @@ export default defineEventHandler(async (event) => {
           }
         }
 
+        artifactSpan.setAttribute('artifact.files_generated', seenFileIds.size);
+        artifactSpan.setStatus({ code: SpanStatusCode.OK });
+
         sendSSE(controller, { type: 'artifact_done' });
         controller.close();
       } catch (err) {
         console.error('Artifact execution error:', err);
+        artifactSpan.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: err instanceof Error ? err.message : String(err),
+        });
+        if (err instanceof Error) {
+          artifactSpan.recordException(err);
+        }
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         sendSSE(controller, { type: 'artifact_error', error: errorMessage });
         controller.close();
+      } finally {
+        artifactSpan.end();
       }
     },
   });

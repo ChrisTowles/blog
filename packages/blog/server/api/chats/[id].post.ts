@@ -9,6 +9,8 @@ import type {
 } from '~~/shared/chat-types';
 import type { AnthropicBetaClient, BetaStreamEvent } from '~~/server/utils/ai/anthropic-beta-types';
 import { getSkillsForAPI, getSkillsSystemPrompt } from '~~/server/utils/ai/skills-loader';
+import { createTracedMessage } from '~~/server/utils/ai/anthropic';
+import { getTracer, aiSpanAttributes, SpanStatusCode } from '~~/server/utils/telemetry';
 
 defineRouteMeta({
   openAPI: {
@@ -114,8 +116,7 @@ export default defineEventHandler(async (event) => {
   // Generate title if needed
   let generatedTitle: string | null = null;
   if (!chat.title && messages.length > 0) {
-    const client = getAnthropicClient();
-    const titleResponse = await client.messages.create({
+    const titleResponse = await createTracedMessage({
       model: config.public.model_fast as string,
       max_tokens: 50,
       system: `You are a title generator for a chat:
@@ -157,6 +158,14 @@ export default defineEventHandler(async (event) => {
 
   const stream = new ReadableStream({
     async start(controller) {
+      const tracer = getTracer();
+      const chatSpan = tracer.startSpan('chat.stream', {
+        attributes: {
+          ...aiSpanAttributes({ model, operation: 'chat', maxTokens: 16000, streaming: true }),
+          'chat.id': id as string,
+          'chat.message_count': messages.length,
+        },
+      });
       try {
         if (generatedTitle) {
           sendSSE(controller, { type: 'title', title: generatedTitle });
@@ -464,13 +473,27 @@ export default defineEventHandler(async (event) => {
           parts: messageParts,
         });
 
+        chatSpan.setAttribute('chat.turn_count', turnCount);
+        chatSpan.setAttribute('chat.code_executions', codeExecutions.length);
+        chatSpan.setAttribute('chat.files_generated', fileParts.length);
+        chatSpan.setStatus({ code: SpanStatusCode.OK });
+
         sendSSE(controller, { type: 'done', messageId });
         controller.close();
       } catch (error) {
         console.error('Stream error:', error);
+        chatSpan.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: error instanceof Error ? error.message : String(error),
+        });
+        if (error instanceof Error) {
+          chatSpan.recordException(error);
+        }
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         sendSSE(controller, { type: 'error', error: errorMessage });
         controller.close();
+      } finally {
+        chatSpan.end();
       }
     },
   });
