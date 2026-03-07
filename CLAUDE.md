@@ -76,6 +76,12 @@ Don't claim a feature works without steps 4-6. Automated tests miss rendering is
 
 **Never accept pre-existing test failures.** When E2E, integration, or unit tests fail — even if the failures appear unrelated to your current work — fix them immediately. Every test in the suite must pass. Broken tests are not "pre-existing conditions" to work around; they are bugs to fix as soon as discovered.
 
+## MCP Servers & Skills
+
+- **Nuxt MCP** — docs, blog, deployment guides via `.claude/mcp.json`
+- **Nuxt UI MCP** — component docs, theming, design system via `.claude/mcp.json`
+- **nuxt-v4 skill** — Nuxt 4 framework patterns, composables, SSR, testing (`.claude/skills/nuxt-v4/`)
+
 ## Pre-commit Hooks
 
 - Image compression requires `pngquant` (`sudo apt-get install pngquant`)
