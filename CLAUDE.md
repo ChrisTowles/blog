@@ -76,6 +76,38 @@ Don't claim a feature works without steps 4-6. Automated tests miss rendering is
 
 **Never accept pre-existing test failures.** When E2E, integration, or unit tests fail — even if the failures appear unrelated to your current work — fix them immediately. Every test in the suite must pass. Broken tests are not "pre-existing conditions" to work around; they are bugs to fix as soon as discovered.
 
+## Multi-Instance Development
+
+Use git worktrees to run multiple Claude instances in parallel, each working on a separate issue with isolated ports and databases.
+
+### Worktree Script
+
+The `scripts/worktree.ts` manager handles creation, slot allocation, and environment setup:
+
+```bash
+pnpm worktree                    # Interactive mode — shows slots, issues, prompts for action
+pnpm worktree init               # First-time setup — creates config dir and slot definitions
+pnpm worktree create <issue#>    # Create worktree from GitHub issue (auto-names branch)
+pnpm worktree create <branch>    # Create worktree from branch name
+pnpm worktree list               # Show all slots and their status
+pnpm worktree delete <issue#>    # Remove worktree and free its slot
+pnpm worktree delete <issue#> --stash   # Stash changes before deleting
+```
+
+### How It Works
+
+1. **Slots** — Pre-configured in `blog-worktrees/config/slots.config.jsonc` with unique `UI_PORT`, `DB_PORT`, and `DATABASE_URL` per slot (up to 5 parallel worktrees).
+2. **Naming** — `pnpm worktree create 108` fetches the issue title from GitHub and creates branch `feature/108-<slug>` with worktree dir `108-<slug>`.
+3. **Environment** — `.env.template` in the config dir is processed per slot, substituting slot-specific ports and copying shared secrets (API keys, OAuth) from the root repo's `.env` files.
+4. **Location** — Worktrees live in `../blog-worktrees/` (sibling to the main repo), not inside the repo.
+
+### Coordination Guidelines
+
+- Each worktree gets its own Docker Compose stack (unique DB port) so instances don't collide.
+- Rebase onto `origin/main` before starting work — the script prompts for this if the branch is behind.
+- Avoid editing the same files in multiple worktrees to minimize merge conflicts.
+- Run `pnpm worktree list` to see which slots/ports are in use before creating a new one.
+
 ## Pre-commit Hooks
 
 - Image compression requires `pngquant` (`sudo apt-get install pngquant`)
@@ -83,5 +115,5 @@ Don't claim a feature works without steps 4-6. Automated tests miss rendering is
 ## References
 
 - [GCP: Hosting](docs/hosting.md)
-- [Worktree Development](scripts/worktree.ts) - `./scripts/worktree.ts create <issue#>`
+- [Worktree Development](scripts/worktree.ts) — `pnpm worktree create <issue#>`
 - [Terraform Details](infra/terraform/README.md)
