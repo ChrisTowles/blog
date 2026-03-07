@@ -26,6 +26,18 @@ module "shared" {
   region     = var.region
 }
 
+module "github_oidc" {
+  source = "../../modules/github-oidc"
+
+  project_id                      = var.project_id
+  region                          = var.region
+  github_repo                     = "ChrisTowles/blog"
+  cloud_run_service_account_email = module.shared.service_account_email
+  artifact_registry_repository    = module.shared.artifact_registry_repository
+
+  depends_on = [module.shared]
+}
+
 module "cloud_sql" {
   source = "../../modules/cloud-sql"
 
