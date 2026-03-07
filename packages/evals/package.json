@@ -1,0 +1,26 @@
+{
+  "name": "@chris-towles/evals",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "eval": "tsx run-eval.ts eval --config promptfooconfig.yaml",
+    "eval:watch": "tsx run-eval.ts eval --config promptfooconfig.yaml --watch",
+    "eval:view": "tsx run-eval.ts view",
+    "eval:ci": "tsx run-eval.ts eval --config promptfooconfig.yaml --output outputs/results.json",
+    "eval:braintrust": "tsx braintrust/run.ts",
+    "eval:braintrust:chatbot": "tsx braintrust/run.ts --eval chatbot",
+    "eval:braintrust:rag": "tsx braintrust/run.ts --eval rag"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "autoevals": "^0.0.104",
+    "braintrust": "^1.1.1",
+    "dotenv": "^17.2.3",
+    "promptfoo": "^0.115.3"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

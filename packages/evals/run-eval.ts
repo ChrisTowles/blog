@@ -10,7 +10,6 @@ const __dirname = dirname(__filename);
 // Load .env from repo root
 config({
   path: resolve(__dirname, '../../.env'),
-  silent: true,
 });
 
 // Verify API key is loaded
