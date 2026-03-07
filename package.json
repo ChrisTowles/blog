@@ -58,6 +58,9 @@
     "deps:update": "pnpm dlx taze --interactive --recursive",
     "clean": "rm -rf node_modules packages/*/node_modules .nuxt .output .nitro dist packages/*/.nuxt packages/*/.output pnpm-lock.yaml",
     "worktree": "pnpm tsx scripts/worktree.ts",
+    "worktree:list": "pnpm tsx scripts/worktree.ts list",
+    "worktree:create": "pnpm tsx scripts/worktree.ts create",
+    "worktree:delete": "pnpm tsx scripts/worktree.ts delete",
     "ralph": "pnpm tsx scripts/ralph-loop.ts"
   },
   "dependencies": {
@@ -72,7 +75,7 @@
     "find-up": "^8.0.0",
     "lint-staged": "^15.5.1",
     "oxfmt": "^0.24.0",
-    "oxlint": "^1.2.0",
+    "oxlint": "^1.51.0",
     "playwright-chromium": "^1.57.0",
     "simple-git-hooks": "^2.11.1",
     "strip-json-comments": "^5.0.3",
