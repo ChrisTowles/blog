@@ -58,6 +58,9 @@
     "deps:update": "pnpm dlx taze --interactive --recursive",
     "clean": "rm -rf node_modules packages/*/node_modules .nuxt .output .nitro dist packages/*/.nuxt packages/*/.output pnpm-lock.yaml",
     "worktree": "pnpm tsx scripts/worktree.ts",
+    "worktree:list": "pnpm tsx scripts/worktree.ts list",
+    "worktree:create": "pnpm tsx scripts/worktree.ts create",
+    "worktree:delete": "pnpm tsx scripts/worktree.ts delete",
     "ralph": "pnpm tsx scripts/ralph-loop.ts"
   },
   "dependencies": {
