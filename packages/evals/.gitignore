@@ -1,6 +1,8 @@
 # Promptfoo outputs
 outputs/
 *.json
+!package.json
+!tsconfig.json
 *.csv
 *.html
 
