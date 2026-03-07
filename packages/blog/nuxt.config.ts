@@ -88,6 +88,8 @@ export default defineNuxtConfig({
     // Loan pages don't need SSR (authenticated feature)
     '/loan': { ssr: false },
     '/loan/**': { ssr: false },
+    // Reader split-panel pages (chat + content, no SEO benefit)
+    '/read/**': { ssr: false },
   },
 
   future: {
