@@ -105,6 +105,7 @@ export default defineNuxtConfig({
     ignore: ['**/*.test.ts', '**/*.spec.ts', '**/*.test.js', '**/*.spec.js'],
     experimental: {
       openAPI: true,
+      websocket: true,
     },
     esbuild: {
       options: {
