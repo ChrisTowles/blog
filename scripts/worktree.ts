@@ -198,7 +198,7 @@ function processEnvTemplate(
 // Commands
 // ============================================================================
 
-async function cmdInit(): Promise<void> {
+function cmdInit(): void {
   const worktreesDir = getWorktreesDir();
   const configDir = getConfigDir();
 
@@ -422,7 +422,7 @@ async function fetchRecentIssues(
   }
 }
 
-async function cmdList(): Promise<void> {
+function cmdList(): void {
   const config = readSlotsConfig();
   const registry = readRegistry();
   const worktreesDir = getWorktreesDir();
@@ -533,7 +533,7 @@ async function cmdDelete(
   await $`git worktree prune`;
 
   // Update registry
-  registry.assignments = registry.assignments.filter((a) => a.slot !== assignment!.slot);
+  registry.assignments = registry.assignments.filter((a) => a.slot !== assignment.slot);
   writeRegistry(registry);
 
   console.log(chalk.gray(`Freed slot: ${assignment.slot}`));
@@ -580,7 +580,7 @@ async function runCommand(
 ): Promise<boolean> {
   switch (command) {
     case 'init':
-      await cmdInit();
+      cmdInit();
       return true;
     case 'create':
     case 'add':
@@ -593,7 +593,7 @@ async function runCommand(
       return true;
     case 'list':
     case 'ls':
-      await cmdList();
+      cmdList();
       return true;
     case 'delete':
     case 'rm':
@@ -751,7 +751,7 @@ async function main(): Promise<void> {
 
   switch (command) {
     case 'init':
-      await cmdInit();
+      cmdInit();
       break;
     case 'create':
     case 'add':
@@ -764,7 +764,7 @@ async function main(): Promise<void> {
       break;
     case 'list':
     case 'ls':
-      await cmdList();
+      cmdList();
       break;
 
     case 'delete':

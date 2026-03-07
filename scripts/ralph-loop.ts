@@ -737,7 +737,7 @@ const main = defineCommand({
 
 // Only run if this is the main module
 if (import.meta.url === `file://${process.argv[1]}`) {
-  runMain(main);
+  void runMain(main);
 }
 
 export { main };

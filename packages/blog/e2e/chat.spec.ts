@@ -28,7 +28,7 @@ test.describe('AI Chat', () => {
     // Try test ID first, fallback to generic selector
     const chatContainer = page.getByTestId(TEST_IDS.CHAT.INPUT);
 
-    expect(chatContainer).toBeVisible();
+    await expect(chatContainer).toBeVisible();
 
     await chatContainer.waitFor({ state: 'visible', timeout: 10000 });
 

@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- types.d.ts augmentation not picked up in server context
   const username = (session.user as any)?.username || '';
   if (!adminNames.includes(username)) {
-    console.log(`Forbidden access attempt by user: ${session}`);
+    console.log(`Forbidden access attempt by user: ${JSON.stringify(session)}`);
     throw createError({ statusCode: 403, statusMessage: `Forbidden, session user: ${username}` });
   }
 
