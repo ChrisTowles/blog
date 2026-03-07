@@ -20,8 +20,7 @@ export async function initTelemetry(): Promise<void> {
   }
 
   const { NodeSDK } = await import('@opentelemetry/sdk-node');
-  const { SimpleSpanProcessor, ConsoleSpanExporter } =
-    await import('@opentelemetry/sdk-trace-node');
+  const { BatchSpanProcessor, ConsoleSpanExporter } = await import('@opentelemetry/sdk-trace-node');
   const { OTLPTraceExporter } = await import('@opentelemetry/exporter-trace-otlp-http');
   const { resourceFromAttributes } = await import('@opentelemetry/resources');
   const { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } =
@@ -40,7 +39,7 @@ export async function initTelemetry(): Promise<void> {
 
   const sdk = new NodeSDK({
     resource,
-    spanProcessors: [new SimpleSpanProcessor(exporter)],
+    spanProcessors: [new BatchSpanProcessor(exporter)],
   });
 
   sdk.start();
@@ -123,6 +122,29 @@ export function aiSpanAttributes(opts: {
     ...(opts.maxTokens && { 'gen_ai.request.max_tokens': opts.maxTokens }),
     ...(opts.streaming !== undefined && { 'gen_ai.request.streaming': opts.streaming }),
   };
+}
+
+/**
+ * Start a span for a streaming response.
+ * The span is NOT ended on success — the caller manages span.end()
+ * after the stream completes. On synchronous throw, the span is
+ * recorded as an error and ended automatically.
+ */
+export function withStreamSpan<T>(name: string, attributes: Attributes, fn: (span: Span) => T): T {
+  const span = getTracer().startSpan(name, { attributes });
+  try {
+    const response = fn(span);
+    // Don't end span here - caller manages it for streaming
+    return response;
+  } catch (err) {
+    span.setStatus({
+      code: SpanStatusCode.ERROR,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    if (err instanceof Error) span.recordException(err);
+    span.end();
+    throw err;
+  }
 }
 
 export { SpanStatusCode };
