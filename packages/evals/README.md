@@ -107,8 +107,8 @@ Test cases are defined in `test-cases/*.yaml` and cover:
 
 ## Model Configuration
 
-**Baseline**: Claude Haiku 4.5 (cost-optimized)
-**Comparison**: Sonnet 4.5, Opus 4.5 (for quality benchmarking)
+**Baseline**: Claude Sonnet 4 (claude-sonnet-4-20250514)
+**Comparison**: Haiku 4.5, Opus 4 (for cost/quality benchmarking)
 
 See `promptfooconfig.yaml` for provider configuration.
 

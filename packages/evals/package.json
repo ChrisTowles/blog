@@ -1,0 +1,20 @@
+{
+  "name": "@chris-towles/evals",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "eval": "tsx run-eval.ts eval -c promptfooconfig.yaml --no-cache",
+    "eval:watch": "tsx run-eval.ts eval -c promptfooconfig.yaml --watch",
+    "eval:ci": "tsx run-eval.ts eval -c promptfooconfig.yaml --no-cache -o outputs/results.json",
+    "eval:view": "tsx run-eval.ts view"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0"
+  },
+  "devDependencies": {
+    "dotenv": "^17.2.3",
+    "promptfoo": "^0.120.27",
+    "tsx": "^4.21.0"
+  }
+}

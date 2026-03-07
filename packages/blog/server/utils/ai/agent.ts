@@ -3,7 +3,7 @@ import { blogToolsServer, blogToolNames } from './tools/index';
 import { getSkillSources, getProjectRoot, defaultSkillConfig } from './skill-config';
 import type { AgentMessage } from './stream-adapter';
 
-// TODO: get promptfoot integration working for these prompts
+// TODO: get promptfoo integration working for these prompts
 
 /**
  * System prompt for the blog chatbot

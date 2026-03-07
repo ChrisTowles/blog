@@ -1,8 +1,10 @@
 # Promptfoo outputs
 outputs/
-*.json
 *.csv
 *.html
+
+# Promptfoo output files
+outputs/*.json
 
 # Test results
 results/
