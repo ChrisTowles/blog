@@ -78,6 +78,7 @@ describe('getMaskedConfig', () => {
       AWS_REGION: 'us-east-1',
       AWS_ACCESS_KEY_ID: 'AKIAIOSFODNN7EXAMPLE',
       AWS_SECRET_ACCESS_KEY: 'wJalrXUtnFEMI/K7MDENG',
+      OTEL_ENABLED: 'false',
     };
 
     const masked = getMaskedConfig(config);

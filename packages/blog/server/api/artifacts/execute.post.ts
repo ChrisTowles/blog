@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { ArtifactSSEEvent, ArtifactFile } from '~~/shared/artifact-types';
 import type { AnthropicBetaClient } from '~~/server/utils/ai/anthropic-beta-types';
+import { aiSpanAttributes, SpanStatusCode, withStreamSpan } from '~~/server/utils/telemetry';
 
 defineRouteMeta({
   openAPI: {
@@ -56,138 +57,164 @@ export default defineEventHandler(async (event) => {
 
   const config = useRuntimeConfig();
 
-  const stream = new ReadableStream({
-    async start(controller) {
-      try {
-        const client = getAnthropicClient();
+  const spanAttrs = {
+    ...aiSpanAttributes({
+      model: config.public.model as string,
+      operation: 'code_execution',
+      maxTokens: 16000,
+      streaming: false,
+    }),
+    'artifact.language': language || 'python',
+    'artifact.has_code': !!code,
+  };
 
-        // Build container config (only included if there's something to set)
-        const hasContainer = containerId || (skills && skills.length > 0);
-        const containerConfig = hasContainer
-          ? {
-              ...(containerId ? { id: containerId } : {}),
-              ...(skills?.length
-                ? {
-                    skills: skills.map((s) => ({
-                      type: s.type,
-                      skill_id: s.skillId,
-                      version: s.version || 'latest',
-                    })),
-                  }
-                : {}),
-            }
-          : undefined;
-
-        // Call Anthropic Messages API with code execution tool
-        const betaClient = client as unknown as AnthropicBetaClient;
-        const response = await betaClient.beta.messages.create({
-          model: config.public.model as string,
-          max_tokens: 16000,
-          system: SYSTEM_PROMPT,
-          betas: [
-            'code-execution-2025-08-25',
-            'files-api-2025-04-14',
-            ...(skills?.length ? ['skills-2025-10-02'] : []),
-          ],
-          ...(containerConfig ? { container: containerConfig } : {}),
-          tools: [
-            {
-              type: 'code_execution_20250825',
-              name: 'code_execution',
-            },
-          ],
-          messages: [{ role: 'user', content: userContent }],
-        });
-
-        // Extract container ID from response for reuse
-        const responseContainerId = response.container?.id;
-        if (responseContainerId) {
-          sendSSE(controller, {
-            type: 'artifact_container',
-            containerId: responseContainerId,
-          });
-        }
-
-        // Process response content blocks
-        const seenFileIds = new Set<string>();
-
-        async function emitFile(fileId: string) {
-          if (seenFileIds.has(fileId)) return;
-          seenFileIds.add(fileId);
-          // Fetch actual metadata from the Files API
-          let fileName = 'output';
-          let mediaType = 'application/octet-stream';
+  const stream = withStreamSpan(
+    'artifact.execute',
+    spanAttrs,
+    (artifactSpan) =>
+      new ReadableStream({
+        async start(controller) {
           try {
-            const meta = await betaClient.beta.files.retrieveMetadata(fileId, {
-              betas: ['files-api-2025-04-14'],
-            });
-            fileName = meta.filename || fileName;
-            mediaType = meta.mime_type || mediaType;
-          } catch (e) {
-            console.warn(`[artifact] Failed to fetch metadata for file ${fileId}:`, e);
-          }
-          const file: ArtifactFile = {
-            fileId,
-            fileName,
-            mediaType,
-            url: `/api/artifacts/files/${fileId}`,
-          };
-          sendSSE(controller, { type: 'artifact_file', file });
-        }
+            const client = getAnthropicClient();
 
-        for (const block of response.content) {
-          if (block.type === 'text') {
-            sendSSE(controller, { type: 'artifact_text', text: block.text });
-          } else if (block.type === 'server_tool_use') {
-            // Handle both bash and text_editor tool use blocks
-            sendSSE(controller, { type: 'artifact_execution_start' });
-            if (block.name === 'bash_code_execution' && block.input?.command) {
+            // Build container config (only included if there's something to set)
+            const hasContainer = containerId || (skills && skills.length > 0);
+            const containerConfig = hasContainer
+              ? {
+                  ...(containerId ? { id: containerId } : {}),
+                  ...(skills?.length
+                    ? {
+                        skills: skills.map((s) => ({
+                          type: s.type,
+                          skill_id: s.skillId,
+                          version: s.version || 'latest',
+                        })),
+                      }
+                    : {}),
+                }
+              : undefined;
+
+            // Call Anthropic Messages API with code execution tool
+            const betaClient = client as unknown as AnthropicBetaClient;
+            const response = await betaClient.beta.messages.create({
+              model: config.public.model as string,
+              max_tokens: 16000,
+              system: SYSTEM_PROMPT,
+              betas: [
+                'code-execution-2025-08-25',
+                'files-api-2025-04-14',
+                ...(skills?.length ? ['skills-2025-10-02'] : []),
+              ],
+              ...(containerConfig ? { container: containerConfig } : {}),
+              tools: [
+                {
+                  type: 'code_execution_20250825',
+                  name: 'code_execution',
+                },
+              ],
+              messages: [{ role: 'user', content: userContent }],
+            });
+
+            // Extract container ID from response for reuse
+            const responseContainerId = response.container?.id;
+            if (responseContainerId) {
               sendSSE(controller, {
-                type: 'artifact_code',
-                code: block.input.command as string,
-                language: 'bash',
-              });
-            } else if (block.name === 'text_editor_code_execution' && block.input?.file_text) {
-              sendSSE(controller, {
-                type: 'artifact_code',
-                code: block.input.file_text as string,
-                language: (block.input.path as string)?.split('.').pop() || 'text',
+                type: 'artifact_container',
+                containerId: responseContainerId,
               });
             }
-          } else if (
-            block.type === 'bash_code_execution_tool_result' ||
-            block.type === 'text_editor_code_execution_tool_result'
-          ) {
-            const result = block.content;
-            if (result?.stdout !== undefined || result?.stderr !== undefined) {
-              sendSSE(controller, {
-                type: 'artifact_execution_result',
-                stdout: result.stdout || '',
-                stderr: result.stderr || '',
-                exitCode: result.return_code ?? 0,
-              });
+
+            // Process response content blocks
+            const seenFileIds = new Set<string>();
+
+            async function emitFile(fileId: string) {
+              if (seenFileIds.has(fileId)) return;
+              seenFileIds.add(fileId);
+              // Fetch actual metadata from the Files API
+              let fileName = 'output';
+              let mediaType = 'application/octet-stream';
+              try {
+                const meta = await betaClient.beta.files.retrieveMetadata(fileId, {
+                  betas: ['files-api-2025-04-14'],
+                });
+                fileName = meta.filename || fileName;
+                mediaType = meta.mime_type || mediaType;
+              } catch (e) {
+                console.warn(`[artifact] Failed to fetch metadata for file ${fileId}:`, e);
+              }
+              const file: ArtifactFile = {
+                fileId,
+                fileName,
+                mediaType,
+                url: `/api/artifacts/files/${fileId}`,
+              };
+              sendSSE(controller, { type: 'artifact_file', file });
             }
-            // Files are nested in result.content[] array
-            if (Array.isArray(result?.content)) {
-              for (const item of result.content) {
-                if (item.file_id) {
-                  await emitFile(item.file_id);
+
+            for (const block of response.content) {
+              if (block.type === 'text') {
+                sendSSE(controller, { type: 'artifact_text', text: block.text });
+              } else if (block.type === 'server_tool_use') {
+                // Handle both bash and text_editor tool use blocks
+                sendSSE(controller, { type: 'artifact_execution_start' });
+                if (block.name === 'bash_code_execution' && block.input?.command) {
+                  sendSSE(controller, {
+                    type: 'artifact_code',
+                    code: block.input.command as string,
+                    language: 'bash',
+                  });
+                } else if (block.name === 'text_editor_code_execution' && block.input?.file_text) {
+                  sendSSE(controller, {
+                    type: 'artifact_code',
+                    code: block.input.file_text as string,
+                    language: (block.input.path as string)?.split('.').pop() || 'text',
+                  });
+                }
+              } else if (
+                block.type === 'bash_code_execution_tool_result' ||
+                block.type === 'text_editor_code_execution_tool_result'
+              ) {
+                const result = block.content;
+                if (result?.stdout !== undefined || result?.stderr !== undefined) {
+                  sendSSE(controller, {
+                    type: 'artifact_execution_result',
+                    stdout: result.stdout || '',
+                    stderr: result.stderr || '',
+                    exitCode: result.return_code ?? 0,
+                  });
+                }
+                // Files are nested in result.content[] array
+                if (Array.isArray(result?.content)) {
+                  for (const item of result.content) {
+                    if (item.file_id) {
+                      await emitFile(item.file_id);
+                    }
+                  }
                 }
               }
             }
-          }
-        }
 
-        sendSSE(controller, { type: 'artifact_done' });
-        controller.close();
-      } catch (err) {
-        console.error('Artifact execution error:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        sendSSE(controller, { type: 'artifact_error', error: errorMessage });
-        controller.close();
-      }
-    },
-  });
+            artifactSpan.setAttribute('artifact.files_generated', seenFileIds.size);
+            artifactSpan.setStatus({ code: SpanStatusCode.OK });
+
+            sendSSE(controller, { type: 'artifact_done' });
+            controller.close();
+          } catch (err) {
+            console.error('Artifact execution error:', err);
+            artifactSpan.setStatus({
+              code: SpanStatusCode.ERROR,
+              message: err instanceof Error ? err.message : String(err),
+            });
+            if (err instanceof Error) artifactSpan.recordException(err);
+            const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+            sendSSE(controller, { type: 'artifact_error', error: errorMessage });
+            controller.close();
+          } finally {
+            artifactSpan.end();
+          }
+        },
+      }),
+  );
 
   setHeader(event, 'Content-Type', 'text/event-stream');
   setHeader(event, 'Cache-Control', 'no-cache');

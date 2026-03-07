@@ -26,6 +26,10 @@ export const envSchema = z.object({
   AWS_REGION: z.string().default('us-east-1'),
   AWS_ACCESS_KEY_ID: z.string().min(1, 'AWS_ACCESS_KEY_ID is required'),
   AWS_SECRET_ACCESS_KEY: z.string().min(1, 'AWS_SECRET_ACCESS_KEY is required'),
+
+  // OpenTelemetry (optional)
+  OTEL_ENABLED: z.string().default('false'),
+  OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;
