@@ -1,5 +1,5 @@
 ---
-name: blog-04-image-prompt
+name: blog-image-prompt
 description: Generate optimized AI image prompts for blog post hero images
 ---
 
@@ -67,7 +67,7 @@ Save to `._tmp/images/{YYYY}-{MM}-{DD}-{HH}{MM}-{blog-title}.md`:
 - **Recommended filename**: `{YYYY}{MM}{DD}-{HH}{MM}-{blog-title}.png`
 - **Aspect ratio**: 16:9 (landscape)
 - **Suggested generators**:
-  - include the probmpt as a URL-encoded parameter for easy copy-paste
+  - include the prompt as a URL-encoded parameter for easy copy-paste
   - [Google AI Studio](https://aistudio.google.com/prompts/new_chat?model=models%2Fgemini-3-pro-image-preview&prompt={PROMPT_ENCODED_FOR_URL}) - use 16:9 aspect ratio
 
 ## Post-Generation Notes

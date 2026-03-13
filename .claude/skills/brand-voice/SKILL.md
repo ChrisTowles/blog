@@ -1,4 +1,7 @@
-# Brand Voice Skill — Chris Towles
+---
+name: brand-voice
+description: Brand Voice Skill — Chris Towles
+---
 
 Use this skill when writing blog posts, articles, or long-form content for christowles.com.
 
@@ -17,10 +20,10 @@ Pragmatic technologist who learns in public. Authority comes from 20+ years of e
 
 Never open with abstractions or throat-clearing. Always start with one of:
 
-- A concrete failure or mistake: *"Three days. That's how long the bug hid..."*
-- An admission of previous ignorance: *"I never used tmux. Like a savage."*
-- A relatable dilemma: *"Should I work or play? Yes."*
-- A specific anecdote that triggers reflection: *"A few things have happened lately..."*
+- A concrete failure or mistake: _"Three days. That's how long the bug hid..."_
+- An admission of previous ignorance: _"I never used tmux. Like a savage."_
+- A relatable dilemma: _"Should I work or play? Yes."_
+- A specific anecdote that triggers reflection: _"A few things have happened lately..."_
 
 ## Sentence Rhythm
 
@@ -57,7 +60,7 @@ Use a layered approach, always in this order:
 3. **Principle**: The underlying rule or pattern
 4. **Fix/Application**: Concrete steps or code
 
-Example flow: *"Context windows are finite. Every byte I pre-loaded for appearances was a byte I couldn't use for thinking. The lesson: exploration isn't waste — it's where the model builds understanding. Strip it back. Only load what's critical."*
+Example flow: _"Context windows are finite. Every byte I pre-loaded for appearances was a byte I couldn't use for thinking. The lesson: exploration isn't waste — it's where the model builds understanding. Strip it back. Only load what's critical."_
 
 ## Formatting
 
@@ -88,7 +91,7 @@ Almost every post follows a **confession → insight → principle** arc:
 3. Extract an explicit, reusable principle
 4. Show ongoing evolution — avoid "final answers"
 
-The reader should feel: *"This person figured it out the hard way and is saving me the trip."*
+The reader should feel: _"This person figured it out the hard way and is saving me the trip."_
 
 ## What to Avoid
 
@@ -107,7 +110,7 @@ Experienced developers and architects who:
 - Build tools and side projects
 - Appreciate honesty over polish
 - Are skeptical of hype
-- Care about *how* things work, not just results
+- Care about _how_ things work, not just results
 - Balance multiple interests (dev, gaming, family, open source)
 
 ## Closing Patterns
