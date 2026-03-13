@@ -858,19 +858,10 @@
               >
             </td>
             <td>
-              <span class="tag tag-green">Yes (3-tier)</span>
+              <span class="tag tag-green">Yes</span>
               <span class="cell-detail"
-                >sandbox-runtime (seccomp + proxy, no container) + recommended external (E2B, Modal,
-                Cloudflare, Daytona)</span
-              >
-              <a class="src" href="https://code.claude.com/docs/en/sandboxing" target="_blank"
-                >source ↗</a
-              >
-
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: 2-component sandbox (bubblewrap/Seatbelt + proxy). No 3-tier.
-                E2B/Modal/etc. not recommended in docs.</span
+                >2-component sandbox: filesystem isolation (Seatbelt on macOS, bubblewrap on Linux)
+                + network proxy</span
               >
               <a class="src" href="https://code.claude.com/docs/en/sandboxing" target="_blank"
                 >source ↗</a
@@ -1010,21 +1001,14 @@
               >
             </td>
             <td>
-              <span class="tag tag-green">Yes</span>
+              <span class="tag tag-green">Yes (100+)</span>
               <span class="cell-detail"
-                >Optimized for Gemini but supports Claude, Ollama, vLLM, 200+ via LiteLLM; Vertex
-                Model Garden</span
-              >
-              <a class="src" href="https://pypi.org/project/google-adk/" target="_blank"
-                >source ↗</a
-              >
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: ADK docs say 100+ via LiteLLM, not 200+.</span
+                >Optimized for Gemini; supports Claude, Ollama, vLLM, 100+ via LiteLLM; Vertex Model
+                Garden</span
               >
               <a
                 class="src"
-                href="https://google.github.io/adk-docs/agents/llm-agents/"
+                href="https://google.github.io/adk-docs/agents/models/litellm/"
                 target="_blank"
                 >source ↗</a
               >
@@ -1043,44 +1027,23 @@
               >
             </td>
             <td>
-              <span class="tag tag-green">Yes</span>
+              <span class="tag tag-green">Yes (7)</span>
               <span class="cell-detail"
-                >10+ built-in connectors (OpenAI, Azure, Google, Mistral, HuggingFace, Ollama, ONNX,
-                Bedrock, NVIDIA)</span
-              >
-              <a
-                class="src"
-                href="https://raw.githubusercontent.com/microsoft/semantic-kernel/main/README.md"
-                target="_blank"
-                >source ↗</a
-              >
-
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: ~7 connectors in README (OpenAI, Azure OpenAI, HuggingFace, Ollama,
-                ONNX, LMStudio, NVIDIA). Google/Mistral/Bedrock not listed.</span
+                >OpenAI, Azure OpenAI, HuggingFace, Ollama, ONNX, LMStudio, NVIDIA</span
               >
               <a class="src" href="https://github.com/microsoft/semantic-kernel" target="_blank"
                 >source ↗</a
               >
             </td>
             <td>
-              <span class="tag tag-green">Yes</span>
+              <span class="tag tag-green">Yes (36+)</span>
               <span class="cell-detail"
-                >20+ dedicated provider packages; any OpenAI-compatible API; LiteLLM/OpenRouter
+                >36+ dedicated provider packages; any OpenAI-compatible API; LiteLLM/OpenRouter
                 supported</span
-              >
-              <a class="src" href="https://github.com/langchain-ai/langchain" target="_blank"
-                >source ↗</a
-              >
-
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: 40+ dedicated provider packages, not 20+.</span
               >
               <a
                 class="src"
-                href="https://python.langchain.com/docs/integrations/providers/"
+                href="https://docs.langchain.com/oss/python/integrations/providers/overview"
                 target="_blank"
                 >source ↗</a
               >
@@ -1096,20 +1059,8 @@
             <td>
               <span class="tag tag-green">Yes</span>
               <span class="cell-detail"
-                >AI Gateway routes to any model; auto-optimizes across GPT, Claude, Llama,
-                open-source via Mosaic AI</span
-              >
-              <a
-                class="src"
-                href="https://docs.databricks.com/aws/en/generative-ai/agent-bricks/"
-                target="_blank"
-                >source ↗</a
-              >
-
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: AI Gateway uses static traffic splitting (manual %), not automatic
-                cross-model optimization.</span
+                >AI Gateway routes to GPT, Claude, Llama, open-source via Mosaic AI; manual
+                percentage-based traffic splitting (not auto-optimization)</span
               >
               <a
                 class="src"
@@ -1217,26 +1168,13 @@
               <a class="src" href="https://www.crewai.com/crewai-flows" target="_blank">source ↗</a>
             </td>
             <td>
-              <span class="cell-title">Supervisor</span>
+              <span class="cell-title">Supervisor (preview)</span>
               <span class="cell-detail"
-                >Multi-Agent Supervisor (beta) orchestrates Genie, agent endpoints, UC functions,
-                MCP; OpenAI Agents SDK for custom</span
+                >Orchestrates Genie Spaces, agent endpoints, UC functions, MCP servers</span
               >
               <a
                 class="src"
                 href="https://docs.databricks.com/aws/en/generative-ai/agent-bricks/multi-agent-supervisor"
-                target="_blank"
-                >source ↗</a
-              >
-
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: Supervisor Agent is now GA (not beta). OpenAI Agents SDK is not part of
-                the Supervisor product.</span
-              >
-              <a
-                class="src"
-                href="https://docs.databricks.com/en/generative-ai/agent-bricks/multi-agent-supervisor.html"
                 target="_blank"
                 >source ↗</a
               >
@@ -1264,25 +1202,14 @@
               >
             </td>
             <td>
-              <span class="tag tag-pink">Proprietary</span>
+              <span class="tag tag-green">MIT</span>
               <span class="cell-detail"
-                >Anthropic Commercial Terms; public GitHub repos but not open-source</span
+                >MIT licensed open-source SDK; usage governed by Anthropic Commercial Terms of
+                Service</span
               >
               <a
                 class="src"
                 href="https://github.com/anthropics/claude-agent-sdk-python"
-                target="_blank"
-                >source ↗</a
-              >
-
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: The SDK is MIT licensed (open source). The repo LICENSE file is
-                MIT.</span
-              >
-              <a
-                class="src"
-                href="https://github.com/anthropics/claude-agent-sdk-python/blob/main/LICENSE"
                 target="_blank"
                 >source ↗</a
               >
@@ -1350,22 +1277,15 @@
             <td>
               <span class="tag tag-pink">Proprietary</span>
               <span class="cell-detail"
-                >Fully proprietary platform; no open-source SDK; Ontology SDK available for customer
-                integrations</span
+                >Proprietary SaaS platform; client SDKs (TypeScript, Python) are Apache 2.0
+                open-source on GitHub</span
               >
               <a
                 class="src"
-                href="https://www.palantir.com/docs/foundry/aip/overview"
+                href="https://github.com/palantir/foundry-platform-python"
                 target="_blank"
                 >source ↗</a
               >
-
-              <span class="tag tag-red">INCORRECT</span>
-              <span class="cell-detail" style="color: var(--red)"
-                >Corrected: OSDK (TypeScript, Python) is open-source under Apache 2.0 on
-                GitHub.</span
-              >
-              <a class="src" href="https://github.com/palantir/osdk-ts" target="_blank">source ↗</a>
             </td>
           </tr>
         </tbody>
