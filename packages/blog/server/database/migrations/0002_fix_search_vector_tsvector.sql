@@ -1,3 +1,6 @@
+-- Enable pg_trgm extension for trigram similarity search
+CREATE EXTENSION IF NOT EXISTS pg_trgm;--> statement-breakpoint
+
 -- Convert searchVector from text to tsvector type
 ALTER TABLE "document_chunks" ALTER COLUMN "searchVector" TYPE tsvector USING to_tsvector('english', COALESCE("searchVector", ''));--> statement-breakpoint
 
