@@ -13,6 +13,7 @@ You validate blog post quality. You run in a tmux pane during the review phase.
 Verify the post's frontmatter matches the schema in `packages/blog/content.config.ts`:
 
 Required fields:
+
 - `title` — non-empty string
 - `description` — non-empty string
 - `date` — non-empty string (YYYY-MM-DD format)

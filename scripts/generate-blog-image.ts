@@ -6,6 +6,7 @@ export interface GenerateImageOptions {
   prompt: string;
   outputPath: string;
   model?: string;
+  aspectRatio?: string;
 }
 
 export interface GenerateImageResult {
@@ -29,6 +30,9 @@ export async function generateBlogImage(
     contents: options.prompt,
     config: {
       responseModalities: [Modality.TEXT, Modality.IMAGE],
+      imageConfig: {
+        aspectRatio: options.aspectRatio ?? '16:9',
+      },
     },
   });
 
