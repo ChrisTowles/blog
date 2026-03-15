@@ -83,5 +83,4 @@ Don't claim a feature works without steps 4-6. Automated tests miss rendering is
 ## References
 
 - [GCP: Hosting](docs/hosting.md)
-- [Worktree Development](scripts/worktree.ts) - `./scripts/worktree.ts create <issue#>`
 - [Terraform Details](infra/terraform/README.md)
