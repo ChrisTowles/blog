@@ -56,8 +56,7 @@
     "prepare": "simple-git-hooks",
     "mcp:inspect": "pnpm dlx @modelcontextprotocol/inspector",
     "deps:update": "pnpm dlx taze --interactive --recursive",
-    "clean": "rm -rf node_modules packages/*/node_modules .nuxt .output .nitro dist packages/*/.nuxt packages/*/.output pnpm-lock.yaml",
-    "worktree": "pnpm tsx scripts/worktree.ts"
+    "clean": "rm -rf node_modules packages/*/node_modules .nuxt .output .nitro dist packages/*/.nuxt packages/*/.output pnpm-lock.yaml"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.958.0",
