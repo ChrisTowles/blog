@@ -6,7 +6,7 @@
 
 ## How reading.com teaches kids to read — and where it falls short
 
-Reading.com is the current gold standard for structured phonics apps, earning a **4.8/5 from phonics.org** and ranking #1 on LearningReadingHub's 2026 list. It delivers 99 fully scripted lessons based on Direct Instruction methodology — the same approach behind *Teach Your Child to Read in 100 Easy Lessons* — validated by Project Follow Through as the most effective large-scale instructional model ever tested.
+Reading.com is the current gold standard for structured phonics apps, earning a **4.8/5 from phonics.org** and ranking #1 on LearningReadingHub's 2026 list. It delivers 99 fully scripted lessons based on Direct Instruction methodology — the same approach behind _Teach Your Child to Read in 100 Easy Lessons_ — validated by Project Follow Through as the most effective large-scale instructional model ever tested.
 
 Each 15–20 minute lesson follows a precise sequence: animated alphabet song → new letter/sound introduction → sound stories → letter writing → blending practice with sliding bars → sight words (orange slider bars signal irregular words) → decodable book reading → comprehension questions → rewards. The app enforces a **co-play model** where a parent sits with the child, following on-screen scripts. Children are never asked to guess from pictures — illustrations are hidden until the child successfully decodes each word.
 
@@ -29,21 +29,21 @@ These gaps define the opportunity. An AI-powered app can preserve reading.com's 
 
 Nine major apps compete in children's literacy. Each has distinct strengths, but **none combines strong Science of Reading pedagogy with AI-generated personalized content**:
 
-| App | Ages | Approach | Adaptive? | Decodable books | Price |
-|-----|------|----------|-----------|-----------------|-------|
-| **Reading.com** | 3–8 | Synthetic phonics + DI | ❌ None | 60 | $12.49/mo |
-| **Lexia Core5** | Pre-K–5 | Structured Literacy | ✅ Sophisticated | None | ~$40/student/yr |
-| **Teach Your Monster** | 3–6 | Synthetic phonics (UK) | ⚠️ Basic | None | Free (web) |
-| **HOMER** | 2–8 | Synthetic phonics | ✅ Adaptive paths | Some | $7.99/mo |
-| **ABCmouse** | 2–8 | General early learning | ⚠️ Basic | None | $14.99/mo |
-| **Raz-Kids** | K–5 | Leveled library | ❌ Rule-based | Leveled, not decodable | $110/yr classroom |
-| **Hooked on Phonics** | 3–8 | Systematic phonics | ❌ None | Physical books | $12.99/mo |
-| **Reading Eggs** | 2–13 | Balanced literacy | ⚠️ Basic | Some | $6/mo |
-| **Headsprout** | Pre-K–5 | ABA-based instruction | ✅ Patented | Printable eBooks | ~$210/yr classroom |
+| App                    | Ages    | Approach               | Adaptive?         | Decodable books        | Price              |
+| ---------------------- | ------- | ---------------------- | ----------------- | ---------------------- | ------------------ |
+| **Reading.com**        | 3–8     | Synthetic phonics + DI | ❌ None           | 60                     | $12.49/mo          |
+| **Lexia Core5**        | Pre-K–5 | Structured Literacy    | ✅ Sophisticated  | None                   | ~$40/student/yr    |
+| **Teach Your Monster** | 3–6     | Synthetic phonics (UK) | ⚠️ Basic          | None                   | Free (web)         |
+| **HOMER**              | 2–8     | Synthetic phonics      | ✅ Adaptive paths | Some                   | $7.99/mo           |
+| **ABCmouse**           | 2–8     | General early learning | ⚠️ Basic          | None                   | $14.99/mo          |
+| **Raz-Kids**           | K–5     | Leveled library        | ❌ Rule-based     | Leveled, not decodable | $110/yr classroom  |
+| **Hooked on Phonics**  | 3–8     | Systematic phonics     | ❌ None           | Physical books         | $12.99/mo          |
+| **Reading Eggs**       | 2–13    | Balanced literacy      | ⚠️ Basic          | Some                   | $6/mo              |
+| **Headsprout**         | Pre-K–5 | ABA-based instruction  | ✅ Patented       | Printable eBooks       | ~$210/yr classroom |
 
 The most consistent parent complaints across all apps: **not enough content at each reading level**, rigid pacing that's either too fast or too slow, limited progress tracking, and no real-time pronunciation feedback. HOMER is the only app that personalizes by interest, but its phonics content is pre-tagged by theme — not dynamically generated around the child's specific interests and phonics level.
 
-**The genuine AI differentiator is generating unlimited decodable stories on demand**, constrained to each child's exact set of mastered phonics patterns and sight words, themed around whatever the child loves. A child who loves dinosaurs and has mastered CVC short-a words gets: *"The T-Rex ran and ran. He had a big hat. Dan the T-Rex sat on a flat rock."* No existing app produces this. Secondary differentiators include AI-powered pronunciation assessment for independent practice, adaptive lesson pacing driven by error pattern analysis, and a parent dashboard that translates raw data into plain-language insights.
+**The genuine AI differentiator is generating unlimited decodable stories on demand**, constrained to each child's exact set of mastered phonics patterns and sight words, themed around whatever the child loves. A child who loves dinosaurs and has mastered CVC short-a words gets: _"The T-Rex ran and ran. He had a big hat. Dan the T-Rex sat on a flat rock."_ No existing app produces this. Secondary differentiators include AI-powered pronunciation assessment for independent practice, adaptive lesson pacing driven by error pattern analysis, and a parent dashboard that translates raw data into plain-language insights.
 
 ---
 
@@ -65,7 +65,7 @@ For children ages 7–11 who are behind, instruction must start where the child 
 
 **Phase 4 — Advanced decoding:** Hard/soft c and g → syllable division → prefixes and suffixes (-ed, -ing, re-, un-, -tion) → Latin and Greek roots.
 
-New grapheme-phoneme correspondences should be introduced at **3–6 per week**, gated by mastery. Anna Gillingham's principle applies: *"As fast as you can, but as slow as you must."* A diagnostic placement test determines where each child enters the sequence.
+New grapheme-phoneme correspondences should be introduced at **3–6 per week**, gated by mastery. Anna Gillingham's principle applies: _"As fast as you can, but as slow as you must."_ A diagnostic placement test determines where each child enters the sequence.
 
 ### Spaced repetition keeps learned patterns from fading
 
@@ -189,7 +189,7 @@ Five specific choices save days of development time: **@nuxt/ui v4** eliminates 
 
 ## Conclusion: the intersection nobody has built yet
 
-The children's literacy app market has a clean split: apps with strong pedagogy (reading.com, Lexia) lack AI personalization, while apps with adaptive technology (HOMER, Headsprout) lack true generative content. **The intersection — systematic synthetic phonics with AI-generated decodable stories personalized to each child's exact phonics level and interests — is unoccupied.** 
+The children's literacy app market has a clean split: apps with strong pedagogy (reading.com, Lexia) lack AI personalization, while apps with adaptive technology (HOMER, Headsprout) lack true generative content. **The intersection — systematic synthetic phonics with AI-generated decodable stories personalized to each child's exact phonics level and interests — is unoccupied.**
 
 The two-week MVP demonstrates the core reading experience: structured stories with synchronized TTS highlighting, SRS-powered phonics and sight word practice, and a parent dashboard with real progress data. This foundation is architecturally designed to absorb the AI generation pipeline in weeks 3–4, when Claude Haiku generates unlimited decodable stories at $0.005 each and Azure Speech Services enables independent read-aloud practice with automated miscue detection.
 

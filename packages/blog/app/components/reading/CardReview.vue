@@ -2,7 +2,6 @@
 const props = defineProps<{
   front: string;
   back: string;
-  cardType: string;
 }>();
 
 const emit = defineEmits<{

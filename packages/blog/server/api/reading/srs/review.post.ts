@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { FSRS, Rating, type Card, type Grade } from 'ts-fsrs';
+import { requireChildOwner } from '../../../utils/reading/require-child-owner';
 
 const bodySchema = z.object({
   cardId: z.number(),
@@ -18,11 +19,6 @@ const RATING_MAP: Record<1 | 3 | 4, Grade> = {
 };
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event);
-  if (!session.user) {
-    throw createError({ statusCode: 401, message: 'Unauthorized' });
-  }
-
   const body = await readValidatedBody(event, bodySchema.parse);
   const db = useDrizzle();
 
@@ -32,6 +28,9 @@ export default defineEventHandler(async (event) => {
   if (!card) {
     throw createError({ statusCode: 404, message: 'Card not found' });
   }
+
+  // Verify ownership
+  await requireChildOwner(event, card.childId);
 
   // Build FSRS card from DB fields
   const fsrsCard: Card = {
@@ -51,7 +50,6 @@ export default defineEventHandler(async (event) => {
   const result = fsrs.next(fsrsCard, new Date(), grade);
   const next = result.card;
 
-  // Update card in DB
   const [updated] = await db
     .update(tables.srsCards)
     .set({

@@ -1,15 +1,13 @@
 import { z } from 'zod';
+import { requireChildOwner } from '../../../utils/reading/require-child-owner';
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event);
-  if (!session.user) {
-    throw createError({ statusCode: 401, message: 'Unauthorized' });
-  }
-
   const { childId } = await getValidatedQuery(
     event,
     z.object({ childId: z.coerce.number() }).parse,
   );
+
+  await requireChildOwner(event, childId);
   const db = useDrizzle();
 
   const sessions = await db.query.readingSessions.findMany({

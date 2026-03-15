@@ -28,6 +28,12 @@ export function useTTS() {
       currentWordIndex.value = -1;
     };
 
+    utterance.onerror = () => {
+      isSpeaking.value = false;
+      isPaused.value = false;
+      currentWordIndex.value = -1;
+    };
+
     speechSynthesis.speak(utterance);
     isSpeaking.value = true;
   }

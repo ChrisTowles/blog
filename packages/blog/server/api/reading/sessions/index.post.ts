@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { requireChildOwner } from '../../../utils/reading/require-child-owner';
 
 const bodySchema = z.object({
   childId: z.number(),
@@ -11,12 +12,9 @@ const bodySchema = z.object({
 });
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event);
-  if (!session.user) {
-    throw createError({ statusCode: 401, message: 'Unauthorized' });
-  }
-
   const body = await readValidatedBody(event, bodySchema.parse);
+
+  await requireChildOwner(event, body.childId);
   const db = useDrizzle();
 
   const [readingSession] = await db

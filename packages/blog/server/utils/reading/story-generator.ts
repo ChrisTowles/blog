@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { getAnthropicClient } from '../ai/anthropic';
 import { annotateWords, calculateDecodability } from './phonics-validator';
 import type { StoryContent } from '~~/shared/reading-types';
 
@@ -23,7 +23,7 @@ const MAX_RETRIES = 2;
 export async function generateStory(options: GenerateOptions): Promise<GeneratedStory> {
   const { allowedPatterns, sightWords, targetWords, theme, wordCount = 75 } = options;
 
-  const client = new Anthropic();
+  const client = getAnthropicClient();
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     const response = await client.messages.create({

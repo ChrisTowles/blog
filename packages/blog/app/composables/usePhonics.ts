@@ -1,5 +1,7 @@
+import type { PhonicsProgressResponse } from '~~/shared/reading-types';
+
 export function usePhonics(childId: Ref<number | null>) {
-  const progress = ref<any[]>([]);
+  const progress = ref<PhonicsProgressResponse[]>([]);
   const isLoading = ref(false);
 
   const masteredUnits = computed(() => progress.value.filter((p) => p.status === 'mastered'));

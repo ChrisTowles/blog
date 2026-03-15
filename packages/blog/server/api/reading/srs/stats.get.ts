@@ -1,31 +1,39 @@
 import { z } from 'zod';
+import { count, lte, gt, gte } from 'drizzle-orm';
+import { requireChildOwner } from '../../../utils/reading/require-child-owner';
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event);
-  if (!session.user) {
-    throw createError({ statusCode: 401, message: 'Unauthorized' });
-  }
-
   const { childId } = await getValidatedQuery(
     event,
     z.object({ childId: z.coerce.number() }).parse,
   );
+
+  await requireChildOwner(event, childId);
   const db = useDrizzle();
 
-  const allCards = await db.query.srsCards.findMany({
-    where: (c, { eq }) => eq(c.childId, childId),
-  });
-
   const now = new Date();
-  const due = allCards.filter((c) => new Date(c.due) <= now).length;
-  const newCards = allCards.filter((c) => c.reps === 0).length;
-  // Mastered = 3+ consecutive good ratings approximated by high stability
-  const mastered = allCards.filter((c) => c.stability > 10 && c.reps >= 3).length;
+  const childFilter = eq(tables.srsCards.childId, childId);
+
+  const [dueResult, newResult, masteredResult, totalResult] = await Promise.all([
+    db
+      .select({ value: count() })
+      .from(tables.srsCards)
+      .where(and(childFilter, lte(tables.srsCards.due, now))),
+    db
+      .select({ value: count() })
+      .from(tables.srsCards)
+      .where(and(childFilter, eq(tables.srsCards.reps, 0))),
+    db
+      .select({ value: count() })
+      .from(tables.srsCards)
+      .where(and(childFilter, gt(tables.srsCards.stability, 10), gte(tables.srsCards.reps, 3))),
+    db.select({ value: count() }).from(tables.srsCards).where(childFilter),
+  ]);
 
   return {
-    due,
-    newCards,
-    mastered,
-    total: allCards.length,
+    due: dueResult[0]?.value ?? 0,
+    newCards: newResult[0]?.value ?? 0,
+    mastered: masteredResult[0]?.value ?? 0,
+    total: totalResult[0]?.value ?? 0,
   };
 });
