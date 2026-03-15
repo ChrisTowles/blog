@@ -29,6 +29,13 @@
       "when": 1771979118831,
       "tag": "0003_illegal_molly_hayes",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1773617554519,
+      "tag": "0004_lazy_amazoness",
+      "breakpoints": true
     }
   ]
 }
