@@ -22,7 +22,7 @@ export async function generateBlogImage(
   }
 
   const ai = new GoogleGenAI({ apiKey });
-  const model = options.model ?? 'gemini-2.0-flash-preview-image-generation';
+  const model = options.model ?? 'gemini-2.5-flash-image';
 
   const response = await ai.models.generateContent({
     model,
