@@ -1,0 +1,83 @@
+import { z } from 'zod';
+import { generateStory } from '../../../utils/reading/story-generator';
+import { reviewStorySafety } from '../../../utils/reading/story-safety';
+import { SIGHT_WORDS_BY_PHASE } from '../../../utils/reading/phonics-seed';
+import type { PhonicsPhase } from '~~/shared/reading-types';
+
+const bodySchema = z.object({
+  childId: z.number(),
+  theme: z.string().optional(),
+});
+
+export default defineEventHandler(async (event) => {
+  const session = await getUserSession(event);
+  if (!session.user) {
+    throw createError({ statusCode: 401, message: 'Unauthorized' });
+  }
+
+  const body = await readValidatedBody(event, bodySchema.parse);
+  const db = useDrizzle();
+
+  // Verify parent owns child
+  const child = await db.query.childProfiles.findFirst({
+    where: (c, { eq, and: a }) => a(eq(c.id, body.childId), eq(c.userId, session.user!.id)),
+  });
+  if (!child) {
+    throw createError({ statusCode: 404, message: 'Child not found' });
+  }
+
+  // Rate limit: 5 stories/child/day
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStories = await db.query.stories.findMany({
+    where: (s, { eq, and: a, gte }) =>
+      a(eq(s.childId, body.childId), eq(s.aiGenerated, true), gte(s.createdAt, today)),
+  });
+  if (todayStories.length >= 5) {
+    throw createError({ statusCode: 429, message: 'Daily story limit reached (5/day)' });
+  }
+
+  // Get child's mastered patterns
+  const progress = await db.query.childPhonicsProgress.findMany({
+    where: (p, { eq, and: a, or: o }) =>
+      a(eq(p.childId, body.childId), o(eq(p.status, 'mastered'), eq(p.status, 'active'))),
+    with: { phonicsUnit: true },
+  });
+
+  const allowedPatterns = progress.flatMap((p) => p.phonicsUnit.patterns);
+  const phase = (child.currentPhase || 1) as PhonicsPhase;
+  const sightWords = SIGHT_WORDS_BY_PHASE[phase] || SIGHT_WORDS_BY_PHASE[1];
+  const theme = body.theme || child.interests[0] || 'animals';
+
+  // Generate story
+  const generated = await generateStory({
+    allowedPatterns,
+    sightWords,
+    targetWords: [], // TODO: pick from next phonics unit
+    theme,
+  });
+
+  // Safety review
+  const safety = await reviewStorySafety(generated.rawText);
+  if (!safety.safe) {
+    throw createError({ statusCode: 422, message: `Story failed safety review: ${safety.reason}` });
+  }
+
+  // Save to DB
+  const [story] = await db
+    .insert(tables.stories)
+    .values({
+      childId: body.childId,
+      title: generated.title,
+      content: generated.content,
+      theme,
+      targetPatterns: allowedPatterns,
+      targetWords: [],
+      decodabilityScore: generated.decodabilityScore,
+      fleschKincaid: generated.fleschKincaid,
+      aiGenerated: true,
+    })
+    .returning();
+
+  return story;
+});
