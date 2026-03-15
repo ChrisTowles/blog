@@ -47,8 +47,8 @@ export default defineEventHandler(async (event) => {
     last_review: card.lastReview ?? undefined,
   };
 
-  const grade = RATING_MAP[body.rating];
-  const result = fsrs.next(fsrsCard, new Date(), grade);
+  const rating = RATING_MAP[body.rating];
+  const result = fsrs.next(fsrsCard, new Date(), rating);
   const next = result.card;
 
   // Update card in DB
