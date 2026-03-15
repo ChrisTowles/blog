@@ -25,6 +25,13 @@ export async function cleanupDatabase() {
   await db.delete(tables.chats);
   await db.delete(tables.documentChunks);
   await db.delete(tables.documents);
+  // Reading tables (order matters for FK constraints)
+  await db.delete(tables.readingSessions);
+  await db.delete(tables.srsCards);
+  await db.delete(tables.childPhonicsProgress);
+  await db.delete(tables.stories);
+  await db.delete(tables.childProfiles);
+  await db.delete(tables.phonicsUnits);
   await db.delete(tables.users);
 }
 
@@ -129,4 +136,70 @@ export async function createTestLoanMessage(
     })
     .returning();
   return message!;
+}
+
+export async function createTestChild(
+  userId: string,
+  overrides?: Partial<typeof tables.childProfiles.$inferInsert>,
+) {
+  const db = useDrizzle();
+  const [child] = await db
+    .insert(tables.childProfiles)
+    .values({
+      userId,
+      name: 'Test Child',
+      birthYear: 2018,
+      currentPhase: 1,
+      interests: ['dinosaurs'],
+      ...overrides,
+    })
+    .returning();
+  return child!;
+}
+
+export async function createTestStory(overrides?: Partial<typeof tables.stories.$inferInsert>) {
+  const db = useDrizzle();
+  const [story] = await db
+    .insert(tables.stories)
+    .values({
+      title: 'Test Story',
+      content: {
+        pages: [
+          {
+            words: [
+              { text: 'The', decodable: false, pattern: null, sightWord: true },
+              { text: 'cat', decodable: true, pattern: 'CVC-short-a', sightWord: false },
+              { text: 'sat', decodable: true, pattern: 'CVC-short-a', sightWord: false },
+            ],
+          },
+        ],
+      },
+      theme: 'animals',
+      targetPatterns: ['CVC-short-a'],
+      targetWords: ['cat', 'sat'],
+      decodabilityScore: 0.67,
+      fleschKincaid: 1.0,
+      aiGenerated: false,
+      ...overrides,
+    })
+    .returning();
+  return story!;
+}
+
+export async function createTestSrsCard(
+  childId: number,
+  overrides?: Partial<typeof tables.srsCards.$inferInsert>,
+) {
+  const db = useDrizzle();
+  const [card] = await db
+    .insert(tables.srsCards)
+    .values({
+      childId,
+      cardType: 'phoneme',
+      front: 'What sound does "sh" make?',
+      back: '/ʃ/ as in "ship"',
+      ...overrides,
+    })
+    .returning();
+  return card!;
 }
