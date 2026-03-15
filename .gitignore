@@ -184,10 +184,7 @@ uv.lock
 
 
 
-## Ignore Ralph state and progress files
-ralph-state.json
-ralph-progress.md
-ralph-log.md
-
+# Superpowers specs/plans (local only)
+docs/superpowers/
 
 .auto-claude
