@@ -88,6 +88,12 @@ export default defineNuxtConfig({
     // Loan pages don't need SSR (authenticated feature)
     '/loan': { ssr: false },
     '/loan/**': { ssr: false },
+    // Reading app - landing is SSR for SEO, interactive pages are CSR
+    '/reading/stories/**': { ssr: false },
+    '/reading/practice': { ssr: false },
+    '/reading/onboarding': { ssr: false },
+    '/reading/dashboard': { ssr: false },
+    '/reading/child/**': { ssr: false },
   },
 
   future: {
