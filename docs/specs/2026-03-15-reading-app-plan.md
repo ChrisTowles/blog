@@ -17,6 +17,7 @@
 ### Task 0.1: Install dependencies
 
 **Files:**
+
 - Modify: `packages/blog/package.json`
 
 - [ ] **Step 1: Install ts-fsrs**
@@ -43,6 +44,7 @@ git commit -m "chore: add ts-fsrs dependency for reading app SRS engine"
 The existing codebase uses a single `server/database/schema.ts`. We need a `schema/` directory so the reading app can have its own schema file.
 
 **Files:**
+
 - Move: `packages/blog/server/database/schema.ts` -> `packages/blog/server/database/schema/blog.ts`
 - Create: `packages/blog/server/database/schema/index.ts`
 - Modify: `packages/blog/drizzle.config.ts`
@@ -66,10 +68,13 @@ export * from './blog';
 - [ ] **Step 3: Update drizzle.config.ts**
 
 Change line 18 from:
+
 ```ts
 schema: './server/database/schema.ts',
 ```
+
 to:
+
 ```ts
 schema: './server/database/schema',
 ```
@@ -100,6 +105,7 @@ git commit -m "refactor: migrate schema.ts to schema/ directory for multi-featur
 ### Task 0.3: Add route rules for /reading
 
 **Files:**
+
 - Modify: `packages/blog/nuxt.config.ts:82-91`
 
 - [ ] **Step 1: Add reading route rules**
@@ -131,6 +137,7 @@ All tasks in this chunk must complete before Chunks 2-4 can start (they depend o
 ### Task 1.1: Create shared reading types
 
 **Files:**
+
 - Create: `packages/blog/shared/reading-types.ts`
 
 - [ ] **Step 1: Write the types file**
@@ -197,6 +204,7 @@ git commit -m "feat: add shared reading app types"
 ### Task 1.2: Create Drizzle schema for reading tables
 
 **Files:**
+
 - Create: `packages/blog/server/database/schema/reading.ts`
 - Modify: `packages/blog/server/database/schema/index.ts`
 
@@ -416,6 +424,7 @@ git commit -m "feat: add reading app Drizzle schema (6 tables)"
 ### Task 1.3: Generate and run migrations
 
 **Files:**
+
 - Generated: `packages/blog/server/database/migrations/NNNN_*.sql`
 
 - [ ] **Step 1: Generate migration**
@@ -444,6 +453,7 @@ git commit -m "feat: add reading app database migration"
 ### Task 1.4: Seed phonics scope & sequence
 
 **Files:**
+
 - Create: `packages/blog/server/utils/reading/phonics-seed.ts`
 
 - [ ] **Step 1: Write the seed data**
@@ -532,14 +542,46 @@ export const PHONICS_SEED: PhonicsUnitSeed[] = [
     phase: 2,
     orderIndex: 1,
     name: 'Initial consonant blends',
-    patterns: ['BL-bl', 'BL-cr', 'BL-st', 'BL-fl', 'BL-gr', 'BL-tr', 'BL-br', 'BL-cl', 'BL-dr', 'BL-fr', 'BL-gl', 'BL-pl', 'BL-pr', 'BL-sk', 'BL-sl', 'BL-sm', 'BL-sn', 'BL-sp', 'BL-sw'],
-    description: 'Initial blends: bl, cr, st, fl, gr, tr, br, cl, dr, fr, gl, pl, pr, sk, sl, sm, sn, sp, sw',
+    patterns: [
+      'BL-bl',
+      'BL-cr',
+      'BL-st',
+      'BL-fl',
+      'BL-gr',
+      'BL-tr',
+      'BL-br',
+      'BL-cl',
+      'BL-dr',
+      'BL-fr',
+      'BL-gl',
+      'BL-pl',
+      'BL-pr',
+      'BL-sk',
+      'BL-sl',
+      'BL-sm',
+      'BL-sn',
+      'BL-sp',
+      'BL-sw',
+    ],
+    description:
+      'Initial blends: bl, cr, st, fl, gr, tr, br, cl, dr, fr, gl, pl, pr, sk, sl, sm, sn, sp, sw',
   },
   {
     phase: 2,
     orderIndex: 2,
     name: 'Final consonant blends',
-    patterns: ['BL-mp', 'BL-nk', 'BL-nd', 'BL-nt', 'BL-ft', 'BL-lt', 'BL-lp', 'BL-lk', 'BL-sk-f', 'BL-st-f'],
+    patterns: [
+      'BL-mp',
+      'BL-nk',
+      'BL-nd',
+      'BL-nt',
+      'BL-ft',
+      'BL-lt',
+      'BL-lp',
+      'BL-lk',
+      'BL-sk-f',
+      'BL-st-f',
+    ],
     description: 'Final blends: -mp, -nk, -nd, -nt, -ft, -lt, -lp, -lk, -sk, -st',
   },
   {
@@ -620,7 +662,16 @@ export const PHONICS_SEED: PhonicsUnitSeed[] = [
     phase: 4,
     orderIndex: 3,
     name: 'Common prefixes and suffixes',
-    patterns: ['AFF-ed', 'AFF-ing', 'AFF-re', 'AFF-un', 'AFF-tion', 'AFF-ly', 'AFF-ful', 'AFF-less'],
+    patterns: [
+      'AFF-ed',
+      'AFF-ing',
+      'AFF-re',
+      'AFF-un',
+      'AFF-tion',
+      'AFF-ly',
+      'AFF-ful',
+      'AFF-less',
+    ],
     description: 'Affixes: -ed, -ing, re-, un-, -tion, -ly, -ful, -less',
   },
   {
@@ -634,10 +685,89 @@ export const PHONICS_SEED: PhonicsUnitSeed[] = [
 
 // Common sight words by phase (high-frequency words that don't follow phonics rules)
 export const SIGHT_WORDS_BY_PHASE: Record<PhonicsPhase, string[]> = {
-  1: ['the', 'a', 'is', 'was', 'to', 'and', 'he', 'she', 'said', 'my', 'of', 'I', 'you', 'are', 'they', 'we', 'do', 'no', 'go', 'so'],
-  2: ['have', 'were', 'what', 'when', 'your', 'there', 'their', 'would', 'could', 'should', 'come', 'some', 'one', 'two', 'who', 'been', 'from', 'many', 'any', 'again'],
-  3: ['through', 'thought', 'because', 'enough', 'though', 'people', 'where', 'friend', 'know', 'world', 'great', 'heart', 'different', 'move', 'water', 'every', 'other', 'laugh', 'answer', 'learn'],
-  4: ['knowledge', 'science', 'special', 'certain', 'beautiful', 'imagine', 'important', 'language', 'measure', 'machine', 'believe', 'receive', 'separate', 'rhythm', 'necessary'],
+  1: [
+    'the',
+    'a',
+    'is',
+    'was',
+    'to',
+    'and',
+    'he',
+    'she',
+    'said',
+    'my',
+    'of',
+    'I',
+    'you',
+    'are',
+    'they',
+    'we',
+    'do',
+    'no',
+    'go',
+    'so',
+  ],
+  2: [
+    'have',
+    'were',
+    'what',
+    'when',
+    'your',
+    'there',
+    'their',
+    'would',
+    'could',
+    'should',
+    'come',
+    'some',
+    'one',
+    'two',
+    'who',
+    'been',
+    'from',
+    'many',
+    'any',
+    'again',
+  ],
+  3: [
+    'through',
+    'thought',
+    'because',
+    'enough',
+    'though',
+    'people',
+    'where',
+    'friend',
+    'know',
+    'world',
+    'great',
+    'heart',
+    'different',
+    'move',
+    'water',
+    'every',
+    'other',
+    'laugh',
+    'answer',
+    'learn',
+  ],
+  4: [
+    'knowledge',
+    'science',
+    'special',
+    'certain',
+    'beautiful',
+    'imagine',
+    'important',
+    'language',
+    'measure',
+    'machine',
+    'believe',
+    'receive',
+    'separate',
+    'rhythm',
+    'necessary',
+  ],
 };
 ```
 
@@ -657,6 +787,7 @@ git commit -m "feat: add phonics scope & sequence seed data (Phase 1-4)"
 ### Task 1.5: Create seed script and API route
 
 **Files:**
+
 - Create: `packages/blog/server/api/reading/seed.post.ts`
 
 - [ ] **Step 1: Write seed endpoint**
@@ -696,6 +827,7 @@ git commit -m "feat: add phonics seed endpoint"
 ### Task 1.6: Add reading test helpers
 
 **Files:**
+
 - Modify: `packages/blog/server/test-utils/db-helper.ts`
 
 - [ ] **Step 1: Add reading test helpers**
@@ -722,9 +854,7 @@ export async function createTestChild(
   return child!;
 }
 
-export async function createTestStory(
-  overrides?: Partial<typeof tables.stories.$inferInsert>,
-) {
+export async function createTestStory(overrides?: Partial<typeof tables.stories.$inferInsert>) {
   const db = useDrizzle();
   const [story] = await db
     .insert(tables.stories)
@@ -808,6 +938,7 @@ Depends on Chunk 1 (needs types from `shared/reading-types.ts`). This chunk buil
 ### Task 2.1: useTTS composable
 
 **Files:**
+
 - Create: `packages/blog/app/composables/useTTS.ts`
 - Create: `packages/blog/app/composables/useTTS.test.ts`
 
@@ -829,7 +960,10 @@ const mockUtterance = {
   onend: null as (() => void) | null,
 };
 
-vi.stubGlobal('SpeechSynthesisUtterance', vi.fn(() => mockUtterance));
+vi.stubGlobal(
+  'SpeechSynthesisUtterance',
+  vi.fn(() => mockUtterance),
+);
 vi.stubGlobal('speechSynthesis', {
   speak: vi.fn(),
   cancel: vi.fn(),
@@ -967,6 +1101,7 @@ git commit -m "feat: add useTTS composable with Web Speech API"
 ### Task 2.2: useActiveChild composable
 
 **Files:**
+
 - Create: `packages/blog/app/composables/useActiveChild.ts`
 
 - [ ] **Step 1: Write useActiveChild**
@@ -1013,6 +1148,7 @@ git commit -m "feat: add useActiveChild composable for multi-child support"
 ### Task 2.3: WordHighlighter component
 
 **Files:**
+
 - Create: `packages/blog/app/components/reading/WordHighlighter.vue`
 
 - [ ] **Step 1: Write WordHighlighter**
@@ -1059,6 +1195,7 @@ git commit -m "feat: add WordHighlighter component with TTS sync"
 ### Task 2.4: StoryReader component
 
 **Files:**
+
 - Create: `packages/blog/app/components/reading/StoryReader.vue`
 
 - [ ] **Step 1: Write StoryReader**
@@ -1072,7 +1209,18 @@ const props = defineProps<{
   content: StoryContent;
 }>();
 
-const { speak, speakWord, stop, pause, resume, isSpeaking, isPaused, currentWordIndex, rate, setRate } = useTTS();
+const {
+  speak,
+  speakWord,
+  stop,
+  pause,
+  resume,
+  isSpeaking,
+  isPaused,
+  currentWordIndex,
+  rate,
+  setRate,
+} = useTTS();
 
 const currentPage = ref(0);
 const totalPages = computed(() => props.content.pages.length);
@@ -1122,35 +1270,38 @@ onUnmounted(() => {
     </div>
 
     <div class="flex items-center justify-center gap-4 py-6">
-      <UButton icon="i-heroicons-backward" variant="ghost" :disabled="currentPage === 0" @click="prevPage" />
+      <UButton
+        icon="i-heroicons-backward"
+        variant="ghost"
+        :disabled="currentPage === 0"
+        @click="prevPage"
+      />
 
-      <UButton
-        v-if="!isSpeaking"
-        icon="i-heroicons-play"
-        size="xl"
-        @click="playCurrentPage"
-      />
-      <UButton
-        v-else-if="isPaused"
-        icon="i-heroicons-play"
-        size="xl"
-        @click="resume"
-      />
-      <UButton
-        v-else
-        icon="i-heroicons-pause"
-        size="xl"
-        @click="pause"
-      />
+      <UButton v-if="!isSpeaking" icon="i-heroicons-play" size="xl" @click="playCurrentPage" />
+      <UButton v-else-if="isPaused" icon="i-heroicons-play" size="xl" @click="resume" />
+      <UButton v-else icon="i-heroicons-pause" size="xl" @click="pause" />
 
       <UButton icon="i-heroicons-stop" variant="ghost" :disabled="!isSpeaking" @click="stop" />
 
-      <UButton icon="i-heroicons-forward" variant="ghost" :disabled="currentPage >= totalPages - 1" @click="nextPage" />
+      <UButton
+        icon="i-heroicons-forward"
+        variant="ghost"
+        :disabled="currentPage >= totalPages - 1"
+        @click="nextPage"
+      />
     </div>
 
     <div class="flex items-center justify-center gap-2 pb-4">
       <span class="text-xs text-gray-500">Speed</span>
-      <input type="range" min="0.5" max="1.2" step="0.1" :value="rate" class="w-32" @input="setRate(parseFloat(($event.target as HTMLInputElement).value))" />
+      <input
+        type="range"
+        min="0.5"
+        max="1.2"
+        step="0.1"
+        :value="rate"
+        class="w-32"
+        @input="setRate(parseFloat(($event.target as HTMLInputElement).value))"
+      />
       <span class="text-xs text-gray-500 w-8">{{ rate }}x</span>
     </div>
   </div>
@@ -1167,6 +1318,7 @@ git commit -m "feat: add StoryReader component with TTS controls"
 ### Task 2.5: Reading pages
 
 **Files:**
+
 - Create: `packages/blog/app/pages/reading/index.vue`
 - Create: `packages/blog/app/pages/reading/stories/[id].vue`
 - Create: `packages/blog/app/pages/reading/dashboard.vue`
@@ -1227,11 +1379,7 @@ const { data: story } = await useFetch(`/api/reading/stories/${route.params.id}`
     <div class="absolute top-4 left-4 z-10">
       <UButton to="/reading/dashboard" icon="i-heroicons-arrow-left" variant="ghost" />
     </div>
-    <ReadingStoryReader
-      v-if="story"
-      :title="story.title"
-      :content="story.content"
-    />
+    <ReadingStoryReader v-if="story" :title="story.title" :content="story.content" />
     <div v-else class="flex items-center justify-center h-full">
       <UIcon name="i-heroicons-arrow-path" class="animate-spin text-4xl" />
     </div>
@@ -1242,6 +1390,7 @@ const { data: story } = await useFetch(`/api/reading/stories/${route.params.id}`
 - [ ] **Step 3: Scaffold remaining pages**
 
 Create minimal placeholder pages for `dashboard.vue`, `child/[id].vue`, `practice.vue`, and `onboarding.vue`. Each should:
+
 - Use `definePageMeta({ middleware: 'auth' })` (except landing)
 - Have a basic UPageHeader with the page name
 - Show placeholder content to be filled in by later tasks
@@ -1262,6 +1411,7 @@ git commit -m "feat: add reading app pages (landing, reader, dashboard, practice
 ### Task 2.6: CardReview component
 
 **Files:**
+
 - Create: `packages/blog/app/components/reading/CardReview.vue`
 
 Depends on srs-engine task (useSRS composable). Build the UI component standalone — wire to useSRS later.
@@ -1295,15 +1445,9 @@ const revealed = ref(false);
         <p class="text-xl">{{ back }}</p>
       </div>
       <div class="flex justify-center gap-4 pt-4">
-        <UButton color="red" variant="soft" size="lg" @click="emit('rate', 1)">
-          Again
-        </UButton>
-        <UButton color="yellow" variant="soft" size="lg" @click="emit('rate', 3)">
-          Hard
-        </UButton>
-        <UButton color="green" variant="soft" size="lg" @click="emit('rate', 4)">
-          Got It!
-        </UButton>
+        <UButton color="red" variant="soft" size="lg" @click="emit('rate', 1)"> Again </UButton>
+        <UButton color="yellow" variant="soft" size="lg" @click="emit('rate', 3)"> Hard </UButton>
+        <UButton color="green" variant="soft" size="lg" @click="emit('rate', 4)"> Got It! </UButton>
       </div>
     </template>
 
@@ -1332,6 +1476,7 @@ Depends on Chunk 1 (schema + types). Builds the phonics validation engine and AI
 ### Task 3.1: Phonics validation engine
 
 **Files:**
+
 - Create: `packages/blog/server/utils/reading/phonics-validator.ts`
 - Create: `packages/blog/server/utils/reading/phonics-validator.test.ts`
 
@@ -1460,7 +1605,10 @@ export function annotateWords(
   knownPatterns: string[],
   sightWords: string[] = [],
 ): StoryWord[] {
-  return text.split(/\s+/).filter(Boolean).map((word) => validateWord(word, knownPatterns, sightWords));
+  return text
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => validateWord(word, knownPatterns, sightWords));
 }
 ```
 
@@ -1480,6 +1628,7 @@ git commit -m "feat: add phonics validation engine with pattern matching"
 ### Task 3.2: Story generator
 
 **Files:**
+
 - Create: `packages/blog/server/utils/reading/story-generator.ts`
 
 - [ ] **Step 1: Write story generator**
@@ -1510,13 +1659,7 @@ interface GeneratedStory {
 const MAX_RETRIES = 2;
 
 export async function generateStory(options: GenerateOptions): Promise<GeneratedStory> {
-  const {
-    allowedPatterns,
-    sightWords,
-    targetWords,
-    theme,
-    wordCount = 75,
-  } = options;
+  const { allowedPatterns, sightWords, targetWords, theme, wordCount = 75 } = options;
 
   const client = new Anthropic();
 
@@ -1535,9 +1678,7 @@ LENGTH: ${wordCount - 15}-${wordCount + 15} words, sentences 3-8 words each
 Generate a story with a simple problem -> attempt -> resolution arc.
 Use ONLY words that match the allowed patterns, sight words, or target words.
 Output as JSON: { "title": "...", "text": "..." }`,
-      messages: [
-        { role: 'user', content: `Write a decodable story about ${theme}.` },
-      ],
+      messages: [{ role: 'user', content: `Write a decodable story about ${theme}.` }],
     });
 
     const textBlock = response.content.find((b) => b.type === 'text');
@@ -1612,6 +1753,7 @@ git commit -m "feat: add AI story generator with Claude Haiku + decodability ret
 ### Task 3.3: Story safety review
 
 **Files:**
+
 - Create: `packages/blog/server/utils/reading/story-safety.ts`
 
 - [ ] **Step 1: Write safety reviewer**
@@ -1622,10 +1764,32 @@ Create `packages/blog/server/utils/reading/story-safety.ts`:
 import Anthropic from '@anthropic-ai/sdk';
 
 const BLOCKLIST = [
-  'kill', 'murder', 'blood', 'death', 'dead', 'die', 'weapon', 'gun',
-  'knife', 'drugs', 'alcohol', 'beer', 'wine', 'hate', 'stupid',
-  'dumb', 'ugly', 'fat', 'scary', 'horror', 'ghost', 'monster',
-  'devil', 'demon', 'hell', 'damn',
+  'kill',
+  'murder',
+  'blood',
+  'death',
+  'dead',
+  'die',
+  'weapon',
+  'gun',
+  'knife',
+  'drugs',
+  'alcohol',
+  'beer',
+  'wine',
+  'hate',
+  'stupid',
+  'dumb',
+  'ugly',
+  'fat',
+  'scary',
+  'horror',
+  'ghost',
+  'monster',
+  'devil',
+  'demon',
+  'hell',
+  'damn',
 ];
 
 interface SafetyResult {
@@ -1650,9 +1814,7 @@ export async function reviewStorySafety(storyText: string): Promise<SafetyResult
     temperature: 0,
     system: `You are a children's content safety reviewer. Classify the following story as SAFE or UNSAFE for children ages 7-11. Check for: violence, scary themes, stereotypes, age-inappropriate content, bullying.
 Reply with JSON: { "safe": true/false, "reason": "..." }`,
-    messages: [
-      { role: 'user', content: storyText },
-    ],
+    messages: [{ role: 'user', content: storyText }],
   });
 
   const textBlock = response.content.find((b) => b.type === 'text');
@@ -1679,6 +1841,7 @@ git commit -m "feat: add story safety reviewer (blocklist + AI classification)"
 ### Task 3.4: Story generation API endpoint
 
 **Files:**
+
 - Create: `packages/blog/server/api/reading/stories/generate.post.ts`
 - Create: `packages/blog/server/api/reading/stories/[id].get.ts`
 - Create: `packages/blog/server/api/reading/stories/index.get.ts`
@@ -1812,7 +1975,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, message: 'Unauthorized' });
   }
 
-  const { childId } = await getValidatedQuery(event, z.object({ childId: z.coerce.number() }).parse);
+  const { childId } = await getValidatedQuery(
+    event,
+    z.object({ childId: z.coerce.number() }).parse,
+  );
   const db = useDrizzle();
 
   const stories = await db.query.stories.findMany({
@@ -1846,6 +2012,7 @@ Depends on Chunk 1 (schema + types). Builds SRS scheduling, child management, an
 ### Task 4.1: Child profile API routes
 
 **Files:**
+
 - Create: `packages/blog/server/api/reading/children/index.post.ts`
 - Create: `packages/blog/server/api/reading/children/index.get.ts`
 - Create: `packages/blog/server/api/reading/children/[id].get.ts`
@@ -1980,6 +2147,7 @@ git commit -m "feat: add child profile CRUD API routes"
 ### Task 4.2: SRS API routes
 
 **Files:**
+
 - Create: `packages/blog/server/api/reading/srs/due.get.ts`
 - Create: `packages/blog/server/api/reading/srs/review.post.ts`
 - Create: `packages/blog/server/api/reading/srs/stats.get.ts`
@@ -1998,12 +2166,14 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, message: 'Unauthorized' });
   }
 
-  const { childId } = await getValidatedQuery(event, z.object({ childId: z.coerce.number() }).parse);
+  const { childId } = await getValidatedQuery(
+    event,
+    z.object({ childId: z.coerce.number() }).parse,
+  );
   const db = useDrizzle();
 
   const cards = await db.query.srsCards.findMany({
-    where: (c, { eq, and: a }) =>
-      a(eq(c.childId, childId), lte(c.due, new Date())),
+    where: (c, { eq, and: a }) => a(eq(c.childId, childId), lte(c.due, new Date())),
     orderBy: (c, { asc }) => [asc(c.due)],
     limit: 20,
   });
@@ -2102,7 +2272,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, message: 'Unauthorized' });
   }
 
-  const { childId } = await getValidatedQuery(event, z.object({ childId: z.coerce.number() }).parse);
+  const { childId } = await getValidatedQuery(
+    event,
+    z.object({ childId: z.coerce.number() }).parse,
+  );
   const db = useDrizzle();
 
   const allCards = await db.query.srsCards.findMany({
@@ -2134,6 +2307,7 @@ git commit -m "feat: add SRS API routes (due cards, review, stats)"
 ### Task 4.3: useSRS composable
 
 **Files:**
+
 - Create: `packages/blog/app/composables/useSRS.ts`
 
 - [ ] **Step 1: Write useSRS composable**
@@ -2182,9 +2356,13 @@ export function useSRS(childId: Ref<number | null>) {
     }
   }
 
-  watch(childId, () => {
-    if (childId.value) fetchDueCards();
-  }, { immediate: true });
+  watch(
+    childId,
+    () => {
+      if (childId.value) fetchDueCards();
+    },
+    { immediate: true },
+  );
 
   return {
     dueCards: readonly(dueCards),
@@ -2207,6 +2385,7 @@ git commit -m "feat: add useSRS composable for SRS card review sessions"
 ### Task 4.4: usePhonics composable
 
 **Files:**
+
 - Create: `packages/blog/app/composables/usePhonics.ts`
 
 - [ ] **Step 1: Write usePhonics composable**
@@ -2232,9 +2411,13 @@ export function usePhonics(childId: Ref<number | null>) {
     }
   }
 
-  watch(childId, () => {
-    if (childId.value) fetchProgress();
-  }, { immediate: true });
+  watch(
+    childId,
+    () => {
+      if (childId.value) fetchProgress();
+    },
+    { immediate: true },
+  );
 
   return {
     progress: readonly(progress),
@@ -2257,6 +2440,7 @@ git commit -m "feat: add usePhonics composable for tracking phonics progress"
 ### Task 4.5: Reading session API routes
 
 **Files:**
+
 - Create: `packages/blog/server/api/reading/sessions/index.post.ts`
 - Create: `packages/blog/server/api/reading/sessions/index.get.ts`
 
@@ -2314,7 +2498,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, message: 'Unauthorized' });
   }
 
-  const { childId } = await getValidatedQuery(event, z.object({ childId: z.coerce.number() }).parse);
+  const { childId } = await getValidatedQuery(
+    event,
+    z.object({ childId: z.coerce.number() }).parse,
+  );
   const db = useDrizzle();
 
   const sessions = await db.query.readingSessions.findMany({

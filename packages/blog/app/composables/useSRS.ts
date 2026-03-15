@@ -1,7 +1,7 @@
-import type { SrsReviewRequest } from '~~/shared/reading-types';
+import type { SrsReviewRequest, SrsCardResponse } from '~~/shared/reading-types';
 
 export function useSRS(childId: Ref<number | null>) {
-  const dueCards = ref<any[]>([]);
+  const dueCards = ref<SrsCardResponse[]>([]);
   const currentIndex = ref(0);
   const isLoading = ref(false);
 

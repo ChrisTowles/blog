@@ -72,76 +72,76 @@ Same PostgreSQL database as the blog.
 
 ### child_profiles
 
-| Column | Type | Notes |
-|--------|------|-------|
-| id | serial PK | |
-| userId | varchar(36) FK -> users | Parent account (users.id is UUID varchar) |
-| name | varchar(100) | |
-| avatarUrl | text | nullable |
-| birthYear | integer | |
-| currentPhase | integer | 1-4, default 1 |
-| interests | text[] | e.g. ["dinosaurs", "space"] |
-| createdAt | timestamp | |
-| updatedAt | timestamp | Application-managed via Drizzle `.$onUpdate()` |
+| Column       | Type                    | Notes                                          |
+| ------------ | ----------------------- | ---------------------------------------------- |
+| id           | serial PK               |                                                |
+| userId       | varchar(36) FK -> users | Parent account (users.id is UUID varchar)      |
+| name         | varchar(100)            |                                                |
+| avatarUrl    | text                    | nullable                                       |
+| birthYear    | integer                 |                                                |
+| currentPhase | integer                 | 1-4, default 1                                 |
+| interests    | text[]                  | e.g. ["dinosaurs", "space"]                    |
+| createdAt    | timestamp               |                                                |
+| updatedAt    | timestamp               | Application-managed via Drizzle `.$onUpdate()` |
 
 ### phonics_units
 
-| Column | Type | Notes |
-|--------|------|-------|
-| id | serial PK | |
-| phase | integer | 1-4 |
-| orderIndex | integer | Sort within phase |
-| name | varchar(100) | e.g. "CVC short-a" |
-| patterns | text[] | e.g. ["CVC-short-a"] |
-| description | text | |
+| Column      | Type         | Notes                |
+| ----------- | ------------ | -------------------- |
+| id          | serial PK    |                      |
+| phase       | integer      | 1-4                  |
+| orderIndex  | integer      | Sort within phase    |
+| name        | varchar(100) | e.g. "CVC short-a"   |
+| patterns    | text[]       | e.g. ["CVC-short-a"] |
+| description | text         |                      |
 
 Seeded with full Phase 1-4 scope & sequence from the research doc.
 
 ### child_phonics_progress
 
-| Column | Type | Notes |
-|--------|------|-------|
-| id | serial PK | |
-| childId | integer FK -> child_profiles | |
-| phonicsUnitId | integer FK -> phonics_units | |
-| status | varchar(20) | locked / active / mastered |
-| masteredAt | timestamp | nullable |
+| Column        | Type                         | Notes                      |
+| ------------- | ---------------------------- | -------------------------- |
+| id            | serial PK                    |                            |
+| childId       | integer FK -> child_profiles |                            |
+| phonicsUnitId | integer FK -> phonics_units  |                            |
+| status        | varchar(20)                  | locked / active / mastered |
+| masteredAt    | timestamp                    | nullable                   |
 
 ### srs_cards
 
-| Column | Type | Notes |
-|--------|------|-------|
-| id | serial PK | |
-| childId | integer FK -> child_profiles | |
-| cardType | varchar(20) | phoneme / sight_word / vocab |
-| front | text | |
-| back | text | |
-| audioUrl | text | nullable |
-| state | integer | FSRS card state |
-| difficulty | real | FSRS |
-| stability | real | FSRS |
-| due | timestamp | FSRS |
-| lastReview | timestamp | nullable, FSRS |
-| reps | integer | FSRS |
-| lapses | integer | FSRS |
-| relatedPhonicsUnitId | integer FK -> phonics_units | nullable |
+| Column               | Type                         | Notes                        |
+| -------------------- | ---------------------------- | ---------------------------- |
+| id                   | serial PK                    |                              |
+| childId              | integer FK -> child_profiles |                              |
+| cardType             | varchar(20)                  | phoneme / sight_word / vocab |
+| front                | text                         |                              |
+| back                 | text                         |                              |
+| audioUrl             | text                         | nullable                     |
+| state                | integer                      | FSRS card state              |
+| difficulty           | real                         | FSRS                         |
+| stability            | real                         | FSRS                         |
+| due                  | timestamp                    | FSRS                         |
+| lastReview           | timestamp                    | nullable, FSRS               |
+| reps                 | integer                      | FSRS                         |
+| lapses               | integer                      | FSRS                         |
+| relatedPhonicsUnitId | integer FK -> phonics_units  | nullable                     |
 
 ### stories
 
-| Column | Type | Notes |
-|--------|------|-------|
-| id | serial PK | |
-| childId | integer FK -> child_profiles | nullable (null = curated) |
-| title | varchar(200) | |
-| content | jsonb | Word arrays with metadata |
-| theme | varchar(100) | |
-| targetPatterns | text[] | Phonics patterns used |
-| targetWords | text[] | New words introduced |
-| decodabilityScore | real | 0-1, target >= 0.95 |
-| fleschKincaid | real | Target 1.0-3.0 |
-| illustrationUrls | text[] | |
-| aiGenerated | boolean | |
-| createdAt | timestamp | |
+| Column            | Type                         | Notes                     |
+| ----------------- | ---------------------------- | ------------------------- |
+| id                | serial PK                    |                           |
+| childId           | integer FK -> child_profiles | nullable (null = curated) |
+| title             | varchar(200)                 |                           |
+| content           | jsonb                        | Word arrays with metadata |
+| theme             | varchar(100)                 |                           |
+| targetPatterns    | text[]                       | Phonics patterns used     |
+| targetWords       | text[]                       | New words introduced      |
+| decodabilityScore | real                         | 0-1, target >= 0.95       |
+| fleschKincaid     | real                         | Target 1.0-3.0            |
+| illustrationUrls  | text[]                       |                           |
+| aiGenerated       | boolean                      |                           |
+| createdAt         | timestamp                    |                           |
 
 `content` JSONB structure:
 
@@ -150,28 +150,28 @@ Seeded with full Phase 1-4 scope & sequence from the research doc.
   pages: [
     {
       words: [
-        { text: "cat", decodable: true, pattern: "CVC-short-a", sightWord: false },
-        { text: "the", decodable: false, pattern: null, sightWord: true }
-      ]
-    }
-  ]
+        { text: 'cat', decodable: true, pattern: 'CVC-short-a', sightWord: false },
+        { text: 'the', decodable: false, pattern: null, sightWord: true },
+      ],
+    },
+  ];
 }
 ```
 
 ### reading_sessions
 
-| Column | Type | Notes |
-|--------|------|-------|
-| id | serial PK | |
-| childId | integer FK -> child_profiles | |
-| storyId | integer FK -> stories | |
-| mode | varchar(20) | listen / guided / independent |
-| wcpm | real | nullable, Words Correct Per Minute |
-| accuracy | real | nullable, 0-1 |
-| duration | integer | seconds |
-| miscues | jsonb | nullable |
-| recordingUrl | text | nullable |
-| completedAt | timestamp | |
+| Column       | Type                         | Notes                              |
+| ------------ | ---------------------------- | ---------------------------------- |
+| id           | serial PK                    |                                    |
+| childId      | integer FK -> child_profiles |                                    |
+| storyId      | integer FK -> stories        |                                    |
+| mode         | varchar(20)                  | listen / guided / independent      |
+| wcpm         | real                         | nullable, Words Correct Per Minute |
+| accuracy     | real                         | nullable, 0-1                      |
+| duration     | integer                      | seconds                            |
+| miscues      | jsonb                        | nullable                           |
+| recordingUrl | text                         | nullable                           |
+| completedAt  | timestamp                    |                                    |
 
 ## AI Story Generation Pipeline
 
@@ -239,6 +239,7 @@ const fsrs = new FSRS({
 ### Auto-Generation
 
 When a phonics unit status changes to `active`:
+
 - Create SRS cards for each pattern in the unit
 - Create SRS cards for target sight words at that level
 
@@ -251,6 +252,7 @@ When a phonics unit status changes to `active`:
 ### Client Composable
 
 `useSRS.ts`:
+
 - Manages review session state (current card, queue)
 - Tracks session progress
 - Queues offline reviews for later sync
@@ -312,6 +314,7 @@ Four feature-sliced teammates. Lead coordinates via shared task list with depend
 **Owns:** `server/database/schema/reading.ts`, migrations, `shared/reading-types.ts`, seed data
 
 Tasks:
+
 1. Create Drizzle schema with all 6 tables
 2. Generate and run migrations
 3. Seed phonics_units with full Phase 1-4 scope & sequence
@@ -327,6 +330,7 @@ Tasks:
 Note: `useSRS.ts` and `usePhonics.ts` live in `app/composables/` but are owned by srs-engine.
 
 Tasks:
+
 1. Story reader page with WordHighlighter component
 2. useTTS composable (Web Speech API, onboundary word tracking)
 3. SRS card review UI (3-button emoji rating)
@@ -339,6 +343,7 @@ Tasks:
 **Owns:** `server/utils/reading/`, `server/api/reading/stories/`
 
 Tasks:
+
 1. Phonics validation engine (word -> grapheme-phoneme decomposition)
 2. Story generation prompt + Claude Haiku integration
 3. Decodability scoring (verify words against child's known patterns)
@@ -350,6 +355,7 @@ Tasks:
 **Owns:** `useSRS.ts`, `usePhonics.ts`, `server/api/reading/srs/`, `server/api/reading/children/`
 
 Tasks:
+
 1. ts-fsrs integration with child-adapted parameters
 2. useSRS composable (due cards, schedule review, sync)
 3. SRS API routes (due, review, stats)

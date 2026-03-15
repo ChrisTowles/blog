@@ -41,3 +41,29 @@ export interface GenerateStoryRequest {
   childId: number;
   theme?: string;
 }
+
+// API response shapes for client-side typing
+export interface SrsCardResponse {
+  id: number;
+  childId: number;
+  cardType: string;
+  front: string;
+  back: string;
+  audioUrl: string | null;
+  state: number;
+  difficulty: number;
+  stability: number;
+  due: string;
+  lastReview: string | null;
+  reps: number;
+  lapses: number;
+  relatedPhonicsUnitId: number | null;
+}
+
+export interface PhonicsProgressResponse {
+  id: number;
+  childId: number;
+  phonicsUnitId: number;
+  status: PhonicsProgressStatus;
+  masteredAt: string | null;
+}

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { count, gte } from 'drizzle-orm';
 import { generateStory } from '../../../utils/reading/story-generator';
 import { reviewStorySafety } from '../../../utils/reading/story-safety';
 import { SIGHT_WORDS_BY_PHASE } from '../../../utils/reading/phonics-seed';
@@ -26,14 +27,21 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'Child not found' });
   }
 
-  // Rate limit: 5 stories/child/day
+  // Rate limit: 5 stories/child/day (use COUNT, not full row fetch)
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const todayStories = await db.query.stories.findMany({
-    where: (s, { eq, and: a, gte }) =>
-      a(eq(s.childId, body.childId), eq(s.aiGenerated, true), gte(s.createdAt, today)),
-  });
-  if (todayStories.length >= 5) {
+  const countResult = await db
+    .select({ value: count() })
+    .from(tables.stories)
+    .where(
+      and(
+        eq(tables.stories.childId, body.childId),
+        eq(tables.stories.aiGenerated, true),
+        gte(tables.stories.createdAt, today),
+      ),
+    );
+  const todayCount = countResult[0]?.value ?? 0;
+  if (todayCount >= 5) {
     throw createError({ statusCode: 429, message: 'Daily story limit reached (5/day)' });
   }
 

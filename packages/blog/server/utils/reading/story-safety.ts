@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { getAnthropicClient } from '../ai/anthropic';
 
 const BLOCKLIST = [
   'kill',
@@ -44,7 +44,7 @@ export async function reviewStorySafety(storyText: string): Promise<SafetyResult
   }
 
   // Stage 2: AI review
-  const client = new Anthropic();
+  const client = getAnthropicClient();
   const response = await client.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 256,

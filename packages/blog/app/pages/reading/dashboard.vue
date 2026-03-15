@@ -16,7 +16,7 @@ const { activeChildId } = useActiveChild();
         <UCard>
           <template #header><h3 class="font-semibold">Stories</h3></template>
           <p class="text-gray-500 mb-4">Read AI-generated stories matched to your level.</p>
-          <UButton to="/reading/dashboard" variant="soft">Browse Stories</UButton>
+          <UButton :to="`/reading/child/${activeChildId}`" variant="soft">Browse Stories</UButton>
         </UCard>
         <UCard>
           <template #header><h3 class="font-semibold">Practice Cards</h3></template>
