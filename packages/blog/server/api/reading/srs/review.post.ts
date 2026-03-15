@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { FSRS, Rating, type Card } from 'ts-fsrs';
+import { FSRS, Rating, type Card, type Grade } from 'ts-fsrs';
 
 const bodySchema = z.object({
   cardId: z.number(),
@@ -40,15 +40,15 @@ export default defineEventHandler(async (event) => {
     difficulty: card.difficulty,
     elapsed_days: 0,
     scheduled_days: 0,
+    learning_steps: 0,
     reps: card.reps,
     lapses: card.lapses,
-    learning_steps: 0,
     state: card.state as Card['state'],
     last_review: card.lastReview ?? undefined,
   };
 
-  const rating = RATING_MAP[body.rating];
-  const result = fsrs.next(fsrsCard, new Date(), rating);
+  const grade = RATING_MAP[body.rating];
+  const result = fsrs.next(fsrsCard, new Date(), grade);
   const next = result.card;
 
   // Update card in DB
