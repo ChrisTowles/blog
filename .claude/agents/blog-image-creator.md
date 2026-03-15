@@ -49,6 +49,7 @@ GOOGLE_AI_API_KEY=$GOOGLE_AI_API_KEY pnpm tsx scripts/generate-blog-image.ts "<p
 ## Output
 
 Report to leader:
+
 - **Status:** success or failed
 - **Image path:** where the image was saved (or prompt path if failed)
 - **Prompt used:** the full prompt for reference
