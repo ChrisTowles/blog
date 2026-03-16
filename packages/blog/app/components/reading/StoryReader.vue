@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { StoryContent, StoryWord, ReadingMode, ReadingMiscue } from '~~/shared/reading-types';
-import type { WordFeedback } from '~/composables/useSpeechRecognition';
 
 const props = defineProps<{
   title: string;
@@ -8,7 +7,6 @@ const props = defineProps<{
   illustrationUrls?: string[];
   storyId?: number;
   childId?: number;
-  bedtime?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -38,19 +36,6 @@ const {
   setRate,
 } = useTTS();
 
-const {
-  isActive: bedtimeActive,
-  toggle: toggleBedtime,
-  shouldSuggest: bedtimeShouldSuggest,
-  activate: activateBedtime,
-  dismissSuggestion: dismissBedtimeSuggestion,
-} = useBedtimeMode();
-
-// Auto-activate bedtime if prop is set
-if (props.bedtime) {
-  activateBedtime();
-}
-
 const currentPage = ref(0);
 const totalPages = computed(() => props.content.pages.length);
 const currentWords = computed(() => props.content.pages[currentPage.value]?.words ?? []);
@@ -60,34 +45,7 @@ const currentIllustration = computed(() => {
   return props.illustrationUrls[currentPage.value] ?? null;
 });
 
-// Bedtime mode: auto-advance after TTS finishes with 5s pause
-const bedtimeAutoAdvanceTimer = ref<ReturnType<typeof setTimeout> | null>(null);
-
-watch(isSpeaking, (speaking) => {
-  if (!speaking && bedtimeActive.value && mode.value === 'listen') {
-    if (currentPage.value < totalPages.value - 1) {
-      bedtimeAutoAdvanceTimer.value = setTimeout(() => {
-        currentPage.value++;
-        setTimeout(() => playCurrentPage(), 400);
-      }, 5000);
-    }
-  }
-});
-
-function clearBedtimeTimer() {
-  if (bedtimeAutoAdvanceTimer.value) {
-    clearTimeout(bedtimeAutoAdvanceTimer.value);
-    bedtimeAutoAdvanceTimer.value = null;
-  }
-}
-
-watch(
-  bedtimeActive,
-  (active) => {
-    setRate(active ? 0.6 : 0.8);
-  },
-  { immediate: true },
-);
+setRate(0.8);
 
 // Guided mode speech recognition
 const {
@@ -245,7 +203,6 @@ function modeIcon(m: ReadingMode): string {
 function setMode(newMode: ReadingMode) {
   stopTTS();
   stopListening();
-  clearBedtimeTimer();
   mode.value = newMode;
   allMiscues.value = [];
   pagesCompleted.value = 0;
@@ -255,7 +212,6 @@ function setMode(newMode: ReadingMode) {
 }
 
 function playCurrentPage() {
-  clearBedtimeTimer();
   const text = currentWords.value.map((w) => w.text).join(' ');
   speak(text);
 }
@@ -305,7 +261,6 @@ function handleWordClick(word: StoryWord) {
 
 function nextPage() {
   stopTTS();
-  clearBedtimeTimer();
   if (mode.value === 'guided') stopListening();
   if (currentPage.value < totalPages.value - 1) {
     currentPage.value++;
@@ -317,7 +272,6 @@ function nextPage() {
 
 function prevPage() {
   stopTTS();
-  clearBedtimeTimer();
   if (mode.value === 'guided') stopListening();
   if (currentPage.value > 0) {
     currentPage.value--;
@@ -327,62 +281,19 @@ function prevPage() {
 onUnmounted(() => {
   stopTTS();
   stopListening();
-  clearBedtimeTimer();
 });
 </script>
 
 <template>
   <div class="reading-immersive relative">
-    <!-- Bedtime sky ambiance -->
-    <ReadingBedtimeSky v-if="bedtimeActive" />
-
-    <!-- Bedtime suggestion banner -->
-    <div
-      v-if="bedtimeShouldSuggest && !bedtimeActive"
-      class="fixed top-4 left-1/2 -translate-x-1/2 z-20 p-4 rounded-2xl bg-[#1a2540]/95 backdrop-blur-sm border border-[#c9a84c]/30 text-center text-sm text-[#e8dcc8] flex items-center gap-3 shadow-lg"
-    >
-      <span class="text-lg">&#x1F31F;</span>
-      <span class="font-semibold">It's getting late -- switch to bedtime mode?</span>
-      <UButton
-        size="xs"
-        class="!rounded-full !bg-[#c9a84c] !text-[#0f1729] !font-bold"
-        @click="activateBedtime"
-      >
-        Enable
-      </UButton>
-      <UButton
-        size="xs"
-        variant="ghost"
-        class="!text-[#e8dcc8]/60"
-        @click="dismissBedtimeSuggestion"
-      >
-        Dismiss
-      </UButton>
-    </div>
-
     <!-- Title bar -->
     <div class="text-center pt-6 pb-2 relative z-10">
-      <div class="flex items-center justify-center gap-3">
-        <h1
-          class="font-extrabold text-[var(--reading-text)]"
-          :class="bedtimeActive ? 'text-4xl md:text-5xl bedtime-text-glow' : 'text-3xl md:text-4xl'"
-          style="font-family: var(--reading-font-display)"
-        >
-          {{ title }}
-        </h1>
-        <button
-          class="w-10 h-10 rounded-full flex items-center justify-center text-xl transition-all hover:scale-110 active:scale-95"
-          :class="
-            bedtimeActive
-              ? 'bg-[#c9a84c]/20 hover:bg-[#c9a84c]/30'
-              : 'bg-[var(--reading-primary)]/10 hover:bg-[var(--reading-primary)]/20'
-          "
-          :title="bedtimeActive ? 'Exit bedtime mode' : 'Enter bedtime mode'"
-          @click="toggleBedtime"
-        >
-          {{ bedtimeActive ? '&#x2600;&#xFE0F;' : '&#x1F319;' }}
-        </button>
-      </div>
+      <h1
+        class="font-extrabold text-[var(--reading-text)] text-3xl md:text-4xl"
+        style="font-family: var(--reading-font-display)"
+      >
+        {{ title }}
+      </h1>
 
       <!-- Page progress dots -->
       <div class="flex items-center justify-center gap-1.5 mt-3">
@@ -406,26 +317,15 @@ onUnmounted(() => {
 
     <!-- Mode selector - pill style -->
     <div class="flex items-center justify-center py-3 relative z-10">
-      <div
-        class="inline-flex rounded-full p-1.5 gap-1"
-        :class="
-          bedtimeActive
-            ? 'bg-[#1a2540]/80 border border-[#c9a84c]/20'
-            : 'bg-[var(--reading-primary)]/10'
-        "
-      >
+      <div class="inline-flex rounded-full p-1.5 gap-1 bg-[var(--reading-primary)]/10">
         <button
           v-for="m in modeOptions"
           :key="m"
           class="rounded-full px-4 py-2 text-sm font-bold transition-all flex items-center gap-1.5"
           :class="
             mode === m
-              ? bedtimeActive
-                ? 'bg-[#c9a84c] text-[#0f1729] shadow-md'
-                : 'bg-[var(--reading-primary)] text-white shadow-md'
-              : bedtimeActive
-                ? 'text-[#e8dcc8]/60 hover:text-[#e8dcc8]'
-                : 'text-[var(--reading-primary)]/60 hover:text-[var(--reading-primary)]'
+              ? 'bg-[var(--reading-primary)] text-white shadow-md'
+              : 'text-[var(--reading-primary)]/60 hover:text-[var(--reading-primary)]'
           "
           style="font-family: var(--reading-font-display)"
           @click="setMode(m)"
@@ -462,50 +362,25 @@ onUnmounted(() => {
       }}
     </div>
 
-    <!-- Bedtime auto-advance indicator -->
-    <div
-      v-if="
-        bedtimeActive &&
-        mode === 'listen' &&
-        !isSpeaking &&
-        bedtimeAutoAdvanceTimer &&
-        currentPage < totalPages - 1
-      "
-      class="mx-auto max-w-xs p-3 rounded-2xl text-center text-sm text-[#e8dcc8]/50 font-semibold relative z-10"
-    >
-      <span class="inline-block reading-pulse">&#x2728;</span> Next page in a moment...
-    </div>
-
     <!-- Main reading area -->
     <div class="flex-1 flex flex-col items-center justify-center px-6 md:px-12 gap-6 relative z-10">
       <Transition name="reading-page" mode="out-in">
-        <div
-          :key="currentPage"
-          class="flex flex-col items-center gap-6 w-full max-w-2xl"
-          :class="bedtimeActive ? 'bedtime-text-glow' : ''"
-        >
+        <div :key="currentPage" class="flex flex-col items-center gap-6 w-full max-w-2xl">
           <!-- Illustration with rounded frame -->
           <div
             v-if="currentIllustration"
-            class="w-full rounded-3xl overflow-hidden shadow-lg"
-            :class="bedtimeActive ? 'shadow-[#c9a84c]/10' : 'shadow-[var(--reading-primary)]/15'"
+            class="w-full rounded-3xl overflow-hidden shadow-lg shadow-[var(--reading-primary)]/15"
           >
             <img
               :src="currentIllustration"
               :alt="`Illustration for page ${currentPage + 1}`"
               class="w-full max-h-56 md:max-h-72 object-cover"
-              :class="bedtimeActive ? 'brightness-75 saturate-75' : ''"
             />
           </div>
 
           <!-- Text area with subtle card background -->
           <div
-            class="w-full rounded-3xl p-6 md:p-8"
-            :class="
-              bedtimeActive
-                ? 'bg-[#162040]/60 border border-[#c9a84c]/10'
-                : 'bg-[var(--reading-card-bg)] border-2 border-[var(--reading-primary)]/10 shadow-sm'
-            "
+            class="w-full rounded-3xl p-6 md:p-8 bg-[var(--reading-card-bg)] border-2 border-[var(--reading-primary)]/10 shadow-sm"
           >
             <ReadingWordHighlighter
               :words="currentWords"
@@ -519,12 +394,11 @@ onUnmounted(() => {
                   ? [...wordFeedbacks]
                   : undefined
               "
-              :class="[
+              :class="
                 mode === 'read-together' && isParentTurn && togetherActive
                   ? 'text-[var(--reading-primary)]'
-                  : '',
-                bedtimeActive ? 'text-2xl md:text-3xl' : '',
-              ]"
+                  : ''
+              "
               @word-click="handleWordClick"
             />
           </div>
@@ -534,12 +408,7 @@ onUnmounted(() => {
 
     <!-- Controls area - sticky at bottom -->
     <div
-      class="sticky bottom-0 pb-6 pt-4 relative z-10"
-      :class="
-        bedtimeActive
-          ? 'bg-gradient-to-t from-[#0a1020] via-[#0a1020]/95 to-transparent'
-          : 'bg-gradient-to-t from-[var(--reading-bg)] via-[var(--reading-bg)]/95 to-transparent'
-      "
+      class="sticky bottom-0 pb-6 pt-4 relative z-10 bg-gradient-to-t from-[var(--reading-bg)] via-[var(--reading-bg)]/95 to-transparent"
     >
       <!-- Listen mode controls -->
       <div v-if="mode === 'listen'" class="flex items-center justify-center gap-3 md:gap-5">
