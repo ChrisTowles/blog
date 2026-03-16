@@ -7,6 +7,7 @@ interface DemoStory {
   phase: number;
   patterns: string[];
   content: StoryContent;
+  illustrationUrls?: string[];
 }
 
 function w(

@@ -64,7 +64,11 @@ function selectStory(id: string) {
         Back to Stories
       </UButton>
     </div>
-    <ReadingStoryReader :title="selectedStory.title" :content="selectedStory.content" />
+    <ReadingStoryReader
+      :title="selectedStory.title"
+      :content="selectedStory.content"
+      :illustration-urls="selectedStory.illustrationUrls"
+    />
     <div class="absolute bottom-20 left-0 right-0 text-center">
       <UButton to="/reading/onboarding" variant="soft" size="sm">
         Sign up for personalized stories

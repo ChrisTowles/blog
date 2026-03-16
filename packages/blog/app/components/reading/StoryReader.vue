@@ -4,6 +4,7 @@ import type { StoryContent, StoryWord } from '~~/shared/reading-types';
 const props = defineProps<{
   title: string;
   content: StoryContent;
+  illustrationUrls?: string[];
 }>();
 
 const {
@@ -22,6 +23,11 @@ const {
 const currentPage = ref(0);
 const totalPages = computed(() => props.content.pages.length);
 const currentWords = computed(() => props.content.pages[currentPage.value]?.words ?? []);
+const currentIllustration = computed(() => {
+  if (!props.illustrationUrls?.length) return null;
+  // index 0 = cover (page 0), index 1+ = per-page
+  return props.illustrationUrls[currentPage.value] ?? null;
+});
 
 function playCurrentPage() {
   const text = currentWords.value.map((w) => w.text).join(' ');
@@ -58,7 +64,13 @@ onUnmounted(() => {
       <p class="text-sm text-gray-500">Page {{ currentPage + 1 }} of {{ totalPages }}</p>
     </div>
 
-    <div class="flex-1 flex items-center justify-center px-8">
+    <div class="flex-1 flex flex-col items-center justify-center px-8 gap-4">
+      <img
+        v-if="currentIllustration"
+        :src="currentIllustration"
+        :alt="`Illustration for page ${currentPage + 1}`"
+        class="max-h-48 md:max-h-64 rounded-xl object-contain"
+      />
       <ReadingWordHighlighter
         :words="currentWords"
         :current-word-index="currentWordIndex"

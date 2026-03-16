@@ -22,6 +22,9 @@ export const envSchema = z.object({
   NUXT_OAUTH_GITHUB_CLIENT_ID: z.string().min(1, 'NUXT_OAUTH_GITHUB_CLIENT_ID is required'),
   NUXT_OAUTH_GITHUB_CLIENT_SECRET: z.string().min(1, 'NUXT_OAUTH_GITHUB_CLIENT_SECRET is required'),
 
+  // Google AI (Gemini) — optional, used for story illustrations
+  GOOGLE_AI_API_KEY: z.string().optional().default(''),
+
   // AWS Bedrock
   AWS_REGION: z.string().default('us-east-1'),
   AWS_ACCESS_KEY_ID: z.string().min(1, 'AWS_ACCESS_KEY_ID is required'),
