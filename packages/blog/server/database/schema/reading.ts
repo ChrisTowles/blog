@@ -136,6 +136,7 @@ export const stories = pgTable(
     fleschKincaid: real().notNull().default(0),
     illustrationUrls: text().array().notNull().default([]),
     aiGenerated: boolean().notNull().default(false),
+    favorited: boolean().notNull().default(false),
     createdAt: timestamp().defaultNow().notNull(),
   },
   (table) => [index('stories_child_id_idx').on(table.childId)],

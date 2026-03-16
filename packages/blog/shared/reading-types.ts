@@ -67,3 +67,14 @@ export interface PhonicsProgressResponse {
   status: PhonicsProgressStatus;
   masteredAt: string | null;
 }
+
+export interface PhonicsMapUnit {
+  id: number;
+  phase: PhonicsPhase;
+  orderIndex: number;
+  name: string;
+  patterns: string[];
+  description: string;
+  status: PhonicsProgressStatus;
+  masteredAt: string | null;
+}

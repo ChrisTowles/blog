@@ -6,6 +6,7 @@ const navItems = [
   { label: 'Dashboard', to: '/reading/dashboard', icon: 'i-lucide-layout-dashboard' },
   { label: 'Practice', to: '/reading/practice', icon: 'i-lucide-book-open' },
   { label: 'Demo', to: '/reading/demo', icon: 'i-lucide-play' },
+  { label: 'Settings', to: '/reading/settings', icon: 'i-lucide-settings' },
 ];
 </script>
 
