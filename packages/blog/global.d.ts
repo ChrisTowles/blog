@@ -5,6 +5,11 @@ declare global {
     username?: string;
     avatar?: string;
   }
+
+  interface Window {
+    SpeechRecognition: typeof SpeechRecognition;
+    webkitSpeechRecognition: typeof SpeechRecognition;
+  }
 }
 
 export {};
