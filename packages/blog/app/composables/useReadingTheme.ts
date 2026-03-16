@@ -1,0 +1,99 @@
+export interface ThemeConfig {
+  name: string;
+  label: string;
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  successColor: string;
+  highlightColor: string;
+  backgroundColor: string;
+  cardBackground: string;
+  textColor: string;
+  fontFamily: string;
+  borderRadius: string;
+  mascotEmoji: string;
+}
+
+const BUILT_IN_THEMES: ThemeConfig[] = [
+  {
+    name: 'bluey',
+    label: 'Bluey',
+    primaryColor: '#4da8da',
+    secondaryColor: '#ffb5c2',
+    accentColor: '#f4845f',
+    successColor: '#7ec8a0',
+    highlightColor: '#ffd166',
+    backgroundColor: '#fff8f0',
+    cardBackground: '#ffffff',
+    textColor: '#2d3748',
+    fontFamily: "'Nunito', 'Rounded Mplus 1c', sans-serif",
+    borderRadius: '1rem',
+    mascotEmoji: '🐶',
+  },
+];
+
+const THEME_STORAGE_KEY = 'reading-theme';
+
+export function useReadingTheme() {
+  const activeThemeName = useState<string>('reading-theme-name', () => 'bluey');
+  const themes = useState<ThemeConfig[]>('reading-themes', () => [...BUILT_IN_THEMES]);
+
+  const activeTheme = computed(
+    () => themes.value.find((t) => t.name === activeThemeName.value) ?? BUILT_IN_THEMES[0]!,
+  );
+
+  function applyTheme(theme: ThemeConfig) {
+    if (!import.meta.client) return;
+    const el = document.querySelector('.reading-theme') as HTMLElement | null;
+    if (!el) return;
+    el.style.setProperty('--reading-sky-blue', theme.primaryColor);
+    el.style.setProperty('--reading-pink', theme.secondaryColor);
+    el.style.setProperty('--reading-orange', theme.accentColor);
+    el.style.setProperty('--reading-green', theme.successColor);
+    el.style.setProperty('--reading-yellow', theme.highlightColor);
+    el.style.setProperty('--reading-cream', theme.backgroundColor);
+    el.style.setProperty('--reading-white', theme.cardBackground);
+    el.style.setProperty('--reading-text', theme.textColor);
+    el.style.setProperty('--reading-font-display', theme.fontFamily);
+    el.style.setProperty('--reading-font-body', theme.fontFamily);
+    el.style.setProperty('--reading-radius', theme.borderRadius);
+    el.style.setProperty('--reading-radius-lg', `calc(${theme.borderRadius} * 1.5)`);
+  }
+
+  function setTheme(name: string) {
+    activeThemeName.value = name;
+    const theme = themes.value.find((t) => t.name === name);
+    if (theme) {
+      applyTheme(theme);
+      if (import.meta.client) {
+        localStorage.setItem(THEME_STORAGE_KEY, name);
+      }
+    }
+  }
+
+  function addTheme(theme: ThemeConfig) {
+    const existing = themes.value.findIndex((t) => t.name === theme.name);
+    if (existing >= 0) {
+      themes.value[existing] = theme;
+    } else {
+      themes.value.push(theme);
+    }
+  }
+
+  function initTheme() {
+    if (!import.meta.client) return;
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    if (stored && themes.value.some((t) => t.name === stored)) {
+      setTheme(stored);
+    }
+  }
+
+  return {
+    themes: computed(() => themes.value),
+    activeTheme,
+    activeThemeName: computed(() => activeThemeName.value),
+    setTheme,
+    addTheme,
+    initTheme,
+  };
+}
