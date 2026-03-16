@@ -8,6 +8,7 @@ const { data: story } = await useFetch<{
   id: number;
   title: string;
   content: StoryContent;
+  illustrationUrls: string[];
 }>(`/api/reading/stories/${route.params.id}`);
 </script>
 
@@ -16,7 +17,12 @@ const { data: story } = await useFetch<{
     <div class="absolute top-4 left-4 z-10">
       <UButton to="/reading/dashboard" icon="i-heroicons-arrow-left" variant="ghost" />
     </div>
-    <ReadingStoryReader v-if="story" :title="story.title" :content="story.content" />
+    <ReadingStoryReader
+      v-if="story"
+      :title="story.title"
+      :content="story.content"
+      :illustration-urls="story.illustrationUrls"
+    />
     <div v-else class="flex items-center justify-center h-full">
       <UIcon name="i-heroicons-arrow-path" class="animate-spin text-4xl" />
     </div>
