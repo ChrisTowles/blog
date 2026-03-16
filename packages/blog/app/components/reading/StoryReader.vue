@@ -64,9 +64,19 @@ const sessionStartTime = ref(0);
 const allMiscues = ref<ReadingMiscue[]>([]);
 const pagesCompleted = ref(0);
 
-// Watch for page completion in guided mode
+// Read Together mode: odd pages (0-indexed: 0,2,4) = parent, even pages (1,3,5) = child
+const isParentTurn = computed(() => currentPage.value % 2 === 0);
+const isChildTurn = computed(() => !isParentTurn.value);
+const togetherActive = ref(false);
+const togetherChildWordCount = ref(0);
+
+// Watch for page completion in guided mode and read-together child turns
 watch(pageComplete, async (complete) => {
-  if (!complete || mode.value !== 'guided') return;
+  if (!complete) return;
+
+  const isGuidedMode = mode.value === 'guided';
+  const isTogetherChildTurn = mode.value === 'read-together' && isChildTurn.value;
+  if (!isGuidedMode && !isTogetherChildTurn) return;
 
   // Collect miscues from this page
   for (const m of pageMiscues.value) {
@@ -77,6 +87,9 @@ watch(pageComplete, async (complete) => {
     });
   }
   pagesCompleted.value += currentWords.value.length;
+  if (isTogetherChildTurn) {
+    togetherChildWordCount.value += currentWords.value.length;
+  }
 
   stopListening();
 
@@ -84,10 +97,20 @@ watch(pageComplete, async (complete) => {
   if (currentPage.value < totalPages.value - 1) {
     await nextTick();
     currentPage.value++;
-    // Small delay before starting recognition on next page
-    setTimeout(() => startListening(), 500);
+    if (isGuidedMode) {
+      setTimeout(() => startListening(), 500);
+    }
+    // In read-together, child turns auto-start recognition after page flip
+    if (mode.value === 'read-together' && isChildTurn.value && togetherActive.value) {
+      setTimeout(() => startListening(), 500);
+    }
   } else {
-    finishGuidedSession();
+    if (isGuidedMode) {
+      finishGuidedSession();
+    }
+    if (mode.value === 'read-together') {
+      finishTogetherSession();
+    }
   }
 });
 
@@ -107,8 +130,47 @@ function finishGuidedSession() {
   };
 
   emit('sessionComplete', sessionData);
+  saveSession(sessionData);
+}
 
-  // POST to API if we have IDs
+function finishTogetherSession() {
+  togetherActive.value = false;
+  const duration = Math.round((Date.now() - sessionStartTime.value) / 1000);
+
+  // Parent session: listen mode, covers parent pages (even-indexed: 0,2,4...)
+  const parentSession = {
+    mode: 'listen' as ReadingMode,
+    wcpm: 0,
+    accuracy: 1,
+    duration,
+    miscues: [] as ReadingMiscue[],
+  };
+  emit('sessionComplete', parentSession);
+  saveSession(parentSession);
+
+  // Child session: guided mode, covers child pages (odd-indexed: 1,3,5...)
+  const childWords = togetherChildWordCount.value;
+  const childCorrect = childWords - allMiscues.value.length;
+  const accuracy = childWords > 0 ? childCorrect / childWords : 0;
+  const wcpm = duration > 0 ? Math.round((childWords / duration) * 60) : 0;
+  const childSession = {
+    mode: 'guided' as ReadingMode,
+    wcpm,
+    accuracy,
+    duration,
+    miscues: allMiscues.value,
+  };
+  emit('sessionComplete', childSession);
+  saveSession(childSession);
+}
+
+function saveSession(sessionData: {
+  mode: ReadingMode;
+  wcpm: number;
+  accuracy: number;
+  duration: number;
+  miscues: ReadingMiscue[];
+}) {
   if (props.storyId && props.childId) {
     $fetch('/api/reading/sessions', {
       method: 'POST',
@@ -121,6 +183,15 @@ function finishGuidedSession() {
   }
 }
 
+const modeOptions = ['listen', 'guided', 'independent', 'read-together'] as const;
+
+function modeLabel(m: ReadingMode): string {
+  if (m === 'listen') return 'Listen';
+  if (m === 'guided') return 'Read Aloud';
+  if (m === 'independent') return 'Read Alone';
+  return 'Read Together';
+}
+
 function setMode(newMode: ReadingMode) {
   stopTTS();
   stopListening();
@@ -128,6 +199,8 @@ function setMode(newMode: ReadingMode) {
   allMiscues.value = [];
   pagesCompleted.value = 0;
   sessionStartTime.value = 0;
+  togetherActive.value = false;
+  togetherChildWordCount.value = 0;
 }
 
 function playCurrentPage() {
@@ -140,6 +213,38 @@ function startGuidedReading() {
   allMiscues.value = [];
   pagesCompleted.value = 0;
   startListening();
+}
+
+function startTogetherReading() {
+  sessionStartTime.value = Date.now();
+  allMiscues.value = [];
+  pagesCompleted.value = 0;
+  togetherChildWordCount.value = 0;
+  togetherActive.value = true;
+  currentPage.value = 0;
+  // First page is parent's turn — no speech recognition needed
+}
+
+function togetherNextPage() {
+  stopTTS();
+  stopListening();
+  if (currentPage.value >= totalPages.value - 1) {
+    finishTogetherSession();
+    return;
+  }
+  currentPage.value++;
+  // If next page is child's turn, start speech recognition
+  if (isChildTurn.value && togetherActive.value) {
+    setTimeout(() => startListening(), 500);
+  }
+}
+
+function togetherPrevPage() {
+  stopTTS();
+  stopListening();
+  if (currentPage.value > 0) {
+    currentPage.value--;
+  }
 }
 
 function handleWordClick(word: StoryWord) {
@@ -186,9 +291,9 @@ onUnmounted(() => {
     </div>
 
     <!-- Mode selector -->
-    <div class="flex items-center justify-center gap-2 py-2">
+    <div class="flex items-center justify-center gap-2 py-2 flex-wrap">
       <UButton
-        v-for="m in ['listen', 'guided', 'independent'] as const"
+        v-for="m in modeOptions"
         :key="m"
         size="sm"
         :variant="mode === m ? 'solid' : 'outline'"
@@ -197,19 +302,34 @@ onUnmounted(() => {
             ? '!bg-[var(--reading-primary)] !text-white'
             : '!text-[var(--reading-primary)] !border-[var(--reading-primary)]'
         "
-        class="!rounded-full capitalize"
+        class="!rounded-full"
         @click="setMode(m)"
       >
-        {{ m === 'listen' ? 'Listen' : m === 'guided' ? 'Read Aloud' : 'Read Alone' }}
+        {{ modeLabel(m) }}
       </UButton>
     </div>
 
     <!-- Speech not supported warning -->
     <div
-      v-if="mode === 'guided' && !speechSupported"
+      v-if="(mode === 'guided' || mode === 'read-together') && !speechSupported"
       class="mx-8 p-3 rounded-2xl bg-[var(--reading-highlight)]/30 text-center text-sm text-[var(--reading-text)]"
     >
       Speech recognition is not available in this browser. Try Chrome or Edge.
+    </div>
+
+    <!-- Read Together turn indicator -->
+    <div
+      v-if="mode === 'read-together' && togetherActive"
+      class="mx-8 p-3 rounded-2xl text-center text-sm font-bold"
+      :class="
+        isParentTurn
+          ? 'bg-[var(--reading-primary)]/20 text-[var(--reading-primary)]'
+          : 'bg-[var(--reading-accent)]/20 text-[var(--reading-accent)]'
+      "
+    >
+      {{
+        isParentTurn ? "Parent's Turn — Read this page aloud!" : "Child's Turn — Your turn to read!"
+      }}
     </div>
 
     <div class="flex-1 flex flex-col items-center justify-center px-8 gap-4">
@@ -223,8 +343,21 @@ onUnmounted(() => {
           />
           <ReadingWordHighlighter
             :words="currentWords"
-            :current-word-index="mode === 'guided' ? currentExpectedIndex : currentWordIndex"
-            :word-feedbacks="mode === 'guided' ? [...wordFeedbacks] : undefined"
+            :current-word-index="
+              mode === 'guided' || (mode === 'read-together' && isChildTurn)
+                ? currentExpectedIndex
+                : currentWordIndex
+            "
+            :word-feedbacks="
+              mode === 'guided' || (mode === 'read-together' && isChildTurn)
+                ? [...wordFeedbacks]
+                : undefined
+            "
+            :class="
+              mode === 'read-together' && isParentTurn && togetherActive
+                ? 'text-[var(--reading-primary)]'
+                : ''
+            "
             @word-click="handleWordClick"
           />
         </div>
@@ -316,6 +449,68 @@ onUnmounted(() => {
       </div>
 
       <p v-if="isListening" class="text-sm text-[var(--reading-text)]/60 font-semibold">
+        Read the words aloud!
+      </p>
+    </div>
+
+    <!-- Read Together mode controls -->
+    <div v-else-if="mode === 'read-together'" class="flex flex-col items-center gap-3 py-6">
+      <div v-if="!togetherActive" class="flex items-center gap-4">
+        <UButton
+          size="xl"
+          class="!rounded-full !bg-[var(--reading-accent)] hover:!bg-[var(--reading-accent)]/85 !text-white"
+          @click="startTogetherReading"
+        >
+          Start Reading Together
+        </UButton>
+      </div>
+      <div v-else class="flex items-center gap-4">
+        <UButton
+          icon="i-heroicons-backward"
+          variant="ghost"
+          class="!rounded-full !text-[var(--reading-primary)]"
+          :disabled="currentPage === 0"
+          @click="togetherPrevPage"
+        />
+
+        <UButton
+          v-if="isParentTurn"
+          icon="i-heroicons-forward"
+          size="xl"
+          class="!rounded-full !bg-[var(--reading-primary)] hover:!bg-[var(--reading-primary)]/85 !text-white"
+          @click="togetherNextPage"
+        >
+          Done — Child's Turn
+        </UButton>
+        <template v-else>
+          <UButton
+            v-if="!isListening"
+            icon="i-heroicons-microphone"
+            size="xl"
+            class="!rounded-full !bg-[var(--reading-accent)] hover:!bg-[var(--reading-accent)]/85 !text-white"
+            @click="startListening"
+          />
+          <UButton
+            v-else
+            icon="i-heroicons-stop"
+            size="xl"
+            class="!rounded-full !bg-red-500 hover:!bg-red-600 !text-white reading-pulse"
+            @click="stopListening"
+          />
+        </template>
+
+        <UButton
+          icon="i-heroicons-forward"
+          variant="ghost"
+          class="!rounded-full !text-[var(--reading-primary)]"
+          :disabled="currentPage >= totalPages - 1"
+          @click="togetherNextPage"
+        />
+      </div>
+      <p
+        v-if="togetherActive && isChildTurn && isListening"
+        class="text-sm text-[var(--reading-text)]/60 font-semibold"
+      >
         Read the words aloud!
       </p>
     </div>

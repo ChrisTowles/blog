@@ -5,6 +5,7 @@ const navItems = [
   { label: 'Home', to: '/reading', icon: 'i-lucide-home' },
   { label: 'Dashboard', to: '/reading/dashboard', icon: 'i-lucide-layout-dashboard' },
   { label: 'Practice', to: '/reading/practice', icon: 'i-lucide-book-open' },
+  { label: 'Words', to: '/reading/words', icon: 'i-lucide-spell-check' },
   { label: 'Demo', to: '/reading/demo', icon: 'i-lucide-play' },
   { label: 'Settings', to: '/reading/settings', icon: 'i-lucide-settings' },
 ];
