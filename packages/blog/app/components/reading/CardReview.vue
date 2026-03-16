@@ -43,46 +43,48 @@ function handleRate(rating: 1 | 3 | 4) {
 </script>
 
 <template>
-  <UCard
+  <div
     ref="cardRef"
     :data-testid="TEST_IDS.READING.CARD_REVIEW"
-    class="max-w-md mx-auto text-center relative overflow-hidden"
+    class="max-w-md mx-auto text-center relative overflow-hidden rounded-3xl bg-[var(--reading-card-bg)] border-2 border-[var(--reading-primary)]/20 p-8 shadow-md"
   >
     <div class="min-h-40 flex items-center justify-center">
-      <p class="text-3xl font-bold reading-pop">{{ front }}</p>
+      <p
+        class="text-4xl font-extrabold text-[var(--reading-text)] reading-pop"
+        style="font-family: var(--reading-font-display)"
+      >
+        {{ front }}
+      </p>
     </div>
 
     <Transition name="reading-flip">
       <template v-if="revealed">
         <div>
-          <UDivider />
+          <hr class="border-[var(--reading-pink)]/30 my-4" />
           <div class="min-h-20 flex items-center justify-center py-4">
-            <p class="text-xl">{{ back }}</p>
+            <p class="text-2xl text-[var(--reading-text)]/80">{{ back }}</p>
           </div>
           <div class="flex justify-center gap-4 pt-4 reading-stagger">
             <UButton
               :data-testid="TEST_IDS.READING.CARD_RATE_AGAIN"
-              color="error"
-              variant="soft"
               size="lg"
+              class="!rounded-full !px-6 !font-bold !bg-[var(--reading-orange)] hover:!bg-[var(--reading-orange)]/85 !text-white"
               @click="handleRate(1)"
             >
               Again
             </UButton>
             <UButton
               :data-testid="TEST_IDS.READING.CARD_RATE_HARD"
-              color="warning"
-              variant="soft"
               size="lg"
+              class="!rounded-full !px-6 !font-bold !bg-[var(--reading-yellow)] hover:!bg-[var(--reading-yellow)]/85 !text-[var(--reading-text)]"
               @click="handleRate(3)"
             >
               Hard
             </UButton>
             <UButton
               :data-testid="TEST_IDS.READING.CARD_RATE_GOOD"
-              color="success"
-              variant="soft"
               size="lg"
+              class="!rounded-full !px-6 !font-bold !bg-[var(--reading-green)] hover:!bg-[var(--reading-green)]/85 !text-white"
               @click="handleRate(4)"
             >
               Got It!
@@ -98,10 +100,12 @@ function handleRate(rating: 1 | 3 | 4) {
           :data-testid="TEST_IDS.READING.CARD_REVEAL"
           size="xl"
           block
+          class="!rounded-full !font-bold !bg-[var(--reading-accent)] hover:!bg-[var(--reading-accent)]/85 !text-white"
           @click="revealed = true"
-          >Show Answer</UButton
         >
+          Show Answer
+        </UButton>
       </div>
     </template>
-  </UCard>
+  </div>
 </template>
