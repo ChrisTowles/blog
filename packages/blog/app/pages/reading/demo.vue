@@ -67,8 +67,8 @@ const storyEmojis = ['🐱', '🐶', '🦊', '🐻', '🐰', '🦁'];
             Phase {{ story.phase }} &middot; {{ story.content.pages.length }} pages
           </p>
 
-          <!-- Read button hint on hover -->
-          <div class="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <!-- Read button hint — always visible (touch devices) -->
+          <div class="mt-4">
             <span
               class="inline-flex items-center gap-1 text-base font-bold text-[var(--reading-primary)] bg-[var(--reading-primary)]/10 px-4 py-2 rounded-full"
             >
