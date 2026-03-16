@@ -38,14 +38,25 @@ function isNavActive(item: (typeof navItems)[number]): boolean {
       class="sticky top-0 z-50 bg-[var(--reading-card-bg)]/80 backdrop-blur-md border-b border-[var(--reading-secondary)]/30"
     >
       <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-        <NuxtLink
-          to="/reading"
-          class="flex items-center gap-2 text-[var(--reading-primary)] font-bold text-xl shrink-0"
-          style="font-family: var(--reading-font-display)"
-        >
-          <UIcon name="i-lucide-book-heart" class="text-2xl" />
-          <span class="hidden sm:inline">Reading App</span>
-        </NuxtLink>
+        <div class="flex items-center gap-3 shrink-0">
+          <NuxtLink
+            to="/"
+            class="flex items-center gap-1 text-[var(--reading-text)]/50 hover:text-[var(--reading-primary)] text-sm transition-colors"
+            title="Back to Blog"
+          >
+            <UIcon name="i-lucide-arrow-left" class="text-lg" />
+            <span class="hidden sm:inline">Blog</span>
+          </NuxtLink>
+          <span class="text-[var(--reading-text)]/20">|</span>
+          <NuxtLink
+            to="/reading"
+            class="flex items-center gap-2 text-[var(--reading-primary)] font-bold text-xl"
+            style="font-family: var(--reading-font-display)"
+          >
+            <UIcon name="i-lucide-book-heart" class="text-2xl" />
+            <span class="hidden sm:inline">Reading App</span>
+          </NuxtLink>
+        </div>
 
         <nav class="flex items-center gap-1 overflow-x-auto">
           <NuxtLink
@@ -73,7 +84,7 @@ function isNavActive(item: (typeof navItems)[number]): boolean {
     </main>
 
     <footer class="text-center py-6 text-sm text-[var(--reading-text)]/50">
-      <NuxtLink to="/" class="hover:text-[var(--reading-primary)]">Back to Blog</NuxtLink>
+      <NuxtLink to="/" class="hover:text-[var(--reading-primary)]">christowles.com</NuxtLink>
     </footer>
   </div>
 </template>
