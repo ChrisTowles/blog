@@ -8,6 +8,7 @@ const props = defineProps<{
   illustrationUrls?: string[];
   storyId?: number;
   childId?: number;
+  bedtime?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -37,6 +38,19 @@ const {
   setRate,
 } = useTTS();
 
+const {
+  isActive: bedtimeActive,
+  toggle: toggleBedtime,
+  shouldSuggest: bedtimeShouldSuggest,
+  activate: activateBedtime,
+  dismissSuggestion: dismissBedtimeSuggestion,
+} = useBedtimeMode();
+
+// Auto-activate bedtime if prop is set
+if (props.bedtime) {
+  activateBedtime();
+}
+
 const currentPage = ref(0);
 const totalPages = computed(() => props.content.pages.length);
 const currentWords = computed(() => props.content.pages[currentPage.value]?.words ?? []);
@@ -45,6 +59,35 @@ const currentIllustration = computed(() => {
   if (!props.illustrationUrls?.length) return null;
   return props.illustrationUrls[currentPage.value] ?? null;
 });
+
+// Bedtime mode: auto-advance after TTS finishes with 5s pause
+const bedtimeAutoAdvanceTimer = ref<ReturnType<typeof setTimeout> | null>(null);
+
+watch(isSpeaking, (speaking) => {
+  if (!speaking && bedtimeActive.value && mode.value === 'listen') {
+    if (currentPage.value < totalPages.value - 1) {
+      bedtimeAutoAdvanceTimer.value = setTimeout(() => {
+        currentPage.value++;
+        setTimeout(() => playCurrentPage(), 400);
+      }, 5000);
+    }
+  }
+});
+
+function clearBedtimeTimer() {
+  if (bedtimeAutoAdvanceTimer.value) {
+    clearTimeout(bedtimeAutoAdvanceTimer.value);
+    bedtimeAutoAdvanceTimer.value = null;
+  }
+}
+
+watch(
+  bedtimeActive,
+  (active) => {
+    setRate(active ? 0.6 : 0.8);
+  },
+  { immediate: true },
+);
 
 // Guided mode speech recognition
 const {
@@ -195,6 +238,7 @@ function modeLabel(m: ReadingMode): string {
 function setMode(newMode: ReadingMode) {
   stopTTS();
   stopListening();
+  clearBedtimeTimer();
   mode.value = newMode;
   allMiscues.value = [];
   pagesCompleted.value = 0;
@@ -204,6 +248,7 @@ function setMode(newMode: ReadingMode) {
 }
 
 function playCurrentPage() {
+  clearBedtimeTimer();
   const text = currentWords.value.map((w) => w.text).join(' ');
   speak(text);
 }
@@ -253,6 +298,7 @@ function handleWordClick(word: StoryWord) {
 
 function nextPage() {
   stopTTS();
+  clearBedtimeTimer();
   if (mode.value === 'guided') stopListening();
   if (currentPage.value < totalPages.value - 1) {
     currentPage.value++;
@@ -264,6 +310,7 @@ function nextPage() {
 
 function prevPage() {
   stopTTS();
+  clearBedtimeTimer();
   if (mode.value === 'guided') stopListening();
   if (currentPage.value > 0) {
     currentPage.value--;
@@ -273,25 +320,62 @@ function prevPage() {
 onUnmounted(() => {
   stopTTS();
   stopListening();
+  clearBedtimeTimer();
 });
 </script>
 
 <template>
-  <div class="flex flex-col h-full">
-    <div class="text-center py-4">
-      <h1
-        class="text-3xl md:text-4xl font-extrabold text-[var(--reading-text)]"
-        style="font-family: var(--reading-font-display)"
+  <div class="flex flex-col h-full relative">
+    <!-- Bedtime sky ambiance -->
+    <ReadingBedtimeSky v-if="bedtimeActive" />
+
+    <!-- Bedtime suggestion banner -->
+    <div
+      v-if="bedtimeShouldSuggest && !bedtimeActive"
+      class="mx-4 mb-2 p-3 rounded-2xl bg-[#1a2540] border border-[#c9a84c]/30 text-center text-sm text-[#e8dcc8] flex items-center justify-center gap-3 relative z-10"
+    >
+      <span>It's getting late — switch to bedtime mode?</span>
+      <UButton
+        size="xs"
+        class="!rounded-full !bg-[#c9a84c] !text-[#0f1729] !font-bold"
+        @click="activateBedtime"
       >
-        {{ title }}
-      </h1>
+        Enable
+      </UButton>
+      <UButton
+        size="xs"
+        variant="ghost"
+        class="!text-[#e8dcc8]/60"
+        @click="dismissBedtimeSuggestion"
+      >
+        Dismiss
+      </UButton>
+    </div>
+
+    <div class="text-center py-4 relative z-10">
+      <div class="flex items-center justify-center gap-3">
+        <h1
+          class="font-extrabold text-[var(--reading-text)]"
+          :class="bedtimeActive ? 'text-4xl md:text-5xl bedtime-text-glow' : 'text-3xl md:text-4xl'"
+          style="font-family: var(--reading-font-display)"
+        >
+          {{ title }}
+        </h1>
+        <button
+          class="text-xl opacity-60 hover:opacity-100 transition-opacity"
+          :title="bedtimeActive ? 'Exit bedtime mode' : 'Enter bedtime mode'"
+          @click="toggleBedtime"
+        >
+          {{ bedtimeActive ? '☀️' : '🌙' }}
+        </button>
+      </div>
       <p class="text-sm text-[var(--reading-text)]/50 font-semibold">
         Page {{ currentPage + 1 }} of {{ totalPages }}
       </p>
     </div>
 
     <!-- Mode selector -->
-    <div class="flex items-center justify-center gap-2 py-2 flex-wrap">
+    <div class="flex items-center justify-center gap-2 py-2 flex-wrap relative z-10">
       <UButton
         v-for="m in modeOptions"
         :key="m"
@@ -332,14 +416,33 @@ onUnmounted(() => {
       }}
     </div>
 
-    <div class="flex-1 flex flex-col items-center justify-center px-8 gap-4">
+    <!-- Bedtime auto-advance indicator -->
+    <div
+      v-if="
+        bedtimeActive &&
+        mode === 'listen' &&
+        !isSpeaking &&
+        bedtimeAutoAdvanceTimer &&
+        currentPage < totalPages - 1
+      "
+      class="mx-8 p-2 rounded-2xl text-center text-xs text-[var(--reading-text)]/40 font-semibold relative z-10"
+    >
+      Next page in a moment...
+    </div>
+
+    <div class="flex-1 flex flex-col items-center justify-center px-8 gap-4 relative z-10">
       <Transition name="reading-page" mode="out-in">
-        <div :key="currentPage" class="flex flex-col items-center gap-4">
+        <div
+          :key="currentPage"
+          class="flex flex-col items-center gap-4"
+          :class="bedtimeActive ? 'bedtime-text-glow' : ''"
+        >
           <img
             v-if="currentIllustration"
             :src="currentIllustration"
             :alt="`Illustration for page ${currentPage + 1}`"
             class="max-h-48 md:max-h-64 rounded-3xl object-contain shadow-md"
+            :class="bedtimeActive ? 'brightness-75' : ''"
           />
           <ReadingWordHighlighter
             :words="currentWords"
@@ -353,11 +456,12 @@ onUnmounted(() => {
                 ? [...wordFeedbacks]
                 : undefined
             "
-            :class="
+            :class="[
               mode === 'read-together' && isParentTurn && togetherActive
                 ? 'text-[var(--reading-primary)]'
-                : ''
-            "
+                : '',
+              bedtimeActive ? 'text-2xl md:text-3xl' : '',
+            ]"
             @word-click="handleWordClick"
           />
         </div>
@@ -365,7 +469,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Listen mode controls -->
-    <div v-if="mode === 'listen'" class="flex items-center justify-center gap-4 py-6">
+    <div v-if="mode === 'listen'" class="flex items-center justify-center gap-4 py-6 relative z-10">
       <UButton
         icon="i-heroicons-backward"
         variant="ghost"
@@ -414,7 +518,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Guided mode controls -->
-    <div v-else-if="mode === 'guided'" class="flex flex-col items-center gap-3 py-6">
+    <div v-else-if="mode === 'guided'" class="flex flex-col items-center gap-3 py-6 relative z-10">
       <div v-if="speechSupported" class="flex items-center gap-4">
         <UButton
           icon="i-heroicons-backward"
@@ -454,7 +558,10 @@ onUnmounted(() => {
     </div>
 
     <!-- Read Together mode controls -->
-    <div v-else-if="mode === 'read-together'" class="flex flex-col items-center gap-3 py-6">
+    <div
+      v-else-if="mode === 'read-together'"
+      class="flex flex-col items-center gap-3 py-6 relative z-10"
+    >
       <div v-if="!togetherActive" class="flex items-center gap-4">
         <UButton
           size="xl"
@@ -516,7 +623,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Independent mode controls -->
-    <div v-else class="flex items-center justify-center gap-4 py-6">
+    <div v-else class="flex items-center justify-center gap-4 py-6 relative z-10">
       <UButton
         icon="i-heroicons-backward"
         variant="ghost"

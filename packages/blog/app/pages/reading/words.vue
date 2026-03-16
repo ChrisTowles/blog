@@ -6,13 +6,20 @@ definePageMeta({ layout: 'reading', middleware: 'auth' });
 const { activeChildId } = useActiveChild();
 const { speakWord } = useTTS();
 
-const { data: words, status } = useFetch('/api/reading/words', {
+interface MasteredWord {
+  id: number;
+  front: string;
+  back: string;
+  cardType: string;
+  stability: number;
+  reps: number;
+}
+
+const { data: words, status } = useFetch<MasteredWord[]>('/api/reading/words', {
   query: { childId: activeChildId },
-  default: () => [],
+  default: () => [] as MasteredWord[],
   watch: [activeChildId],
 });
-
-type MasteredWord = (typeof words.value)[number];
 
 const groupedWords = computed(() => {
   const groups: Record<string, MasteredWord[]> = {};
