@@ -30,21 +30,8 @@ const BUILT_IN_THEMES: ThemeConfig[] = [
     borderRadius: '1rem',
     mascotEmoji: '🐶',
   },
-  {
-    name: 'bedtime',
-    label: 'Bedtime',
-    primaryColor: '#c9a84c',
-    secondaryColor: '#7b8fb2',
-    accentColor: '#d4a44c',
-    successColor: '#6b9b7a',
-    highlightColor: '#e8c55a',
-    backgroundColor: '#0f1729',
-    cardBackground: '#1a2540',
-    textColor: '#e8dcc8',
-    fontFamily: "'Nunito', 'Rounded Mplus 1c', sans-serif",
-    borderRadius: '1rem',
-    mascotEmoji: '🌙',
-  },
+  // Bedtime is a MODE (CSS overlay via .bedtime-active), not a theme.
+  // Don't add it here — it's controlled by useBedtimeMode.
 ];
 
 const THEME_STORAGE_KEY = 'reading-theme';
