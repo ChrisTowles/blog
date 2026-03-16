@@ -130,10 +130,10 @@ export function useSpeechRecognition(options: SpeechRecognitionOptions) {
     }
   }
 
-  const elapsedSeconds = computed(() => {
+  function getElapsedSeconds(): number {
     if (!startTime.value) return 0;
     return (Date.now() - startTime.value) / 1000;
-  });
+  }
 
   const accuracy = computed(() => {
     const total = wordFeedbacks.value.filter((f) => f !== 'pending').length;
@@ -142,12 +142,12 @@ export function useSpeechRecognition(options: SpeechRecognitionOptions) {
     return correct / total;
   });
 
-  const wcpm = computed(() => {
-    const seconds = elapsedSeconds.value;
+  function getWcpm(): number {
+    const seconds = getElapsedSeconds();
     if (seconds === 0) return 0;
     const wordsRead = wordFeedbacks.value.filter((f) => f !== 'pending').length;
     return Math.round((wordsRead / seconds) * 60);
-  });
+  }
 
   const isComplete = computed(() => {
     return (
@@ -161,6 +161,9 @@ export function useSpeechRecognition(options: SpeechRecognitionOptions) {
     isSupported.value = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
   }
 
+  // Clean up microphone on component unmount
+  onUnmounted(() => stop());
+
   return {
     isSupported: readonly(isSupported),
     isListening: readonly(isListening),
@@ -169,7 +172,8 @@ export function useSpeechRecognition(options: SpeechRecognitionOptions) {
     currentExpectedIndex: readonly(currentExpectedIndex),
     miscues: readonly(miscues),
     accuracy,
-    wcpm,
+    getWcpm,
+    getElapsedSeconds,
     isComplete,
     start,
     stop,

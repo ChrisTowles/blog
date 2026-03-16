@@ -1,7 +1,7 @@
-import type { PhonicsProgressResponse } from '~~/shared/reading-types';
+import type { PhonicsMapUnit } from '~~/shared/reading-types';
 
 export function usePhonics(childId: Ref<number | null>) {
-  const progress = ref<PhonicsProgressResponse[]>([]);
+  const progress = ref<PhonicsMapUnit[]>([]);
   const isLoading = ref(false);
 
   const masteredUnits = computed(() => progress.value.filter((p) => p.status === 'mastered'));
@@ -12,10 +12,10 @@ export function usePhonics(childId: Ref<number | null>) {
     if (!childId.value) return;
     isLoading.value = true;
     try {
-      const child = await $fetch(`/api/reading/children/${childId.value}`);
-      // TODO: fetch phonics progress from dedicated endpoint
-      // For now, return empty until phonics progress API is built
-      void child;
+      const data = await $fetch('/api/reading/phonics/progress', {
+        params: { childId: childId.value },
+      });
+      progress.value = data as PhonicsMapUnit[];
     } finally {
       isLoading.value = false;
     }
