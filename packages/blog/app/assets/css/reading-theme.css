@@ -229,6 +229,99 @@
   pointer-events: none;
 }
 
+/* ── Bedtime mode ── */
+
+.bedtime-sky {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.bedtime-star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: #ffd98e;
+  border-radius: 50%;
+  animation: bedtime-twinkle var(--twinkle-duration, 3s) ease-in-out infinite;
+  animation-delay: var(--twinkle-delay, 0s);
+  opacity: 0;
+}
+
+.bedtime-star--large {
+  width: 5px;
+  height: 5px;
+  box-shadow: 0 0 6px 2px rgba(255, 217, 142, 0.4);
+}
+
+.bedtime-moon {
+  position: absolute;
+  top: 8%;
+  right: 10%;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffeeb5, #e8c55a);
+  box-shadow:
+    0 0 30px 10px rgba(232, 197, 90, 0.2),
+    0 0 60px 20px rgba(232, 197, 90, 0.1);
+  animation: bedtime-moon-glow 6s ease-in-out infinite;
+}
+
+.bedtime-moon::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #0f1729;
+  opacity: 0.85;
+}
+
+@keyframes bedtime-twinkle {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.3);
+  }
+}
+
+@keyframes bedtime-moon-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 30px 10px rgba(232, 197, 90, 0.2),
+      0 0 60px 20px rgba(232, 197, 90, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 40px 15px rgba(232, 197, 90, 0.3),
+      0 0 80px 30px rgba(232, 197, 90, 0.15);
+  }
+}
+
+/* Bedtime mode overrides for reading layout */
+.reading-theme.bedtime-active {
+  background: linear-gradient(180deg, #0a1020 0%, #0f1729 30%, #162040 100%);
+}
+
+.reading-theme.bedtime-active header {
+  background: rgba(15, 23, 41, 0.9) !important;
+  border-color: rgba(201, 168, 76, 0.2) !important;
+}
+
+.bedtime-text-glow {
+  text-shadow: 0 0 20px rgba(232, 197, 90, 0.15);
+}
+
 /* Reduce motion for accessibility */
 @media (prefers-reduced-motion: reduce) {
   .reading-bounce,
@@ -245,5 +338,14 @@
   .reading-page-leave-active,
   .reading-flip-enter-active {
     animation: none !important;
+  }
+
+  .bedtime-star,
+  .bedtime-moon {
+    animation: none !important;
+  }
+
+  .bedtime-star {
+    opacity: 0.5 !important;
   }
 }

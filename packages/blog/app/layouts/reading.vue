@@ -1,18 +1,24 @@
 <script setup lang="ts">
 const route = useRoute();
+const { isActive: bedtimeActive, initBedtimeMode } = useBedtimeMode();
+
+onMounted(() => {
+  initBedtimeMode();
+});
 
 const navItems = [
   { label: 'Home', to: '/reading', icon: 'i-lucide-home' },
   { label: 'Dashboard', to: '/reading/dashboard', icon: 'i-lucide-layout-dashboard' },
   { label: 'Practice', to: '/reading/practice', icon: 'i-lucide-book-open' },
   { label: 'Words', to: '/reading/words', icon: 'i-lucide-spell-check' },
+  { label: 'Bedtime', to: '/reading/bedtime', icon: 'i-lucide-moon' },
   { label: 'Demo', to: '/reading/demo', icon: 'i-lucide-play' },
   { label: 'Settings', to: '/reading/settings', icon: 'i-lucide-settings' },
 ];
 </script>
 
 <template>
-  <div class="reading-theme">
+  <div class="reading-theme" :class="{ 'bedtime-active': bedtimeActive }">
     <header
       class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-[var(--reading-pink)]/30"
     >

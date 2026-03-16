@@ -641,7 +641,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Speed control (listen mode only) -->
-    <div v-if="mode === 'listen'" class="flex items-center justify-center gap-2 pb-4">
+    <div v-if="mode === 'listen'" class="flex items-center justify-center gap-2 pb-4 relative z-10">
       <span class="text-xs text-[var(--reading-text)]/50 font-semibold">Speed</span>
       <input
         type="range"
