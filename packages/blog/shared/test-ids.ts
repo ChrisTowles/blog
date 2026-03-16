@@ -47,6 +47,7 @@ export const TEST_IDS = {
     USER_MENU: 'user-menu',
     LOGIN_BUTTON: 'login-button',
     THEME_TOGGLE: 'theme-toggle',
+    READING_LINK: 'nav-reading',
   },
   SEARCH: {
     PAGE: 'search-page',
@@ -84,6 +85,13 @@ export const TEST_IDS = {
     CARD_RATE_HARD: 'reading-card-rate-hard',
     CARD_RATE_GOOD: 'reading-card-rate-good',
     NO_CHILD_PROMPT: 'reading-no-child-prompt',
+    ONBOARDING_NAME_INPUT: 'reading-onboarding-name',
+    ONBOARDING_BIRTH_YEAR_INPUT: 'reading-onboarding-birth-year',
+    ONBOARDING_NEXT: 'reading-onboarding-next',
+    ONBOARDING_BACK: 'reading-onboarding-back',
+    ONBOARDING_SUBMIT: 'reading-onboarding-submit',
+    ONBOARDING_INTEREST_CARD: 'reading-onboarding-interest',
+    ONBOARDING_TERMS_CHECKBOX: 'reading-onboarding-terms',
   },
   ADMIN: {
     GITHUB_DASHBOARD: 'admin-github-dashboard',

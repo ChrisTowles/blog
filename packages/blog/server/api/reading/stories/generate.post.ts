@@ -2,6 +2,10 @@ import { z } from 'zod';
 import { count, gte } from 'drizzle-orm';
 import { generateStory } from '../../../utils/reading/story-generator';
 import { reviewStorySafety } from '../../../utils/reading/story-safety';
+import {
+  generateStoryIllustrations,
+  saveStoryImages,
+} from '../../../utils/reading/image-generator';
 import { SIGHT_WORDS_BY_PHASE } from '../../../utils/reading/phonics-seed';
 import type { PhonicsPhase } from '~~/shared/reading-types';
 
@@ -71,7 +75,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 422, message: `Story failed safety review: ${safety.reason}` });
   }
 
-  // Save to DB
+  // Save to DB (without illustrations first to get storyId)
   const [story] = await db
     .insert(tables.stories)
     .values({
@@ -86,6 +90,25 @@ export default defineEventHandler(async (event) => {
       aiGenerated: true,
     })
     .returning();
+
+  // Generate illustrations (non-critical — story works without images)
+  if (process.env.GOOGLE_AI_API_KEY) {
+    try {
+      const pageTexts = generated.content.pages.map((p) => p.words.map((w) => w.text).join(' '));
+      const images = await generateStoryIllustrations(generated.title, theme, pageTexts);
+      const illustrationUrls = await saveStoryImages(story!.id, images);
+
+      const [updated] = await db
+        .update(tables.stories)
+        .set({ illustrationUrls })
+        .where(eq(tables.stories.id, story!.id))
+        .returning();
+
+      return updated;
+    } catch (e) {
+      console.warn('Image generation failed, returning story without illustrations:', e);
+    }
+  }
 
   return story;
 });
