@@ -1,7 +1,6 @@
 <script setup lang="ts">
 const route = useRoute();
 const colorMode = useColorMode();
-const { isActive: bedtimeActive, initBedtimeMode } = useBedtimeMode();
 
 // Force light mode in reading app — the blog uses dark mode globally,
 // but the reading app has its own warm/kid-friendly theme
@@ -9,10 +8,8 @@ const previousColorMode = ref(colorMode.preference);
 onMounted(() => {
   previousColorMode.value = colorMode.preference;
   colorMode.preference = 'light';
-  initBedtimeMode();
 });
 onUnmounted(() => {
-  // Restore the user's color mode when leaving the reading app
   colorMode.preference = previousColorMode.value;
 });
 
@@ -21,7 +18,6 @@ const navItems = [
   { label: 'Dashboard', to: '/reading/dashboard', icon: 'i-lucide-layout-dashboard' },
   { label: 'Practice', to: '/reading/practice', icon: 'i-lucide-book-open' },
   { label: 'Words', to: '/reading/words', icon: 'i-lucide-spell-check' },
-  { label: 'Bedtime', to: '/reading/bedtime', icon: 'i-lucide-moon' },
   { label: 'Demo', to: '/reading/demo', icon: 'i-lucide-play' },
   { label: 'Settings', to: '/reading/settings', icon: 'i-lucide-settings' },
 ];
@@ -33,7 +29,7 @@ function isNavActive(item: (typeof navItems)[number]): boolean {
 </script>
 
 <template>
-  <div class="reading-theme" :class="{ 'bedtime-active': bedtimeActive }">
+  <div class="reading-theme">
     <header
       class="sticky top-0 z-50 bg-[var(--reading-card-bg)]/80 backdrop-blur-md border-b border-[var(--reading-secondary)]/30"
     >
