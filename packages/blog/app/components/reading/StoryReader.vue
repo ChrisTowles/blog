@@ -65,17 +65,21 @@ onUnmounted(() => {
     </div>
 
     <div class="flex-1 flex flex-col items-center justify-center px-8 gap-4">
-      <img
-        v-if="currentIllustration"
-        :src="currentIllustration"
-        :alt="`Illustration for page ${currentPage + 1}`"
-        class="max-h-48 md:max-h-64 rounded-xl object-contain"
-      />
-      <ReadingWordHighlighter
-        :words="currentWords"
-        :current-word-index="currentWordIndex"
-        @word-click="handleWordClick"
-      />
+      <Transition name="reading-page" mode="out-in">
+        <div :key="currentPage" class="flex flex-col items-center gap-4">
+          <img
+            v-if="currentIllustration"
+            :src="currentIllustration"
+            :alt="`Illustration for page ${currentPage + 1}`"
+            class="max-h-48 md:max-h-64 rounded-xl object-contain"
+          />
+          <ReadingWordHighlighter
+            :words="currentWords"
+            :current-word-index="currentWordIndex"
+            @word-click="handleWordClick"
+          />
+        </div>
+      </Transition>
     </div>
 
     <div class="flex items-center justify-center gap-4 py-6">

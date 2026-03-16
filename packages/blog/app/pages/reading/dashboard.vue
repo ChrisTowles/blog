@@ -21,13 +21,13 @@ const { activeChildId } = useActiveChild();
           <p class="text-lg text-gray-500 mb-4">No child profile selected.</p>
           <UButton to="/reading/onboarding">Set Up a Profile</UButton>
         </div>
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <UCard>
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6 reading-stagger">
+          <UCard class="reading-wobble-hover">
             <template #header><h3 class="font-semibold">Stories</h3></template>
             <p class="text-gray-500 mb-4">Read AI-generated stories matched to your level.</p>
             <UButton :to="`/reading/child/${activeChildId}`" variant="soft">Browse Stories</UButton>
           </UCard>
-          <UCard>
+          <UCard class="reading-wobble-hover">
             <template #header><h3 class="font-semibold">Practice Cards</h3></template>
             <p class="text-gray-500 mb-4">Review phonics and sight word flashcards.</p>
             <UButton to="/reading/practice" variant="soft">Start Practice</UButton>
