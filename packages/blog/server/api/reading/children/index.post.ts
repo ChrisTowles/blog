@@ -25,5 +25,12 @@ export default defineEventHandler(async (event) => {
     })
     .returning();
 
+  if (!child) {
+    throw createError({ statusCode: 500, message: 'Failed to create child profile' });
+  }
+
+  // Seed Phase 1 phonics progress and initial SRS cards
+  await seedChildPhonicsAndCards(child.id);
+
   return child;
 });
