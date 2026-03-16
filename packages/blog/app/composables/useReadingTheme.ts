@@ -12,9 +12,10 @@ export interface ThemeConfig {
   fontFamily: string;
   borderRadius: string;
   mascotEmoji: string;
+  system?: boolean; // system themes can't be edited or deleted
 }
 
-const BUILT_IN_THEMES: ThemeConfig[] = [
+const SYSTEM_THEMES: ThemeConfig[] = [
   {
     name: 'bluey',
     label: 'Bluey',
@@ -29,19 +30,45 @@ const BUILT_IN_THEMES: ThemeConfig[] = [
     fontFamily: "'Nunito', 'Rounded Mplus 1c', sans-serif",
     borderRadius: '1rem',
     mascotEmoji: '🐶',
+    system: true,
   },
-  // Bedtime is a MODE (CSS overlay via .bedtime-active), not a theme.
-  // Don't add it here — it's controlled by useBedtimeMode.
+  {
+    name: 'princess',
+    label: 'Princess',
+    primaryColor: '#e91e8c',
+    secondaryColor: '#c084fc',
+    accentColor: '#f472b6',
+    successColor: '#a78bfa',
+    highlightColor: '#fbbf24',
+    backgroundColor: '#fdf2f8',
+    cardBackground: '#ffffff',
+    textColor: '#831843',
+    fontFamily: "'Nunito', 'Rounded Mplus 1c', sans-serif",
+    borderRadius: '1.25rem',
+    mascotEmoji: '👸',
+    system: true,
+  },
 ];
 
 const THEME_STORAGE_KEY = 'reading-theme';
+const USER_THEMES_STORAGE_KEY = 'reading-user-themes';
 
 export function useReadingTheme() {
   const activeThemeName = useState<string>('reading-theme-name', () => 'bluey');
-  const themes = useState<ThemeConfig[]>('reading-themes', () => [...BUILT_IN_THEMES]);
+  const userThemes = useState<ThemeConfig[]>('reading-user-themes', () => {
+    if (import.meta.client) {
+      try {
+        const stored = localStorage.getItem(USER_THEMES_STORAGE_KEY);
+        if (stored) return JSON.parse(stored);
+      } catch {}
+    }
+    return [];
+  });
+
+  const themes = computed(() => [...SYSTEM_THEMES, ...userThemes.value]);
 
   const activeTheme = computed(
-    () => themes.value.find((t) => t.name === activeThemeName.value) ?? BUILT_IN_THEMES[0]!,
+    () => themes.value.find((t) => t.name === activeThemeName.value) ?? SYSTEM_THEMES[0]!,
   );
 
   function applyTheme(theme: ThemeConfig) {
@@ -57,7 +84,6 @@ export function useReadingTheme() {
     el.style.setProperty('--reading-cream', theme.backgroundColor);
     el.style.setProperty('--reading-white', theme.cardBackground);
     el.style.setProperty('--reading-text', theme.textColor);
-    // Also set semantic tokens directly for components that use them
     el.style.setProperty('--reading-primary', theme.primaryColor);
     el.style.setProperty('--reading-secondary', theme.secondaryColor);
     el.style.setProperty('--reading-accent', theme.accentColor);
@@ -82,13 +108,37 @@ export function useReadingTheme() {
     }
   }
 
-  function addTheme(theme: ThemeConfig) {
-    const existing = themes.value.findIndex((t) => t.name === theme.name);
-    if (existing >= 0) {
-      themes.value[existing] = theme;
-    } else {
-      themes.value.push(theme);
+  function saveUserThemes() {
+    if (import.meta.client) {
+      localStorage.setItem(USER_THEMES_STORAGE_KEY, JSON.stringify(userThemes.value));
     }
+  }
+
+  function addTheme(theme: ThemeConfig) {
+    // Can't overwrite system themes
+    if (SYSTEM_THEMES.some((t) => t.name === theme.name)) return;
+
+    const userTheme = { ...theme, system: false };
+    const existing = userThemes.value.findIndex((t) => t.name === theme.name);
+    if (existing >= 0) {
+      userThemes.value[existing] = userTheme;
+    } else {
+      userThemes.value.push(userTheme);
+    }
+    saveUserThemes();
+  }
+
+  function removeTheme(name: string) {
+    if (isSystem(name)) return;
+    userThemes.value = userThemes.value.filter((t) => t.name !== name);
+    saveUserThemes();
+    if (activeThemeName.value === name) {
+      setTheme('bluey');
+    }
+  }
+
+  function isSystem(name: string) {
+    return SYSTEM_THEMES.some((t) => t.name === name);
   }
 
   function initTheme() {
@@ -99,27 +149,14 @@ export function useReadingTheme() {
     }
   }
 
-  function removeTheme(name: string) {
-    // Can't remove built-in themes
-    if (BUILT_IN_THEMES.some((t) => t.name === name)) return;
-    themes.value = themes.value.filter((t) => t.name !== name);
-    if (activeThemeName.value === name) {
-      setTheme('bluey');
-    }
-  }
-
-  function isBuiltIn(name: string) {
-    return BUILT_IN_THEMES.some((t) => t.name === name);
-  }
-
   return {
-    themes: computed(() => themes.value),
+    themes,
     activeTheme,
     activeThemeName: computed(() => activeThemeName.value),
     setTheme,
     addTheme,
     removeTheme,
-    isBuiltIn,
+    isSystem,
     initTheme,
   };
 }

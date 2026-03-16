@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { themes, activeThemeName, setTheme, removeTheme, isBuiltIn } = useReadingTheme();
+const { themes, activeThemeName, setTheme, removeTheme, isSystem } = useReadingTheme();
 
 const emit = defineEmits<{
   edit: [themeName: string];
@@ -46,7 +46,7 @@ const emit = defineEmits<{
         </button>
         <!-- Edit/Delete buttons for custom themes -->
         <div
-          v-if="!isBuiltIn(theme.name)"
+          v-if="!isSystem(theme.name)"
           class="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
         >
           <button
