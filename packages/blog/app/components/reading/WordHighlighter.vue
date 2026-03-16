@@ -15,25 +15,30 @@ const emit = defineEmits<{
 function feedbackClass(index: number): string {
   if (!props.wordFeedbacks) return '';
   const fb = props.wordFeedbacks[index];
-  if (fb === 'correct') return 'bg-[var(--reading-success)]/30 text-[var(--reading-success)]';
-  if (fb === 'incorrect') return 'bg-red-200 text-red-600';
+  if (fb === 'correct')
+    return 'bg-[var(--reading-success)]/25 text-[var(--reading-success)] ring-2 ring-[var(--reading-success)]/30';
+  if (fb === 'incorrect') return 'bg-red-100 text-red-500 ring-2 ring-red-300/50';
   return '';
 }
 </script>
 
 <template>
-  <p class="leading-relaxed text-2xl md:text-3xl">
+  <p
+    class="leading-loose text-2xl md:text-3xl text-center"
+    style="font-family: var(--reading-font-display); word-spacing: 0.15em"
+  >
     <span
       v-for="(word, i) in words"
       :key="i"
-      class="cursor-pointer rounded-md px-1 py-0.5 transition-all duration-150 inline-block reading-wobble-hover"
+      class="cursor-pointer rounded-xl px-2 py-1 transition-all duration-200 inline-block reading-wobble-hover"
       :class="[
         feedbackClass(i),
         {
-          'bg-[var(--reading-highlight)] scale-110 reading-bounce':
+          'bg-[var(--reading-highlight)] scale-115 reading-bounce shadow-md shadow-[var(--reading-highlight)]/30':
             i === currentWordIndex && !wordFeedbacks,
-          'text-[var(--reading-primary)] font-bold': word.sightWord && !wordFeedbacks?.[i],
-          'ring-2 ring-[var(--reading-accent)] scale-105':
+          'text-[var(--reading-primary)] font-extrabold underline decoration-[var(--reading-primary)]/30 decoration-wavy underline-offset-4':
+            word.sightWord && !wordFeedbacks?.[i],
+          'ring-2 ring-[var(--reading-accent)] scale-110 bg-[var(--reading-accent)]/10':
             wordFeedbacks && wordFeedbacks[i] === 'pending' && i === currentWordIndex,
         },
       ]"

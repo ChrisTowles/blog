@@ -235,6 +235,13 @@ function modeLabel(m: ReadingMode): string {
   return 'Read Together';
 }
 
+function modeIcon(m: ReadingMode): string {
+  if (m === 'listen') return 'i-heroicons-speaker-wave';
+  if (m === 'guided') return 'i-heroicons-microphone';
+  if (m === 'independent') return 'i-heroicons-eye';
+  return 'i-heroicons-user-group';
+}
+
 function setMode(newMode: ReadingMode) {
   stopTTS();
   stopListening();
@@ -325,16 +332,17 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col h-full relative">
+  <div class="reading-immersive relative">
     <!-- Bedtime sky ambiance -->
     <ReadingBedtimeSky v-if="bedtimeActive" />
 
     <!-- Bedtime suggestion banner -->
     <div
       v-if="bedtimeShouldSuggest && !bedtimeActive"
-      class="mx-4 mb-2 p-3 rounded-2xl bg-[#1a2540] border border-[#c9a84c]/30 text-center text-sm text-[#e8dcc8] flex items-center justify-center gap-3 relative z-10"
+      class="fixed top-4 left-1/2 -translate-x-1/2 z-20 p-4 rounded-2xl bg-[#1a2540]/95 backdrop-blur-sm border border-[#c9a84c]/30 text-center text-sm text-[#e8dcc8] flex items-center gap-3 shadow-lg"
     >
-      <span>It's getting late — switch to bedtime mode?</span>
+      <span class="text-lg">&#x1F31F;</span>
+      <span class="font-semibold">It's getting late -- switch to bedtime mode?</span>
       <UButton
         size="xs"
         class="!rounded-full !bg-[#c9a84c] !text-[#0f1729] !font-bold"
@@ -352,7 +360,8 @@ onUnmounted(() => {
       </UButton>
     </div>
 
-    <div class="text-center py-4 relative z-10">
+    <!-- Title bar -->
+    <div class="text-center pt-6 pb-2 relative z-10">
       <div class="flex items-center justify-center gap-3">
         <h1
           class="font-extrabold text-[var(--reading-text)]"
@@ -362,57 +371,94 @@ onUnmounted(() => {
           {{ title }}
         </h1>
         <button
-          class="text-xl opacity-60 hover:opacity-100 transition-opacity"
+          class="w-10 h-10 rounded-full flex items-center justify-center text-xl transition-all hover:scale-110 active:scale-95"
+          :class="
+            bedtimeActive
+              ? 'bg-[#c9a84c]/20 hover:bg-[#c9a84c]/30'
+              : 'bg-[var(--reading-primary)]/10 hover:bg-[var(--reading-primary)]/20'
+          "
           :title="bedtimeActive ? 'Exit bedtime mode' : 'Enter bedtime mode'"
           @click="toggleBedtime"
         >
-          {{ bedtimeActive ? '☀️' : '🌙' }}
+          {{ bedtimeActive ? '&#x2600;&#xFE0F;' : '&#x1F319;' }}
         </button>
       </div>
-      <p class="text-sm text-[var(--reading-text)]/50 font-semibold">
+
+      <!-- Page progress dots -->
+      <div class="flex items-center justify-center gap-1.5 mt-3">
+        <div
+          v-for="p in totalPages"
+          :key="p"
+          class="rounded-full transition-all duration-300"
+          :class="
+            p - 1 === currentPage
+              ? 'w-8 h-3 bg-[var(--reading-accent)]'
+              : p - 1 < currentPage
+                ? 'w-3 h-3 bg-[var(--reading-green)]'
+                : 'w-3 h-3 bg-[var(--reading-primary)]/20'
+          "
+        />
+      </div>
+      <p class="text-xs text-[var(--reading-text)]/40 font-semibold mt-1">
         Page {{ currentPage + 1 }} of {{ totalPages }}
       </p>
     </div>
 
-    <!-- Mode selector -->
-    <div class="flex items-center justify-center gap-2 py-2 flex-wrap relative z-10">
-      <UButton
-        v-for="m in modeOptions"
-        :key="m"
-        size="sm"
-        :variant="mode === m ? 'solid' : 'outline'"
+    <!-- Mode selector - pill style -->
+    <div class="flex items-center justify-center py-3 relative z-10">
+      <div
+        class="inline-flex rounded-full p-1.5 gap-1"
         :class="
-          mode === m
-            ? '!bg-[var(--reading-primary)] !text-white'
-            : '!text-[var(--reading-primary)] !border-[var(--reading-primary)]'
+          bedtimeActive
+            ? 'bg-[#1a2540]/80 border border-[#c9a84c]/20'
+            : 'bg-[var(--reading-primary)]/10'
         "
-        class="!rounded-full"
-        @click="setMode(m)"
       >
-        {{ modeLabel(m) }}
-      </UButton>
+        <button
+          v-for="m in modeOptions"
+          :key="m"
+          class="rounded-full px-4 py-2 text-sm font-bold transition-all flex items-center gap-1.5"
+          :class="
+            mode === m
+              ? bedtimeActive
+                ? 'bg-[#c9a84c] text-[#0f1729] shadow-md'
+                : 'bg-[var(--reading-primary)] text-white shadow-md'
+              : bedtimeActive
+                ? 'text-[#e8dcc8]/60 hover:text-[#e8dcc8]'
+                : 'text-[var(--reading-primary)]/60 hover:text-[var(--reading-primary)]'
+          "
+          style="font-family: var(--reading-font-display)"
+          @click="setMode(m)"
+        >
+          <UIcon :name="modeIcon(m)" class="text-base" />
+          <span class="hidden sm:inline">{{ modeLabel(m) }}</span>
+        </button>
+      </div>
     </div>
 
     <!-- Speech not supported warning -->
     <div
       v-if="(mode === 'guided' || mode === 'read-together') && !speechSupported"
-      class="mx-8 p-3 rounded-2xl bg-[var(--reading-highlight)]/30 text-center text-sm text-[var(--reading-text)]"
+      class="mx-auto max-w-md p-4 rounded-2xl bg-[var(--reading-highlight)]/30 text-center text-sm text-[var(--reading-text)] font-semibold relative z-10"
     >
-      Speech recognition is not available in this browser. Try Chrome or Edge.
+      &#x1F399;&#xFE0F; Speech recognition is not available in this browser. Try Chrome or Edge.
     </div>
 
     <!-- Read Together turn indicator -->
     <div
       v-if="mode === 'read-together' && togetherActive"
-      class="mx-8 p-3 rounded-2xl text-center text-sm font-bold"
+      class="mx-auto max-w-md p-4 rounded-2xl text-center font-bold relative z-10 reading-bounce"
       :class="
         isParentTurn
-          ? 'bg-[var(--reading-primary)]/20 text-[var(--reading-primary)]'
-          : 'bg-[var(--reading-accent)]/20 text-[var(--reading-accent)]'
+          ? 'bg-[var(--reading-primary)]/15 text-[var(--reading-primary)] border-2 border-[var(--reading-primary)]/25'
+          : 'bg-[var(--reading-accent)]/15 text-[var(--reading-accent)] border-2 border-[var(--reading-accent)]/25'
       "
     >
+      <span class="text-xl mr-2">{{ isParentTurn ? '&#x1F9D1;' : '&#x1F476;' }}</span>
       {{
-        isParentTurn ? "Parent's Turn — Read this page aloud!" : "Child's Turn — Your turn to read!"
+        isParentTurn
+          ? "Parent's Turn -- Read this page aloud!"
+          : "Child's Turn -- Your turn to read!"
       }}
     </div>
 
@@ -425,234 +471,268 @@ onUnmounted(() => {
         bedtimeAutoAdvanceTimer &&
         currentPage < totalPages - 1
       "
-      class="mx-8 p-2 rounded-2xl text-center text-xs text-[var(--reading-text)]/40 font-semibold relative z-10"
+      class="mx-auto max-w-xs p-3 rounded-2xl text-center text-sm text-[#e8dcc8]/50 font-semibold relative z-10"
     >
-      Next page in a moment...
+      <span class="inline-block reading-pulse">&#x2728;</span> Next page in a moment...
     </div>
 
-    <div class="flex-1 flex flex-col items-center justify-center px-8 gap-4 relative z-10">
+    <!-- Main reading area -->
+    <div class="flex-1 flex flex-col items-center justify-center px-6 md:px-12 gap-6 relative z-10">
       <Transition name="reading-page" mode="out-in">
         <div
           :key="currentPage"
-          class="flex flex-col items-center gap-4"
+          class="flex flex-col items-center gap-6 w-full max-w-2xl"
           :class="bedtimeActive ? 'bedtime-text-glow' : ''"
         >
-          <img
+          <!-- Illustration with rounded frame -->
+          <div
             v-if="currentIllustration"
-            :src="currentIllustration"
-            :alt="`Illustration for page ${currentPage + 1}`"
-            class="max-h-48 md:max-h-64 rounded-3xl object-contain shadow-md"
-            :class="bedtimeActive ? 'brightness-75' : ''"
-          />
-          <ReadingWordHighlighter
-            :words="currentWords"
-            :current-word-index="
-              mode === 'guided' || (mode === 'read-together' && isChildTurn)
-                ? currentExpectedIndex
-                : currentWordIndex
+            class="w-full rounded-3xl overflow-hidden shadow-lg"
+            :class="bedtimeActive ? 'shadow-[#c9a84c]/10' : 'shadow-[var(--reading-primary)]/15'"
+          >
+            <img
+              :src="currentIllustration"
+              :alt="`Illustration for page ${currentPage + 1}`"
+              class="w-full max-h-56 md:max-h-72 object-cover"
+              :class="bedtimeActive ? 'brightness-75 saturate-75' : ''"
+            />
+          </div>
+
+          <!-- Text area with subtle card background -->
+          <div
+            class="w-full rounded-3xl p-6 md:p-8"
+            :class="
+              bedtimeActive
+                ? 'bg-[#162040]/60 border border-[#c9a84c]/10'
+                : 'bg-[var(--reading-card-bg)] border-2 border-[var(--reading-primary)]/10 shadow-sm'
             "
-            :word-feedbacks="
-              mode === 'guided' || (mode === 'read-together' && isChildTurn)
-                ? [...wordFeedbacks]
-                : undefined
-            "
-            :class="[
-              mode === 'read-together' && isParentTurn && togetherActive
-                ? 'text-[var(--reading-primary)]'
-                : '',
-              bedtimeActive ? 'text-2xl md:text-3xl' : '',
-            ]"
-            @word-click="handleWordClick"
-          />
+          >
+            <ReadingWordHighlighter
+              :words="currentWords"
+              :current-word-index="
+                mode === 'guided' || (mode === 'read-together' && isChildTurn)
+                  ? currentExpectedIndex
+                  : currentWordIndex
+              "
+              :word-feedbacks="
+                mode === 'guided' || (mode === 'read-together' && isChildTurn)
+                  ? [...wordFeedbacks]
+                  : undefined
+              "
+              :class="[
+                mode === 'read-together' && isParentTurn && togetherActive
+                  ? 'text-[var(--reading-primary)]'
+                  : '',
+                bedtimeActive ? 'text-2xl md:text-3xl' : '',
+              ]"
+              @word-click="handleWordClick"
+            />
+          </div>
         </div>
       </Transition>
     </div>
 
-    <!-- Listen mode controls -->
-    <div v-if="mode === 'listen'" class="flex items-center justify-center gap-4 py-6 relative z-10">
-      <UButton
-        icon="i-heroicons-backward"
-        variant="ghost"
-        class="!rounded-full !text-[var(--reading-primary)]"
-        :disabled="currentPage === 0"
-        @click="prevPage"
-      />
-
-      <UButton
-        v-if="!isSpeaking"
-        icon="i-heroicons-play"
-        size="xl"
-        class="!rounded-full !bg-[var(--reading-accent)] hover:!bg-[var(--reading-accent)]/85 !text-white"
-        @click="playCurrentPage"
-      />
-      <UButton
-        v-else-if="isPaused"
-        icon="i-heroicons-play"
-        size="xl"
-        class="!rounded-full !bg-[var(--reading-accent)] hover:!bg-[var(--reading-accent)]/85 !text-white"
-        @click="resume"
-      />
-      <UButton
-        v-else
-        icon="i-heroicons-pause"
-        size="xl"
-        class="!rounded-full !bg-[var(--reading-highlight)] !text-[var(--reading-text)]"
-        @click="pause"
-      />
-
-      <UButton
-        icon="i-heroicons-stop"
-        variant="ghost"
-        class="!rounded-full !text-[var(--reading-primary)]"
-        :disabled="!isSpeaking"
-        @click="stopTTS"
-      />
-
-      <UButton
-        icon="i-heroicons-forward"
-        variant="ghost"
-        class="!rounded-full !text-[var(--reading-primary)]"
-        :disabled="currentPage >= totalPages - 1"
-        @click="nextPage"
-      />
-    </div>
-
-    <!-- Guided mode controls -->
-    <div v-else-if="mode === 'guided'" class="flex flex-col items-center gap-3 py-6 relative z-10">
-      <div v-if="speechSupported" class="flex items-center gap-4">
-        <UButton
-          icon="i-heroicons-backward"
-          variant="ghost"
-          class="!rounded-full !text-[var(--reading-primary)]"
-          :disabled="currentPage === 0"
-          @click="prevPage"
-        />
-
-        <UButton
-          v-if="!isListening"
-          icon="i-heroicons-microphone"
-          size="xl"
-          class="!rounded-full !bg-[var(--reading-accent)] hover:!bg-[var(--reading-accent)]/85 !text-white"
-          @click="startGuidedReading"
-        />
-        <UButton
-          v-else
-          icon="i-heroicons-stop"
-          size="xl"
-          class="!rounded-full !bg-red-500 hover:!bg-red-600 !text-white reading-pulse"
-          @click="stopListening"
-        />
-
-        <UButton
-          icon="i-heroicons-forward"
-          variant="ghost"
-          class="!rounded-full !text-[var(--reading-primary)]"
-          :disabled="currentPage >= totalPages - 1"
-          @click="nextPage"
-        />
-      </div>
-
-      <p v-if="isListening" class="text-sm text-[var(--reading-text)]/60 font-semibold">
-        Read the words aloud!
-      </p>
-    </div>
-
-    <!-- Read Together mode controls -->
+    <!-- Controls area - sticky at bottom -->
     <div
-      v-else-if="mode === 'read-together'"
-      class="flex flex-col items-center gap-3 py-6 relative z-10"
+      class="sticky bottom-0 pb-6 pt-4 relative z-10"
+      :class="
+        bedtimeActive
+          ? 'bg-gradient-to-t from-[#0a1020] via-[#0a1020]/95 to-transparent'
+          : 'bg-gradient-to-t from-[var(--reading-bg)] via-[var(--reading-bg)]/95 to-transparent'
+      "
     >
-      <div v-if="!togetherActive" class="flex items-center gap-4">
-        <UButton
-          size="xl"
-          class="!rounded-full !bg-[var(--reading-accent)] hover:!bg-[var(--reading-accent)]/85 !text-white"
-          @click="startTogetherReading"
+      <!-- Listen mode controls -->
+      <div v-if="mode === 'listen'" class="flex items-center justify-center gap-3 md:gap-5">
+        <button
+          class="reading-fab !w-12 !h-12 bg-[var(--reading-card-bg)] text-[var(--reading-primary)]"
+          :class="{ 'opacity-30 pointer-events-none': currentPage === 0 }"
+          @click="prevPage"
         >
-          Start Reading Together
-        </UButton>
-      </div>
-      <div v-else class="flex items-center gap-4">
-        <UButton
-          icon="i-heroicons-backward"
-          variant="ghost"
-          class="!rounded-full !text-[var(--reading-primary)]"
-          :disabled="currentPage === 0"
-          @click="togetherPrevPage"
-        />
+          <UIcon name="i-heroicons-backward" class="text-xl" />
+        </button>
 
-        <UButton
-          v-if="isParentTurn"
-          icon="i-heroicons-forward"
-          size="xl"
-          class="!rounded-full !bg-[var(--reading-primary)] hover:!bg-[var(--reading-primary)]/85 !text-white"
-          @click="togetherNextPage"
+        <button
+          v-if="!isSpeaking"
+          class="reading-fab bg-[var(--reading-accent)] text-white"
+          @click="playCurrentPage"
         >
-          Done — Child's Turn
-        </UButton>
-        <template v-else>
-          <UButton
+          <UIcon name="i-heroicons-play" class="text-2xl" />
+        </button>
+        <button
+          v-else-if="isPaused"
+          class="reading-fab bg-[var(--reading-accent)] text-white"
+          @click="resume"
+        >
+          <UIcon name="i-heroicons-play" class="text-2xl" />
+        </button>
+        <button
+          v-else
+          class="reading-fab bg-[var(--reading-highlight)] text-[var(--reading-text)]"
+          @click="pause"
+        >
+          <UIcon name="i-heroicons-pause" class="text-2xl" />
+        </button>
+
+        <button
+          class="reading-fab !w-12 !h-12 bg-[var(--reading-card-bg)] text-[var(--reading-primary)]"
+          :class="{ 'opacity-30 pointer-events-none': !isSpeaking }"
+          @click="stopTTS"
+        >
+          <UIcon name="i-heroicons-stop" class="text-xl" />
+        </button>
+
+        <button
+          class="reading-fab !w-12 !h-12 bg-[var(--reading-card-bg)] text-[var(--reading-primary)]"
+          :class="{ 'opacity-30 pointer-events-none': currentPage >= totalPages - 1 }"
+          @click="nextPage"
+        >
+          <UIcon name="i-heroicons-forward" class="text-xl" />
+        </button>
+      </div>
+
+      <!-- Guided mode controls -->
+      <div v-else-if="mode === 'guided'" class="flex flex-col items-center gap-3">
+        <div v-if="speechSupported" class="flex items-center gap-3 md:gap-5">
+          <button
+            class="reading-fab !w-12 !h-12 bg-[var(--reading-card-bg)] text-[var(--reading-primary)]"
+            :class="{ 'opacity-30 pointer-events-none': currentPage === 0 }"
+            @click="prevPage"
+          >
+            <UIcon name="i-heroicons-backward" class="text-xl" />
+          </button>
+
+          <button
             v-if="!isListening"
-            icon="i-heroicons-microphone"
-            size="xl"
-            class="!rounded-full !bg-[var(--reading-accent)] hover:!bg-[var(--reading-accent)]/85 !text-white"
-            @click="startListening"
-          />
-          <UButton
+            class="reading-fab bg-[var(--reading-accent)] text-white"
+            @click="startGuidedReading"
+          >
+            <UIcon name="i-heroicons-microphone" class="text-2xl" />
+          </button>
+          <button
             v-else
-            icon="i-heroicons-stop"
-            size="xl"
-            class="!rounded-full !bg-red-500 hover:!bg-red-600 !text-white reading-pulse"
+            class="reading-fab bg-red-500 text-white reading-pulse"
             @click="stopListening"
-          />
-        </template>
+          >
+            <UIcon name="i-heroicons-stop" class="text-2xl" />
+          </button>
 
-        <UButton
-          icon="i-heroicons-forward"
-          variant="ghost"
-          class="!rounded-full !text-[var(--reading-primary)]"
-          :disabled="currentPage >= totalPages - 1"
-          @click="togetherNextPage"
-        />
+          <button
+            class="reading-fab !w-12 !h-12 bg-[var(--reading-card-bg)] text-[var(--reading-primary)]"
+            :class="{ 'opacity-30 pointer-events-none': currentPage >= totalPages - 1 }"
+            @click="nextPage"
+          >
+            <UIcon name="i-heroicons-forward" class="text-xl" />
+          </button>
+        </div>
+
+        <p
+          v-if="isListening"
+          class="text-base text-[var(--reading-accent)] font-bold reading-bounce"
+          style="font-family: var(--reading-font-display)"
+        >
+          &#x1F3A4; Read the words aloud!
+        </p>
       </div>
-      <p
-        v-if="togetherActive && isChildTurn && isListening"
-        class="text-sm text-[var(--reading-text)]/60 font-semibold"
-      >
-        Read the words aloud!
-      </p>
-    </div>
 
-    <!-- Independent mode controls -->
-    <div v-else class="flex items-center justify-center gap-4 py-6 relative z-10">
-      <UButton
-        icon="i-heroicons-backward"
-        variant="ghost"
-        class="!rounded-full !text-[var(--reading-primary)]"
-        :disabled="currentPage === 0"
-        @click="prevPage"
-      />
-      <UButton
-        icon="i-heroicons-forward"
-        size="xl"
-        class="!rounded-full !bg-[var(--reading-accent)] hover:!bg-[var(--reading-accent)]/85 !text-white"
-        :disabled="currentPage >= totalPages - 1"
-        @click="nextPage"
-      />
-    </div>
+      <!-- Read Together mode controls -->
+      <div v-else-if="mode === 'read-together'" class="flex flex-col items-center gap-3">
+        <div v-if="!togetherActive" class="flex items-center gap-4">
+          <button
+            class="reading-fab !w-auto !px-8 bg-[var(--reading-accent)] text-white font-bold text-lg"
+            style="font-family: var(--reading-font-display)"
+            @click="startTogetherReading"
+          >
+            &#x1F91D; Start Reading Together
+          </button>
+        </div>
+        <div v-else class="flex items-center gap-3 md:gap-5">
+          <button
+            class="reading-fab !w-12 !h-12 bg-[var(--reading-card-bg)] text-[var(--reading-primary)]"
+            :class="{ 'opacity-30 pointer-events-none': currentPage === 0 }"
+            @click="togetherPrevPage"
+          >
+            <UIcon name="i-heroicons-backward" class="text-xl" />
+          </button>
 
-    <!-- Speed control (listen mode only) -->
-    <div v-if="mode === 'listen'" class="flex items-center justify-center gap-2 pb-4 relative z-10">
-      <span class="text-xs text-[var(--reading-text)]/50 font-semibold">Speed</span>
-      <input
-        type="range"
-        min="0.5"
-        max="1.2"
-        step="0.1"
-        :value="rate"
-        class="w-32 accent-[var(--reading-accent)]"
-        @input="setRate(parseFloat(($event.target as HTMLInputElement).value))"
-      />
-      <span class="text-xs text-[var(--reading-text)]/50 font-semibold w-8">{{ rate }}x</span>
+          <button
+            v-if="isParentTurn"
+            class="reading-fab !w-auto !px-6 bg-[var(--reading-primary)] text-white font-bold"
+            style="font-family: var(--reading-font-display)"
+            @click="togetherNextPage"
+          >
+            Done &#x2192; Child's Turn
+          </button>
+          <template v-else>
+            <button
+              v-if="!isListening"
+              class="reading-fab bg-[var(--reading-accent)] text-white"
+              @click="startListening"
+            >
+              <UIcon name="i-heroicons-microphone" class="text-2xl" />
+            </button>
+            <button
+              v-else
+              class="reading-fab bg-red-500 text-white reading-pulse"
+              @click="stopListening"
+            >
+              <UIcon name="i-heroicons-stop" class="text-2xl" />
+            </button>
+          </template>
+
+          <button
+            class="reading-fab !w-12 !h-12 bg-[var(--reading-card-bg)] text-[var(--reading-primary)]"
+            :class="{ 'opacity-30 pointer-events-none': currentPage >= totalPages - 1 }"
+            @click="togetherNextPage"
+          >
+            <UIcon name="i-heroicons-forward" class="text-xl" />
+          </button>
+        </div>
+        <p
+          v-if="togetherActive && isChildTurn && isListening"
+          class="text-base text-[var(--reading-accent)] font-bold reading-bounce"
+          style="font-family: var(--reading-font-display)"
+        >
+          &#x1F3A4; Read the words aloud!
+        </p>
+      </div>
+
+      <!-- Independent mode controls -->
+      <div v-else class="flex items-center justify-center gap-3 md:gap-5">
+        <button
+          class="reading-fab !w-12 !h-12 bg-[var(--reading-card-bg)] text-[var(--reading-primary)]"
+          :class="{ 'opacity-30 pointer-events-none': currentPage === 0 }"
+          @click="prevPage"
+        >
+          <UIcon name="i-heroicons-backward" class="text-xl" />
+        </button>
+        <button
+          class="reading-fab bg-[var(--reading-accent)] text-white"
+          :class="{ 'opacity-30 pointer-events-none': currentPage >= totalPages - 1 }"
+          @click="nextPage"
+        >
+          <UIcon name="i-heroicons-forward" class="text-2xl" />
+        </button>
+      </div>
+
+      <!-- Speed control (listen mode only) -->
+      <div v-if="mode === 'listen'" class="flex items-center justify-center gap-3 mt-4">
+        <span class="text-xs text-[var(--reading-text)]/40 font-bold">&#x1F422;</span>
+        <input
+          type="range"
+          min="0.5"
+          max="1.2"
+          step="0.1"
+          :value="rate"
+          class="w-28 accent-[var(--reading-accent)] h-2 rounded-full"
+          @input="setRate(parseFloat(($event.target as HTMLInputElement).value))"
+        />
+        <span class="text-xs text-[var(--reading-text)]/40 font-bold">&#x1F407;</span>
+        <span
+          class="text-xs font-bold rounded-full px-2 py-0.5 bg-[var(--reading-accent)]/15 text-[var(--reading-accent)]"
+        >
+          {{ rate }}x
+        </span>
+      </div>
     </div>
   </div>
 </template>
