@@ -1,0 +1,50 @@
+.reading-theme {
+  /* Bluey-inspired color palette */
+  --reading-sky-blue: #4da8da;
+  --reading-orange: #f4845f;
+  --reading-green: #7ec8a0;
+  --reading-yellow: #ffd166;
+  --reading-pink: #ffb5c2;
+  --reading-cream: #fff8f0;
+  --reading-white: #ffffff;
+  --reading-text: #2d3748;
+
+  /* Semantic tokens */
+  --reading-primary: var(--reading-sky-blue);
+  --reading-accent: var(--reading-orange);
+  --reading-success: var(--reading-green);
+  --reading-highlight: var(--reading-yellow);
+  --reading-secondary: var(--reading-pink);
+  --reading-bg: var(--reading-cream);
+  --reading-card-bg: var(--reading-white);
+
+  /* Typography */
+  --reading-font-display: 'Nunito', 'Rounded Mplus 1c', sans-serif;
+  --reading-font-body: 'Nunito', sans-serif;
+
+  /* Spacing & radius — bubbly feel */
+  --reading-radius: 1rem;
+  --reading-radius-lg: 1.5rem;
+
+  /* Override Nuxt UI theme within reading pages */
+  --ui-radius: 1rem;
+  --ui-bg: var(--reading-cream);
+  --ui-text-highlighted: var(--reading-text);
+
+  background-color: var(--reading-bg);
+  color: var(--reading-text);
+  font-family: var(--reading-font-body);
+  min-height: 100dvh;
+}
+
+/* Nuxt UI component overrides within reading theme */
+.reading-theme .btn-primary {
+  background-color: var(--reading-accent);
+  border-radius: var(--reading-radius);
+  font-weight: 700;
+  font-family: var(--reading-font-display);
+}
+
+.reading-theme .btn-primary:hover {
+  background-color: color-mix(in srgb, var(--reading-accent) 85%, black);
+}
