@@ -228,7 +228,7 @@ async function generateMagicTheme() {
         <button
           v-for="color in PRESET_COLORS"
           :key="color"
-          class="w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 cursor-pointer"
+          class="w-11 h-11 rounded-full border-2 transition-transform hover:scale-110 active:scale-95 cursor-pointer"
           :class="
             getColor(activeFieldKey) === color
               ? 'border-[var(--reading-text)] scale-110'
@@ -247,7 +247,7 @@ async function generateMagicTheme() {
         <button
           v-for="emoji in MASCOT_EMOJIS"
           :key="emoji"
-          class="w-9 h-9 rounded-lg text-lg flex items-center justify-center transition-transform hover:scale-125 cursor-pointer"
+          class="w-11 h-11 rounded-lg text-lg flex items-center justify-center transition-transform hover:scale-110 active:scale-95 cursor-pointer"
           :class="
             mascotEmoji === emoji
               ? 'bg-[var(--reading-primary)]/20 scale-110 ring-2 ring-[var(--reading-primary)]'

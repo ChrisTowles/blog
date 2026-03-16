@@ -61,7 +61,7 @@ function isNavActive(item: (typeof navItems)[number]): boolean {
             :to="item.to"
             :title="item.label"
             :aria-label="item.label"
-            class="px-3 py-2 rounded-full text-base font-semibold transition-colors whitespace-nowrap"
+            class="px-3 py-2 rounded-full text-base font-semibold transition-colors whitespace-nowrap min-h-[44px] min-w-[44px] flex items-center justify-center"
             :class="
               isNavActive(item)
                 ? 'bg-[var(--reading-primary)] text-white'

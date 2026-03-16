@@ -44,20 +44,17 @@ const emit = defineEmits<{
             </div>
           </div>
         </button>
-        <!-- Edit/Delete buttons for custom themes -->
-        <div
-          v-if="!isSystem(theme.name)"
-          class="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-        >
+        <!-- Edit/Delete buttons for custom themes — always visible (touch devices) -->
+        <div v-if="!isSystem(theme.name)" class="absolute -top-2 -right-2 flex gap-1">
           <button
-            class="w-6 h-6 rounded-full bg-[var(--reading-primary)] text-white text-xs flex items-center justify-center hover:scale-110 transition-transform"
+            class="w-8 h-8 rounded-full bg-[var(--reading-primary)] text-white text-xs flex items-center justify-center active:scale-95 transition-transform"
             title="Edit theme"
             @click.stop="emit('edit', theme.name)"
           >
             ✏️
           </button>
           <button
-            class="w-6 h-6 rounded-full bg-red-400 text-white text-xs flex items-center justify-center hover:scale-110 transition-transform"
+            class="w-8 h-8 rounded-full bg-red-400 text-white text-xs flex items-center justify-center active:scale-95 transition-transform"
             title="Delete theme"
             @click.stop="removeTheme(theme.name)"
           >
