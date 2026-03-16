@@ -1,8 +1,22 @@
 <script setup lang="ts">
 import { TEST_IDS } from '~~/shared/test-ids';
+
 definePageMeta({ layout: 'reading', middleware: 'auth' });
 
 const { activeChildId } = useActiveChild();
+
+const { progress: phonicsProgress } = usePhonics(computed(() => activeChildId.value ?? null));
+
+const { data: sessions } = useFetch('/api/reading/sessions', {
+  query: { childId: activeChildId },
+  default: () => [],
+  watch: [activeChildId],
+});
+
+const { data: srsStats } = useFetch('/api/reading/srs/stats', {
+  query: { childId: activeChildId },
+  watch: [activeChildId],
+});
 </script>
 
 <template>
@@ -40,48 +54,61 @@ const { activeChildId } = useActiveChild();
         </UButton>
       </div>
 
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-8 reading-stagger">
-        <div
-          class="reading-wobble-hover rounded-3xl bg-[var(--reading-card-bg)] border-2 border-[var(--reading-sky-blue)]/30 p-8 shadow-md shadow-[var(--reading-sky-blue)]/10"
-        >
-          <div class="text-4xl mb-3">📚</div>
-          <h3
-            class="text-2xl font-bold text-[var(--reading-primary)] mb-3"
-            style="font-family: var(--reading-font-display)"
+      <div v-else class="space-y-8 reading-stagger">
+        <!-- Quick actions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div
+            class="reading-wobble-hover rounded-3xl bg-[var(--reading-card-bg)] border-2 border-[var(--reading-sky-blue)]/30 p-8 shadow-md shadow-[var(--reading-sky-blue)]/10"
           >
-            Stories
-          </h3>
-          <p class="text-lg text-[var(--reading-text)]/70 mb-6">
-            Read AI-generated stories matched to your level.
-          </p>
-          <UButton
-            :to="`/reading/child/${activeChildId}`"
-            class="!rounded-full !px-6 !font-bold !bg-[var(--reading-primary)] hover:!bg-[var(--reading-primary)]/85 !text-white"
+            <div class="text-4xl mb-3">📚</div>
+            <h3
+              class="text-2xl font-bold text-[var(--reading-primary)] mb-3"
+              style="font-family: var(--reading-font-display)"
+            >
+              Stories
+            </h3>
+            <p class="text-lg text-[var(--reading-text)]/70 mb-6">
+              Read AI-generated stories matched to your level.
+            </p>
+            <UButton
+              :to="`/reading/child/${activeChildId}`"
+              class="!rounded-full !px-6 !font-bold !bg-[var(--reading-primary)] hover:!bg-[var(--reading-primary)]/85 !text-white"
+            >
+              Browse Stories
+            </UButton>
+          </div>
+
+          <div
+            class="reading-wobble-hover rounded-3xl bg-[var(--reading-card-bg)] border-2 border-[var(--reading-orange)]/30 p-8 shadow-md shadow-[var(--reading-orange)]/10"
           >
-            Browse Stories
-          </UButton>
+            <div class="text-4xl mb-3">🃏</div>
+            <h3
+              class="text-2xl font-bold text-[var(--reading-accent)] mb-3"
+              style="font-family: var(--reading-font-display)"
+            >
+              Practice Cards
+            </h3>
+            <p class="text-lg text-[var(--reading-text)]/70 mb-6">
+              Review phonics and sight word flashcards.
+            </p>
+            <UButton
+              to="/reading/practice"
+              class="!rounded-full !px-6 !font-bold !bg-[var(--reading-accent)] hover:!bg-[var(--reading-accent)]/85 !text-white"
+            >
+              Start Practice
+            </UButton>
+          </div>
         </div>
 
-        <div
-          class="reading-wobble-hover rounded-3xl bg-[var(--reading-card-bg)] border-2 border-[var(--reading-orange)]/30 p-8 shadow-md shadow-[var(--reading-orange)]/10"
-        >
-          <div class="text-4xl mb-3">🃏</div>
-          <h3
-            class="text-2xl font-bold text-[var(--reading-accent)] mb-3"
-            style="font-family: var(--reading-font-display)"
-          >
-            Practice Cards
-          </h3>
-          <p class="text-lg text-[var(--reading-text)]/70 mb-6">
-            Review phonics and sight word flashcards.
-          </p>
-          <UButton
-            to="/reading/practice"
-            class="!rounded-full !px-6 !font-bold !bg-[var(--reading-accent)] hover:!bg-[var(--reading-accent)]/85 !text-white"
-          >
-            Start Practice
-          </UButton>
-        </div>
+        <!-- Reading Streak Calendar -->
+        <ReadingStreakCalendar :sessions="sessions ?? []" />
+
+        <!-- Progress Charts -->
+        <ReadingProgressChart
+          :sessions="sessions ?? []"
+          :phonics-progress="phonicsProgress"
+          :srs-stats="srsStats ?? null"
+        />
       </div>
     </div>
   </div>

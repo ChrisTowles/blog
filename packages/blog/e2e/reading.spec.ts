@@ -17,14 +17,14 @@ test.describe('Reading App', () => {
       // CTA button visible
       const cta = page.getByTestId(TEST_IDS.READING.LANDING_CTA);
       await expect(cta).toBeVisible();
-      await expect(cta).toHaveText('Get Started');
+      await expect(cta).toHaveText('Try a Story');
     });
 
-    test('CTA links to onboarding', async ({ page }) => {
+    test('CTA links to demo', async ({ page }) => {
       await page.goto('/reading', { waitUntil: 'networkidle' });
 
       const cta = page.getByTestId(TEST_IDS.READING.LANDING_CTA);
-      await expect(cta).toHaveAttribute('href', '/reading/onboarding');
+      await expect(cta).toHaveAttribute('href', '/reading/demo');
     });
 
     test('is SSR rendered (has content before JS)', async ({ page }) => {
@@ -35,7 +35,7 @@ test.describe('Reading App', () => {
       // Core content should be in initial HTML
       const body = await page.content();
       expect(body).toContain('AI-Powered Reading Practice');
-      expect(body).toContain('Get Started');
+      expect(body).toContain('Try a Story');
     });
   });
 

@@ -66,6 +66,9 @@ export function useTTS() {
     rate.value = Math.max(0.5, Math.min(1.2, newRate));
   }
 
+  // Clean up speech synthesis on component unmount
+  onUnmounted(() => stop());
+
   return {
     isSpeaking: readonly(isSpeaking),
     isPaused: readonly(isPaused),

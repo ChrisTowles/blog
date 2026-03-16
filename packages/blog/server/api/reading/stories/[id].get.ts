@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { requireChildOwner } from '../../../utils/reading/require-child-owner';
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event);
@@ -15,6 +16,11 @@ export default defineEventHandler(async (event) => {
 
   if (!story) {
     throw createError({ statusCode: 404, message: 'Story not found' });
+  }
+
+  // Verify ownership if story belongs to a child
+  if (story.childId) {
+    await requireChildOwner(event, story.childId);
   }
 
   return story;

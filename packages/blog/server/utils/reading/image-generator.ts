@@ -46,18 +46,14 @@ export async function generateStoryIllustrations(
     throw new Error('GOOGLE_AI_API_KEY not configured');
   }
 
-  const cover = await generateImage(
-    ai,
-    `Book cover for a children's story called "${title}" about ${theme}.`,
-  );
+  const [cover, ...pages] = await Promise.all([
+    generateImage(ai, `Book cover for a children's story called "${title}" about ${theme}.`),
+    ...pageTexts.map((text) =>
+      generateImage(ai, `Scene from a children's story about ${theme}: ${text}`),
+    ),
+  ]);
 
-  const pages: Buffer[] = [];
-  for (const text of pageTexts) {
-    const page = await generateImage(ai, `Scene from a children's story about ${theme}: ${text}`);
-    pages.push(page);
-  }
-
-  return { cover, pages };
+  return { cover: cover!, pages };
 }
 
 export async function saveStoryImages(
