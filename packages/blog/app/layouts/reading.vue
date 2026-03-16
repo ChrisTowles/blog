@@ -1,9 +1,19 @@
 <script setup lang="ts">
 const route = useRoute();
+const colorMode = useColorMode();
 const { isActive: bedtimeActive, initBedtimeMode } = useBedtimeMode();
 
+// Force light mode in reading app — the blog uses dark mode globally,
+// but the reading app has its own warm/kid-friendly theme
+const previousColorMode = ref(colorMode.preference);
 onMounted(() => {
+  previousColorMode.value = colorMode.preference;
+  colorMode.preference = 'light';
   initBedtimeMode();
+});
+onUnmounted(() => {
+  // Restore the user's color mode when leaving the reading app
+  colorMode.preference = previousColorMode.value;
 });
 
 const navItems = [
