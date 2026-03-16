@@ -48,3 +48,187 @@
 .reading-theme .btn-primary:hover {
   background-color: color-mix(in srgb, var(--reading-accent) 85%, black);
 }
+
+/* ── Kid-friendly animations ── */
+
+@keyframes reading-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-8px);
+  }
+  60% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes reading-wobble {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-3deg);
+  }
+  75% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes reading-pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes reading-fade-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes reading-fade-slide-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+}
+
+@keyframes reading-card-flip {
+  0% {
+    transform: rotateX(90deg);
+    opacity: 0;
+  }
+  100% {
+    transform: rotateX(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes reading-confetti-fall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(120px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes reading-float-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Utility classes */
+.reading-bounce {
+  animation: reading-bounce 0.5s ease;
+}
+
+.reading-wobble-hover {
+  transition: transform 0.2s ease;
+  will-change: transform;
+}
+
+.reading-wobble-hover:hover {
+  animation: reading-wobble 0.4s ease;
+}
+
+.reading-pop {
+  animation: reading-pop 0.3s ease;
+}
+
+.reading-float-in {
+  animation: reading-float-in 0.4s ease both;
+}
+
+/* Page transition classes for Vue <Transition> */
+.reading-page-enter-active {
+  animation: reading-fade-slide-in 0.35s ease;
+}
+
+.reading-page-leave-active {
+  animation: reading-fade-slide-out 0.25s ease;
+}
+
+/* Card flip reveal */
+.reading-flip-enter-active {
+  animation: reading-card-flip 0.4s ease;
+  transform-origin: center top;
+}
+
+/* Staggered children float-in */
+.reading-stagger > * {
+  animation: reading-float-in 0.4s ease both;
+}
+
+.reading-stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.reading-stagger > *:nth-child(2) {
+  animation-delay: 80ms;
+}
+.reading-stagger > *:nth-child(3) {
+  animation-delay: 160ms;
+}
+.reading-stagger > *:nth-child(4) {
+  animation-delay: 240ms;
+}
+.reading-stagger > *:nth-child(5) {
+  animation-delay: 320ms;
+}
+.reading-stagger > *:nth-child(6) {
+  animation-delay: 400ms;
+}
+
+/* Confetti particle */
+.reading-confetti-particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: reading-confetti-fall 1s ease forwards;
+  pointer-events: none;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .reading-bounce,
+  .reading-wobble-hover:hover,
+  .reading-pop,
+  .reading-float-in,
+  .reading-stagger > *,
+  .reading-confetti-particle {
+    animation: none !important;
+  }
+
+  .reading-page-enter-active,
+  .reading-page-leave-active,
+  .reading-flip-enter-active {
+    animation: none !important;
+  }
+}

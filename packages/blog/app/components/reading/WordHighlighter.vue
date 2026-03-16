@@ -16,10 +16,10 @@ const emit = defineEmits<{
     <span
       v-for="(word, i) in words"
       :key="i"
-      class="cursor-pointer rounded-md px-1 py-0.5 transition-all duration-150 inline-block"
+      class="cursor-pointer rounded-md px-1 py-0.5 transition-all duration-150 inline-block reading-wobble-hover"
       :class="{
-        'bg-yellow-300 dark:bg-yellow-500/40 scale-110': i === currentWordIndex,
-        'text-purple-600 dark:text-purple-400 font-bold': word.sightWord,
+        'bg-[var(--reading-highlight)] scale-110 reading-bounce': i === currentWordIndex,
+        'text-[var(--reading-primary)] font-bold': word.sightWord,
       }"
       @click="emit('wordClick', word, i)"
     >

@@ -24,11 +24,11 @@ function selectStory(id: string) {
     />
     <UPageBody>
       <div class="max-w-3xl mx-auto space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 reading-stagger">
           <UCard
             v-for="story in DEMO_STORIES"
             :key="story.id"
-            class="cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+            class="cursor-pointer hover:ring-2 hover:ring-primary transition-all reading-wobble-hover"
             @click="selectStory(story.id)"
           >
             <template #header>
