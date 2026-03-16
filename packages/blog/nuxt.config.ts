@@ -89,6 +89,7 @@ export default defineNuxtConfig({
     '/loan': { ssr: false },
     '/loan/**': { ssr: false },
     // Reading app - landing is SSR for SEO, interactive pages are CSR
+    '/reading/demo': { ssr: false },
     '/reading/stories/**': { ssr: false },
     '/reading/practice': { ssr: false },
     '/reading/onboarding': { ssr: false },
