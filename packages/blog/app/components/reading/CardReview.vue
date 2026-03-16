@@ -46,65 +46,92 @@ function handleRate(rating: 1 | 3 | 4) {
   <div
     ref="cardRef"
     :data-testid="TEST_IDS.READING.CARD_REVIEW"
-    class="max-w-md mx-auto text-center relative overflow-hidden rounded-3xl bg-[var(--reading-card-bg)] border-2 border-[var(--reading-primary)]/20 p-8 shadow-md"
+    class="max-w-md mx-auto text-center relative overflow-hidden rounded-[2rem] bg-[var(--reading-card-bg)] border-3 border-[var(--reading-primary)]/20 p-8 md:p-10 shadow-xl shadow-[var(--reading-primary)]/10"
   >
-    <div class="min-h-40 flex items-center justify-center">
+    <!-- Decorative corner dots -->
+    <div class="absolute top-4 left-4 w-3 h-3 rounded-full bg-[var(--reading-yellow)] opacity-40" />
+    <div class="absolute top-4 right-4 w-3 h-3 rounded-full bg-[var(--reading-pink)] opacity-40" />
+    <div
+      class="absolute bottom-4 left-4 w-3 h-3 rounded-full bg-[var(--reading-green)] opacity-40"
+    />
+    <div
+      class="absolute bottom-4 right-4 w-3 h-3 rounded-full bg-[var(--reading-sky-blue)] opacity-40"
+    />
+
+    <!-- Front (word) -->
+    <div class="min-h-44 flex flex-col items-center justify-center gap-3">
+      <div class="text-4xl">&#x1F4A1;</div>
       <p
-        class="text-4xl font-extrabold text-[var(--reading-text)] reading-pop"
+        class="text-5xl md:text-6xl font-extrabold text-[var(--reading-text)] reading-pop"
         style="font-family: var(--reading-font-display)"
       >
         {{ front }}
       </p>
     </div>
 
+    <!-- Revealed back + rating buttons -->
     <Transition name="reading-flip">
       <template v-if="revealed">
         <div>
-          <hr class="border-[var(--reading-pink)]/30 my-4" />
-          <div class="min-h-20 flex items-center justify-center py-4">
-            <p class="text-2xl text-[var(--reading-text)]/80">{{ back }}</p>
+          <div class="flex items-center gap-3 my-5">
+            <div class="flex-1 h-0.5 rounded-full bg-[var(--reading-pink)]/20" />
+            <span class="text-lg text-[var(--reading-pink)]/50">&#x2728;</span>
+            <div class="flex-1 h-0.5 rounded-full bg-[var(--reading-pink)]/20" />
           </div>
-          <div class="flex justify-center gap-4 pt-4 reading-stagger">
-            <UButton
+
+          <div class="min-h-24 flex items-center justify-center py-4">
+            <p
+              class="text-2xl md:text-3xl text-[var(--reading-text)]/80 font-semibold"
+              style="font-family: var(--reading-font-display)"
+            >
+              {{ back }}
+            </p>
+          </div>
+
+          <div class="flex justify-center gap-3 pt-6 reading-stagger">
+            <button
               :data-testid="TEST_IDS.READING.CARD_RATE_AGAIN"
-              size="lg"
-              class="!rounded-full !px-6 !font-bold !bg-[var(--reading-orange)] hover:!bg-[var(--reading-orange)]/85 !text-white"
+              class="reading-fab !w-auto !h-auto !px-6 !py-4 !rounded-2xl bg-[var(--reading-orange)] text-white font-bold text-lg flex flex-col items-center gap-1"
+              style="font-family: var(--reading-font-display)"
               @click="handleRate(1)"
             >
-              Again
-            </UButton>
-            <UButton
+              <span class="text-2xl">&#x1F504;</span>
+              <span>Again</span>
+            </button>
+            <button
               :data-testid="TEST_IDS.READING.CARD_RATE_HARD"
-              size="lg"
-              class="!rounded-full !px-6 !font-bold !bg-[var(--reading-yellow)] hover:!bg-[var(--reading-yellow)]/85 !text-[var(--reading-text)]"
+              class="reading-fab !w-auto !h-auto !px-6 !py-4 !rounded-2xl bg-[var(--reading-yellow)] text-[var(--reading-text)] font-bold text-lg flex flex-col items-center gap-1"
+              style="font-family: var(--reading-font-display)"
               @click="handleRate(3)"
             >
-              Hard
-            </UButton>
-            <UButton
+              <span class="text-2xl">&#x1F914;</span>
+              <span>Hard</span>
+            </button>
+            <button
               :data-testid="TEST_IDS.READING.CARD_RATE_GOOD"
-              size="lg"
-              class="!rounded-full !px-6 !font-bold !bg-[var(--reading-green)] hover:!bg-[var(--reading-green)]/85 !text-white"
+              class="reading-fab !w-auto !h-auto !px-6 !py-4 !rounded-2xl bg-[var(--reading-green)] text-white font-bold text-lg flex flex-col items-center gap-1"
+              style="font-family: var(--reading-font-display)"
               @click="handleRate(4)"
             >
-              Got It!
-            </UButton>
+              <span class="text-2xl">&#x1F389;</span>
+              <span>Got It!</span>
+            </button>
           </div>
         </div>
       </template>
     </Transition>
 
+    <!-- Reveal button -->
     <template v-if="!revealed">
-      <div class="pt-4">
-        <UButton
+      <div class="pt-6">
+        <button
           :data-testid="TEST_IDS.READING.CARD_REVEAL"
-          size="xl"
-          block
-          class="!rounded-full !font-bold !bg-[var(--reading-accent)] hover:!bg-[var(--reading-accent)]/85 !text-white"
+          class="w-full reading-fab !w-full !h-auto !rounded-2xl !py-5 bg-[var(--reading-accent)] text-white font-bold text-xl"
+          style="font-family: var(--reading-font-display)"
           @click="revealed = true"
         >
-          Show Answer
-        </UButton>
+          &#x1F50D; Show Answer
+        </button>
       </div>
     </template>
   </div>
