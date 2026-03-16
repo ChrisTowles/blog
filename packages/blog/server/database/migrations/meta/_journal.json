@@ -43,6 +43,13 @@
       "when": 1773633546065,
       "tag": "0005_workable_the_twelve",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1773634781287,
+      "tag": "0006_bored_vulture",
+      "breakpoints": true
     }
   ]
 }

@@ -15,7 +15,7 @@ export interface StoryContent {
 
 export type PhonicsPhase = 1 | 2 | 3 | 4;
 export type PhonicsProgressStatus = 'locked' | 'active' | 'mastered';
-export type ReadingMode = 'listen' | 'guided' | 'independent';
+export type ReadingMode = 'listen' | 'guided' | 'independent' | 'read-together';
 export type SrsCardType = 'phoneme' | 'sight_word' | 'vocab';
 
 export interface ReadingMiscue {
@@ -67,6 +67,36 @@ export interface PhonicsProgressResponse {
   status: PhonicsProgressStatus;
   masteredAt: string | null;
 }
+
+export type AchievementType =
+  | 'first_story'
+  | 'ten_words'
+  | 'seven_day_streak'
+  | 'phase_complete'
+  | 'fifty_stories';
+
+export interface AchievementResponse {
+  id: number;
+  childId: number;
+  type: AchievementType;
+  earnedAt: string;
+  meta: Record<string, unknown> | null;
+}
+
+export const ACHIEVEMENT_DEFINITIONS: Record<
+  AchievementType,
+  { label: string; description: string; emoji: string }
+> = {
+  first_story: { label: 'First Story', description: 'Read your very first story!', emoji: '📖' },
+  ten_words: { label: 'Word Collector', description: 'Mastered 10 words!', emoji: '🔤' },
+  seven_day_streak: { label: '7-Day Streak', description: 'Read 7 days in a row!', emoji: '🔥' },
+  phase_complete: {
+    label: 'Phase Complete',
+    description: 'Completed a phonics phase!',
+    emoji: '🎓',
+  },
+  fifty_stories: { label: 'Bookworm', description: 'Read 50 stories!', emoji: '🐛' },
+};
 
 export interface PhonicsMapUnit {
   id: number;

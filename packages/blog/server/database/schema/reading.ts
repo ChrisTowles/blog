@@ -12,7 +12,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { users } from './blog';
-import type { StoryContent, ReadingMiscue } from '~~/shared/reading-types';
+import type { StoryContent, ReadingMiscue, AchievementType } from '~~/shared/reading-types';
 
 // --- Reading App Tables ---
 
@@ -46,6 +46,7 @@ export const childProfilesRelations = relations(childProfiles, ({ one, many }) =
   srsCards: many(srsCards),
   stories: many(stories),
   readingSessions: many(readingSessions),
+  achievements: many(achievements),
 }));
 
 export const phonicsUnits = pgTable('phonics_units', {
@@ -181,5 +182,26 @@ export const readingSessionsRelations = relations(readingSessions, ({ one }) => 
   story: one(stories, {
     fields: [readingSessions.storyId],
     references: [stories.id],
+  }),
+}));
+
+export const achievements = pgTable(
+  'achievements',
+  {
+    id: serial().primaryKey(),
+    childId: integer()
+      .notNull()
+      .references(() => childProfiles.id, { onDelete: 'cascade' }),
+    type: varchar({ length: 50 }).$type<AchievementType>().notNull(),
+    earnedAt: timestamp().defaultNow().notNull(),
+    meta: jsonb().$type<Record<string, unknown>>(),
+  },
+  (table) => [index('achievements_child_id_idx').on(table.childId)],
+);
+
+export const achievementsRelations = relations(achievements, ({ one }) => ({
+  child: one(childProfiles, {
+    fields: [achievements.childId],
+    references: [childProfiles.id],
   }),
 }));
