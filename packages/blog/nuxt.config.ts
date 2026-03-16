@@ -49,7 +49,7 @@ export default defineNuxtConfig({
   devServer: {
     port: parseInt(process.env.UI_PORT!),
   },
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/reading-theme.css'],
 
   colorMode: {
     preference: 'dark', // default value of $colorMode.preference

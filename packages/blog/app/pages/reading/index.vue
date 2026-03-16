@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { TEST_IDS } from '~~/shared/test-ids';
-definePageMeta({ layout: 'default' });
+definePageMeta({ layout: 'reading' });
 </script>
 
 <template>
