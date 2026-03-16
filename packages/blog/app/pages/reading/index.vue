@@ -25,9 +25,12 @@ definePageMeta({ layout: 'default' });
             Word-by-word highlighting with text-to-speech at child-friendly pace.
           </UCard>
         </div>
-        <UButton :data-testid="TEST_IDS.READING.LANDING_CTA" to="/reading/onboarding" size="xl"
-          >Get Started</UButton
-        >
+        <div class="flex gap-4 justify-center">
+          <UButton :data-testid="TEST_IDS.READING.LANDING_CTA" to="/reading/demo" size="xl"
+            >Try a Story</UButton
+          >
+          <UButton to="/reading/onboarding" size="xl" variant="outline">Create Account</UButton>
+        </div>
       </div>
     </UPageBody>
   </div>
