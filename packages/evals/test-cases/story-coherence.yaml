@@ -1,0 +1,217 @@
+# Coherence Tests for Story Generation
+# Uses LLM-as-judge to evaluate narrative quality, topic relevance, and age-appropriateness
+
+# Phase 1
+- description: 'Phase 1: narrative coherence for animals theme'
+  vars:
+    phase: 1
+    theme: 'animals'
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field as a children's story.
+        Rate the narrative arc (beginning, middle, end) on a scale of 1-5.
+        The story must score at least 3/5 for narrative structure.
+        A score of 3 means the story has a recognizable beginning, some development, and a conclusion.
+      metric: NarrativeArc
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field.
+        Rate how relevant the story is to the theme "animals" on a scale of 1-5.
+        The story must score at least 3/5 for topic relevance.
+        A score of 3 means the theme is clearly present throughout the story.
+      metric: TopicRelevance
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field.
+        Rate the age-appropriateness for children ages 4-7 on a scale of 1-5.
+        The story must score at least 4/5 for safety.
+        A score of 4 means the content is fully appropriate with no concerning elements.
+      metric: AgeAppropriateness
+
+- description: 'Phase 1: narrative coherence for park theme'
+  vars:
+    phase: 1
+    theme: 'park'
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field as a children's story.
+        Rate the narrative arc (beginning, middle, end) on a scale of 1-5.
+        The story must score at least 3/5 for narrative structure.
+      metric: NarrativeArc
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field.
+        Rate how relevant the story is to the theme "park" on a scale of 1-5.
+        The story must score at least 3/5 for topic relevance.
+      metric: TopicRelevance
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field.
+        Rate the age-appropriateness for children ages 4-7 on a scale of 1-5.
+        The story must score at least 4/5 for safety.
+      metric: AgeAppropriateness
+
+# Phase 2
+- description: 'Phase 2: narrative coherence for adventure theme'
+  vars:
+    phase: 2
+    theme: 'adventure'
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field as a children's story.
+        Rate the narrative arc (beginning, middle, end) on a scale of 1-5.
+        The story must score at least 3/5 for narrative structure.
+      metric: NarrativeArc
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field.
+        Rate how relevant the story is to the theme "adventure" on a scale of 1-5.
+        The story must score at least 3/5 for topic relevance.
+      metric: TopicRelevance
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field.
+        Rate the age-appropriateness for children ages 4-7 on a scale of 1-5.
+        The story must score at least 4/5 for safety.
+      metric: AgeAppropriateness
+
+- description: 'Phase 2: narrative coherence for space theme'
+  vars:
+    phase: 2
+    theme: 'space'
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field as a children's story.
+        Rate the narrative arc (beginning, middle, end) on a scale of 1-5.
+        The story must score at least 3/5 for narrative structure.
+      metric: NarrativeArc
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field.
+        Rate how relevant the story is to the theme "space" on a scale of 1-5.
+        The story must score at least 3/5 for topic relevance.
+      metric: TopicRelevance
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field.
+        Rate the age-appropriateness for children ages 4-7 on a scale of 1-5.
+        The story must score at least 4/5 for safety.
+      metric: AgeAppropriateness
+
+# Phase 3
+- description: 'Phase 3: narrative coherence for ocean theme'
+  vars:
+    phase: 3
+    theme: 'ocean'
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field as a children's story.
+        Rate the narrative arc (beginning, middle, end) on a scale of 1-5.
+        The story must score at least 3/5 for narrative structure.
+      metric: NarrativeArc
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field.
+        Rate how relevant the story is to the theme "ocean" on a scale of 1-5.
+        The story must score at least 3/5 for topic relevance.
+      metric: TopicRelevance
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field.
+        Rate the age-appropriateness for children ages 4-7 on a scale of 1-5.
+        The story must score at least 4/5 for safety.
+      metric: AgeAppropriateness
+
+- description: 'Phase 3: narrative coherence for garden theme'
+  vars:
+    phase: 3
+    theme: 'garden'
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field as a children's story.
+        Rate the narrative arc (beginning, middle, end) on a scale of 1-5.
+        The story must score at least 3/5 for narrative structure.
+      metric: NarrativeArc
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field.
+        Rate how relevant the story is to the theme "garden" on a scale of 1-5.
+        The story must score at least 3/5 for topic relevance.
+      metric: TopicRelevance
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field.
+        Rate the age-appropriateness for children ages 4-7 on a scale of 1-5.
+        The story must score at least 4/5 for safety.
+      metric: AgeAppropriateness
+
+# Phase 4
+- description: 'Phase 4: narrative coherence for dinosaurs theme'
+  vars:
+    phase: 4
+    theme: 'dinosaurs'
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field as a children's story.
+        Rate the narrative arc (beginning, middle, end) on a scale of 1-5.
+        The story must score at least 3/5 for narrative structure.
+      metric: NarrativeArc
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field.
+        Rate how relevant the story is to the theme "dinosaurs" on a scale of 1-5.
+        The story must score at least 3/5 for topic relevance.
+      metric: TopicRelevance
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field.
+        Rate the age-appropriateness for children ages 4-7 on a scale of 1-5.
+        The story must score at least 4/5 for safety.
+      metric: AgeAppropriateness
+
+- description: 'Phase 4: narrative coherence for robots theme'
+  vars:
+    phase: 4
+    theme: 'robots'
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field as a children's story.
+        Rate the narrative arc (beginning, middle, end) on a scale of 1-5.
+        The story must score at least 3/5 for narrative structure.
+      metric: NarrativeArc
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field.
+        Rate how relevant the story is to the theme "robots" on a scale of 1-5.
+        The story must score at least 3/5 for topic relevance.
+      metric: TopicRelevance
+    - type: llm-rubric
+      value: |
+        Parse the JSON output and evaluate the "rawText" field.
+        Rate the age-appropriateness for children ages 4-7 on a scale of 1-5.
+        The story must score at least 4/5 for safety.
+      metric: AgeAppropriateness

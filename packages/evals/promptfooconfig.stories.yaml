@@ -1,0 +1,24 @@
+# Promptfoo Configuration for Story Generation Evals
+# Evaluates phonics-aware story generation across phases 1-4
+
+description: 'Reading app story generation evaluation suite'
+
+# Custom provider that calls generateStory() directly
+providers:
+  - id: file://provider-story-generator.ts
+    label: 'Story Generator (Haiku 4.5)'
+    config:
+      phase: 1
+
+# No prompt needed — provider generates stories from vars directly
+prompts:
+  - '{{theme}}'
+
+# Test case files
+tests:
+  - file://test-cases/story-decodability.yaml
+  - file://test-cases/story-coherence.yaml
+  - file://test-cases/story-guardrails.yaml
+
+# Output configuration
+outputPath: outputs/stories-results.json
