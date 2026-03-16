@@ -12,7 +12,7 @@ const { activeChildId } = useActiveChild();
         <span class="text-5xl reading-bounce inline-block">🎴</span>
       </div>
       <h1
-        class="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-[var(--reading-accent)] via-[var(--reading-pink)] to-[var(--reading-primary)] bg-clip-text text-transparent"
+        class="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-[var(--reading-accent)] via-[var(--reading-secondary)] to-[var(--reading-primary)] bg-clip-text text-transparent"
         style="font-family: var(--reading-font-display)"
       >
         Practice Cards
@@ -29,7 +29,7 @@ const { activeChildId } = useActiveChild();
       <!-- No child selected -->
       <div v-if="!activeChildId" class="text-center py-12 reading-float-in">
         <div
-          class="inline-flex items-center justify-center w-28 h-28 rounded-full bg-gradient-to-br from-[var(--reading-yellow)]/30 to-[var(--reading-pink)]/20 mb-6 shadow-lg shadow-[var(--reading-yellow)]/10"
+          class="inline-flex items-center justify-center w-28 h-28 rounded-full bg-gradient-to-br from-[var(--reading-highlight)]/30 to-[var(--reading-secondary)]/20 mb-6 shadow-lg shadow-[var(--reading-highlight)]/10"
         >
           <span class="text-6xl">📝</span>
         </div>
@@ -41,7 +41,7 @@ const { activeChildId } = useActiveChild();
         </p>
         <UButton
           to="/reading/onboarding"
-          class="!rounded-full !px-10 !py-4 !text-xl !font-bold !bg-gradient-to-r !from-[var(--reading-accent)] !to-[var(--reading-orange)] hover:!shadow-lg hover:!shadow-[var(--reading-accent)]/30 !text-white !transition-all !duration-300 hover:!scale-105"
+          class="!rounded-full !px-10 !py-4 !text-xl !font-bold !bg-gradient-to-r !from-[var(--reading-accent)] !to-[var(--reading-accent)] hover:!shadow-lg hover:!shadow-[var(--reading-accent)]/30 !text-white !transition-all !duration-300 hover:!scale-105"
         >
           Set Up a Profile
         </UButton>
@@ -54,15 +54,15 @@ const { activeChildId } = useActiveChild();
         >
           <!-- Decorative dots -->
           <div class="flex justify-center gap-3 mb-6">
-            <span class="w-4 h-4 rounded-full bg-[var(--reading-orange)] opacity-60" />
-            <span class="w-4 h-4 rounded-full bg-[var(--reading-yellow)] opacity-60" />
-            <span class="w-4 h-4 rounded-full bg-[var(--reading-green)] opacity-60" />
-            <span class="w-4 h-4 rounded-full bg-[var(--reading-sky-blue)] opacity-60" />
-            <span class="w-4 h-4 rounded-full bg-[var(--reading-pink)] opacity-60" />
+            <span class="w-4 h-4 rounded-full bg-[var(--reading-accent)] opacity-60" />
+            <span class="w-4 h-4 rounded-full bg-[var(--reading-highlight)] opacity-60" />
+            <span class="w-4 h-4 rounded-full bg-[var(--reading-success)] opacity-60" />
+            <span class="w-4 h-4 rounded-full bg-[var(--reading-primary)] opacity-60" />
+            <span class="w-4 h-4 rounded-full bg-[var(--reading-secondary)] opacity-60" />
           </div>
 
           <div
-            class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-[var(--reading-primary)]/20 to-[var(--reading-sky-blue)]/10 mb-6"
+            class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-[var(--reading-primary)]/20 to-[var(--reading-primary)]/10 mb-6"
           >
             <span class="text-5xl">🎴</span>
           </div>

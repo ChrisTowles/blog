@@ -173,7 +173,7 @@ const phonicsOption = computed(() => {
   <div :data-testid="TEST_IDS.READING.PROGRESS_CHART" class="space-y-6">
     <!-- WCPM Trend -->
     <div
-      class="rounded-3xl bg-[var(--reading-card-bg)] border-2 border-[var(--reading-green)]/30 p-6 shadow-md shadow-[var(--reading-green)]/10"
+      class="rounded-3xl bg-[var(--reading-card-bg)] border-2 border-[var(--reading-success)]/30 p-6 shadow-md shadow-[var(--reading-success)]/10"
     >
       <h3
         class="text-xl font-bold text-[var(--reading-success)] mb-4"
@@ -197,7 +197,7 @@ const phonicsOption = computed(() => {
 
     <!-- Phonics Mastery -->
     <div
-      class="rounded-3xl bg-[var(--reading-card-bg)] border-2 border-[var(--reading-sky-blue)]/30 p-6 shadow-md shadow-[var(--reading-sky-blue)]/10"
+      class="rounded-3xl bg-[var(--reading-card-bg)] border-2 border-[var(--reading-primary)]/30 p-6 shadow-md shadow-[var(--reading-primary)]/10"
     >
       <div class="flex items-center justify-between mb-3">
         <h3
@@ -231,7 +231,7 @@ const phonicsOption = computed(() => {
     <div
       v-if="srsStats"
       :data-testid="TEST_IDS.READING.SRS_STATS_SUMMARY"
-      class="rounded-3xl bg-[var(--reading-card-bg)] border-2 border-[var(--reading-orange)]/30 p-6 shadow-md shadow-[var(--reading-orange)]/10"
+      class="rounded-3xl bg-[var(--reading-card-bg)] border-2 border-[var(--reading-accent)]/30 p-6 shadow-md shadow-[var(--reading-accent)]/10"
     >
       <h3
         class="text-xl font-bold text-[var(--reading-accent)] mb-4"
@@ -240,25 +240,25 @@ const phonicsOption = computed(() => {
         🃏 Flashcard Stats
       </h3>
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-        <div class="rounded-2xl bg-[var(--reading-orange)]/10 p-3">
+        <div class="rounded-2xl bg-[var(--reading-accent)]/10 p-3">
           <div class="text-2xl font-bold text-[var(--reading-accent)]">
             {{ srsStats.due }}
           </div>
           <div class="text-xs text-[var(--reading-text)]/60 font-semibold">Due Now</div>
         </div>
-        <div class="rounded-2xl bg-[var(--reading-sky-blue)]/10 p-3">
+        <div class="rounded-2xl bg-[var(--reading-primary)]/10 p-3">
           <div class="text-2xl font-bold text-[var(--reading-primary)]">
             {{ srsStats.newCards }}
           </div>
           <div class="text-xs text-[var(--reading-text)]/60 font-semibold">New</div>
         </div>
-        <div class="rounded-2xl bg-[var(--reading-green)]/10 p-3">
+        <div class="rounded-2xl bg-[var(--reading-success)]/10 p-3">
           <div class="text-2xl font-bold text-[var(--reading-success)]">
             {{ srsStats.mastered }}
           </div>
           <div class="text-xs text-[var(--reading-text)]/60 font-semibold">Mastered</div>
         </div>
-        <div class="rounded-2xl bg-[var(--reading-yellow)]/10 p-3">
+        <div class="rounded-2xl bg-[var(--reading-highlight)]/10 p-3">
           <div class="text-2xl font-bold text-[var(--reading-text)]">
             {{ srsStats.total }}
           </div>

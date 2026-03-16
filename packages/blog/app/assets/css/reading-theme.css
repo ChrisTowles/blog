@@ -161,11 +161,11 @@
   border-radius: 3px;
   background: linear-gradient(
     90deg,
-    var(--reading-orange),
-    var(--reading-yellow),
-    var(--reading-green),
-    var(--reading-sky-blue),
-    var(--reading-pink)
+    var(--reading-accent),
+    var(--reading-highlight),
+    var(--reading-success),
+    var(--reading-primary),
+    var(--reading-secondary)
   );
 }
 
@@ -216,7 +216,7 @@
 .reading-story-card:hover {
   transform: translateY(-4px);
   box-shadow:
-    0 12px 24px -8px rgba(77, 168, 218, 0.2),
+    0 12px 24px -8px color-mix(in srgb, var(--reading-primary) 20%, transparent),
     0 4px 8px -2px rgba(0, 0, 0, 0.08);
 }
 
@@ -295,7 +295,7 @@
   flex: 1;
   height: 3px;
   border-radius: 1.5px;
-  background: linear-gradient(90deg, var(--reading-sky-blue) 0%, transparent 100%);
+  background: linear-gradient(90deg, var(--reading-primary) 0%, transparent 100%);
   opacity: 0.3;
 }
 

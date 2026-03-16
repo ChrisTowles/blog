@@ -3,6 +3,17 @@ definePageMeta({
   layout: 'reading',
   middleware: 'auth',
 });
+
+const themeCreatorRef = ref<{ loadTheme: (theme: any) => void } | null>(null);
+
+const { themes } = useReadingTheme();
+
+function handleEditTheme(themeName: string) {
+  const theme = themes.value.find((t) => t.name === themeName);
+  if (theme && themeCreatorRef.value) {
+    themeCreatorRef.value.loadTheme(theme);
+  }
+}
 </script>
 
 <template>
@@ -13,7 +24,7 @@ definePageMeta({
         <span class="text-5xl reading-bounce inline-block">🎨</span>
       </div>
       <h1
-        class="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-[var(--reading-pink)] via-[var(--reading-primary)] to-[var(--reading-green)] bg-clip-text text-transparent"
+        class="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-[var(--reading-secondary)] via-[var(--reading-primary)] to-[var(--reading-success)] bg-clip-text text-transparent"
         style="font-family: var(--reading-font-display)"
       >
         Settings
@@ -29,11 +40,11 @@ definePageMeta({
     <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto reading-stagger">
       <!-- Theme picker card -->
       <div
-        class="group rounded-3xl bg-[var(--reading-card-bg)] p-8 shadow-lg shadow-[var(--reading-pink)]/10 border-2 border-[var(--reading-pink)]/20 transition-all duration-300 hover:shadow-xl hover:shadow-[var(--reading-pink)]/15 hover:border-[var(--reading-pink)]/40"
+        class="group rounded-3xl bg-[var(--reading-card-bg)] p-8 shadow-lg shadow-[var(--reading-secondary)]/10 border-2 border-[var(--reading-secondary)]/20 transition-all duration-300 hover:shadow-xl hover:shadow-[var(--reading-secondary)]/15 hover:border-[var(--reading-secondary)]/40"
       >
         <div class="flex items-center gap-3 mb-6">
           <div
-            class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[var(--reading-pink)]/15 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6"
+            class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[var(--reading-secondary)]/15 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6"
           >
             <span class="text-2xl">🎭</span>
           </div>
@@ -44,7 +55,7 @@ definePageMeta({
             Pick a Theme
           </h2>
         </div>
-        <ReadingThemePicker />
+        <ReadingThemePicker @edit="handleEditTheme" />
       </div>
 
       <!-- Theme creator card -->
@@ -64,7 +75,7 @@ definePageMeta({
             Create Your Own
           </h2>
         </div>
-        <ReadingThemeCreator />
+        <ReadingThemeCreator ref="themeCreatorRef" />
       </div>
     </div>
   </div>

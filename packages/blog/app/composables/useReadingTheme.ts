@@ -61,6 +61,7 @@ export function useReadingTheme() {
     if (!import.meta.client) return;
     const el = document.querySelector('.reading-theme') as HTMLElement | null;
     if (!el) return;
+    // Set BOTH raw palette AND semantic tokens so all components update
     el.style.setProperty('--reading-sky-blue', theme.primaryColor);
     el.style.setProperty('--reading-pink', theme.secondaryColor);
     el.style.setProperty('--reading-orange', theme.accentColor);
@@ -69,6 +70,14 @@ export function useReadingTheme() {
     el.style.setProperty('--reading-cream', theme.backgroundColor);
     el.style.setProperty('--reading-white', theme.cardBackground);
     el.style.setProperty('--reading-text', theme.textColor);
+    // Also set semantic tokens directly for components that use them
+    el.style.setProperty('--reading-primary', theme.primaryColor);
+    el.style.setProperty('--reading-secondary', theme.secondaryColor);
+    el.style.setProperty('--reading-accent', theme.accentColor);
+    el.style.setProperty('--reading-success', theme.successColor);
+    el.style.setProperty('--reading-highlight', theme.highlightColor);
+    el.style.setProperty('--reading-bg', theme.backgroundColor);
+    el.style.setProperty('--reading-card-bg', theme.cardBackground);
     el.style.setProperty('--reading-font-display', theme.fontFamily);
     el.style.setProperty('--reading-font-body', theme.fontFamily);
     el.style.setProperty('--reading-radius', theme.borderRadius);
@@ -103,12 +112,27 @@ export function useReadingTheme() {
     }
   }
 
+  function removeTheme(name: string) {
+    // Can't remove built-in themes
+    if (BUILT_IN_THEMES.some((t) => t.name === name)) return;
+    themes.value = themes.value.filter((t) => t.name !== name);
+    if (activeThemeName.value === name) {
+      setTheme('bluey');
+    }
+  }
+
+  function isBuiltIn(name: string) {
+    return BUILT_IN_THEMES.some((t) => t.name === name);
+  }
+
   return {
     themes: computed(() => themes.value),
     activeTheme,
     activeThemeName: computed(() => activeThemeName.value),
     setTheme,
     addTheme,
+    removeTheme,
+    isBuiltIn,
     initTheme,
   };
 }

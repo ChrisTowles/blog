@@ -1,5 +1,9 @@
 <script setup lang="ts">
-const { themes, activeThemeName, setTheme } = useReadingTheme();
+const { themes, activeThemeName, setTheme, removeTheme, isBuiltIn } = useReadingTheme();
+
+const emit = defineEmits<{
+  edit: [themeName: string];
+}>();
 </script>
 
 <template>
@@ -11,30 +15,56 @@ const { themes, activeThemeName, setTheme } = useReadingTheme();
       Choose a Theme
     </h3>
     <div class="flex flex-wrap gap-3">
-      <button
-        v-for="theme in themes"
-        :key="theme.name"
-        class="reading-wobble-hover flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all cursor-pointer"
-        :class="
-          activeThemeName === theme.name
-            ? 'border-[var(--reading-primary)] shadow-md scale-105'
-            : 'border-transparent hover:border-[var(--reading-primary)]/30'
-        "
-        :style="{ backgroundColor: theme.cardBackground }"
-        @click="setTheme(theme.name)"
-      >
-        <span class="text-2xl">{{ theme.mascotEmoji }}</span>
-        <div class="text-left">
-          <p class="font-bold text-sm" :style="{ color: theme.textColor }">{{ theme.label }}</p>
-          <div class="flex gap-1 mt-1">
-            <span class="w-3 h-3 rounded-full" :style="{ backgroundColor: theme.primaryColor }" />
-            <span class="w-3 h-3 rounded-full" :style="{ backgroundColor: theme.accentColor }" />
-            <span class="w-3 h-3 rounded-full" :style="{ backgroundColor: theme.successColor }" />
-            <span class="w-3 h-3 rounded-full" :style="{ backgroundColor: theme.highlightColor }" />
-            <span class="w-3 h-3 rounded-full" :style="{ backgroundColor: theme.secondaryColor }" />
+      <div v-for="theme in themes" :key="theme.name" class="relative group">
+        <button
+          class="reading-wobble-hover flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all cursor-pointer"
+          :class="
+            activeThemeName === theme.name
+              ? 'border-[var(--reading-primary)] shadow-md scale-105'
+              : 'border-transparent hover:border-[var(--reading-primary)]/30'
+          "
+          :style="{ backgroundColor: theme.cardBackground }"
+          @click="setTheme(theme.name)"
+        >
+          <span class="text-2xl">{{ theme.mascotEmoji }}</span>
+          <div class="text-left">
+            <p class="font-bold text-sm" :style="{ color: theme.textColor }">{{ theme.label }}</p>
+            <div class="flex gap-1 mt-1">
+              <span class="w-3 h-3 rounded-full" :style="{ backgroundColor: theme.primaryColor }" />
+              <span class="w-3 h-3 rounded-full" :style="{ backgroundColor: theme.accentColor }" />
+              <span class="w-3 h-3 rounded-full" :style="{ backgroundColor: theme.successColor }" />
+              <span
+                class="w-3 h-3 rounded-full"
+                :style="{ backgroundColor: theme.highlightColor }"
+              />
+              <span
+                class="w-3 h-3 rounded-full"
+                :style="{ backgroundColor: theme.secondaryColor }"
+              />
+            </div>
           </div>
+        </button>
+        <!-- Edit/Delete buttons for custom themes -->
+        <div
+          v-if="!isBuiltIn(theme.name)"
+          class="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <button
+            class="w-6 h-6 rounded-full bg-[var(--reading-primary)] text-white text-xs flex items-center justify-center hover:scale-110 transition-transform"
+            title="Edit theme"
+            @click.stop="emit('edit', theme.name)"
+          >
+            ✏️
+          </button>
+          <button
+            class="w-6 h-6 rounded-full bg-red-400 text-white text-xs flex items-center justify-center hover:scale-110 transition-transform"
+            title="Delete theme"
+            @click.stop="removeTheme(theme.name)"
+          >
+            ✕
+          </button>
         </div>
-      </button>
+      </div>
     </div>
   </div>
 </template>
