@@ -20,29 +20,29 @@ export async function checkAchievements(childId: number): Promise<AchievementRes
 
   // first_story: at least 1 reading session
   if (!earned.has('first_story')) {
-    const [result] = await db
+    const rows = await db
       .select({ total: count() })
       .from(tables.readingSessions)
       .where(eq(tables.readingSessions.childId, childId));
-    if ((result?.total ?? 0) >= 1) newAchievements.push('first_story');
+    if ((rows[0]?.total ?? 0) >= 1) newAchievements.push('first_story');
   }
 
   // fifty_stories: at least 50 reading sessions
   if (!earned.has('fifty_stories')) {
-    const [result] = await db
+    const rows = await db
       .select({ total: count() })
       .from(tables.readingSessions)
       .where(eq(tables.readingSessions.childId, childId));
-    if ((result?.total ?? 0) >= 50) newAchievements.push('fifty_stories');
+    if ((rows[0]?.total ?? 0) >= 50) newAchievements.push('fifty_stories');
   }
 
   // ten_words: at least 10 mastered SRS cards
   if (!earned.has('ten_words')) {
-    const [result] = await db
+    const rows = await db
       .select({ total: count() })
       .from(tables.srsCards)
       .where(and(eq(tables.srsCards.childId, childId), gte(tables.srsCards.reps, 3)));
-    if ((result?.total ?? 0) >= 10) newAchievements.push('ten_words');
+    if ((rows[0]?.total ?? 0) >= 10) newAchievements.push('ten_words');
   }
 
   // seven_day_streak: sessions on 7 consecutive days
