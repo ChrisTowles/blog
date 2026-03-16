@@ -144,6 +144,161 @@
   }
 }
 
+/* ── Shared decorative classes ── */
+
+.reading-page-header {
+  position: relative;
+}
+
+.reading-page-header::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--reading-orange),
+    var(--reading-yellow),
+    var(--reading-green),
+    var(--reading-sky-blue),
+    var(--reading-pink)
+  );
+}
+
+/* Treasure card with shimmer */
+.reading-treasure-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.reading-treasure-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 10%,
+    transparent 20%
+  );
+  animation: reading-shimmer 4s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.reading-treasure-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes reading-shimmer {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Story card with gradient border on hover */
+.reading-story-card {
+  position: relative;
+  background: var(--reading-card-bg);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.reading-story-card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 12px 24px -8px rgba(77, 168, 218, 0.2),
+    0 4px 8px -2px rgba(0, 0, 0, 0.08);
+}
+
+/* Immersive reader wrapper */
+.reading-immersive {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.reading-immersive-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Floating action buttons */
+.reading-fab {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 4px 14px -2px rgba(0, 0, 0, 0.15),
+    0 2px 6px -1px rgba(0, 0, 0, 0.1);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.reading-fab:hover {
+  transform: scale(1.08);
+  box-shadow:
+    0 6px 20px -2px rgba(0, 0, 0, 0.2),
+    0 3px 8px -1px rgba(0, 0, 0, 0.12);
+}
+
+.reading-fab:active {
+  transform: scale(0.95);
+}
+
+/* Bedtime cozy card */
+.bedtime-cozy-card {
+  background: linear-gradient(135deg, rgba(30, 40, 65, 0.95), rgba(20, 28, 50, 0.95));
+  border: 1.5px solid rgba(201, 168, 76, 0.25);
+  box-shadow:
+    0 8px 24px -4px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 238, 181, 0.05);
+}
+
+.bedtime-cozy-card:hover {
+  border-color: rgba(201, 168, 76, 0.5);
+  box-shadow:
+    0 12px 32px -4px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 238, 181, 0.08),
+    0 0 20px rgba(201, 168, 76, 0.08);
+}
+
+/* Word bank group header */
+.reading-group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.reading-group-header::after {
+  content: '';
+  flex: 1;
+  height: 3px;
+  border-radius: 1.5px;
+  background: linear-gradient(90deg, var(--reading-sky-blue) 0%, transparent 100%);
+  opacity: 0.3;
+}
+
 /* Utility classes */
 .reading-bounce {
   animation: reading-bounce 0.5s ease;
