@@ -53,6 +53,7 @@
     "eval": "pnpm --filter @chris-towles/evals eval",
     "eval:watch": "pnpm --filter @chris-towles/evals eval:watch",
     "eval:view": "pnpm --filter @chris-towles/evals eval:view",
+    "eval:stories": "tsx packages/evals/run-eval.ts eval -c packages/evals/promptfooconfig.stories.yaml",
     "prepare": "simple-git-hooks",
     "mcp:inspect": "pnpm dlx @modelcontextprotocol/inspector",
     "deps:update": "pnpm dlx taze --interactive --recursive",

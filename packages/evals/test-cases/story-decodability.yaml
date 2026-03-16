@@ -1,0 +1,286 @@
+# Decodability Tests for Story Generation
+# Validates phonics phase accuracy, reading level, and word count constraints
+
+# Phase 1 — CVC words (sat, pin, mat, dog)
+- description: 'Phase 1: animals theme produces decodable text'
+  vars:
+    phase: 1
+    theme: 'animals'
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.decodabilityScore >= 0.90;
+      metric: DecodabilityScore
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.fleschKincaid >= 0 && data.fleschKincaid <= 5;
+      metric: FleschKincaid
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.wordCount >= 40 && data.wordCount <= 120;
+      metric: WordCount
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return typeof data.title === 'string' && data.title.trim().length > 0;
+      metric: TitlePresent
+
+- description: 'Phase 1: park theme produces decodable text'
+  vars:
+    phase: 1
+    theme: 'park'
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.decodabilityScore >= 0.90;
+      metric: DecodabilityScore
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.fleschKincaid >= 0 && data.fleschKincaid <= 5;
+      metric: FleschKincaid
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.wordCount >= 40 && data.wordCount <= 120;
+      metric: WordCount
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return typeof data.title === 'string' && data.title.trim().length > 0;
+      metric: TitlePresent
+
+- description: 'Phase 1: food theme produces decodable text'
+  vars:
+    phase: 1
+    theme: 'food'
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.decodabilityScore >= 0.90;
+      metric: DecodabilityScore
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.fleschKincaid >= 0 && data.fleschKincaid <= 5;
+      metric: FleschKincaid
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.wordCount >= 40 && data.wordCount <= 120;
+      metric: WordCount
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return typeof data.title === 'string' && data.title.trim().length > 0;
+      metric: TitlePresent
+
+- description: 'Phase 1: family theme produces decodable text'
+  vars:
+    phase: 1
+    theme: 'family'
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.decodabilityScore >= 0.90;
+      metric: DecodabilityScore
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.fleschKincaid >= 0 && data.fleschKincaid <= 5;
+      metric: FleschKincaid
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.wordCount >= 40 && data.wordCount <= 120;
+      metric: WordCount
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return typeof data.title === 'string' && data.title.trim().length > 0;
+      metric: TitlePresent
+
+# Phase 2 — consonant digraphs (sh, ch, th, ng)
+- description: 'Phase 2: adventure theme maintains decodability'
+  vars:
+    phase: 2
+    theme: 'adventure'
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.decodabilityScore >= 0.90;
+      metric: DecodabilityScore
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.fleschKincaid >= 0 && data.fleschKincaid <= 5;
+      metric: FleschKincaid
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.wordCount >= 40 && data.wordCount <= 120;
+      metric: WordCount
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return typeof data.title === 'string' && data.title.trim().length > 0;
+      metric: TitlePresent
+
+- description: 'Phase 2: space theme maintains decodability'
+  vars:
+    phase: 2
+    theme: 'space'
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.decodabilityScore >= 0.90;
+      metric: DecodabilityScore
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.fleschKincaid >= 0 && data.fleschKincaid <= 5;
+      metric: FleschKincaid
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.wordCount >= 40 && data.wordCount <= 120;
+      metric: WordCount
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return typeof data.title === 'string' && data.title.trim().length > 0;
+      metric: TitlePresent
+
+# Phase 3 — vowel digraphs (ai, ee, oa, oo)
+- description: 'Phase 3: ocean theme maintains decodability'
+  vars:
+    phase: 3
+    theme: 'ocean'
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.decodabilityScore >= 0.90;
+      metric: DecodabilityScore
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.fleschKincaid >= 0 && data.fleschKincaid <= 5;
+      metric: FleschKincaid
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.wordCount >= 40 && data.wordCount <= 120;
+      metric: WordCount
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return typeof data.title === 'string' && data.title.trim().length > 0;
+      metric: TitlePresent
+
+- description: 'Phase 3: garden theme maintains decodability'
+  vars:
+    phase: 3
+    theme: 'garden'
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.decodabilityScore >= 0.90;
+      metric: DecodabilityScore
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.fleschKincaid >= 0 && data.fleschKincaid <= 5;
+      metric: FleschKincaid
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.wordCount >= 40 && data.wordCount <= 120;
+      metric: WordCount
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return typeof data.title === 'string' && data.title.trim().length > 0;
+      metric: TitlePresent
+
+# Phase 4 — consonant clusters (bl, cr, str, spl)
+- description: 'Phase 4: dinosaurs theme maintains decodability'
+  vars:
+    phase: 4
+    theme: 'dinosaurs'
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.decodabilityScore >= 0.90;
+      metric: DecodabilityScore
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.fleschKincaid >= 0 && data.fleschKincaid <= 5;
+      metric: FleschKincaid
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.wordCount >= 40 && data.wordCount <= 120;
+      metric: WordCount
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return typeof data.title === 'string' && data.title.trim().length > 0;
+      metric: TitlePresent
+
+- description: 'Phase 4: robots theme maintains decodability'
+  vars:
+    phase: 4
+    theme: 'robots'
+  assert:
+    - type: is-json
+      metric: ValidJSON
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.decodabilityScore >= 0.90;
+      metric: DecodabilityScore
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.fleschKincaid >= 0 && data.fleschKincaid <= 5;
+      metric: FleschKincaid
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return data.wordCount >= 40 && data.wordCount <= 120;
+      metric: WordCount
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        return typeof data.title === 'string' && data.title.trim().length > 0;
+      metric: TitlePresent
