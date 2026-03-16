@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { StoryContent } from '~~/shared/reading-types';
 
-definePageMeta({ layout: false });
+definePageMeta({ layout: 'reading' });
 
 const route = useRoute();
 const { data: story } = await useFetch<{
@@ -13,9 +13,16 @@ const { data: story } = await useFetch<{
 </script>
 
 <template>
-  <div class="h-screen bg-white dark:bg-gray-950">
-    <div class="absolute top-4 left-4 z-10">
-      <UButton to="/reading/dashboard" icon="i-heroicons-arrow-left" variant="ghost" />
+  <div class="min-h-[70vh] relative">
+    <div class="mb-4">
+      <UButton
+        to="/reading/dashboard"
+        icon="i-heroicons-arrow-left"
+        variant="ghost"
+        class="!rounded-full !text-[var(--reading-primary)] !font-bold"
+      >
+        Back to Dashboard
+      </UButton>
     </div>
     <ReadingStoryReader
       v-if="story"
@@ -23,8 +30,17 @@ const { data: story } = await useFetch<{
       :content="story.content"
       :illustration-urls="story.illustrationUrls"
     />
-    <div v-else class="flex items-center justify-center h-full">
-      <UIcon name="i-heroicons-arrow-path" class="animate-spin text-4xl" />
+    <div v-else class="flex flex-col items-center justify-center h-[60vh] reading-float-in">
+      <UIcon
+        name="i-heroicons-arrow-path"
+        class="animate-spin text-5xl text-[var(--reading-primary)]"
+      />
+      <p
+        class="mt-4 text-xl text-[var(--reading-text)]/60"
+        style="font-family: var(--reading-font-display)"
+      >
+        Loading story...
+      </p>
     </div>
   </div>
 </template>
