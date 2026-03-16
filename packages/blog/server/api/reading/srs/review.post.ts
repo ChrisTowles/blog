@@ -64,5 +64,8 @@ export default defineEventHandler(async (event) => {
     .where(eq(tables.srsCards.id, body.cardId))
     .returning();
 
-  return updated;
+  // Check for newly earned achievements
+  const newAchievements = await checkAchievements(card.childId);
+
+  return { ...updated, newAchievements };
 });

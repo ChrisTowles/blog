@@ -17,6 +17,12 @@ const { data: srsStats } = useFetch('/api/reading/srs/stats', {
   query: { childId: activeChildId },
   watch: [activeChildId],
 });
+
+const { data: achievements } = useFetch('/api/reading/achievements', {
+  query: { childId: activeChildId },
+  default: () => [],
+  watch: [activeChildId],
+});
 </script>
 
 <template>
@@ -99,6 +105,9 @@ const { data: srsStats } = useFetch('/api/reading/srs/stats', {
             </UButton>
           </div>
         </div>
+
+        <!-- Achievements -->
+        <ReadingAchievementList :achievements="achievements ?? []" />
 
         <!-- Reading Streak Calendar -->
         <ReadingStreakCalendar :sessions="sessions ?? []" />

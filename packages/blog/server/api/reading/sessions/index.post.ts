@@ -30,5 +30,8 @@ export default defineEventHandler(async (event) => {
     })
     .returning();
 
-  return readingSession;
+  // Check for newly earned achievements
+  const newAchievements = await checkAchievements(body.childId);
+
+  return { ...readingSession, newAchievements };
 });
