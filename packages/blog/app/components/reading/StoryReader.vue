@@ -394,7 +394,7 @@ onUnmounted(() => {
             p - 1 === currentPage
               ? 'w-8 h-3 bg-[var(--reading-accent)]'
               : p - 1 < currentPage
-                ? 'w-3 h-3 bg-[var(--reading-green)]'
+                ? 'w-3 h-3 bg-[var(--reading-success)]'
                 : 'w-3 h-3 bg-[var(--reading-primary)]/20'
           "
         />

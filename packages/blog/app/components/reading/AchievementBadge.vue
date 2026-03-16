@@ -27,11 +27,11 @@ const definition = computed(() => ACHIEVEMENT_DEFINITIONS[props.type]);
     <div
       v-if="isNew"
       :data-testid="TEST_IDS.READING.ACHIEVEMENT_NEW"
-      class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[var(--reading-orange)] animate-ping"
+      class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[var(--reading-accent)] animate-ping"
     />
     <div
       v-if="isNew"
-      class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[var(--reading-orange)] flex items-center justify-center"
+      class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[var(--reading-accent)] flex items-center justify-center"
     >
       <span class="text-white text-[10px] font-bold">!</span>
     </div>

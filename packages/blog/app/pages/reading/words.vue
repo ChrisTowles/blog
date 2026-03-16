@@ -43,9 +43,9 @@ function groupIcon(name: string): string {
 }
 
 function groupColor(name: string): string {
-  if (name === 'Sight Words') return 'var(--reading-pink)';
-  if (name === 'Vocabulary') return 'var(--reading-yellow)';
-  return 'var(--reading-sky-blue)';
+  if (name === 'Sight Words') return 'var(--reading-secondary)';
+  if (name === 'Vocabulary') return 'var(--reading-highlight)';
+  return 'var(--reading-primary)';
 }
 </script>
 
@@ -98,16 +98,16 @@ function groupColor(name: string): string {
         <!-- Trophy counter -->
         <div :data-testid="TEST_IDS.READING.WORD_COUNT" class="text-center reading-float-in">
           <div
-            class="inline-flex items-center gap-4 rounded-[2rem] bg-[var(--reading-card-bg)] border-3 border-[var(--reading-green)]/30 px-10 py-5 shadow-xl shadow-[var(--reading-green)]/10"
+            class="inline-flex items-center gap-4 rounded-[2rem] bg-[var(--reading-card-bg)] border-3 border-[var(--reading-success)]/30 px-10 py-5 shadow-xl shadow-[var(--reading-success)]/10"
           >
             <div
-              class="w-16 h-16 rounded-full bg-[var(--reading-green)]/15 flex items-center justify-center"
+              class="w-16 h-16 rounded-full bg-[var(--reading-success)]/15 flex items-center justify-center"
             >
               <span class="text-4xl">&#x1F3C6;</span>
             </div>
             <div class="text-left">
               <span
-                class="block text-4xl font-extrabold text-[var(--reading-green)]"
+                class="block text-4xl font-extrabold text-[var(--reading-success)]"
                 style="font-family: var(--reading-font-display)"
               >
                 {{ words.length }}
@@ -186,7 +186,7 @@ function groupColor(name: string): string {
                 v-for="word in groupWords"
                 :key="word.id"
                 :data-testid="TEST_IDS.READING.WORD_CARD"
-                class="reading-treasure-card reading-wobble-hover rounded-2xl bg-[var(--reading-card-bg)] border-2 border-[var(--reading-sky-blue)]/20 p-5 shadow-sm hover:shadow-lg transition-all text-center cursor-pointer group hover:border-[var(--reading-sky-blue)]/40"
+                class="reading-treasure-card reading-wobble-hover rounded-2xl bg-[var(--reading-card-bg)] border-2 border-[var(--reading-primary)]/20 p-5 shadow-sm hover:shadow-lg transition-all text-center cursor-pointer group hover:border-[var(--reading-primary)]/40"
                 @click="speakWord(word.front)"
               >
                 <div
@@ -206,10 +206,10 @@ function groupColor(name: string): string {
                     class="inline-block text-xs font-bold px-3 py-1.5 rounded-full"
                     :class="
                       word.cardType === 'sight_word'
-                        ? 'bg-[var(--reading-pink)]/20 text-[var(--reading-pink)]'
+                        ? 'bg-[var(--reading-secondary)]/20 text-[var(--reading-secondary)]'
                         : word.cardType === 'vocab'
-                          ? 'bg-[var(--reading-yellow)]/20 text-[var(--reading-orange)]'
-                          : 'bg-[var(--reading-sky-blue)]/15 text-[var(--reading-sky-blue)]'
+                          ? 'bg-[var(--reading-highlight)]/20 text-[var(--reading-accent)]'
+                          : 'bg-[var(--reading-primary)]/15 text-[var(--reading-primary)]'
                     "
                   >
                     {{ word.cardType === 'sight_word' ? 'sight word' : word.cardType }}

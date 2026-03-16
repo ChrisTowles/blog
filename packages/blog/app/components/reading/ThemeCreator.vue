@@ -62,6 +62,20 @@ const highlightColor = ref(PRESET_COLORS[4]!);
 const mascotEmoji = ref('🦄');
 const magicPrompt = ref('');
 const isMagicLoading = ref(false);
+const isEditing = ref(false);
+
+function loadTheme(theme: ThemeConfig) {
+  themeName.value = theme.label;
+  primaryColor.value = theme.primaryColor;
+  secondaryColor.value = theme.secondaryColor;
+  accentColor.value = theme.accentColor;
+  successColor.value = theme.successColor;
+  highlightColor.value = theme.highlightColor;
+  mascotEmoji.value = theme.mascotEmoji;
+  isEditing.value = true;
+}
+
+defineExpose({ loadTheme });
 
 type ColorKey = 'primary' | 'secondary' | 'accent' | 'success' | 'highlight';
 
@@ -162,12 +176,12 @@ async function generateMagicTheme() {
         v-model="magicPrompt"
         type="text"
         placeholder="Describe a theme... (e.g. ocean adventure)"
-        class="flex-1 px-4 py-2 rounded-xl border-2 border-[var(--reading-pink)]/30 bg-white text-sm focus:outline-none focus:border-[var(--reading-primary)]"
+        class="flex-1 px-4 py-2 rounded-xl border-2 border-[var(--reading-secondary)]/30 bg-[var(--reading-card-bg)] text-sm focus:outline-none focus:border-[var(--reading-primary)]"
         @keydown.enter="generateMagicTheme"
       />
       <button
         class="reading-wobble-hover px-4 py-2 rounded-xl text-white text-sm font-bold transition-colors disabled:opacity-50"
-        :style="{ backgroundColor: 'var(--reading-orange)' }"
+        :style="{ backgroundColor: 'var(--reading-accent)' }"
         :disabled="isMagicLoading || !magicPrompt.trim()"
         @click="generateMagicTheme"
       >
@@ -182,7 +196,7 @@ async function generateMagicTheme() {
         v-model="themeName"
         type="text"
         placeholder="My Awesome Theme"
-        class="w-full px-4 py-2 rounded-xl border-2 border-[var(--reading-pink)]/30 bg-white text-sm focus:outline-none focus:border-[var(--reading-primary)]"
+        class="w-full px-4 py-2 rounded-xl border-2 border-[var(--reading-secondary)]/30 bg-[var(--reading-card-bg)] text-sm focus:outline-none focus:border-[var(--reading-primary)]"
       />
     </div>
 
@@ -308,7 +322,7 @@ async function generateMagicTheme() {
       :disabled="!themeName.trim()"
       @click="saveTheme"
     >
-      Save & Apply Theme
+      {{ isEditing ? 'Update & Apply Theme' : 'Save & Apply Theme' }}
     </button>
   </div>
 </template>

@@ -24,7 +24,7 @@ const storyEmojis = ['🐱', '🐶', '🦊', '🐻', '🐰', '🦁'];
     <div class="text-center space-y-4">
       <div class="text-5xl md:text-6xl reading-bounce">🎮</div>
       <h1
-        class="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-[var(--reading-accent)] to-[var(--reading-pink)] bg-clip-text text-transparent"
+        class="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-[var(--reading-accent)] to-[var(--reading-secondary)] bg-clip-text text-transparent"
         style="font-family: var(--reading-font-display)"
       >
         Try It Out
@@ -80,7 +80,7 @@ const storyEmojis = ['🐱', '🐶', '🦊', '🐻', '🐰', '🦁'];
 
       <!-- Upsell CTA with more visual prominence -->
       <div
-        class="text-center rounded-[2rem] bg-gradient-to-r from-[var(--reading-sky-blue)]/10 via-[var(--reading-pink)]/10 to-[var(--reading-orange)]/10 border-2 border-[var(--reading-pink)]/30 p-8"
+        class="text-center rounded-[2rem] bg-gradient-to-r from-[var(--reading-primary)]/10 via-[var(--reading-secondary)]/10 to-[var(--reading-accent)]/10 border-2 border-[var(--reading-secondary)]/30 p-8"
       >
         <p
           class="text-2xl text-[var(--reading-text)]/70 mb-4"

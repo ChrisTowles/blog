@@ -17,11 +17,11 @@ function spawnConfetti() {
   const card = cardRef.value;
   if (!card) return;
   const colors = [
-    'var(--reading-orange)',
-    'var(--reading-yellow)',
-    'var(--reading-pink)',
-    'var(--reading-green)',
-    'var(--reading-sky-blue)',
+    'var(--reading-accent)',
+    'var(--reading-highlight)',
+    'var(--reading-secondary)',
+    'var(--reading-success)',
+    'var(--reading-primary)',
   ];
   for (let i = 0; i < 12; i++) {
     const particle = document.createElement('div');
@@ -49,13 +49,17 @@ function handleRate(rating: 1 | 3 | 4) {
     class="max-w-md mx-auto text-center relative overflow-hidden rounded-[2rem] bg-[var(--reading-card-bg)] border-3 border-[var(--reading-primary)]/20 p-8 md:p-10 shadow-xl shadow-[var(--reading-primary)]/10"
   >
     <!-- Decorative corner dots -->
-    <div class="absolute top-4 left-4 w-3 h-3 rounded-full bg-[var(--reading-yellow)] opacity-40" />
-    <div class="absolute top-4 right-4 w-3 h-3 rounded-full bg-[var(--reading-pink)] opacity-40" />
     <div
-      class="absolute bottom-4 left-4 w-3 h-3 rounded-full bg-[var(--reading-green)] opacity-40"
+      class="absolute top-4 left-4 w-3 h-3 rounded-full bg-[var(--reading-highlight)] opacity-40"
     />
     <div
-      class="absolute bottom-4 right-4 w-3 h-3 rounded-full bg-[var(--reading-sky-blue)] opacity-40"
+      class="absolute top-4 right-4 w-3 h-3 rounded-full bg-[var(--reading-secondary)] opacity-40"
+    />
+    <div
+      class="absolute bottom-4 left-4 w-3 h-3 rounded-full bg-[var(--reading-success)] opacity-40"
+    />
+    <div
+      class="absolute bottom-4 right-4 w-3 h-3 rounded-full bg-[var(--reading-primary)] opacity-40"
     />
 
     <!-- Front (word) -->
@@ -74,9 +78,9 @@ function handleRate(rating: 1 | 3 | 4) {
       <template v-if="revealed">
         <div>
           <div class="flex items-center gap-3 my-5">
-            <div class="flex-1 h-0.5 rounded-full bg-[var(--reading-pink)]/20" />
-            <span class="text-lg text-[var(--reading-pink)]/50">&#x2728;</span>
-            <div class="flex-1 h-0.5 rounded-full bg-[var(--reading-pink)]/20" />
+            <div class="flex-1 h-0.5 rounded-full bg-[var(--reading-secondary)]/20" />
+            <span class="text-lg text-[var(--reading-secondary)]/50">&#x2728;</span>
+            <div class="flex-1 h-0.5 rounded-full bg-[var(--reading-secondary)]/20" />
           </div>
 
           <div class="min-h-24 flex items-center justify-center py-4">
@@ -91,7 +95,7 @@ function handleRate(rating: 1 | 3 | 4) {
           <div class="flex justify-center gap-3 pt-6 reading-stagger">
             <button
               :data-testid="TEST_IDS.READING.CARD_RATE_AGAIN"
-              class="reading-fab !w-auto !h-auto !px-6 !py-4 !rounded-2xl bg-[var(--reading-orange)] text-white font-bold text-lg flex flex-col items-center gap-1"
+              class="reading-fab !w-auto !h-auto !px-6 !py-4 !rounded-2xl bg-[var(--reading-accent)] text-white font-bold text-lg flex flex-col items-center gap-1"
               style="font-family: var(--reading-font-display)"
               @click="handleRate(1)"
             >
@@ -100,7 +104,7 @@ function handleRate(rating: 1 | 3 | 4) {
             </button>
             <button
               :data-testid="TEST_IDS.READING.CARD_RATE_HARD"
-              class="reading-fab !w-auto !h-auto !px-6 !py-4 !rounded-2xl bg-[var(--reading-yellow)] text-[var(--reading-text)] font-bold text-lg flex flex-col items-center gap-1"
+              class="reading-fab !w-auto !h-auto !px-6 !py-4 !rounded-2xl bg-[var(--reading-highlight)] text-[var(--reading-text)] font-bold text-lg flex flex-col items-center gap-1"
               style="font-family: var(--reading-font-display)"
               @click="handleRate(3)"
             >
@@ -109,7 +113,7 @@ function handleRate(rating: 1 | 3 | 4) {
             </button>
             <button
               :data-testid="TEST_IDS.READING.CARD_RATE_GOOD"
-              class="reading-fab !w-auto !h-auto !px-6 !py-4 !rounded-2xl bg-[var(--reading-green)] text-white font-bold text-lg flex flex-col items-center gap-1"
+              class="reading-fab !w-auto !h-auto !px-6 !py-4 !rounded-2xl bg-[var(--reading-success)] text-white font-bold text-lg flex flex-col items-center gap-1"
               style="font-family: var(--reading-font-display)"
               @click="handleRate(4)"
             >

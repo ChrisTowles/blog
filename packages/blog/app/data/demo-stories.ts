@@ -28,6 +28,12 @@ export const DEMO_STORIES: DemoStory[] = [
     theme: 'animals',
     phase: 1,
     patterns: ['CVC-short-a', 'CVC-short-i', 'CVC-short-o'],
+    illustrationUrls: [
+      '/images/reading/demo/the-big-cat/page-0.png',
+      '/images/reading/demo/the-big-cat/page-1.png',
+      '/images/reading/demo/the-big-cat/page-2.png',
+      '/images/reading/demo/the-big-cat/page-3.png',
+    ],
     content: {
       pages: [
         {
@@ -88,6 +94,12 @@ export const DEMO_STORIES: DemoStory[] = [
     theme: 'farm',
     phase: 1,
     patterns: ['CVC-short-e', 'CVC-short-a', 'CVC-short-u'],
+    illustrationUrls: [
+      '/images/reading/demo/the-red-hen/page-0.png',
+      '/images/reading/demo/the-red-hen/page-1.png',
+      '/images/reading/demo/the-red-hen/page-2.png',
+      '/images/reading/demo/the-red-hen/page-3.png',
+    ],
     content: {
       pages: [
         {
@@ -151,6 +163,12 @@ export const DEMO_STORIES: DemoStory[] = [
     theme: 'adventure',
     phase: 1,
     patterns: ['CVC-short-a', 'CVC-short-i', 'DG-sh'],
+    illustrationUrls: [
+      '/images/reading/demo/dan-and-the-ship/page-0.png',
+      '/images/reading/demo/dan-and-the-ship/page-1.png',
+      '/images/reading/demo/dan-and-the-ship/page-2.png',
+      '/images/reading/demo/dan-and-the-ship/page-3.png',
+    ],
     content: {
       pages: [
         {

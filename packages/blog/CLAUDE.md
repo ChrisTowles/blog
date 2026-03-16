@@ -190,6 +190,7 @@ DB test helpers in `server/test-utils/db-helper.ts`: `cleanupDatabase()`, `creat
 - **Anthropic client** — always use `getAnthropicClient()` from `utils/ai/anthropic.ts`, never `new Anthropic()`. The singleton wraps with Braintrust observability.
 - **Reading API auth** — use `requireChildOwner(event, childId)` from `server/utils/reading/require-child-owner.ts` for any route that accesses child-scoped data.
 - **Reading layout** — `/reading` pages use `layout: 'reading'` (not `default`). Bluey theme via CSS custom properties in `assets/css/reading-theme.css`.
+- **Reading theme colors** — NEVER use raw palette vars (`--reading-sky-blue`, `--reading-orange`, etc.) in components. Always use semantic tokens: `--reading-primary`, `--reading-secondary`, `--reading-accent`, `--reading-success`, `--reading-highlight`, `--reading-bg`, `--reading-card-bg`, `--reading-text`. Raw palette vars are only defined in `reading-theme.css` and mapped by `useReadingTheme.applyTheme()`. Using raw vars breaks custom themes.
 - **Composable cleanup** — composables using browser APIs (Speech, TTS) must call cleanup in `onUnmounted`. Don't rely on consumers to clean up.
 - **MDC slots parse as markdown** — code in `::component` body loses indentation and `[x]` becomes links. Use `code` prop with `\n` escapes for code content.
 - **Nuxt auto-imports don't work in Vitest** — test files need explicit imports (`import { chatTools } from './tools'`).

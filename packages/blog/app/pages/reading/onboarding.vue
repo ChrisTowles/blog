@@ -93,8 +93,8 @@ const stepLabels = ['About', 'Interests', 'Confirm'];
             class="h-4 rounded-full transition-all duration-500 ease-out"
             :class="
               s <= step
-                ? 'bg-gradient-to-r from-[var(--reading-accent)] to-[var(--reading-pink)] w-16 shadow-md shadow-[var(--reading-accent)]/30'
-                : 'bg-[var(--reading-pink)]/30 w-10'
+                ? 'bg-gradient-to-r from-[var(--reading-accent)] to-[var(--reading-secondary)] w-16 shadow-md shadow-[var(--reading-accent)]/30'
+                : 'bg-[var(--reading-secondary)]/30 w-10'
             "
           />
           <span
@@ -112,7 +112,7 @@ const stepLabels = ['About', 'Interests', 'Confirm'];
         <div
           v-if="step === 1"
           key="step1"
-          class="rounded-[2rem] bg-[var(--reading-card-bg)] border-3 border-[var(--reading-sky-blue)]/40 p-8 md:p-10 shadow-lg shadow-[var(--reading-sky-blue)]/10"
+          class="rounded-[2rem] bg-[var(--reading-card-bg)] border-3 border-[var(--reading-primary)]/40 p-8 md:p-10 shadow-lg shadow-[var(--reading-primary)]/10"
         >
           <h2
             class="text-3xl md:text-4xl font-bold text-[var(--reading-primary)] mb-8"
@@ -161,7 +161,7 @@ const stepLabels = ['About', 'Interests', 'Confirm'];
               :data-testid="TEST_IDS.READING.ONBOARDING_NEXT"
               size="xl"
               :disabled="!step1Valid"
-              class="!rounded-full !px-10 !py-4 !text-xl !font-bold !bg-gradient-to-r !from-[var(--reading-accent)] !to-[var(--reading-orange)] hover:!brightness-110 !text-white !shadow-md hover:!shadow-lg !transition-all !duration-300 hover:!scale-105 !min-h-[52px]"
+              class="!rounded-full !px-10 !py-4 !text-xl !font-bold !bg-gradient-to-r !from-[var(--reading-accent)] !to-[var(--reading-accent)] hover:!brightness-110 !text-white !shadow-md hover:!shadow-lg !transition-all !duration-300 hover:!scale-105 !min-h-[52px]"
               @click="step = 2"
             >
               Next →
@@ -173,7 +173,7 @@ const stepLabels = ['About', 'Interests', 'Confirm'];
         <div
           v-else-if="step === 2"
           key="step2"
-          class="rounded-[2rem] bg-[var(--reading-card-bg)] border-3 border-[var(--reading-orange)]/40 p-8 md:p-10 shadow-lg shadow-[var(--reading-orange)]/10"
+          class="rounded-[2rem] bg-[var(--reading-card-bg)] border-3 border-[var(--reading-accent)]/40 p-8 md:p-10 shadow-lg shadow-[var(--reading-accent)]/10"
         >
           <h2
             class="text-3xl md:text-4xl font-bold text-[var(--reading-accent)] mb-3"
@@ -193,7 +193,7 @@ const stepLabels = ['About', 'Interests', 'Confirm'];
               :class="
                 selectedInterests.has(interest.id)
                   ? 'border-[var(--reading-accent)] bg-[var(--reading-accent)]/15 scale-105 shadow-md shadow-[var(--reading-accent)]/20'
-                  : 'border-[var(--reading-pink)]/30 hover:border-[var(--reading-accent)]/50 hover:bg-[var(--reading-accent)]/5'
+                  : 'border-[var(--reading-secondary)]/30 hover:border-[var(--reading-accent)]/50 hover:bg-[var(--reading-accent)]/5'
               "
               @click="toggleInterest(interest.id)"
             >
@@ -228,7 +228,7 @@ const stepLabels = ['About', 'Interests', 'Confirm'];
             <UButton
               :data-testid="TEST_IDS.READING.ONBOARDING_NEXT"
               size="xl"
-              class="!rounded-full !px-10 !py-4 !text-xl !font-bold !bg-gradient-to-r !from-[var(--reading-accent)] !to-[var(--reading-orange)] hover:!brightness-110 !text-white !shadow-md hover:!shadow-lg !transition-all !duration-300 hover:!scale-105 !min-h-[52px]"
+              class="!rounded-full !px-10 !py-4 !text-xl !font-bold !bg-gradient-to-r !from-[var(--reading-accent)] !to-[var(--reading-accent)] hover:!brightness-110 !text-white !shadow-md hover:!shadow-lg !transition-all !duration-300 hover:!scale-105 !min-h-[52px]"
               @click="step = 3"
             >
               Next →
@@ -240,7 +240,7 @@ const stepLabels = ['About', 'Interests', 'Confirm'];
         <div
           v-else
           key="step3"
-          class="rounded-[2rem] bg-[var(--reading-card-bg)] border-3 border-[var(--reading-green)]/40 p-8 md:p-10 shadow-lg shadow-[var(--reading-green)]/10"
+          class="rounded-[2rem] bg-[var(--reading-card-bg)] border-3 border-[var(--reading-success)]/40 p-8 md:p-10 shadow-lg shadow-[var(--reading-success)]/10"
         >
           <h2
             class="text-3xl md:text-4xl font-bold text-[var(--reading-success)] mb-8"
@@ -250,7 +250,7 @@ const stepLabels = ['About', 'Interests', 'Confirm'];
           </h2>
           <div class="space-y-6">
             <div
-              class="rounded-[1.5rem] bg-gradient-to-br from-[var(--reading-bg)] to-[var(--reading-pink)]/10 p-6 md:p-8 space-y-4 border border-[var(--reading-pink)]/20"
+              class="rounded-[1.5rem] bg-gradient-to-br from-[var(--reading-bg)] to-[var(--reading-secondary)]/10 p-6 md:p-8 space-y-4 border border-[var(--reading-secondary)]/20"
             >
               <p class="text-xl" style="font-family: var(--reading-font-display)">
                 <strong class="text-[var(--reading-primary)]">Name:</strong>
@@ -270,7 +270,7 @@ const stepLabels = ['About', 'Interests', 'Confirm'];
               </p>
             </div>
 
-            <hr class="border-[var(--reading-pink)]/30" />
+            <hr class="border-[var(--reading-secondary)]/30" />
 
             <label
               class="flex items-start gap-4 cursor-pointer p-4 rounded-2xl hover:bg-[var(--reading-bg)] transition-colors duration-200 min-h-[52px]"
@@ -288,7 +288,10 @@ const stepLabels = ['About', 'Interests', 'Confirm'];
               </span>
             </label>
 
-            <p v-if="error" class="text-red-500 text-lg font-semibold rounded-xl bg-red-50 p-4">
+            <p
+              v-if="error"
+              class="text-red-500 text-lg font-semibold rounded-xl bg-[var(--reading-accent)]/10 border border-[var(--reading-accent)]/30 p-4"
+            >
               {{ error }}
             </p>
           </div>
@@ -307,7 +310,7 @@ const stepLabels = ['About', 'Interests', 'Confirm'];
               size="xl"
               :disabled="!step3Valid || submitting"
               :loading="submitting"
-              class="!rounded-full !px-10 !py-4 !text-xl !font-bold !bg-gradient-to-r !from-[var(--reading-success)] !to-[var(--reading-green)] hover:!brightness-110 !text-white !shadow-md hover:!shadow-lg !transition-all !duration-300 hover:!scale-105 !min-h-[52px]"
+              class="!rounded-full !px-10 !py-4 !text-xl !font-bold !bg-gradient-to-r !from-[var(--reading-success)] !to-[var(--reading-success)] hover:!brightness-110 !text-white !shadow-md hover:!shadow-lg !transition-all !duration-300 hover:!scale-105 !min-h-[52px]"
               @click="submit"
             >
               🚀 Create Profile

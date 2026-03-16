@@ -55,7 +55,7 @@ const option = computed(() => ({
     bottom: 5,
     itemStyle: {
       borderWidth: 2,
-      borderColor: '#fff',
+      borderColor: '#fff8f0',
       borderRadius: 3,
     },
     yearLabel: { show: false },
@@ -113,7 +113,7 @@ const currentStreak = computed(() => {
 <template>
   <div
     :data-testid="TEST_IDS.READING.STREAK_CALENDAR"
-    class="rounded-3xl bg-[var(--reading-card-bg)] border-2 border-[var(--reading-sky-blue)]/30 p-6 shadow-md shadow-[var(--reading-sky-blue)]/10"
+    class="rounded-3xl bg-[var(--reading-card-bg)] border-2 border-[var(--reading-primary)]/30 p-6 shadow-md shadow-[var(--reading-primary)]/10"
   >
     <div class="flex items-center justify-between mb-4">
       <h3
@@ -122,7 +122,9 @@ const currentStreak = computed(() => {
       >
         Reading Streak
       </h3>
-      <div class="flex items-center gap-2 rounded-full bg-[var(--reading-yellow)]/20 px-4 py-1.5">
+      <div
+        class="flex items-center gap-2 rounded-full bg-[var(--reading-highlight)]/20 px-4 py-1.5"
+      >
         <span class="text-2xl">🔥</span>
         <span
           class="text-lg font-bold text-[var(--reading-text)]"

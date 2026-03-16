@@ -33,7 +33,7 @@ const { data: achievements } = useFetch('/api/reading/achievements', {
         <span class="text-5xl reading-bounce inline-block">📖</span>
       </div>
       <h1
-        class="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-[var(--reading-primary)] via-[var(--reading-accent)] to-[var(--reading-pink)] bg-clip-text text-transparent"
+        class="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-[var(--reading-primary)] via-[var(--reading-accent)] to-[var(--reading-secondary)] bg-clip-text text-transparent"
         style="font-family: var(--reading-font-display)"
       >
         Reading Dashboard
@@ -53,7 +53,7 @@ const { data: achievements } = useFetch('/api/reading/achievements', {
         class="text-center py-16 reading-float-in"
       >
         <div
-          class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-[var(--reading-yellow)]/30 to-[var(--reading-orange)]/20 mb-6"
+          class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-[var(--reading-highlight)]/30 to-[var(--reading-accent)]/20 mb-6"
         >
           <span class="text-5xl">👋</span>
         </div>
@@ -65,7 +65,7 @@ const { data: achievements } = useFetch('/api/reading/achievements', {
         </p>
         <UButton
           to="/reading/onboarding"
-          class="!rounded-full !px-10 !py-4 !text-xl !font-bold !bg-gradient-to-r !from-[var(--reading-accent)] !to-[var(--reading-orange)] hover:!shadow-lg hover:!shadow-[var(--reading-accent)]/30 !text-white !transition-all !duration-300 hover:!scale-105"
+          class="!rounded-full !px-10 !py-4 !text-xl !font-bold !bg-gradient-to-r !from-[var(--reading-accent)] !to-[var(--reading-accent)] hover:!shadow-lg hover:!shadow-[var(--reading-accent)]/30 !text-white !transition-all !duration-300 hover:!scale-105"
         >
           Set Up a Profile
         </UButton>
@@ -76,10 +76,10 @@ const { data: achievements } = useFetch('/api/reading/achievements', {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
           <!-- Stories card -->
           <div
-            class="group reading-wobble-hover rounded-3xl bg-[var(--reading-card-bg)] border-2 border-[var(--reading-sky-blue)]/30 p-8 shadow-lg shadow-[var(--reading-sky-blue)]/10 transition-all duration-300 hover:shadow-xl hover:shadow-[var(--reading-sky-blue)]/20 hover:border-[var(--reading-sky-blue)]/50 hover:-translate-y-1"
+            class="group reading-wobble-hover rounded-3xl bg-[var(--reading-card-bg)] border-2 border-[var(--reading-primary)]/30 p-8 shadow-lg shadow-[var(--reading-primary)]/10 transition-all duration-300 hover:shadow-xl hover:shadow-[var(--reading-primary)]/20 hover:border-[var(--reading-primary)]/50 hover:-translate-y-1"
           >
             <div
-              class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[var(--reading-sky-blue)]/15 mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
+              class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[var(--reading-primary)]/15 mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
             >
               <span class="text-4xl">📚</span>
             </div>
@@ -94,7 +94,7 @@ const { data: achievements } = useFetch('/api/reading/achievements', {
             </p>
             <UButton
               :to="`/reading/child/${activeChildId}`"
-              class="!rounded-full !px-8 !py-3 !text-lg !font-bold !bg-gradient-to-r !from-[var(--reading-primary)] !to-[var(--reading-sky-blue)] hover:!shadow-md hover:!shadow-[var(--reading-primary)]/30 !text-white !transition-all !duration-300"
+              class="!rounded-full !px-8 !py-3 !text-lg !font-bold !bg-gradient-to-r !from-[var(--reading-primary)] !to-[var(--reading-primary)] hover:!shadow-md hover:!shadow-[var(--reading-primary)]/30 !text-white !transition-all !duration-300"
             >
               Browse Stories
             </UButton>
@@ -102,10 +102,10 @@ const { data: achievements } = useFetch('/api/reading/achievements', {
 
           <!-- Practice cards card -->
           <div
-            class="group reading-wobble-hover rounded-3xl bg-[var(--reading-card-bg)] border-2 border-[var(--reading-orange)]/30 p-8 shadow-lg shadow-[var(--reading-orange)]/10 transition-all duration-300 hover:shadow-xl hover:shadow-[var(--reading-orange)]/20 hover:border-[var(--reading-orange)]/50 hover:-translate-y-1"
+            class="group reading-wobble-hover rounded-3xl bg-[var(--reading-card-bg)] border-2 border-[var(--reading-accent)]/30 p-8 shadow-lg shadow-[var(--reading-accent)]/10 transition-all duration-300 hover:shadow-xl hover:shadow-[var(--reading-accent)]/20 hover:border-[var(--reading-accent)]/50 hover:-translate-y-1"
           >
             <div
-              class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[var(--reading-orange)]/15 mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"
+              class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[var(--reading-accent)]/15 mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"
             >
               <span class="text-4xl">🃏</span>
             </div>
@@ -120,7 +120,7 @@ const { data: achievements } = useFetch('/api/reading/achievements', {
             </p>
             <UButton
               to="/reading/practice"
-              class="!rounded-full !px-8 !py-3 !text-lg !font-bold !bg-gradient-to-r !from-[var(--reading-accent)] !to-[var(--reading-orange)] hover:!shadow-md hover:!shadow-[var(--reading-accent)]/30 !text-white !transition-all !duration-300"
+              class="!rounded-full !px-8 !py-3 !text-lg !font-bold !bg-gradient-to-r !from-[var(--reading-accent)] !to-[var(--reading-accent)] hover:!shadow-md hover:!shadow-[var(--reading-accent)]/30 !text-white !transition-all !duration-300"
             >
               Start Practice
             </UButton>

@@ -65,9 +65,9 @@ function decodabilityLabel(score: number) {
 }
 
 function decodabilityColor(score: number) {
-  if (score >= 0.8) return 'var(--reading-green)';
-  if (score >= 0.5) return 'var(--reading-yellow)';
-  return 'var(--reading-orange)';
+  if (score >= 0.8) return 'var(--reading-success)';
+  if (score >= 0.5) return 'var(--reading-highlight)';
+  return 'var(--reading-accent)';
 }
 </script>
 
@@ -186,7 +186,7 @@ function decodabilityColor(score: number) {
               />
               <div
                 v-else
-                class="h-44 flex items-center justify-center bg-gradient-to-br from-[var(--reading-primary)]/15 via-[var(--reading-sky-blue)]/10 to-[var(--reading-green)]/15"
+                class="h-44 flex items-center justify-center bg-gradient-to-br from-[var(--reading-primary)]/15 via-[var(--reading-primary)]/10 to-[var(--reading-success)]/15"
               >
                 <span class="text-7xl opacity-50">&#x1F4D6;</span>
               </div>
@@ -213,7 +213,7 @@ function decodabilityColor(score: number) {
               <!-- Theme badge -->
               <span
                 v-if="story.theme"
-                class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold bg-[var(--reading-sky-blue)]/15 text-[var(--reading-sky-blue)]"
+                class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold bg-[var(--reading-primary)]/15 text-[var(--reading-primary)]"
               >
                 &#x1F3AD; {{ story.theme }}
               </span>
@@ -237,8 +237,8 @@ function decodabilityColor(score: number) {
                 class="w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-all hover:scale-125 active:scale-90"
                 :class="
                   story.favorited
-                    ? 'bg-red-50 reading-pop'
-                    : 'bg-[var(--reading-bg)] hover:bg-red-50'
+                    ? 'bg-[var(--reading-secondary)]/20 reading-pop'
+                    : 'bg-[var(--reading-bg)] hover:bg-[var(--reading-secondary)]/20'
                 "
                 :title="story.favorited ? 'Remove from favorites' : 'Add to favorites'"
                 @click="toggleFavorite(story.id)"
