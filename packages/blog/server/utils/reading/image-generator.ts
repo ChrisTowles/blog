@@ -122,27 +122,21 @@ async function uploadToGcs(bucket: string, path: string, buffer: Buffer): Promis
 }
 
 /**
- * Save illustration buffers — uploads to GCS when GCS_BUCKET_NAME is set,
- * otherwise falls back to data URIs for local dev.
+ * Save illustration buffers to GCS. Requires GCS_BUCKET_NAME env var.
  */
 export async function saveStoryImages(
   storyId: number,
   images: StoryIllustrations,
 ): Promise<string[]> {
   const bucket = process.env.GCS_BUCKET_NAME;
-
-  if (bucket) {
-    const prefix = `reading/stories/${storyId}`;
-    const uploads = [
-      uploadToGcs(bucket, `${prefix}/cover.png`, images.cover),
-      ...images.pages.map((page, i) => uploadToGcs(bucket, `${prefix}/page-${i}.png`, page)),
-    ];
-    return Promise.all(uploads);
+  if (!bucket) {
+    throw new Error('GCS_BUCKET_NAME not configured');
   }
 
-  // Fallback: data URIs for local dev without GCS
-  return [
-    `data:image/png;base64,${images.cover.toString('base64')}`,
-    ...images.pages.map((page) => `data:image/png;base64,${page.toString('base64')}`),
+  const prefix = `reading/stories/${storyId}`;
+  const uploads = [
+    uploadToGcs(bucket, `${prefix}/cover.png`, images.cover),
+    ...images.pages.map((page, i) => uploadToGcs(bucket, `${prefix}/page-${i}.png`, page)),
   ];
+  return Promise.all(uploads);
 }

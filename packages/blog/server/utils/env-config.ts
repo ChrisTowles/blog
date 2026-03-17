@@ -25,8 +25,8 @@ export const envSchema = z.object({
   // Google AI (Gemini) — optional, used for story illustrations
   GOOGLE_AI_API_KEY: z.string().optional().default(''),
 
-  // GCS media bucket — optional, falls back to data URIs when unset
-  GCS_BUCKET_NAME: z.string().optional().default(''),
+  // GCS media bucket for reading illustrations
+  GCS_BUCKET_NAME: z.string().min(1, 'GCS_BUCKET_NAME is required'),
 
   // AWS Bedrock
   AWS_REGION: z.string().default('us-east-1'),
