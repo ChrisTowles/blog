@@ -64,7 +64,7 @@ async function generateImage(
     contents: fullPrompt,
     config: {
       responseModalities: [Modality.TEXT, Modality.IMAGE],
-      imageConfig: { aspectRatio: '4:3' },
+      imageConfig: { aspectRatio: '1:1' },
     },
   });
 
