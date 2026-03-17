@@ -37,9 +37,23 @@ export interface SrsStatsResponse {
   total: number;
 }
 
+export interface StoryPreview {
+  title: string;
+  summary: string;
+}
+
 export interface GenerateStoryRequest {
   childId: number;
   theme?: string;
+  genre?: string;
+  who?: string;
+  idea?: string;
+  previewMode?: boolean;
+  selectedPreview?: StoryPreview;
+}
+
+export interface GenerateStoryPreviewResponse {
+  previews: StoryPreview[];
 }
 
 // API response shapes for client-side typing

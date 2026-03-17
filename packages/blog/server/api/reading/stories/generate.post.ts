@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { count, gte } from 'drizzle-orm';
-import { generateStory } from '../../../utils/reading/story-generator';
+import { generateStory, generateStoryPreviews } from '../../../utils/reading/story-generator';
 import { reviewStorySafety } from '../../../utils/reading/story-safety';
 import {
   generateStoryIllustrations,
@@ -12,6 +12,16 @@ import type { PhonicsPhase } from '~~/shared/reading-types';
 const bodySchema = z.object({
   childId: z.number(),
   theme: z.string().optional(),
+  genre: z.string().optional(),
+  who: z.string().optional(),
+  idea: z.string().optional(),
+  previewMode: z.boolean().optional(),
+  selectedPreview: z
+    .object({
+      title: z.string(),
+      summary: z.string(),
+    })
+    .optional(),
 });
 
 export default defineEventHandler(async (event) => {
@@ -59,7 +69,18 @@ export default defineEventHandler(async (event) => {
   const allowedPatterns = progress.flatMap((p) => p.phonicsUnit.patterns);
   const phase = (child.currentPhase || 1) as PhonicsPhase;
   const sightWords = SIGHT_WORDS_BY_PHASE[phase] || SIGHT_WORDS_BY_PHASE[1];
-  const theme = body.theme || child.interests[0] || 'animals';
+  const theme = body.genre || body.theme || child.interests[0] || 'animals';
+
+  // Preview mode: return quick previews without full generation
+  if (body.previewMode) {
+    const previews = await generateStoryPreviews({
+      theme,
+      who: body.who,
+      idea: body.idea,
+      childInterests: child.interests,
+    });
+    return { previews };
+  }
 
   // Generate story
   const generated = await generateStory({
@@ -67,6 +88,9 @@ export default defineEventHandler(async (event) => {
     sightWords,
     targetWords: [], // TODO: pick from next phonics unit
     theme,
+    who: body.who,
+    idea: body.idea,
+    selectedPreview: body.selectedPreview,
   });
 
   // Safety review
