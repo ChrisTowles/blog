@@ -135,12 +135,12 @@
 
 @keyframes reading-float-in {
   from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
+    opacity: 0.7;
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
@@ -332,7 +332,7 @@
 }
 
 .reading-float-in {
-  animation: reading-float-in 0.4s ease both;
+  animation: reading-float-in 0.25s ease both;
 }
 
 /* Page transition classes for Vue <Transition> */
@@ -352,26 +352,26 @@
 
 /* Staggered children float-in */
 .reading-stagger > * {
-  animation: reading-float-in 0.4s ease both;
+  animation: reading-float-in 0.25s ease both;
 }
 
 .reading-stagger > *:nth-child(1) {
   animation-delay: 0ms;
 }
 .reading-stagger > *:nth-child(2) {
-  animation-delay: 80ms;
+  animation-delay: 50ms;
 }
 .reading-stagger > *:nth-child(3) {
-  animation-delay: 160ms;
+  animation-delay: 100ms;
 }
 .reading-stagger > *:nth-child(4) {
-  animation-delay: 240ms;
+  animation-delay: 150ms;
 }
 .reading-stagger > *:nth-child(5) {
-  animation-delay: 320ms;
+  animation-delay: 200ms;
 }
 .reading-stagger > *:nth-child(6) {
-  animation-delay: 400ms;
+  animation-delay: 250ms;
 }
 
 /* Confetti particle */
