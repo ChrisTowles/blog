@@ -21,7 +21,15 @@ const emit = defineEmits<{
   ];
 }>();
 
-const mode = ref<ReadingMode>('listen');
+const route = useRoute();
+const router = useRouter();
+
+const initialMode = (['listen', 'guided', 'independent', 'read-together'] as const).includes(
+  route.query.mode as ReadingMode,
+)
+  ? (route.query.mode as ReadingMode)
+  : 'listen';
+const mode = ref<ReadingMode>(initialMode);
 
 const {
   speak,
@@ -36,7 +44,8 @@ const {
   setRate,
 } = useTTS();
 
-const currentPage = ref(0);
+const initialPage = route.query.page ? Math.max(0, Number(route.query.page) - 1) : 0;
+const currentPage = ref(initialPage);
 const totalPages = computed(() => props.content.pages.length);
 const currentWords = computed(() => props.content.pages[currentPage.value]?.words ?? []);
 const expectedWordTexts = computed(() => currentWords.value.map((w) => w.text));
@@ -46,6 +55,15 @@ const currentIllustration = computed(() => {
 });
 
 setRate(0.8);
+
+// Sync page and mode to URL query params
+watch(currentPage, (page) => {
+  router.replace({ query: { ...route.query, page: page === 0 ? undefined : page + 1 } });
+});
+
+watch(mode, (m) => {
+  router.replace({ query: { ...route.query, mode: m === 'listen' ? undefined : m } });
+});
 
 // Guided mode speech recognition
 const {
