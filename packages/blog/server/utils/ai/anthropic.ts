@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { wrapAnthropic, initLogger } from 'braintrust';
+import { envSchema } from '../env-config';
 
 let _client: Anthropic | null = null;
 let _logger: ReturnType<typeof initLogger> | null = null;
