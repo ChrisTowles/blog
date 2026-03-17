@@ -276,15 +276,28 @@ function togetherPrevPage() {
 // Phonics slider state
 const sliderWord = ref<StoryWord | null>(null);
 const sliderWordIndex = ref(-1);
+const phonicsSliderEnabled = ref(
+  import.meta.client ? localStorage.getItem('reading-phonics-slider') !== 'off' : true,
+);
+
+function togglePhonicsSlider() {
+  phonicsSliderEnabled.value = !phonicsSliderEnabled.value;
+  if (import.meta.client) {
+    localStorage.setItem('reading-phonics-slider', phonicsSliderEnabled.value ? 'on' : 'off');
+  }
+  if (!phonicsSliderEnabled.value) dismissSlider();
+}
 
 function handleWordClick(word: StoryWord, index: number) {
-  // Toggle slider: if tapping the same word, dismiss; otherwise show for new word
-  if (sliderWord.value && sliderWordIndex.value === index) {
-    sliderWord.value = null;
-    sliderWordIndex.value = -1;
-  } else if (word.pattern && !word.sightWord) {
-    sliderWord.value = word;
-    sliderWordIndex.value = index;
+  if (phonicsSliderEnabled.value && word.pattern && !word.sightWord) {
+    // Toggle slider: if tapping the same word, dismiss; otherwise show for new word
+    if (sliderWord.value && sliderWordIndex.value === index) {
+      sliderWord.value = null;
+      sliderWordIndex.value = -1;
+    } else {
+      sliderWord.value = word;
+      sliderWordIndex.value = index;
+    }
   } else {
     sliderWord.value = null;
     sliderWordIndex.value = -1;
@@ -647,6 +660,23 @@ onUnmounted(() => {
         >
           {{ rate }}x
         </span>
+      </div>
+
+      <!-- Phonics slider toggle -->
+      <div class="flex items-center justify-center mt-3">
+        <button
+          class="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all active:scale-95"
+          :class="
+            phonicsSliderEnabled
+              ? 'bg-[var(--reading-success)]/15 text-[var(--reading-success)]'
+              : 'bg-[var(--reading-text)]/10 text-[var(--reading-text)]/40'
+          "
+          style="font-family: var(--reading-font-display)"
+          @click="togglePhonicsSlider"
+        >
+          <span class="text-base">{{ phonicsSliderEnabled ? '&#x1F524;' : '&#x1F507;' }}</span>
+          Sound-out {{ phonicsSliderEnabled ? 'On' : 'Off' }}
+        </button>
       </div>
     </div>
   </div>
