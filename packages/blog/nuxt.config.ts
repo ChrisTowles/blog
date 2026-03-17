@@ -92,6 +92,7 @@ export default defineNuxtConfig({
     '/reading/demo': { ssr: false },
     '/reading/stories/**': { ssr: false },
     '/reading/practice': { ssr: false },
+    '/reading/curriculum': { ssr: false },
     '/reading/onboarding': { ssr: false },
     '/reading/dashboard': { ssr: false },
     '/reading/child/**': { ssr: false },
