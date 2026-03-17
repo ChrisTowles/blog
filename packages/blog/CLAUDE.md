@@ -192,6 +192,7 @@ DB test helpers in `server/test-utils/db-helper.ts`: `cleanupDatabase()`, `creat
 - **Reading layout** — `/reading` pages use `layout: 'reading'` (not `default`). Bluey theme via CSS custom properties in `assets/css/reading-theme.css`.
 - **Reading theme colors** — NEVER use raw palette vars (`--reading-sky-blue`, `--reading-orange`, etc.) in components. Always use semantic tokens: `--reading-primary`, `--reading-secondary`, `--reading-accent`, `--reading-success`, `--reading-highlight`, `--reading-bg`, `--reading-card-bg`, `--reading-text`. Raw palette vars are only defined in `reading-theme.css` and mapped by `useReadingTheme.applyTheme()`. Using raw vars breaks custom themes.
 - **Composable cleanup** — composables using browser APIs (Speech, TTS) must call cleanup in `onUnmounted`. Don't rely on consumers to clean up.
+- **Mobile-first, no hover** — the reading app targets tablets and phones. Never rely on hover for essential interactions (edit, delete, reveal). Use tap/click, long-press, or always-visible controls. Test at 375px width.
 - **MDC slots parse as markdown** — code in `::component` body loses indentation and `[x]` becomes links. Use `code` prop with `\n` escapes for code content.
 - **Nuxt auto-imports don't work in Vitest** — test files need explicit imports (`import { chatTools } from './tools'`).
 - **Vue ref unwrapping** — nested refs in objects returned from composables are NOT auto-unwrapped in templates. Destructure to top-level: `const { status, code } = useMyComposable()`.
