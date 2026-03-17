@@ -127,6 +127,34 @@ const { data: achievements } = useFetch('/api/reading/achievements', {
           </div>
         </div>
 
+        <!-- Curriculum link -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div
+            class="group reading-wobble-hover rounded-3xl bg-[var(--reading-card-bg)] border-2 border-[var(--reading-success)]/30 p-8 shadow-lg shadow-[var(--reading-success)]/10 transition-all duration-300 hover:shadow-xl hover:shadow-[var(--reading-success)]/20 hover:border-[var(--reading-success)]/50 hover:-translate-y-1"
+          >
+            <div
+              class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[var(--reading-success)]/15 mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
+            >
+              <span class="text-4xl">&#x1F4DA;</span>
+            </div>
+            <h3
+              class="text-2xl md:text-3xl font-bold text-[var(--reading-success)] mb-3"
+              style="font-family: var(--reading-font-display)"
+            >
+              Curriculum
+            </h3>
+            <p class="text-lg md:text-xl text-[var(--reading-text)]/60 mb-6 leading-relaxed">
+              View the full phonics progression across all 4 phases.
+            </p>
+            <UButton
+              to="/reading/curriculum"
+              class="!rounded-full !px-8 !py-3 !text-lg !font-bold !bg-gradient-to-r !from-[var(--reading-success)] !to-[var(--reading-success)] hover:!shadow-md hover:!shadow-[var(--reading-success)]/30 !text-white !transition-all !duration-300"
+            >
+              View Curriculum
+            </UButton>
+          </div>
+        </div>
+
         <!-- Achievements -->
         <ReadingAchievementList :achievements="achievements ?? []" />
 
