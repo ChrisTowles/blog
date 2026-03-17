@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { generateStory } from './story-generator';
 import { reviewStorySafety } from './story-safety';
 
-describe('AI story generation pipeline', () => {
+const hasApiKeys = !!process.env.ANTHROPIC_API_KEY && !!process.env.BRAINTRUST_API_KEY;
+
+describe.skipIf(!hasApiKeys)('AI story generation pipeline', () => {
   it('generates a decodable story with correct structure', async () => {
     const result = await generateStory({
       allowedPatterns: ['CVC-short-a', 'CVC-short-i', 'CVC-short-o'],
