@@ -255,12 +255,33 @@ function togetherPrevPage() {
   }
 }
 
-function handleWordClick(word: StoryWord) {
-  speakWord(word.text);
+// Phonics slider state
+const sliderWord = ref<StoryWord | null>(null);
+const sliderWordIndex = ref(-1);
+
+function handleWordClick(word: StoryWord, index: number) {
+  // Toggle slider: if tapping the same word, dismiss; otherwise show for new word
+  if (sliderWord.value && sliderWordIndex.value === index) {
+    sliderWord.value = null;
+    sliderWordIndex.value = -1;
+  } else if (word.pattern && !word.sightWord) {
+    sliderWord.value = word;
+    sliderWordIndex.value = index;
+  } else {
+    sliderWord.value = null;
+    sliderWordIndex.value = -1;
+    speakWord(word.text);
+  }
+}
+
+function dismissSlider() {
+  sliderWord.value = null;
+  sliderWordIndex.value = -1;
 }
 
 function nextPage() {
   stopTTS();
+  dismissSlider();
   if (mode.value === 'guided') stopListening();
   if (currentPage.value < totalPages.value - 1) {
     currentPage.value++;
@@ -272,6 +293,7 @@ function nextPage() {
 
 function prevPage() {
   stopTTS();
+  dismissSlider();
   if (mode.value === 'guided') stopListening();
   if (currentPage.value > 0) {
     currentPage.value--;
@@ -371,7 +393,7 @@ onUnmounted(() => {
         >
           <!-- Text area — left on desktop, below on mobile -->
           <div
-            class="w-full md:w-[55%] order-2 md:order-1 rounded-3xl p-6 md:p-8 bg-[var(--reading-card-bg)] border-2 border-[var(--reading-primary)]/10 shadow-sm flex items-center"
+            class="w-full md:w-[55%] order-2 md:order-1 rounded-3xl p-6 md:p-8 bg-[var(--reading-card-bg)] border-2 border-[var(--reading-primary)]/10 shadow-sm flex flex-col justify-center"
           >
             <ReadingWordHighlighter
               :words="currentWords"
@@ -392,6 +414,9 @@ onUnmounted(() => {
               "
               @word-click="handleWordClick"
             />
+
+            <!-- Phonics sounding-out slider -->
+            <ReadingPhonicsSlider v-if="sliderWord" :word="sliderWord" @dismiss="dismissSlider" />
           </div>
 
           <!-- Illustration — right on desktop, top on mobile -->
