@@ -178,6 +178,7 @@ DB test helpers in `server/test-utils/db-helper.ts`: `cleanupDatabase()`, `creat
 
 ## Key Patterns
 
+- **URL state** — All meaningful UI state (filters, pagination, selected tabs, expanded sections, reading mode) must be stored as URL query params so browser back/forward works and URLs are shareable. Use `useRoute`/`useRouter` with `router.replace()` for state changes. Initialize from URL on mount. Never store filter/page/mode state only in `ref()` — always sync to the URL.
 - Server utils in `server/utils/` are auto-imported by Nitro (e.g. `retrieveRAG`, `embedText`, `useDrizzle`)
 - Shared test IDs in `shared/test-ids.ts` — used by both Vue components and Playwright E2E tests
 - UI components from `@nuxt/ui` (`UCard`, `UButton`, `UBlogPost`, `UPageHeader`, etc.)
