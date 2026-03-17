@@ -3,7 +3,7 @@ import { TEST_IDS } from '~~/shared/test-ids';
 import { PHONICS_SEED, SIGHT_WORDS_BY_PHASE } from '~~/server/utils/reading/phonics-seed';
 import type { PhonicsPhase, PhonicsProgressResponse } from '~~/shared/reading-types';
 
-definePageMeta({ layout: 'reading', middleware: 'auth' });
+definePageMeta({ layout: 'reading' });
 
 const { activeChildId } = useActiveChild();
 
@@ -42,8 +42,17 @@ const phaseEmojis: Record<PhonicsPhase, string> = {
   4: '\u{1F680}',
 };
 
-// Track which phases are expanded
-const expandedPhases = ref<Set<PhonicsPhase>>(new Set([1]));
+const route = useRoute();
+const router = useRouter();
+
+// Track which phases are expanded — initialize from URL or default to phase 1
+const initialPhases = route.query.open
+  ? (String(route.query.open)
+      .split(',')
+      .map(Number)
+      .filter((n) => n >= 1 && n <= 4) as PhonicsPhase[])
+  : [1 as PhonicsPhase];
+const expandedPhases = ref<Set<PhonicsPhase>>(new Set(initialPhases));
 
 function togglePhase(phase: PhonicsPhase) {
   const s = new Set(expandedPhases.value);
@@ -51,6 +60,12 @@ function togglePhase(phase: PhonicsPhase) {
   else s.add(phase);
   expandedPhases.value = s;
 }
+
+watch(expandedPhases, (phases) => {
+  const sorted = Array.from(phases).sort();
+  const isDefault = sorted.length === 1 && sorted[0] === 1;
+  router.replace({ query: { ...route.query, open: isDefault ? undefined : sorted.join(',') } });
+});
 
 function getUnitStatus(unitIndex: number): 'locked' | 'active' | 'mastered' | null {
   if (!progress.value || !activeChildId.value) return null;
