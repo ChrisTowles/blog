@@ -112,3 +112,9 @@ variable "braintrust_project_name" {
   description = "Braintrust project name"
   type        = string
 }
+
+variable "gcs_bucket_name" {
+  description = "GCS media bucket name"
+  type        = string
+  default     = ""
+}

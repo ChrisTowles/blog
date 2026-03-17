@@ -83,6 +83,31 @@ data "google_secret_manager_secret" "braintrust_api_key" {
   project   = var.project_id
 }
 
+# GCS bucket for media (story illustrations, etc.)
+resource "google_storage_bucket" "media" {
+  name                        = "${var.project_id}-media"
+  location                    = var.region
+  project                     = var.project_id
+  uniform_bucket_level_access = true
+  force_destroy               = false
+
+  depends_on = [google_project_service.required_apis]
+}
+
+# Public read access for media bucket objects
+resource "google_storage_bucket_iam_member" "media_public_read" {
+  bucket = google_storage_bucket.media.name
+  role   = "roles/storage.objectViewer"
+  member = "allUsers"
+}
+
+# Grant Cloud Run service account write access to media bucket
+resource "google_storage_bucket_iam_member" "media_cloud_run_writer" {
+  bucket = google_storage_bucket.media.name
+  role   = "roles/storage.objectCreator"
+  member = "serviceAccount:${google_service_account.cloud_run.email}"
+}
+
 # Removed blocks to safely remove resources from state without deleting them
 removed {
   from = google_secret_manager_secret.anthropic_api_key

@@ -76,6 +76,7 @@ describe('getMaskedConfig', () => {
       NUXT_OAUTH_GITHUB_CLIENT_ID: 'github-client-id',
       NUXT_OAUTH_GITHUB_CLIENT_SECRET: 'github-secret',
       GOOGLE_AI_API_KEY: '',
+      GCS_BUCKET_NAME: '',
       AWS_REGION: 'us-east-1',
       AWS_ACCESS_KEY_ID: 'AKIAIOSFODNN7EXAMPLE',
       AWS_SECRET_ACCESS_KEY: 'wJalrXUtnFEMI/K7MDENG',

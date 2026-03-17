@@ -148,6 +148,14 @@ resource "google_cloud_run_v2_service" "main" {
         }
       }
 
+      dynamic "env" {
+        for_each = var.gcs_bucket_name != "" ? [1] : []
+        content {
+          name  = "GCS_BUCKET_NAME"
+          value = var.gcs_bucket_name
+        }
+      }
+
       dynamic "volume_mounts" {
         for_each = var.cloud_sql_connection_name != "" ? [1] : []
         content {
