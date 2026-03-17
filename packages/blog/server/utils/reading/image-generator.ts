@@ -1,6 +1,4 @@
 import { GoogleGenAI, Modality } from '@google/genai';
-import { writeFile, mkdir } from 'node:fs/promises';
-import { join } from 'node:path';
 
 interface StoryIllustrations {
   cover: Buffer;
@@ -112,23 +110,18 @@ export async function generateStoryIllustrations(
   return { cover: cover!, pages };
 }
 
-export async function saveStoryImages(
-  storyId: number,
-  images: StoryIllustrations,
-): Promise<string[]> {
-  const baseDir = join(process.cwd(), 'public/images/reading/stories', String(storyId));
-  await mkdir(baseDir, { recursive: true });
-
+/**
+ * Convert illustration buffers to data URI strings.
+ * Stores images inline in the database rather than writing to the filesystem,
+ * which ensures they persist on ephemeral hosting like Cloud Run.
+ */
+export function saveStoryImages(_storyId: number, images: StoryIllustrations): string[] {
   const urls: string[] = [];
 
-  const coverPath = join(baseDir, 'cover.png');
-  await writeFile(coverPath, images.cover);
-  urls.push(`/images/reading/stories/${storyId}/cover.png`);
+  urls.push(`data:image/png;base64,${images.cover.toString('base64')}`);
 
-  for (let i = 0; i < images.pages.length; i++) {
-    const pagePath = join(baseDir, `page-${i}.png`);
-    await writeFile(pagePath, images.pages[i]!);
-    urls.push(`/images/reading/stories/${storyId}/page-${i}.png`);
+  for (const page of images.pages) {
+    urls.push(`data:image/png;base64,${page.toString('base64')}`);
   }
 
   return urls;
