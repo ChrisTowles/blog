@@ -52,3 +52,8 @@ output "braintrust_api_key_secret_id" {
   description = "Secret Manager secret ID for Braintrust API key"
   value       = data.google_secret_manager_secret.braintrust_api_key.secret_id
 }
+
+output "media_bucket_name" {
+  description = "GCS media bucket name"
+  value       = google_storage_bucket.media.name
+}

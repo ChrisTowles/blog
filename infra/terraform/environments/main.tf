@@ -61,6 +61,7 @@ module "cloud_run" {
   min_instances                        = var.min_instances
   max_instances                        = var.max_instances
   additional_env_vars                  = { NUXT_PUBLIC_GTAG_ID = var.gtag_id }
+  gcs_bucket_name                      = module.shared.media_bucket_name
 
   depends_on = [module.cloud_sql]
 }
