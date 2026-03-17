@@ -1,4 +1,5 @@
 import { GoogleGenAI, Modality } from '@google/genai';
+import { Storage } from '@google-cloud/storage';
 
 interface StoryIllustrations {
   cover: Buffer;
@@ -110,19 +111,38 @@ export async function generateStoryIllustrations(
   return { cover: cover!, pages };
 }
 
+async function uploadToGcs(bucket: string, path: string, buffer: Buffer): Promise<string> {
+  const storage = new Storage();
+  const file = storage.bucket(bucket).file(path);
+  await file.save(buffer, {
+    contentType: 'image/png',
+    metadata: { cacheControl: 'public, max-age=31536000' },
+  });
+  return `https://storage.googleapis.com/${bucket}/${path}`;
+}
+
 /**
- * Convert illustration buffers to data URI strings.
- * Stores images inline in the database rather than writing to the filesystem,
- * which ensures they persist on ephemeral hosting like Cloud Run.
+ * Save illustration buffers — uploads to GCS when GCS_BUCKET_NAME is set,
+ * otherwise falls back to data URIs for local dev.
  */
-export function saveStoryImages(_storyId: number, images: StoryIllustrations): string[] {
-  const urls: string[] = [];
+export async function saveStoryImages(
+  storyId: number,
+  images: StoryIllustrations,
+): Promise<string[]> {
+  const bucket = process.env.GCS_BUCKET_NAME;
 
-  urls.push(`data:image/png;base64,${images.cover.toString('base64')}`);
-
-  for (const page of images.pages) {
-    urls.push(`data:image/png;base64,${page.toString('base64')}`);
+  if (bucket) {
+    const prefix = `reading/stories/${storyId}`;
+    const uploads = [
+      uploadToGcs(bucket, `${prefix}/cover.png`, images.cover),
+      ...images.pages.map((page, i) => uploadToGcs(bucket, `${prefix}/page-${i}.png`, page)),
+    ];
+    return Promise.all(uploads);
   }
 
-  return urls;
+  // Fallback: data URIs for local dev without GCS
+  return [
+    `data:image/png;base64,${images.cover.toString('base64')}`,
+    ...images.pages.map((page) => `data:image/png;base64,${page.toString('base64')}`),
+  ];
 }
