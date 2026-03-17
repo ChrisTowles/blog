@@ -11,6 +11,70 @@ const emit = defineEmits<{
 
 const { speakWord } = useTTS();
 
+// Map letter segments to phoneme-like pronunciations for TTS.
+// TTS says letter names ("bee", "see") instead of sounds ("/b/", "/k/").
+// These short words trick TTS into producing the phoneme sound.
+const PHONEME_SOUNDS: Record<string, string> = {
+  a: 'ah',
+  b: 'buh',
+  c: 'kuh',
+  d: 'duh',
+  e: 'eh',
+  f: 'fff',
+  g: 'guh',
+  h: 'huh',
+  i: 'ih',
+  j: 'juh',
+  k: 'kuh',
+  l: 'lll',
+  m: 'mmm',
+  n: 'nnn',
+  o: 'aw',
+  p: 'puh',
+  q: 'kwuh',
+  r: 'rrr',
+  s: 'sss',
+  t: 'tuh',
+  u: 'uh',
+  v: 'vvv',
+  w: 'wuh',
+  x: 'ks',
+  y: 'yuh',
+  z: 'zzz',
+  sh: 'shh',
+  ch: 'chuh',
+  th: 'thh',
+  ck: 'kuh',
+  wh: 'wuh',
+  ph: 'fff',
+  ng: 'nng',
+  ai: 'ay',
+  ay: 'ay',
+  ee: 'ee',
+  ea: 'ee',
+  oa: 'oh',
+  oe: 'oh',
+  oo: 'ooh',
+  ou: 'ow',
+  ow: 'ow',
+  oi: 'oy',
+  oy: 'oy',
+  ar: 'are',
+  or: 'ore',
+  er: 'err',
+  ir: 'err',
+  ur: 'err',
+  igh: 'eye',
+  kn: 'nnn',
+  wr: 'rrr',
+  mb: 'mmm',
+};
+
+function speakPhoneme(segment: string) {
+  const sound = PHONEME_SOUNDS[segment.toLowerCase()];
+  speakWord(sound || segment);
+}
+
 const segments = computed(() => splitWordIntoSegments(props.word.text, props.word.pattern));
 const activeIndex = ref(-1);
 const completedCount = ref(0);
@@ -117,8 +181,8 @@ function activateSegment(idx: number) {
   if (idx < 0 || idx >= segments.value.length) return;
   activeIndex.value = idx;
   completedCount.value = idx;
-  // Speak the segment sound
-  speakWord(segments.value[idx]!);
+  // Speak the phoneme sound (not the letter name)
+  speakPhoneme(segments.value[idx]!);
 }
 
 function segmentClass(idx: number): string {
@@ -154,9 +218,11 @@ function segmentClass(idx: number): string {
       </div>
     </div>
 
-    <!-- Dismiss hint -->
-    <button class="text-xs text-[var(--reading-text)]/40 font-semibold" @click="emit('dismiss')">
-      tap to close
-    </button>
+    <!-- Controls row -->
+    <div class="flex items-center gap-4">
+      <button class="text-xs text-[var(--reading-text)]/40 font-semibold" @click="emit('dismiss')">
+        tap to close
+      </button>
+    </div>
   </div>
 </template>
