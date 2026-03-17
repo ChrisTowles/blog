@@ -10,6 +10,7 @@ describe('envSchema', () => {
     BRAINTRUST_PROJECT_NAME: 'blog-towles-test',
     NUXT_OAUTH_GITHUB_CLIENT_ID: 'github-client-id',
     NUXT_OAUTH_GITHUB_CLIENT_SECRET: 'github-secret',
+    GCS_BUCKET_NAME: 'blog-towles-test-media',
     AWS_ACCESS_KEY_ID: 'AKIAIOSFODNN7EXAMPLE',
     AWS_SECRET_ACCESS_KEY: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
   };
@@ -76,7 +77,7 @@ describe('getMaskedConfig', () => {
       NUXT_OAUTH_GITHUB_CLIENT_ID: 'github-client-id',
       NUXT_OAUTH_GITHUB_CLIENT_SECRET: 'github-secret',
       GOOGLE_AI_API_KEY: '',
-      GCS_BUCKET_NAME: '',
+      GCS_BUCKET_NAME: 'blog-towles-test-media',
       AWS_REGION: 'us-east-1',
       AWS_ACCESS_KEY_ID: 'AKIAIOSFODNN7EXAMPLE',
       AWS_SECRET_ACCESS_KEY: 'wJalrXUtnFEMI/K7MDENG',
