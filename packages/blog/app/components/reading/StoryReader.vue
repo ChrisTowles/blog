@@ -363,24 +363,15 @@ onUnmounted(() => {
     </div>
 
     <!-- Main reading area -->
-    <div class="flex-1 flex flex-col items-center justify-center px-6 md:px-12 gap-6 relative z-10">
+    <div class="flex-1 flex flex-col items-center justify-center px-4 md:px-8 gap-6 relative z-10">
       <Transition name="reading-page" mode="out-in">
-        <div :key="currentPage" class="flex flex-col items-center gap-6 w-full max-w-2xl">
-          <!-- Illustration with rounded frame -->
+        <div
+          :key="currentPage"
+          class="flex flex-col md:flex-row items-center md:items-stretch gap-6 w-full max-w-5xl"
+        >
+          <!-- Text area — left on desktop, below on mobile -->
           <div
-            v-if="currentIllustration"
-            class="w-full rounded-3xl overflow-hidden shadow-lg shadow-[var(--reading-primary)]/15"
-          >
-            <img
-              :src="currentIllustration"
-              :alt="`Illustration for page ${currentPage + 1}`"
-              class="w-full max-h-56 md:max-h-72 object-cover"
-            />
-          </div>
-
-          <!-- Text area with subtle card background -->
-          <div
-            class="w-full rounded-3xl p-6 md:p-8 bg-[var(--reading-card-bg)] border-2 border-[var(--reading-primary)]/10 shadow-sm"
+            class="w-full md:w-[55%] order-2 md:order-1 rounded-3xl p-6 md:p-8 bg-[var(--reading-card-bg)] border-2 border-[var(--reading-primary)]/10 shadow-sm flex items-center"
           >
             <ReadingWordHighlighter
               :words="currentWords"
@@ -400,6 +391,18 @@ onUnmounted(() => {
                   : ''
               "
               @word-click="handleWordClick"
+            />
+          </div>
+
+          <!-- Illustration — right on desktop, top on mobile -->
+          <div
+            v-if="currentIllustration"
+            class="w-full md:w-[45%] order-1 md:order-2 rounded-3xl overflow-hidden shadow-lg shadow-[var(--reading-primary)]/15"
+          >
+            <img
+              :src="currentIllustration"
+              :alt="`Illustration for page ${currentPage + 1}`"
+              class="w-full aspect-square object-cover"
             />
           </div>
         </div>
