@@ -9,7 +9,7 @@ interface StoryIllustrations {
 const ILLUSTRATION_STYLE =
   'Flat vector illustration style. Soft rounded shapes with thick dark outlines. Warm saturated colors on cream/warm white backgrounds. Characters have simple expressive faces with dot eyes and small mouths. Characters are 2-3 heads tall (chibi proportions). Style similar to Bluey or Peppa Pig — simple, clean, appealing to ages 5-10. No text, no words, no letters in the image. Scene has simple background elements (grass, sky, simple furniture). Consistent warm lighting.';
 
-const CHARACTER_DESCRIPTIONS: Record<string, string> = {
+export const CHARACTER_DESCRIPTIONS: Record<string, string> = {
   cat: 'An orange tabby cat with big green eyes, round body, short stubby legs, pink nose, always smiling. Thick dark outline.',
   hen: 'A plump red hen with bright yellow beak, small flapping wings, wearing a tiny blue polka-dot bow on head. Round body.',
   'red hen':
@@ -28,7 +28,7 @@ function getGeminiClient(): GoogleGenAI | null {
   return new GoogleGenAI({ apiKey });
 }
 
-function buildCharacterPrompt(characters: string[]): string {
+export function buildCharacterPrompt(characters: string[]): string {
   const descriptions = characters
     .map((c) => CHARACTER_DESCRIPTIONS[c.toLowerCase()])
     .filter(Boolean);
@@ -36,7 +36,7 @@ function buildCharacterPrompt(characters: string[]): string {
   return `Characters in the scene: ${descriptions.join(' ')}`;
 }
 
-function extractCharacters(text: string): string[] {
+export function extractCharacters(text: string): string[] {
   const lowerText = text.toLowerCase();
   const found: string[] = [];
   // Check longer keys first to avoid duplicate matches (e.g. "red hen" before "hen")

@@ -1,6 +1,6 @@
 import { getAnthropicClient } from '../ai/anthropic';
 
-const BLOCKLIST = [
+export const BLOCKLIST = [
   'kill',
   'murder',
   'blood',
@@ -36,9 +36,9 @@ interface SafetyResult {
 
 export async function reviewStorySafety(storyText: string): Promise<SafetyResult> {
   // Stage 1: Blocklist scan
-  const lowerText = storyText.toLowerCase();
   for (const word of BLOCKLIST) {
-    if (lowerText.includes(word)) {
+    const boundary = new RegExp(`\\b${word}\\b`, 'i');
+    if (boundary.test(storyText)) {
       return { safe: false, reason: `Contains blocked word: "${word}"` };
     }
   }
