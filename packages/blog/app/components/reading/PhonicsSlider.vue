@@ -80,6 +80,7 @@ const activeIndex = ref(-1);
 const completedCount = ref(0);
 const isDragging = ref(false);
 const trackRef = ref<HTMLElement | null>(null);
+let cachedRect: DOMRect | null = null;
 
 function splitWordIntoSegments(word: string, pattern: string | null): string[] {
   const clean = word.toLowerCase().replace(/[^a-z]/g, '');
@@ -143,8 +144,8 @@ function splitWordIntoSegments(word: string, pattern: string | null): string[] {
 }
 
 function getSegmentFromX(clientX: number): number {
-  if (!trackRef.value) return -1;
-  const rect = trackRef.value.getBoundingClientRect();
+  const rect = cachedRect ?? trackRef.value?.getBoundingClientRect();
+  if (!rect) return -1;
   const x = clientX - rect.left;
   const segWidth = rect.width / segments.value.length;
   return Math.max(0, Math.min(segments.value.length - 1, Math.floor(x / segWidth)));
@@ -154,6 +155,7 @@ function onPointerDown(e: PointerEvent) {
   isDragging.value = true;
   completedCount.value = 0;
   activeIndex.value = -1;
+  cachedRect = trackRef.value?.getBoundingClientRect() ?? null;
   const idx = getSegmentFromX(e.clientX);
   activateSegment(idx);
   (e.target as HTMLElement)?.setPointerCapture?.(e.pointerId);
@@ -170,6 +172,7 @@ function onPointerMove(e: PointerEvent) {
 function onPointerUp() {
   if (!isDragging.value) return;
   isDragging.value = false;
+  cachedRect = null;
   // If thumb reached last segment, play the full word
   if (activeIndex.value === segments.value.length - 1) {
     completedCount.value = segments.value.length;

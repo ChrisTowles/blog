@@ -111,9 +111,10 @@ export async function generateStoryIllustrations(
   return { cover: cover!, pages };
 }
 
+const gcsStorage = new Storage();
+
 async function uploadToGcs(bucket: string, path: string, buffer: Buffer): Promise<string> {
-  const storage = new Storage();
-  const file = storage.bucket(bucket).file(path);
+  const file = gcsStorage.bucket(bucket).file(path);
   await file.save(buffer, {
     contentType: 'image/png',
     metadata: { cacheControl: 'public, max-age=31536000' },
