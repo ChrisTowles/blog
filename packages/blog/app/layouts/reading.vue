@@ -19,6 +19,7 @@ const navItems = [
   { label: 'Practice', to: '/reading/practice', icon: 'i-lucide-book-open' },
   { label: 'Words', to: '/reading/words', icon: 'i-lucide-spell-check' },
   { label: 'Demo', to: '/reading/demo', icon: 'i-lucide-play' },
+  { label: 'About', to: '/reading/about', icon: 'i-lucide-info' },
   { label: 'Settings', to: '/reading/settings', icon: 'i-lucide-settings' },
 ];
 
