@@ -87,17 +87,14 @@ async function handleSubmit() {
   await generateWithOptions();
 }
 
-async function generateFromPreview(preview: StoryPreview) {
+async function generateStory(body: Record<string, unknown>) {
   step.value = 'generating';
   generating.value = true;
   startLoadingMessages();
   try {
     await $fetch('/api/reading/stories/generate', {
       method: 'POST',
-      body: {
-        childId: childId.value,
-        selectedPreview: preview,
-      },
+      body: { childId: childId.value, ...body },
     });
     router.push(`/reading/child/${childId.value}`);
   } finally {
@@ -106,25 +103,16 @@ async function generateFromPreview(preview: StoryPreview) {
   }
 }
 
-async function generateWithOptions() {
-  step.value = 'generating';
-  generating.value = true;
-  startLoadingMessages();
-  try {
-    await $fetch('/api/reading/stories/generate', {
-      method: 'POST',
-      body: {
-        childId: childId.value,
-        genre: genre.value || undefined,
-        who: who.value || undefined,
-        idea: idea.value || undefined,
-      },
-    });
-    router.push(`/reading/child/${childId.value}`);
-  } finally {
-    generating.value = false;
-    stopLoadingMessages();
-  }
+function generateFromPreview(preview: StoryPreview) {
+  return generateStory({ selectedPreview: preview });
+}
+
+function generateWithOptions() {
+  return generateStory({
+    genre: genre.value || undefined,
+    who: who.value || undefined,
+    idea: idea.value || undefined,
+  });
 }
 </script>
 

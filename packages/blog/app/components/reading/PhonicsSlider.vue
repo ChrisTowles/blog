@@ -82,20 +82,27 @@ const isDragging = ref(false);
 const trackRef = ref<HTMLElement | null>(null);
 let cachedRect: DOMRect | null = null;
 
+// Split a word around a known substring (digraph, vowel team, etc.)
+function splitOnSubstring(word: string, key: string): string[] | null {
+  const idx = word.indexOf(key);
+  if (idx < 0) return null;
+  const parts: string[] = [];
+  if (idx > 0) parts.push(word.slice(0, idx));
+  parts.push(key);
+  if (idx + key.length < word.length) parts.push(word.slice(idx + key.length));
+  return parts;
+}
+
 function splitWordIntoSegments(word: string, pattern: string | null): string[] {
   const clean = word.toLowerCase().replace(/[^a-z]/g, '');
   if (!pattern || pattern === 'sight') return [clean];
 
-  // Digraph patterns — keep digraph together
-  if (pattern.startsWith('DG-')) {
-    const digraph = pattern.replace('DG-', '');
-    const idx = clean.indexOf(digraph);
-    if (idx >= 0) {
-      const parts: string[] = [];
-      if (idx > 0) parts.push(clean.slice(0, idx));
-      parts.push(digraph);
-      if (idx + digraph.length < clean.length) parts.push(clean.slice(idx + digraph.length));
-      return parts;
+  // Patterns with a known substring to split around (DG, VT, RC)
+  for (const prefix of ['DG-', 'VT-', 'RC-']) {
+    if (pattern.startsWith(prefix)) {
+      const key = pattern.slice(prefix.length);
+      const parts = splitOnSubstring(clean, key);
+      if (parts) return parts;
     }
   }
 
@@ -103,32 +110,6 @@ function splitWordIntoSegments(word: string, pattern: string | null): string[] {
   if (pattern.startsWith('VCe-')) {
     if (clean.length >= 4) {
       return [clean.slice(0, -3), clean.slice(-3, -2), clean.slice(-2)];
-    }
-  }
-
-  // Vowel team patterns
-  if (pattern.startsWith('VT-')) {
-    const team = pattern.replace('VT-', '');
-    const idx = clean.indexOf(team);
-    if (idx >= 0) {
-      const parts: string[] = [];
-      if (idx > 0) parts.push(clean.slice(0, idx));
-      parts.push(team);
-      if (idx + team.length < clean.length) parts.push(clean.slice(idx + team.length));
-      return parts;
-    }
-  }
-
-  // R-controlled patterns
-  if (pattern.startsWith('RC-')) {
-    const rc = pattern.replace('RC-', '');
-    const idx = clean.indexOf(rc);
-    if (idx >= 0) {
-      const parts: string[] = [];
-      if (idx > 0) parts.push(clean.slice(0, idx));
-      parts.push(rc);
-      if (idx + rc.length < clean.length) parts.push(clean.slice(idx + rc.length));
-      return parts;
     }
   }
 

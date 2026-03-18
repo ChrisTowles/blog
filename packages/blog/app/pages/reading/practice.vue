@@ -9,10 +9,10 @@ const { currentCard, remaining, isLoading, fetchDueCards, submitReview, dueCards
 
 // Session tracking
 const sessionStartTime = ref<number | null>(null);
-const reviewedCount = ref(0);
 const againCount = ref(0);
 const hardCount = ref(0);
 const goodCount = ref(0);
+const reviewedCount = computed(() => againCount.value + hardCount.value + goodCount.value);
 const sessionComplete = ref(false);
 const totalInSession = ref(0);
 
@@ -55,7 +55,6 @@ const progressPercent = computed(() => {
 });
 
 async function handleRate(rating: 1 | 3 | 4) {
-  reviewedCount.value++;
   if (rating === 1) againCount.value++;
   else if (rating === 3) hardCount.value++;
   else goodCount.value++;
@@ -70,7 +69,6 @@ async function handleRate(rating: 1 | 3 | 4) {
 
 function startNewSession() {
   sessionComplete.value = false;
-  reviewedCount.value = 0;
   againCount.value = 0;
   hardCount.value = 0;
   goodCount.value = 0;
