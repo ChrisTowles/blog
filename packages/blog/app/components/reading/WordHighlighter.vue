@@ -36,8 +36,7 @@ function feedbackClass(index: number): string {
         {
           'bg-[var(--reading-highlight)] scale-115 reading-bounce shadow-md shadow-[var(--reading-highlight)]/30':
             i === currentWordIndex && !wordFeedbacks,
-          'text-[var(--reading-primary)] font-extrabold underline decoration-[var(--reading-primary)]/30 decoration-wavy underline-offset-4':
-            word.sightWord && !wordFeedbacks?.[i],
+          'text-[var(--reading-accent)] font-extrabold': word.sightWord && !wordFeedbacks?.[i],
           'ring-2 ring-[var(--reading-accent)] scale-110 bg-[var(--reading-accent)]/10':
             wordFeedbacks && wordFeedbacks[i] === 'pending' && i === currentWordIndex,
         },
