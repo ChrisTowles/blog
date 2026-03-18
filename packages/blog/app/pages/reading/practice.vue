@@ -4,9 +4,8 @@ import { TEST_IDS } from '~~/shared/test-ids';
 definePageMeta({ layout: 'reading', middleware: 'auth' });
 
 const { activeChildId } = useActiveChild();
-const childIdRef = computed(() => activeChildId.value);
 const { currentCard, remaining, isLoading, fetchDueCards, submitReview, dueCards } =
-  useSRS(childIdRef);
+  useSRS(activeChildId);
 
 // Session tracking
 const sessionStartTime = ref<number | null>(null);

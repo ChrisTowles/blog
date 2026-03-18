@@ -67,14 +67,9 @@ watch(expandedPhases, (phases) => {
   router.replace({ query: { ...route.query, open: isDefault ? undefined : sorted.join(',') } });
 });
 
-function getUnitStatus(unitIndex: number): 'locked' | 'active' | 'mastered' | null {
-  if (!progress.value || !activeChildId.value) return null;
-  // phonicsUnitId in DB is 1-indexed and matches the order in PHONICS_SEED + 1
-  const p = progress.value.find((pr) => pr.phonicsUnitId === unitIndex + 1);
-  return p?.status ?? null;
-}
-
-function statusBadge(status: 'locked' | 'active' | 'mastered' | null) {
+function statusBadgeFor(
+  status: 'locked' | 'active' | 'mastered' | null,
+): { label: string; color: string; emoji: string } | null {
   if (!status) return null;
   if (status === 'mastered')
     return { label: 'Mastered', color: 'var(--reading-success)', emoji: '\u2705' };
@@ -82,6 +77,20 @@ function statusBadge(status: 'locked' | 'active' | 'mastered' | null) {
     return { label: 'Learning', color: 'var(--reading-highlight)', emoji: '\u{1F4D6}' };
   return { label: 'Locked', color: 'var(--reading-text)', emoji: '\u{1F512}' };
 }
+
+// Pre-compute status badges for all units to avoid repeated O(n) lookups in the template
+const unitBadges = computed(() => {
+  const map = new Map<number, ReturnType<typeof statusBadgeFor>>();
+  for (let i = 0; i < PHONICS_SEED.length; i++) {
+    let status: 'locked' | 'active' | 'mastered' | null = null;
+    if (progress.value && activeChildId.value) {
+      const p = progress.value.find((pr) => pr.phonicsUnitId === i + 1);
+      status = p?.status ?? null;
+    }
+    map.set(i, statusBadgeFor(status));
+  }
+  return map;
+});
 
 // Map pattern codes to friendly descriptions
 function friendlyPattern(pattern: string): string {
@@ -244,16 +253,15 @@ const sightWordsByPhase = SIGHT_WORDS_BY_PHASE;
                     <!-- Progress badge if child selected -->
                     <template v-if="activeChildId">
                       <span
-                        v-if="statusBadge(getUnitStatus(PHONICS_SEED.indexOf(unit)))"
+                        v-if="unitBadges.get(PHONICS_SEED.indexOf(unit))"
                         class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold"
                         :style="{
-                          backgroundColor:
-                            statusBadge(getUnitStatus(PHONICS_SEED.indexOf(unit)))!.color + '22',
-                          color: statusBadge(getUnitStatus(PHONICS_SEED.indexOf(unit)))!.color,
+                          backgroundColor: unitBadges.get(PHONICS_SEED.indexOf(unit))!.color + '22',
+                          color: unitBadges.get(PHONICS_SEED.indexOf(unit))!.color,
                         }"
                       >
-                        {{ statusBadge(getUnitStatus(PHONICS_SEED.indexOf(unit)))!.emoji }}
-                        {{ statusBadge(getUnitStatus(PHONICS_SEED.indexOf(unit)))!.label }}
+                        {{ unitBadges.get(PHONICS_SEED.indexOf(unit))!.emoji }}
+                        {{ unitBadges.get(PHONICS_SEED.indexOf(unit))!.label }}
                       </span>
                     </template>
                   </div>
