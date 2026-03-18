@@ -1,28 +1,5 @@
 import { describe, it, expect } from 'vitest';
-
-// Unit tests for pure functions (no API key needed)
-// Export the pure functions for testing by importing the module
-// Note: generateStory requires ANTHROPIC_API_KEY and is tested in the integration test
-
-// Re-implement locally since they're not exported
-function countSyllables(word: string): number {
-  const clean = word.toLowerCase().replace(/[^a-z]/g, '');
-  if (clean.length <= 3) return 1;
-  const matches = clean.match(/[aeiouy]+/g);
-  let count = matches ? matches.length : 1;
-  if (clean.endsWith('e') && !clean.endsWith('le')) count--;
-  return Math.max(1, count);
-}
-
-function calculateFleschKincaid(text: string): number {
-  const sentences = text.split(/[.!?]+/).filter(Boolean);
-  const words = text.split(/\s+/).filter(Boolean);
-  const syllables = words.reduce((sum, w) => sum + countSyllables(w), 0);
-
-  if (sentences.length === 0 || words.length === 0) return 0;
-
-  return 0.39 * (words.length / sentences.length) + 11.8 * (syllables / words.length) - 15.59;
-}
+import { countSyllables, calculateFleschKincaid, buildStoryPromptExtras } from './story-generator';
 
 describe('countSyllables', () => {
   it('counts single syllable words', () => {
@@ -60,6 +37,11 @@ describe('countSyllables', () => {
     expect(countSyllables('cat!')).toBe(1);
     expect(countSyllables('dog.')).toBe(1);
   });
+
+  it('handles empty-ish input', () => {
+    expect(countSyllables('')).toBe(1);
+    expect(countSyllables('...')).toBe(1);
+  });
 });
 
 describe('calculateFleschKincaid', () => {
@@ -70,22 +52,58 @@ describe('calculateFleschKincaid', () => {
   it('calculates grade level for simple sentences', () => {
     const text = 'The cat sat. The dog ran. The big hat.';
     const score = calculateFleschKincaid(text);
-    // Simple CVC sentences should produce a low grade level
     expect(score).toBeLessThan(5);
   });
 
   it('produces higher scores for complex text', () => {
     const simple = 'The cat sat on a mat.';
     const complex = 'The extraordinary circumstances necessitated immediate intervention.';
-    const simpleScore = calculateFleschKincaid(simple);
-    const complexScore = calculateFleschKincaid(complex);
-    expect(complexScore).toBeGreaterThan(simpleScore);
+    expect(calculateFleschKincaid(complex)).toBeGreaterThan(calculateFleschKincaid(simple));
   });
 
   it('handles single sentence', () => {
-    const text = 'The cat is big.';
-    const score = calculateFleschKincaid(text);
+    const score = calculateFleschKincaid('The cat is big.');
     expect(typeof score).toBe('number');
     expect(Number.isFinite(score)).toBe(true);
+  });
+
+  it('handles text with only punctuation-separated fragments', () => {
+    const score = calculateFleschKincaid('Run! Jump! Go!');
+    expect(Number.isFinite(score)).toBe(true);
+  });
+});
+
+describe('buildStoryPromptExtras', () => {
+  it('returns empty string with no options', () => {
+    expect(buildStoryPromptExtras({})).toBe('');
+  });
+
+  it('includes character when who is set', () => {
+    const result = buildStoryPromptExtras({ who: 'Rex the dog' });
+    expect(result).toContain('MAIN CHARACTER: Rex the dog');
+  });
+
+  it('includes idea when set', () => {
+    const result = buildStoryPromptExtras({ idea: 'a trip to the park' });
+    expect(result).toContain('STORY IDEA: a trip to the park');
+  });
+
+  it('includes selected preview', () => {
+    const result = buildStoryPromptExtras({
+      selectedPreview: { title: 'Fun Day', summary: 'A fun day at the beach' },
+    });
+    expect(result).toContain('USE THIS STORY CONCEPT');
+    expect(result).toContain('Fun Day');
+    expect(result).toContain('A fun day at the beach');
+  });
+
+  it('combines all options with newlines', () => {
+    const result = buildStoryPromptExtras({
+      who: 'Cat',
+      idea: 'adventure',
+      selectedPreview: { title: 'T', summary: 'S' },
+    });
+    const lines = result.split('\n');
+    expect(lines).toHaveLength(3);
   });
 });

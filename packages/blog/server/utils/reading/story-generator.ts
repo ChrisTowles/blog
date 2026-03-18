@@ -30,7 +30,7 @@ interface GeneratedStory {
 
 const MAX_RETRIES = 2;
 
-function buildStoryPromptExtras(options: {
+export function buildStoryPromptExtras(options: {
   who?: string;
   idea?: string;
   selectedPreview?: StoryPreview;
@@ -163,7 +163,7 @@ Output as JSON: { "title": "...", "text": "..." }`,
   throw new Error('Failed to generate story with sufficient decodability');
 }
 
-function calculateFleschKincaid(text: string): number {
+export function calculateFleschKincaid(text: string): number {
   const sentences = text.split(/[.!?]+/).filter(Boolean);
   const words = text.split(/\s+/).filter(Boolean);
   const syllables = words.reduce((sum, w) => sum + countSyllables(w), 0);
@@ -173,7 +173,7 @@ function calculateFleschKincaid(text: string): number {
   return 0.39 * (words.length / sentences.length) + 11.8 * (syllables / words.length) - 15.59;
 }
 
-function countSyllables(word: string): number {
+export function countSyllables(word: string): number {
   const clean = word.toLowerCase().replace(/[^a-z]/g, '');
   if (clean.length <= 3) return 1;
   const matches = clean.match(/[aeiouy]+/g);
