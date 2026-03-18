@@ -273,9 +273,11 @@ function togetherPrevPage() {
   }
 }
 
-// Phonics slider state
-const sliderWord = ref<StoryWord | null>(null);
+// Phonics slider state — derive word from index to keep in sync
 const sliderWordIndex = ref(-1);
+const sliderWord = computed(() =>
+  sliderWordIndex.value >= 0 ? (currentWords.value[sliderWordIndex.value] ?? null) : null,
+);
 const phonicsSliderEnabled = ref(
   import.meta.client ? localStorage.getItem('reading-phonics-slider') !== 'off' : true,
 );
@@ -290,23 +292,14 @@ function togglePhonicsSlider() {
 
 function handleWordClick(word: StoryWord, index: number) {
   if (phonicsSliderEnabled.value && word.pattern && !word.sightWord) {
-    // Toggle slider: if tapping the same word, dismiss; otherwise show for new word
-    if (sliderWord.value && sliderWordIndex.value === index) {
-      sliderWord.value = null;
-      sliderWordIndex.value = -1;
-    } else {
-      sliderWord.value = word;
-      sliderWordIndex.value = index;
-    }
+    sliderWordIndex.value = sliderWordIndex.value === index ? -1 : index;
   } else {
-    sliderWord.value = null;
     sliderWordIndex.value = -1;
     speakWord(word.text);
   }
 }
 
 function dismissSlider() {
-  sliderWord.value = null;
   sliderWordIndex.value = -1;
 }
 
