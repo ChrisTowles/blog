@@ -31,13 +31,26 @@ watch(
 const elapsedSeconds = ref(0);
 let timer: ReturnType<typeof setInterval> | null = null;
 
-onMounted(() => {
-  timer = setInterval(() => {
-    if (sessionStartTime.value && !sessionComplete.value) {
-      elapsedSeconds.value = Math.floor((Date.now() - sessionStartTime.value) / 1000);
+const sessionActive = computed(() => !!sessionStartTime.value && !sessionComplete.value);
+
+watch(
+  sessionActive,
+  (active) => {
+    if (active) {
+      if (!timer) {
+        timer = setInterval(() => {
+          elapsedSeconds.value = Math.floor((Date.now() - sessionStartTime.value!) / 1000);
+        }, 1000);
+      }
+    } else {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
     }
-  }, 1000);
-});
+  },
+  { immediate: true },
+);
 
 onUnmounted(() => {
   if (timer) clearInterval(timer);

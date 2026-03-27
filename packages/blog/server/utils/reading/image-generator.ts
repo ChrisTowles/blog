@@ -36,11 +36,14 @@ export function buildCharacterPrompt(characters: string[]): string {
   return `Characters in the scene: ${descriptions.join(' ')}`;
 }
 
+const SORTED_CHARACTER_KEYS = Object.keys(CHARACTER_DESCRIPTIONS).sort(
+  (a, b) => b.length - a.length,
+);
+
 export function extractCharacters(text: string): string[] {
   const lowerText = text.toLowerCase();
   const found: string[] = [];
-  // Check longer keys first to avoid duplicate matches (e.g. "red hen" before "hen")
-  const keys = Object.keys(CHARACTER_DESCRIPTIONS).sort((a, b) => b.length - a.length);
+  const keys = SORTED_CHARACTER_KEYS;
   for (const key of keys) {
     if (
       lowerText.includes(key) &&
@@ -111,10 +114,14 @@ export async function generateStoryIllustrations(
   return { cover: cover!, pages };
 }
 
-const gcsStorage = new Storage();
+let gcsStorage: Storage | null = null;
+function getGcsStorage(): Storage {
+  if (!gcsStorage) gcsStorage = new Storage();
+  return gcsStorage;
+}
 
 async function uploadToGcs(bucket: string, path: string, buffer: Buffer): Promise<string> {
-  const file = gcsStorage.bucket(bucket).file(path);
+  const file = getGcsStorage().bucket(bucket).file(path);
   await file.save(buffer, {
     contentType: 'image/png',
     metadata: { cacheControl: 'public, max-age=31536000' },
