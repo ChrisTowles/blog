@@ -78,16 +78,17 @@ function statusBadgeFor(
   return { label: 'Locked', color: 'var(--reading-text)', emoji: '\u{1F512}' };
 }
 
-// Pre-compute status badges for all units to avoid repeated O(n) lookups in the template
+// Pre-compute status badges keyed by "phase:orderIndex" to avoid O(n) indexOf lookups in template
 const unitBadges = computed(() => {
-  const map = new Map<number, ReturnType<typeof statusBadgeFor>>();
+  const map = new Map<string, ReturnType<typeof statusBadgeFor>>();
   for (let i = 0; i < PHONICS_SEED.length; i++) {
+    const unit = PHONICS_SEED[i]!;
     let status: 'locked' | 'active' | 'mastered' | null = null;
     if (progress.value && activeChildId.value) {
       const p = progress.value.find((pr) => pr.phonicsUnitId === i + 1);
       status = p?.status ?? null;
     }
-    map.set(i, statusBadgeFor(status));
+    map.set(`${unit.phase}:${unit.orderIndex}`, statusBadgeFor(status));
   }
   return map;
 });
@@ -251,17 +252,17 @@ const sightWordsByPhase = SIGHT_WORDS_BY_PHASE;
                       {{ unit.name }}
                     </h3>
                     <!-- Progress badge if child selected -->
-                    <template v-if="activeChildId">
+                    <template v-if="activeChildId && unitBadges.get(`${phase}:${unit.orderIndex}`)">
                       <span
-                        v-if="unitBadges.get(PHONICS_SEED.indexOf(unit))"
                         class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold"
                         :style="{
-                          backgroundColor: unitBadges.get(PHONICS_SEED.indexOf(unit))!.color + '22',
-                          color: unitBadges.get(PHONICS_SEED.indexOf(unit))!.color,
+                          backgroundColor:
+                            unitBadges.get(`${phase}:${unit.orderIndex}`)!.color + '22',
+                          color: unitBadges.get(`${phase}:${unit.orderIndex}`)!.color,
                         }"
                       >
-                        {{ unitBadges.get(PHONICS_SEED.indexOf(unit))!.emoji }}
-                        {{ unitBadges.get(PHONICS_SEED.indexOf(unit))!.label }}
+                        {{ unitBadges.get(`${phase}:${unit.orderIndex}`)!.emoji }}
+                        {{ unitBadges.get(`${phase}:${unit.orderIndex}`)!.label }}
                       </span>
                     </template>
                   </div>

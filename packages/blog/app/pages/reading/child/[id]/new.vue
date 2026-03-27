@@ -8,15 +8,10 @@ const route = useRoute();
 const router = useRouter();
 const childId = computed(() => Number(route.params.id));
 
-const initialStep = (['input', 'previews', 'generating'] as const).includes(
-  route.query.step as 'input' | 'previews' | 'generating',
-)
-  ? (route.query.step as 'input' | 'previews' | 'generating')
-  : 'input';
 const genre = ref('');
 const who = ref('');
 const idea = ref('');
-const step = ref<'input' | 'previews' | 'generating'>(initialStep);
+const step = ref<'input' | 'previews' | 'generating'>('input');
 
 watch(step, (val) => {
   router.replace({ query: { ...route.query, step: val === 'input' ? undefined : val } });
@@ -48,6 +43,7 @@ const loadingMessageIndex = ref(0);
 let loadingInterval: ReturnType<typeof setInterval> | null = null;
 
 function startLoadingMessages() {
+  stopLoadingMessages();
   loadingMessageIndex.value = 0;
   loadingInterval = setInterval(() => {
     loadingMessageIndex.value = (loadingMessageIndex.value + 1) % LOADING_MESSAGES.length;
