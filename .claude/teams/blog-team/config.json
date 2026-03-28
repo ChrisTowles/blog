@@ -46,16 +46,6 @@
       "subscriptions": []
     },
     {
-      "agentId": "blog-image-creator@blog-team",
-      "name": "blog-image-creator",
-      "agentType": "agent",
-      "model": "claude-sonnet-4-6",
-      "joinedAt": 0,
-      "tmuxPaneId": "",
-      "cwd": "/home/ctowles/code/p/blog",
-      "subscriptions": []
-    },
-    {
       "agentId": "blog-qa-checker@blog-team",
       "name": "blog-qa-checker",
       "agentType": "agent",

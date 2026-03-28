@@ -19,9 +19,7 @@ useHead({
   htmlAttrs: {
     lang: 'en',
   },
-  scripts: [
-    //  { async: 'async', src: `https://platform.twitter.com/widgets.js` },
-  ],
+  script: [{ async: true, src: 'https://platform.twitter.com/widgets.js' }],
 });
 
 useSeoMeta({

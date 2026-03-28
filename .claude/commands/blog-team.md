@@ -1,6 +1,6 @@
 ---
 name: blog-team
-description: Launch the blog post creation team — interviewer, researcher, voice reviewer, image creator, QA checker in parallel tmux panes
+description: Launch the blog post creation team — interviewer, researcher, voice reviewer, QA checker in parallel tmux panes
 arguments:
   - name: topic
     description: The blog post topic or a brief description
@@ -14,7 +14,7 @@ Launch the blog post creation team for: $ARGUMENTS
 
 ## Setup
 
-1. Create tmux session `blog-team` with 5 panes (leader, researcher, voice-reviewer, image-creator, qa-checker)
+1. Create tmux session `blog-team` with 4 panes (leader, researcher, voice-reviewer, qa-checker)
 2. Start the blog-team-leader agent in pane 0
 3. Pass the topic and links to the leader
 
