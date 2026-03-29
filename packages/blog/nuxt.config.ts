@@ -33,7 +33,7 @@ export default defineNuxtConfig({
           ad_user_data: 'denied',
           ad_personalization: 'denied',
           ad_storage: 'denied',
-          analytics_storage: 'denied',
+          analytics_storage: 'granted',
         },
       ],
     ],
