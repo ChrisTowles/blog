@@ -21,7 +21,8 @@ infra/              # infrastructure
 
 - **GCP Cloud Run** — production hosting, Cloud SQL (PostgreSQL)
 - **Cloudflare** — DNS only (no longer used for Workers/hosting)
-- Deploy: `pnpm gcp:prod:deploy` / `pnpm gcp:staging:deploy`
+- **CI deploys automatically** on merge to `main` — no manual deploy needed
+- Manual deploy (if needed): `pnpm gcp:prod:deploy` / `pnpm gcp:staging:deploy`
 
 ## Commands
 
