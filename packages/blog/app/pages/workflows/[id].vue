@@ -68,6 +68,20 @@ function onNodeUpdated(updatedNode: Node) {
   }
 }
 
+const { startRun, runStatus, isRunning, finalOutput, runError } = useWorkflowRun(workflowId);
+
+// Inject run status into node data so PromptNode can show live status
+watch(
+  runStatus,
+  (status) => {
+    nodes.value = nodes.value.map((n) => ({
+      ...n,
+      data: { ...n.data, __runStatus: status.get(n.id) },
+    }));
+  },
+  { deep: true },
+);
+
 onMounted(() => {
   if (workflow.value?.viewport) {
     setViewport(workflow.value.viewport);
@@ -145,39 +159,59 @@ const nodeTypes: NodeTypesObject = {
       </VueFlow>
     </div>
 
-    <!-- Right panel: node editor -->
+    <!-- Right panel: tabbed editor + run panel -->
     <div
-      class="w-96 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-y-auto"
+      class="w-96 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex flex-col"
     >
-      <!-- Save status -->
-      <div
-        class="px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between"
+      <UTabs
+        :items="[
+          { label: 'Edit', slot: 'edit' },
+          { label: 'Run', slot: 'run' },
+        ]"
+        class="flex-1 min-h-0"
       >
-        <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Node Editor</span>
-        <span
-          class="text-xs"
-          :class="
-            saveStatus === 'saving'
-              ? 'text-yellow-500'
-              : saveStatus === 'saved'
-                ? 'text-green-500'
-                : saveStatus === 'error'
-                  ? 'text-red-500'
-                  : 'text-gray-400'
-          "
-        >
-          {{
-            saveStatus === 'saving'
-              ? 'Saving…'
-              : saveStatus === 'saved'
-                ? 'Saved ✓'
-                : saveStatus === 'error'
-                  ? 'Save failed'
-                  : ''
-          }}
-        </span>
-      </div>
-      <WorkflowNodeEditor :node="selectedNode" @update:node="onNodeUpdated" />
+        <template #edit>
+          <!-- Save status -->
+          <div
+            class="px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between"
+          >
+            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Node Editor</span>
+            <span
+              class="text-xs"
+              :class="
+                saveStatus === 'saving'
+                  ? 'text-yellow-500'
+                  : saveStatus === 'saved'
+                    ? 'text-green-500'
+                    : saveStatus === 'error'
+                      ? 'text-red-500'
+                      : 'text-gray-400'
+              "
+            >
+              {{
+                saveStatus === 'saving'
+                  ? 'Saving…'
+                  : saveStatus === 'saved'
+                    ? 'Saved ✓'
+                    : saveStatus === 'error'
+                      ? 'Save failed'
+                      : ''
+              }}
+            </span>
+          </div>
+          <WorkflowNodeEditor :node="selectedNode" @update:node="onNodeUpdated" />
+        </template>
+        <template #run>
+          <WorkflowRunPanel
+            :workflow-id="workflowId"
+            :is-running="isRunning"
+            :final-output="finalOutput"
+            :run-error="runError"
+            :run-status="runStatus"
+            @run="startRun()"
+          />
+        </template>
+      </UTabs>
     </div>
   </div>
 </template>
