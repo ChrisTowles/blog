@@ -7,7 +7,10 @@ defineRouteMeta({
 
 export default defineEventHandler(async (event) => {
   const { id } = await getValidatedRouterParams(event, z.object({ id: z.string() }).parse);
-  await requireWorkflowOwner(event, id);
+  const workflow = await requireWorkflowOwner(event, id);
+  if (workflow.isPublished) {
+    throw createError({ statusCode: 403, message: 'Cannot delete a template workflow' });
+  }
   const db = useDrizzle();
 
   // CASCADE deletes nodes, edges, runs, node_executions

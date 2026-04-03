@@ -1,4 +1,4 @@
-import type { NodeRunStatus } from '~~/shared/workflow-types';
+import type { NodeRunStatus } from '../../shared/workflow-types';
 
 export function useWorkflowRun(workflowId: string) {
   const runStatus = ref(new Map<string, NodeRunStatus>());

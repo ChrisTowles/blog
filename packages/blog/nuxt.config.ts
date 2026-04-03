@@ -11,6 +11,8 @@ dotenv.config({
 });
 
 export default defineNuxtConfig({
+  extends: ['../layers/workflows'],
+
   modules: [
     '@nuxt/image',
     '@nuxt/ui',

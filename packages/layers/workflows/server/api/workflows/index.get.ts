@@ -17,6 +17,7 @@ export default defineEventHandler(async (event) => {
       name: tables.workflows.name,
       description: tables.workflows.description,
       version: tables.workflows.version,
+      isTemplate: tables.workflows.isPublished,
       updatedAt: tables.workflows.updatedAt,
     })
     .from(tables.workflows)

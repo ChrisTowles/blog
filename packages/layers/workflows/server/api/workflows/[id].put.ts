@@ -45,7 +45,10 @@ const saveSchema = z.object({
 export default defineEventHandler(async (event) => {
   const { id } = await getValidatedRouterParams(event, z.object({ id: z.string() }).parse);
   const { nodes, edges, viewport } = await readValidatedBody(event, saveSchema.parse);
-  await requireWorkflowOwner(event, id);
+  const workflow = await requireWorkflowOwner(event, id);
+  if (workflow.isPublished) {
+    throw createError({ statusCode: 403, message: 'Cannot edit a template workflow' });
+  }
   const db = useDrizzle();
 
   await db.transaction(async (tx) => {

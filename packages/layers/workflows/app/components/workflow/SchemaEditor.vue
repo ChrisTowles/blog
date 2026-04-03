@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SchemaField } from '~~/shared/workflow-types';
+import type { SchemaField } from '../../../shared/workflow-types';
 
 const props = defineProps<{
   schema: Record<string, unknown>;

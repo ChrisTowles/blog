@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { WorkflowNodeType } from '~~/shared/workflow-types';
-import { NODE_TYPE_DEFAULTS } from '~~/shared/workflow-types';
+import type { WorkflowNodeType } from '../../../shared/workflow-types';
+import { NODE_TYPE_DEFAULTS } from '../../../shared/workflow-types';
 
 const nodeTypes: { type: WorkflowNodeType; label: string; description: string }[] = [
   { type: 'prompt', label: 'Prompt', description: 'Freeform LLM call → structured output' },

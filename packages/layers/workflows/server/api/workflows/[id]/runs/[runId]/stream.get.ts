@@ -1,6 +1,6 @@
 import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
-import type { WorkflowSSEEvent } from '~~/shared/workflow-types';
+import type { WorkflowSSEEvent } from '../../../../../../shared/workflow-types';
 
 defineRouteMeta({
   openAPI: { description: 'SSE stream for live workflow execution status', tags: ['workflows'] },

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Node } from '@vue-flow/core';
-import type { WorkflowNodeType } from '~~/shared/workflow-types';
-import { NODE_TYPE_DEFAULTS } from '~~/shared/workflow-types';
+import type { WorkflowNodeType } from '../../../shared/workflow-types';
+import { NODE_TYPE_DEFAULTS } from '../../../shared/workflow-types';
 
 const props = defineProps<{
   node: Node | null;
