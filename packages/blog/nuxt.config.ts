@@ -11,7 +11,7 @@ dotenv.config({
 });
 
 export default defineNuxtConfig({
-  extends: ['../layers/workflows'],
+  extends: ['../layers/workflows', '../layers/reading'],
 
   modules: [
     '@nuxt/image',
@@ -51,7 +51,7 @@ export default defineNuxtConfig({
   devServer: {
     port: parseInt(process.env.UI_PORT!),
   },
-  css: ['~/assets/css/main.css', '~/assets/css/reading-theme.css'],
+  css: ['~/assets/css/main.css'],
 
   colorMode: {
     preference: 'dark', // default value of $colorMode.preference
@@ -90,14 +90,6 @@ export default defineNuxtConfig({
     // Loan pages don't need SSR (authenticated feature)
     '/loan': { ssr: false },
     '/loan/**': { ssr: false },
-    // Reading app - landing is SSR for SEO, interactive pages are CSR
-    '/reading/demo': { ssr: false },
-    '/reading/stories/**': { ssr: false },
-    '/reading/practice': { ssr: false },
-    '/reading/curriculum': { ssr: false },
-    '/reading/onboarding': { ssr: false },
-    '/reading/dashboard': { ssr: false },
-    '/reading/child/**': { ssr: false },
   },
 
   future: {

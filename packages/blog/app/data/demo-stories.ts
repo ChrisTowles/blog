@@ -1,4 +1,4 @@
-import type { StoryContent } from '~~/shared/reading-types';
+import type { StoryContent } from '../../../layers/reading/shared/reading-types';
 
 interface DemoStory {
   id: string;

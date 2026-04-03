@@ -242,6 +242,42 @@ importers:
         specifier: ^3.2.1
         version: 3.2.2(typescript@5.9.3)
 
+  packages/layers/reading:
+    devDependencies:
+      '@google-cloud/storage':
+        specifier: ^7.19.0
+        version: 7.19.0
+      drizzle-orm:
+        specifier: ^0.44.7
+        version: 0.44.7(@opentelemetry/api@1.9.0)(better-sqlite3@12.5.0)(pg@8.16.3)(postgres@3.4.8)
+      ts-fsrs:
+        specifier: ^5.2.3
+        version: 5.2.3
+      zod:
+        specifier: ^4.3.4
+        version: 4.3.5
+
+  packages/layers/workflows:
+    devDependencies:
+      '@vue-flow/background':
+        specifier: ^1.3.2
+        version: 1.3.2(@vue-flow/core@1.48.2(vue@3.5.26(typescript@5.9.3)))(vue@3.5.26(typescript@5.9.3))
+      '@vue-flow/controls':
+        specifier: ^1.1.3
+        version: 1.1.3(@vue-flow/core@1.48.2(vue@3.5.26(typescript@5.9.3)))(vue@3.5.26(typescript@5.9.3))
+      '@vue-flow/core':
+        specifier: ^1.48.2
+        version: 1.48.2(vue@3.5.26(typescript@5.9.3))
+      '@vue-flow/minimap':
+        specifier: ^1.5.4
+        version: 1.5.4(@vue-flow/core@1.48.2(vue@3.5.26(typescript@5.9.3)))(vue@3.5.26(typescript@5.9.3))
+      '@vueuse/core':
+        specifier: ^14.1.0
+        version: 14.2.1(vue@3.5.26(typescript@5.9.3))
+      drizzle-orm:
+        specifier: ^0.44.7
+        version: 0.44.7(@opentelemetry/api@1.9.0)(better-sqlite3@12.5.0)(pg@8.16.3)(postgres@3.4.8)
+
   packages/slides:
     dependencies:
       '@slidev/cli':
@@ -12686,7 +12722,7 @@ snapshots:
       '@typescript/ata': 0.9.8(typescript@5.9.3)
       '@unhead/vue': 2.1.1(vue@3.5.26(typescript@5.9.3))
       '@unocss/reset': 66.5.12
-      '@vueuse/core': 14.1.0(vue@3.5.26(typescript@5.9.3))
+      '@vueuse/core': 14.2.1(vue@3.5.26(typescript@5.9.3))
       '@vueuse/math': 14.1.0(vue@3.5.26(typescript@5.9.3))
       '@vueuse/motion': 3.0.3(magicast@0.5.1)(vue@3.5.26(typescript@5.9.3))
       ansis: 4.2.0
