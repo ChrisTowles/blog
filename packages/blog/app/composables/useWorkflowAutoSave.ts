@@ -1,0 +1,34 @@
+import { useDebounceFn } from '@vueuse/core';
+import type { Node, Edge } from '@vue-flow/core';
+import type { Ref } from 'vue';
+
+export function useWorkflowAutoSave(
+  workflowId: string,
+  nodes: Ref<Node[]>,
+  edges: Ref<Edge[]>,
+  viewport: Ref<{ x: number; y: number; zoom: number }>,
+) {
+  const saveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle');
+
+  const save = useDebounceFn(async () => {
+    saveStatus.value = 'saving';
+    try {
+      await $fetch(`/api/workflows/${workflowId}`, {
+        method: 'PUT',
+        body: {
+          nodes: nodes.value,
+          edges: edges.value,
+          viewport: viewport.value,
+        },
+      });
+      saveStatus.value = 'saved';
+      setTimeout(() => {
+        saveStatus.value = 'idle';
+      }, 2000);
+    } catch {
+      saveStatus.value = 'error';
+    }
+  }, 1000);
+
+  return { save, saveStatus };
+}

@@ -22,6 +22,7 @@ interface WorkflowResponse {
 }
 
 const route = useRoute();
+const router = useRouter();
 const workflowId = route.params.id as string;
 
 const { data: workflow } = await useFetch<WorkflowResponse>(`/api/workflows/${workflowId}`);
@@ -36,11 +37,42 @@ const nodes = ref<Node[]>(workflow.value.nodes ?? []);
 const edges = ref<Edge[]>(workflow.value.edges ?? []);
 
 const config = useRuntimeConfig();
-const { setViewport, project, addNodes } = useVueFlow();
+const { setViewport, project, addNodes, onNodeClick, getViewport } = useVueFlow();
+
+const selectedNode = ref<Node | null>(null);
+const viewport = ref<{ x: number; y: number; zoom: number }>({ x: 0, y: 0, zoom: 1 });
+
+const { save, saveStatus } = useWorkflowAutoSave(workflowId, nodes, edges, viewport);
+
+watch([nodes, edges], () => save(), { deep: true });
+
+onNodeClick(({ node }) => {
+  selectedNode.value = node;
+  router.replace({ query: { ...route.query, node: node.id } });
+});
+
+function onViewportChange({ flowTransform }: { event: unknown; flowTransform: ViewportTransform }) {
+  viewport.value = flowTransform;
+  save();
+}
+
+function onNodeUpdated(updatedNode: Node) {
+  const idx = nodes.value.findIndex((n) => n.id === updatedNode.id);
+  if (idx !== -1) {
+    nodes.value[idx] = updatedNode;
+  }
+  if (selectedNode.value?.id === updatedNode.id) {
+    selectedNode.value = updatedNode;
+  }
+}
 
 onMounted(() => {
   if (workflow.value?.viewport) {
     setViewport(workflow.value.viewport);
+  }
+  const nodeId = route.query.node as string | undefined;
+  if (nodeId) {
+    selectedNode.value = nodes.value.find((n) => n.id === nodeId) ?? null;
   }
 });
 
@@ -103,6 +135,7 @@ const nodeTypes: NodeTypesObject = {
         :default-edge-options="{ type: 'smoothstep', animated: true }"
         fit-view-on-init
         class="h-full"
+        @move-end="onViewportChange"
       >
         <Background />
         <Controls />
@@ -110,11 +143,39 @@ const nodeTypes: NodeTypesObject = {
       </VueFlow>
     </div>
 
-    <!-- Right panel placeholder (WorkflowNodeEditor added in Task 10) -->
+    <!-- Right panel: node editor -->
     <div
       class="w-96 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-y-auto"
     >
-      <p class="p-4 text-gray-400 text-sm">Select a node to edit</p>
+      <!-- Save status -->
+      <div
+        class="px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between"
+      >
+        <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Node Editor</span>
+        <span
+          class="text-xs"
+          :class="
+            saveStatus === 'saving'
+              ? 'text-yellow-500'
+              : saveStatus === 'saved'
+                ? 'text-green-500'
+                : saveStatus === 'error'
+                  ? 'text-red-500'
+                  : 'text-gray-400'
+          "
+        >
+          {{
+            saveStatus === 'saving'
+              ? 'Saving…'
+              : saveStatus === 'saved'
+                ? 'Saved ✓'
+                : saveStatus === 'error'
+                  ? 'Save failed'
+                  : ''
+          }}
+        </span>
+      </div>
+      <WorkflowNodeEditor :node="selectedNode" @update:node="onNodeUpdated" />
     </div>
   </div>
 </template>
