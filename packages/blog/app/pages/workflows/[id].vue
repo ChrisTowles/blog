@@ -6,6 +6,8 @@ import { MiniMap } from '@vue-flow/minimap';
 import '@vue-flow/core/dist/style.css';
 import '@vue-flow/core/dist/theme-default.css';
 import type { Node, Edge, NodeTypesObject, ViewportTransform } from '@vue-flow/core';
+import type { WorkflowNodeType } from '~~/shared/workflow-types';
+import { NODE_TYPE_DEFAULTS } from '~~/shared/workflow-types';
 
 definePageMeta({ middleware: 'auth' });
 
@@ -33,13 +35,48 @@ useSeoMeta({ title: workflow.value.name });
 const nodes = ref<Node[]>(workflow.value.nodes ?? []);
 const edges = ref<Edge[]>(workflow.value.edges ?? []);
 
-const { setViewport } = useVueFlow();
+const { setViewport, project, addNodes } = useVueFlow();
 
 onMounted(() => {
   if (workflow.value?.viewport) {
     setViewport(workflow.value.viewport);
   }
 });
+
+function onDrop(event: DragEvent) {
+  event.preventDefault();
+  const type = event.dataTransfer?.getData('application/workflow-node') as WorkflowNodeType;
+  if (!type) return;
+
+  const canvasEl = (event.target as HTMLElement).closest('.vue-flow');
+  const rect = canvasEl?.getBoundingClientRect();
+  if (!rect) return;
+
+  const position = project({
+    x: event.clientX - rect.left,
+    y: event.clientY - rect.top,
+  });
+
+  const defaults = NODE_TYPE_DEFAULTS[type];
+  const nodeId = `node_${Date.now()}`;
+
+  addNodes([
+    {
+      id: nodeId,
+      type,
+      position,
+      data: {
+        label: `${type.charAt(0).toUpperCase() + type.slice(1)} Node`,
+        prompt: '',
+        model: 'claude-sonnet-4-20250514',
+        temperature: defaults.temperature,
+        maxTokens: defaults.maxTokens,
+        outputSchema: { type: 'object', properties: {}, required: [] },
+        inputMapping: {},
+      },
+    },
+  ]);
+}
 
 const nodeTypes: NodeTypesObject = {
   prompt: resolveComponent('WorkflowPromptNode') as NodeTypesObject[string],
@@ -51,15 +88,11 @@ const nodeTypes: NodeTypesObject = {
 
 <template>
   <div class="flex h-screen overflow-hidden">
-    <!-- Left sidebar placeholder (WorkflowSidebar added in Task 9) -->
-    <div
-      class="w-56 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex items-center justify-center"
-    >
-      <p class="text-xs text-gray-400">Node palette (Task 9)</p>
-    </div>
+    <!-- Left sidebar: node palette -->
+    <WorkflowSidebar />
 
     <!-- Center: VueFlow canvas -->
-    <div class="flex-1 relative">
+    <div class="flex-1 relative" @dragover.prevent @drop="onDrop">
       <VueFlow
         v-model:nodes="nodes"
         v-model:edges="edges"
