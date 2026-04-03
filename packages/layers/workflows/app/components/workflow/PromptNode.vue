@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Handle, Position } from '@vue-flow/core';
 import type { NodeProps } from '@vue-flow/core';
-import type { NodeRunStatus, WorkflowNodeType } from '~~/shared/workflow-types';
-import { NODE_TYPE_DEFAULTS } from '~~/shared/workflow-types';
+import type { NodeRunStatus, WorkflowNodeType } from '../../../shared/workflow-types';
+import { NODE_TYPE_DEFAULTS } from '../../../shared/workflow-types';
 
 interface WorkflowNodeData {
   label: string;
@@ -38,6 +38,12 @@ const statusClasses = computed(() => {
   if (s === 'completed') return 'ring-2 ring-green-400 ring-offset-1';
   if (s === 'failed') return 'ring-2 ring-red-400 ring-offset-1';
   return '';
+});
+
+const outputPreview = computed(() => {
+  if (!runStatus.value?.output) return '';
+  const str = JSON.stringify(runStatus.value.output);
+  return str.length > 120 ? str.slice(0, 120) + '…' : str;
 });
 
 const accentColorClass = computed(() => {
@@ -83,13 +89,27 @@ const accentColorClass = computed(() => {
       </div>
     </div>
 
-    <div
-      v-if="runStatus?.status === 'completed'"
-      class="px-3 pb-2 text-xs text-gray-400 flex gap-2"
-    >
-      <span>{{ runStatus.tokensIn }}+{{ runStatus.tokensOut }} tok</span>
-      <span>{{ runStatus.latencyMs }}ms</span>
+    <!-- Running indicator -->
+    <div v-if="runStatus?.status === 'running'" class="px-3 pb-2 flex items-center gap-1.5">
+      <span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+      <span class="text-xs text-blue-400">Running…</span>
     </div>
+
+    <!-- Completed: metrics + output preview -->
+    <div v-if="runStatus?.status === 'completed'" class="px-3 pb-2 space-y-1">
+      <div class="text-xs text-gray-400 flex gap-2">
+        <span>{{ runStatus.tokensIn }}+{{ runStatus.tokensOut }} tok</span>
+        <span>{{ (runStatus.latencyMs ?? 0) / 1000 }}s</span>
+      </div>
+      <div
+        v-if="outputPreview"
+        class="text-xs bg-green-900/20 text-green-300 rounded px-1.5 py-1 line-clamp-3 break-all"
+      >
+        {{ outputPreview }}
+      </div>
+    </div>
+
+    <!-- Failed -->
     <div v-if="runStatus?.status === 'failed'" class="px-3 pb-2 text-xs text-red-400 truncate">
       {{ runStatus.error }}
     </div>

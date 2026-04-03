@@ -6,8 +6,8 @@ import { MiniMap } from '@vue-flow/minimap';
 import '@vue-flow/core/dist/style.css';
 import '@vue-flow/core/dist/theme-default.css';
 import type { Node, Edge, NodeTypesObject, ViewportTransform } from '@vue-flow/core';
-import type { WorkflowNodeType } from '~~/shared/workflow-types';
-import { NODE_TYPE_DEFAULTS } from '~~/shared/workflow-types';
+import type { WorkflowNodeType } from '../../../shared/workflow-types';
+import { NODE_TYPE_DEFAULTS } from '../../../shared/workflow-types';
 
 definePageMeta({ middleware: 'auth' });
 
@@ -37,12 +37,28 @@ const nodes = ref<Node[]>(workflow.value.nodes ?? []);
 const edges = ref<Edge[]>(workflow.value.edges ?? []);
 
 const config = useRuntimeConfig();
-const { setViewport, project, addNodes, onNodeClick, getViewport } = useVueFlow();
+const { setViewport, project, addNodes, onNodeClick } = useVueFlow();
 
-const selectedNode = ref<Node | null>(null);
+const selectedNode = computed(() => {
+  const nodeId = route.query.node as string | undefined;
+  return nodeId ? (nodes.value.find((n) => n.id === nodeId) ?? null) : null;
+});
 const viewport = ref<{ x: number; y: number; zoom: number }>(
   workflow.value?.viewport ?? { x: 0, y: 0, zoom: 1 },
 );
+
+// URL-driven active tab (edit | run)
+const activeTab = computed({
+  get: () => (route.query.tab === 'run' ? 'run' : 'edit'),
+  set: (val: string | number) => {
+    router.replace({ query: { ...route.query, tab: val === 'run' ? 'run' : undefined } });
+  },
+});
+
+const tabItems = [
+  { label: 'Edit', slot: 'edit', value: 'edit' },
+  { label: 'Run', slot: 'run', value: 'run' },
+];
 
 const { startRun, runStatus, isRunning, finalOutput, runError } = useWorkflowRun(workflowId);
 const { save, saveStatus } = useWorkflowAutoSave(workflowId, nodes, edges, viewport);
@@ -55,9 +71,12 @@ watch(
   { deep: true },
 );
 
+function selectNode(nodeId: string | null) {
+  router.replace({ query: { ...route.query, node: nodeId || undefined } });
+}
+
 onNodeClick(({ node }) => {
-  selectedNode.value = node;
-  router.replace({ query: { ...route.query, node: node.id } });
+  selectNode(node.id);
 });
 
 function onViewportChange({ flowTransform }: { event: unknown; flowTransform: ViewportTransform }) {
@@ -70,29 +89,34 @@ function onNodeUpdated(updatedNode: Node) {
   if (idx !== -1) {
     nodes.value[idx] = updatedNode;
   }
-  if (selectedNode.value?.id === updatedNode.id) {
-    selectedNode.value = updatedNode;
-  }
 }
 
+// Update __runStatus on existing node objects in-place to avoid VueFlow re-render
 watch(
   runStatus,
   (status) => {
-    nodes.value = nodes.value.map((n) => ({
-      ...n,
-      data: { ...n.data, __runStatus: status.get(n.id) },
-    }));
+    for (const node of nodes.value) {
+      const nodeStatus = status.get(node.id);
+      if (nodeStatus) {
+        node.data = { ...node.data, __runStatus: nodeStatus };
+      } else if (node.data.__runStatus) {
+        // Clear stale status
+        const { __runStatus: _, ...rest } = node.data;
+        node.data = rest;
+      }
+    }
   },
   { deep: true },
 );
 
+// Auto-switch to Run tab when a run starts
+watch(isRunning, (running) => {
+  if (running) activeTab.value = 'run';
+});
+
 onMounted(() => {
   if (workflow.value?.viewport) {
     setViewport(workflow.value.viewport);
-  }
-  const nodeId = route.query.node as string | undefined;
-  if (nodeId) {
-    selectedNode.value = nodes.value.find((n) => n.id === nodeId) ?? null;
   }
 });
 
@@ -166,13 +190,7 @@ const nodeTypes: NodeTypesObject = {
     <div
       class="w-96 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex flex-col"
     >
-      <UTabs
-        :items="[
-          { label: 'Edit', slot: 'edit' },
-          { label: 'Run', slot: 'run' },
-        ]"
-        class="flex-1 min-h-0"
-      >
+      <UTabs v-model="activeTab" :items="tabItems" class="flex-1 min-h-0">
         <template #edit>
           <!-- Save status -->
           <div
@@ -211,7 +229,14 @@ const nodeTypes: NodeTypesObject = {
             :final-output="finalOutput"
             :run-error="runError"
             :run-status="runStatus"
+            :nodes="nodes"
             @run="startRun()"
+            @select-node="
+              (id: string) => {
+                selectNode(id);
+                activeTab = 'edit';
+              }
+            "
           />
         </template>
       </UTabs>
