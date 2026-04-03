@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
     .returning();
 
   if (!workflow) {
-    throw createError({ statusCode: 500, statusMessage: 'Failed to create workflow' });
+    throw createError({ statusCode: 500, message: 'Failed to create workflow' });
   }
 
   return { id: workflow.id };
