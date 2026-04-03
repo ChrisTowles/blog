@@ -6,25 +6,12 @@ defineRouteMeta({
 });
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event);
-  if (!session.user) {
-    throw createError({ statusCode: 401, message: 'Unauthorized' });
-  }
-
   const { id, runId } = await getValidatedRouterParams(
     event,
     z.object({ id: z.string(), runId: z.string() }).parse,
   );
+  await requireWorkflowOwner(event, id);
   const db = useDrizzle();
-
-  const [workflow] = await db
-    .select({ id: tables.workflows.id })
-    .from(tables.workflows)
-    .where(and(eq(tables.workflows.id, id), eq(tables.workflows.ownerId, session.user.id)));
-
-  if (!workflow) {
-    throw createError({ statusCode: 404, message: 'Workflow not found' });
-  }
 
   const [run] = await db
     .select()

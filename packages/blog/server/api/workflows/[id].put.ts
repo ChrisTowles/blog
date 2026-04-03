@@ -1,4 +1,4 @@
-import { and, eq, sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 defineRouteMeta({
@@ -43,23 +43,10 @@ const saveSchema = z.object({
 });
 
 export default defineEventHandler(async (event) => {
-  const session = await getUserSession(event);
-  if (!session.user) {
-    throw createError({ statusCode: 401, message: 'Unauthorized' });
-  }
-
   const { id } = await getValidatedRouterParams(event, z.object({ id: z.string() }).parse);
   const { nodes, edges, viewport } = await readValidatedBody(event, saveSchema.parse);
+  await requireWorkflowOwner(event, id);
   const db = useDrizzle();
-
-  const [workflow] = await db
-    .select({ id: tables.workflows.id })
-    .from(tables.workflows)
-    .where(and(eq(tables.workflows.id, id), eq(tables.workflows.ownerId, session.user.id)));
-
-  if (!workflow) {
-    throw createError({ statusCode: 404, message: 'Workflow not found' });
-  }
 
   await db.transaction(async (tx) => {
     // 1. Update viewport (only if provided), updatedAt, and bump version in one statement
