@@ -35,6 +35,7 @@ useSeoMeta({ title: workflow.value.name });
 const nodes = ref<Node[]>(workflow.value.nodes ?? []);
 const edges = ref<Edge[]>(workflow.value.edges ?? []);
 
+const config = useRuntimeConfig();
 const { setViewport, project, addNodes } = useVueFlow();
 
 onMounted(() => {
@@ -68,7 +69,7 @@ function onDrop(event: DragEvent) {
       data: {
         label: `${type.charAt(0).toUpperCase() + type.slice(1)} Node`,
         prompt: '',
-        model: 'claude-sonnet-4-20250514',
+        model: config.public.model as string,
         temperature: defaults.temperature,
         maxTokens: defaults.maxTokens,
         outputSchema: { type: 'object', properties: {}, required: [] },
@@ -78,11 +79,13 @@ function onDrop(event: DragEvent) {
   ]);
 }
 
+// All types use WorkflowPromptNode for now; distinct components added in later tasks.
+const promptNodeComponent = resolveComponent('WorkflowPromptNode') as NodeTypesObject[string];
 const nodeTypes: NodeTypesObject = {
-  prompt: resolveComponent('WorkflowPromptNode') as NodeTypesObject[string],
-  transform: resolveComponent('WorkflowPromptNode') as NodeTypesObject[string],
-  classifier: resolveComponent('WorkflowPromptNode') as NodeTypesObject[string],
-  validator: resolveComponent('WorkflowPromptNode') as NodeTypesObject[string],
+  prompt: promptNodeComponent,
+  transform: promptNodeComponent,
+  classifier: promptNodeComponent,
+  validator: promptNodeComponent,
 };
 </script>
 
