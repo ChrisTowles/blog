@@ -25,6 +25,9 @@ export function getAnthropicClient(): Anthropic {
     const result = envSchema.parse(process.env);
     const rawClient = new Anthropic({
       apiKey: result.ANTHROPIC_API_KEY,
+      // happy-dom in Vitest sets window, which triggers the Anthropic browser guard.
+      // This is a server-side client — allow it in test environments.
+      dangerouslyAllowBrowser: !!process.env.VITEST,
     });
 
     // Wrap with Braintrust observability

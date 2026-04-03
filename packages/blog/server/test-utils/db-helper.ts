@@ -32,6 +32,7 @@ export async function cleanupDatabase() {
   await db.delete(tables.stories);
   await db.delete(tables.childProfiles);
   await db.delete(tables.phonicsUnits);
+  await db.delete(tables.workflows);
   await db.delete(tables.users);
 }
 
@@ -202,4 +203,42 @@ export async function createTestSrsCard(
     })
     .returning();
   return card!;
+}
+
+export async function createTestWorkflow(
+  userId: string,
+  overrides: Partial<{ name: string; description: string }> = {},
+) {
+  const db = useDrizzle();
+  const [workflow] = await db
+    .insert(tables.workflows)
+    .values({
+      name: overrides.name ?? 'Test Workflow',
+      description: overrides.description,
+      ownerId: userId,
+    })
+    .returning();
+  return workflow!;
+}
+
+export async function createTestWorkflowNode(
+  workflowId: string,
+  nodeId: string,
+  overrides: Partial<{ label: string; type: string }> = {},
+) {
+  const db = useDrizzle();
+  const [node] = await db
+    .insert(tables.workflowNodes)
+    .values({
+      workflowId,
+      nodeId,
+      type: overrides.type ?? 'prompt',
+      label: overrides.label ?? 'Test Node',
+      prompt: 'What is {{input.query}}?',
+      outputSchema:
+        '{"type":"object","properties":{"answer":{"type":"string"}},"required":["answer"]}',
+      inputMapping: '{}',
+    })
+    .returning();
+  return node!;
 }
