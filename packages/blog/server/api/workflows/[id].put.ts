@@ -62,16 +62,15 @@ export default defineEventHandler(async (event) => {
   }
 
   await db.transaction(async (tx) => {
-    // 1. Update viewport, updatedAt, and bump version atomically
-    await tx
-      .update(tables.workflows)
-      .set({
-        viewport: viewport ? JSON.stringify(viewport) : null,
-        updatedAt: new Date().toISOString(),
-      })
-      .where(eq(tables.workflows.id, id));
-
-    await tx.execute(sql`UPDATE workflows SET version = version + 1 WHERE id = ${id}`);
+    // 1. Update viewport (only if provided), updatedAt, and bump version in one statement
+    const updates: Record<string, unknown> = {
+      updatedAt: new Date().toISOString(),
+      version: sql`version + 1`,
+    };
+    if (viewport !== undefined) {
+      updates.viewport = JSON.stringify(viewport);
+    }
+    await tx.update(tables.workflows).set(updates).where(eq(tables.workflows.id, id));
 
     // 2. Delete existing nodes and edges
     await tx.delete(tables.workflowNodes).where(eq(tables.workflowNodes.workflowId, id));
