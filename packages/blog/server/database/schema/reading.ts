@@ -12,7 +12,11 @@ import {
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { users } from './blog';
-import type { StoryContent, ReadingMiscue, AchievementType } from '~~/shared/reading-types';
+import type {
+  StoryContent,
+  ReadingMiscue,
+  AchievementType,
+} from '../../../../layers/reading/shared/reading-types';
 
 // --- Reading App Tables ---
 
