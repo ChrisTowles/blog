@@ -63,17 +63,27 @@ export default defineEventHandler(async (event) => {
           db.select().from(tables.workflowEdges).where(eq(tables.workflowEdges.workflowId, id)),
         ]);
 
-        const engineNodes = dbNodes.map((n) => ({
-          id: n.nodeId,
-          type: n.type,
-          label: n.label,
-          prompt: n.prompt,
-          model: n.model,
-          temperature: n.temperature,
-          maxTokens: n.maxTokens,
-          outputSchema: JSON.parse(n.outputSchema),
-          inputMapping: JSON.parse(n.inputMapping),
-        }));
+        const engineNodes = dbNodes.map((n) => {
+          let outputSchema: Record<string, unknown> = { type: 'object', properties: {} };
+          let inputMapping: Record<string, string> = {};
+          try {
+            outputSchema = JSON.parse(n.outputSchema);
+          } catch {}
+          try {
+            inputMapping = JSON.parse(n.inputMapping);
+          } catch {}
+          return {
+            id: n.nodeId,
+            type: n.type,
+            label: n.label,
+            prompt: n.prompt,
+            model: n.model,
+            temperature: n.temperature,
+            maxTokens: n.maxTokens,
+            outputSchema,
+            inputMapping,
+          };
+        });
 
         const engineEdges = dbEdges.map((e) => ({
           source: e.sourceNode,
@@ -92,6 +102,7 @@ export default defineEventHandler(async (event) => {
           ? JSON.parse(run.inputData)
           : {};
 
+        let runFailed = false;
         for (const node of sortedNodes) {
           sendEvent(controller, {
             event: 'node:start',
@@ -122,29 +133,36 @@ export default defineEventHandler(async (event) => {
               .where(eq(tables.workflowRuns.id, runId));
 
             sendEvent(controller, { event: 'run:error', data: { error } });
-            return;
+            runFailed = true;
+            break;
           }
         }
 
-        // Aggregate terminal node outputs
-        const terminalNodes = findTerminalNodes(engineNodes, engineEdges);
-        const finalOutput: Record<string, Record<string, unknown>> = {};
-        for (const node of terminalNodes) {
-          finalOutput[node.id] = nodeOutputs.get(node.id) ?? {};
+        if (!runFailed) {
+          // Aggregate terminal node outputs
+          const terminalNodes = findTerminalNodes(engineNodes, engineEdges);
+          const finalOutput: Record<string, Record<string, unknown>> = {};
+          for (const node of terminalNodes) {
+            finalOutput[node.id] = nodeOutputs.get(node.id) ?? {};
+          }
+
+          await db
+            .update(tables.workflowRuns)
+            .set({
+              status: 'completed',
+              outputData: JSON.stringify(finalOutput),
+              completedAt: new Date().toISOString(),
+            })
+            .where(eq(tables.workflowRuns.id, runId));
+
+          sendEvent(controller, { event: 'run:complete', data: { output: finalOutput } });
         }
-
-        await db
-          .update(tables.workflowRuns)
-          .set({
-            status: 'completed',
-            outputData: JSON.stringify(finalOutput),
-            completedAt: new Date().toISOString(),
-          })
-          .where(eq(tables.workflowRuns.id, runId));
-
-        sendEvent(controller, { event: 'run:complete', data: { output: finalOutput } });
       } catch (err) {
         const error = err instanceof Error ? err.message : 'Unknown error';
+        await db
+          .update(tables.workflowRuns)
+          .set({ status: 'failed', error, completedAt: new Date().toISOString() })
+          .where(eq(tables.workflowRuns.id, runId));
         sendEvent(controller, { event: 'run:error', data: { error } });
       } finally {
         clearInterval(keepAlive);
