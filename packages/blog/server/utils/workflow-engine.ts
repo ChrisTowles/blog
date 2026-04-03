@@ -117,9 +117,8 @@ export async function executeNode(
 
   const resolvedPrompt = resolveTemplate(node.prompt, nodeOutputs, workflowInput);
   const startedAt = new Date().toISOString();
-  const t0 = Date.now();
 
-  // Write pending row
+  // Write pending row — if this throws, there's nothing to update
   const [execRow] = await db
     .insert(tables.nodeExecutions)
     .values({
@@ -131,6 +130,9 @@ export async function executeNode(
     })
     .returning();
 
+  if (!execRow) throw new Error('Failed to insert node execution row');
+
+  const t0 = Date.now();
   try {
     const response = await client.messages.create({
       model: node.model,
@@ -151,10 +153,12 @@ export async function executeNode(
     });
 
     const latencyMs = Date.now() - t0;
-    const toolBlock = response.content.find((c) => c.type === 'tool_use');
+    const toolBlock = response.content.find(
+      (c) => c.type === 'tool_use' && c.name === 'structured_output',
+    );
 
     if (!toolBlock || toolBlock.type !== 'tool_use') {
-      throw new Error('No tool_use block in response');
+      throw new Error('No structured_output tool_use block in response');
     }
 
     const parsedOutput = toolBlock.input as Record<string, unknown>;
@@ -172,7 +176,7 @@ export async function executeNode(
         latencyMs,
         completedAt: new Date().toISOString(),
       })
-      .where(eq(tables.nodeExecutions.id, execRow!.id));
+      .where(eq(tables.nodeExecutions.id, execRow.id));
 
     return {
       parsedOutput,
@@ -186,7 +190,7 @@ export async function executeNode(
     await db
       .update(tables.nodeExecutions)
       .set({ status: 'failed', error, completedAt: new Date().toISOString() })
-      .where(eq(tables.nodeExecutions.id, execRow!.id));
+      .where(eq(tables.nodeExecutions.id, execRow.id));
     throw err;
   }
 }
