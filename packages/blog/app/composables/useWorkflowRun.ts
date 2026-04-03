@@ -13,10 +13,17 @@ export function useWorkflowRun(workflowId: string) {
     runError.value = null;
     isRunning.value = true;
 
-    const { runId } = await $fetch<{ runId: string }>(`/api/workflows/${workflowId}/run`, {
-      method: 'POST',
-      body: { input },
-    });
+    let runId: string;
+    try {
+      ({ runId } = await $fetch<{ runId: string }>(`/api/workflows/${workflowId}/run`, {
+        method: 'POST',
+        body: { input },
+      }));
+    } catch (err) {
+      runError.value = err instanceof Error ? err.message : 'Failed to start run';
+      isRunning.value = false;
+      return;
+    }
 
     currentRunId.value = runId;
 

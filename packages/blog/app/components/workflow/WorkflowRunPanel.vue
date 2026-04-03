@@ -14,7 +14,7 @@ const emit = defineEmits<{
   (e: 'run'): void;
 }>();
 
-const { data: runs, refresh } = await useFetch(`/api/workflows/${props.workflowId}/runs`);
+const { data: runs, refresh } = useFetch(`/api/workflows/${props.workflowId}/runs`);
 
 watch(
   () => props.isRunning,
