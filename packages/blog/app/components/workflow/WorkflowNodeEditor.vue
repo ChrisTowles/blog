@@ -15,6 +15,13 @@ const MODELS = [
   { label: 'Claude Opus 4', value: 'claude-opus-4-20250514' },
 ];
 
+const NODE_ICONS: Record<string, string> = {
+  prompt: '⚡',
+  transform: '🔄',
+  classifier: '🏷️',
+  validator: '✅',
+};
+
 function updateData(key: string, value: unknown) {
   if (!props.node) return;
   emit('update:node', {
@@ -27,15 +34,7 @@ function updateData(key: string, value: unknown) {
 <template>
   <div v-if="node" class="p-4 space-y-4">
     <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
-      <span class="text-lg">{{
-        node.type === 'prompt'
-          ? '⚡'
-          : node.type === 'transform'
-            ? '🔄'
-            : node.type === 'classifier'
-              ? '🏷️'
-              : '✅'
-      }}</span>
+      <span class="text-lg">{{ NODE_ICONS[node.type ?? ''] ?? '⚡' }}</span>
       <h3 class="font-semibold text-gray-800 dark:text-gray-200 capitalize">
         {{ node.type }} Node
       </h3>

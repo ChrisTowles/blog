@@ -1,4 +1,4 @@
-import { useDebounceFn } from '@vueuse/core';
+import { useDebounceFn, useTimeoutFn } from '@vueuse/core';
 import type { Node, Edge } from '@vue-flow/core';
 import type { Ref } from 'vue';
 
@@ -9,6 +9,14 @@ export function useWorkflowAutoSave(
   viewport: Ref<{ x: number; y: number; zoom: number }>,
 ) {
   const saveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle');
+
+  const { start: resetToIdle } = useTimeoutFn(
+    () => {
+      saveStatus.value = 'idle';
+    },
+    2000,
+    { immediate: false },
+  );
 
   const save = useDebounceFn(async () => {
     saveStatus.value = 'saving';
@@ -22,9 +30,7 @@ export function useWorkflowAutoSave(
         },
       });
       saveStatus.value = 'saved';
-      setTimeout(() => {
-        saveStatus.value = 'idle';
-      }, 2000);
+      resetToIdle();
     } catch {
       saveStatus.value = 'error';
     }
