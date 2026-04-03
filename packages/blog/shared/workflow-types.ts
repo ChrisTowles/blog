@@ -14,7 +14,6 @@ export interface SchemaField {
   description: string;
   required: boolean;
   enumValues?: string[]; // for type === 'string' with fixed options
-  arrayItemType?: string; // for type === 'array'
 }
 
 // Live status for a single node during a run

@@ -44,9 +44,16 @@ const viewport = ref<{ x: number; y: number; zoom: number }>(
   workflow.value?.viewport ?? { x: 0, y: 0, zoom: 1 },
 );
 
+const { startRun, runStatus, isRunning, finalOutput, runError } = useWorkflowRun(workflowId);
 const { save, saveStatus } = useWorkflowAutoSave(workflowId, nodes, edges, viewport);
 
-watch([nodes, edges], () => save(), { deep: true });
+watch(
+  [nodes, edges],
+  () => {
+    if (!isRunning.value) save();
+  },
+  { deep: true },
+);
 
 onNodeClick(({ node }) => {
   selectedNode.value = node;
@@ -68,9 +75,6 @@ function onNodeUpdated(updatedNode: Node) {
   }
 }
 
-const { startRun, runStatus, isRunning, finalOutput, runError } = useWorkflowRun(workflowId);
-
-// Inject run status into node data so PromptNode can show live status
 watch(
   runStatus,
   (status) => {
@@ -127,7 +131,6 @@ function onDrop(event: DragEvent) {
   ]);
 }
 
-// All types use WorkflowPromptNode for now; distinct components added in later tasks.
 const promptNodeComponent = resolveComponent('WorkflowPromptNode') as NodeTypesObject[string];
 const nodeTypes: NodeTypesObject = {
   prompt: promptNodeComponent,
