@@ -1,3 +1,9 @@
+/**
+ * Shared types for the workflow builder feature.
+ * Used by both client (VueFlow canvas, node editor, SchemaEditor)
+ * and server (SSE stream endpoint, node executor, topo-sort engine).
+ */
+
 // Node type identifiers
 export type WorkflowNodeType = 'prompt' | 'transform' | 'classifier' | 'validator';
 
