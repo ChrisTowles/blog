@@ -12,7 +12,13 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle();
   const rows = await db
-    .select()
+    .select({
+      id: tables.workflows.id,
+      name: tables.workflows.name,
+      description: tables.workflows.description,
+      version: tables.workflows.version,
+      updatedAt: tables.workflows.updatedAt,
+    })
     .from(tables.workflows)
     .where(eq(tables.workflows.ownerId, session.user.id))
     .orderBy(desc(tables.workflows.updatedAt));

@@ -94,6 +94,44 @@ export function findTerminalNodes(nodes: WorkflowNode[], edges: WorkflowEdge[]):
   return nodes.filter((n) => !sourcesWithOutgoing.has(n.id));
 }
 
+/**
+ * Convert a DB workflow_nodes row to an engine-ready WorkflowNode.
+ * Handles corrupt JSON in outputSchema/inputMapping with safe fallbacks.
+ */
+export function dbNodeToEngineNode(n: {
+  nodeId: string;
+  type: string;
+  label: string;
+  prompt: string;
+  model: string;
+  temperature: number;
+  maxTokens: number;
+  outputSchema: string;
+  inputMapping: string;
+}): WorkflowNode {
+  let outputSchema: Record<string, unknown> = { type: 'object', properties: {} };
+  let inputMapping: Record<string, string> = {};
+  try {
+    outputSchema = JSON.parse(n.outputSchema);
+  } catch {}
+  try {
+    inputMapping = JSON.parse(n.inputMapping);
+  } catch {}
+  return {
+    id: n.nodeId,
+    type: n.type,
+    label: n.label,
+    prompt: n.prompt,
+    model: n.model,
+    temperature: n.temperature,
+    maxTokens: n.maxTokens,
+    outputSchema,
+    inputMapping,
+  };
+}
+
+const TOOL_NAME = 'structured_output';
+
 export interface NodeExecutionResult {
   parsedOutput: Record<string, unknown>;
   tokensIn: number;
@@ -140,7 +178,7 @@ export async function executeNode(
       temperature: node.temperature,
       tools: [
         {
-          name: 'structured_output',
+          name: TOOL_NAME,
           description: 'Return the structured response for this prompt.',
           input_schema: node.outputSchema as {
             type: 'object';
@@ -148,14 +186,12 @@ export async function executeNode(
           },
         },
       ],
-      tool_choice: { type: 'tool', name: 'structured_output' },
+      tool_choice: { type: 'tool', name: TOOL_NAME },
       messages: [{ role: 'user', content: resolvedPrompt }],
     });
 
     const latencyMs = Date.now() - t0;
-    const toolBlock = response.content.find(
-      (c) => c.type === 'tool_use' && c.name === 'structured_output',
-    );
+    const toolBlock = response.content.find((c) => c.type === 'tool_use' && c.name === TOOL_NAME);
 
     if (!toolBlock || toolBlock.type !== 'tool_use') {
       throw new Error('No structured_output tool_use block in response');

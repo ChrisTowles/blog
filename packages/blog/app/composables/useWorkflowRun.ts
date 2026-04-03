@@ -6,8 +6,15 @@ export function useWorkflowRun(workflowId: string) {
   const finalOutput = ref<Record<string, Record<string, unknown>> | null>(null);
   const runError = ref<string | null>(null);
   const currentRunId = ref<string | null>(null);
+  const eventSource = ref<EventSource | null>(null);
+
+  function closeEventSource() {
+    eventSource.value?.close();
+    eventSource.value = null;
+  }
 
   async function startRun(input?: Record<string, unknown>) {
+    closeEventSource();
     runStatus.value = new Map();
     finalOutput.value = null;
     runError.value = null;
@@ -28,6 +35,7 @@ export function useWorkflowRun(workflowId: string) {
     currentRunId.value = runId;
 
     const es = new EventSource(`/api/workflows/${workflowId}/runs/${runId}/stream`);
+    eventSource.value = es;
 
     es.addEventListener('node:start', (e) => {
       const { nodeId } = JSON.parse(e.data) as { nodeId: string };
@@ -67,19 +75,22 @@ export function useWorkflowRun(workflowId: string) {
         JSON.parse(e.data) as { output: Record<string, Record<string, unknown>> }
       ).output;
       isRunning.value = false;
-      es.close();
+      closeEventSource();
     });
 
     es.addEventListener('run:error', (e) => {
       runError.value = (JSON.parse(e.data) as { error: string }).error;
       isRunning.value = false;
-      es.close();
+      closeEventSource();
     });
 
     es.onerror = () => {
-      if (!isRunning.value) es.close();
+      isRunning.value = false;
+      closeEventSource();
     };
   }
+
+  onUnmounted(closeEventSource);
 
   return { startRun, runStatus, isRunning, finalOutput, runError, currentRunId };
 }
