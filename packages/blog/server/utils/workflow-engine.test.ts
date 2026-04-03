@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { topologicalSort, resolveTemplate } from './workflow-engine';
+import { topologicalSort, resolveTemplate, findTerminalNodes } from './workflow-engine';
+import type { WorkflowNode, WorkflowEdge } from './workflow-engine';
 
 describe('topologicalSort', () => {
   it('returns single node unchanged', () => {
@@ -85,5 +86,46 @@ describe('resolveTemplate', () => {
     const out = new Map([['n', { data: { nested: true } }]]);
     const result = resolveTemplate('{{n.data}}', out, {});
     expect(result).toBe('{"nested":true}');
+  });
+});
+
+describe('findTerminalNodes', () => {
+  function makeNode(id: string): WorkflowNode {
+    return {
+      id,
+      type: 'prompt',
+      label: id,
+      prompt: '',
+      model: 'm',
+      temperature: 0.7,
+      maxTokens: 1024,
+      outputSchema: {},
+      inputMapping: {},
+    };
+  }
+
+  it('returns all nodes when there are no edges', () => {
+    const nodes = [makeNode('a'), makeNode('b')];
+    expect(findTerminalNodes(nodes, []).map((n) => n.id)).toEqual(['a', 'b']);
+  });
+
+  it('returns only the last node in a chain', () => {
+    const nodes = [makeNode('a'), makeNode('b'), makeNode('c')];
+    const edges: WorkflowEdge[] = [
+      { source: 'a', target: 'b' },
+      { source: 'b', target: 'c' },
+    ];
+    expect(findTerminalNodes(nodes, edges).map((n) => n.id)).toEqual(['c']);
+  });
+
+  it('returns the convergence node in a diamond', () => {
+    const nodes = [makeNode('a'), makeNode('b'), makeNode('c'), makeNode('d')];
+    const edges: WorkflowEdge[] = [
+      { source: 'a', target: 'b' },
+      { source: 'a', target: 'c' },
+      { source: 'b', target: 'd' },
+      { source: 'c', target: 'd' },
+    ];
+    expect(findTerminalNodes(nodes, edges).map((n) => n.id)).toEqual(['d']);
   });
 });

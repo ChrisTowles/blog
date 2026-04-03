@@ -48,8 +48,7 @@ export function topologicalSort<T extends { id: string }>(
 
   while (queue.length > 0) {
     const id = queue.shift()!;
-    const node = nodeById.get(id);
-    if (node) sorted.push(node);
+    sorted.push(nodeById.get(id)!);
 
     for (const neighbor of adjacency.get(id) ?? []) {
       const newDegree = (inDegree.get(neighbor) ?? 0) - 1;
