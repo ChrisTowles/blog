@@ -71,7 +71,19 @@ watch(
 );
 
 function addField() {
-  fields.value.push({ name: '', type: 'string', description: '', required: false });
+  fields.value.push({
+    name: `field${fields.value.length}`,
+    type: 'string',
+    description: '',
+    required: false,
+  });
+}
+
+function parseEnumInput(value: string): string[] {
+  return value
+    .split(',')
+    .map((v) => v.trim())
+    .filter(Boolean);
 }
 
 function removeField(i: number) {
@@ -114,7 +126,7 @@ function onRawBlur() {
     <div v-else class="space-y-2">
       <div
         v-for="(field, i) in fields"
-        :key="i"
+        :key="field.name || i"
         class="rounded border border-gray-200 dark:border-gray-700 p-2 space-y-1.5"
       >
         <div class="flex items-center gap-2">
@@ -138,12 +150,7 @@ function onRawBlur() {
             :value="field.enumValues?.join(', ')"
             placeholder="Enum values (comma-separated)"
             size="xs"
-            @input="
-              field.enumValues = ($event.target as HTMLInputElement).value
-                .split(',')
-                .map((v: string) => v.trim())
-                .filter(Boolean)
-            "
+            @input="field.enumValues = parseEnumInput(($event.target as HTMLInputElement).value)"
           />
         </div>
       </div>
