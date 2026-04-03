@@ -1,3 +1,4 @@
+import { relations } from 'drizzle-orm';
 import { integer, pgTable, real, text, varchar } from 'drizzle-orm/pg-core';
 
 export const workflows = pgTable('workflows', {
@@ -89,3 +90,26 @@ export const nodeExecutions = pgTable('node_executions', {
   startedAt: text(),
   completedAt: text(),
 });
+
+export const workflowsRelations = relations(workflows, ({ many }) => ({
+  nodes: many(workflowNodes),
+  edges: many(workflowEdges),
+  runs: many(workflowRuns),
+}));
+
+export const workflowNodesRelations = relations(workflowNodes, ({ one }) => ({
+  workflow: one(workflows, { fields: [workflowNodes.workflowId], references: [workflows.id] }),
+}));
+
+export const workflowEdgesRelations = relations(workflowEdges, ({ one }) => ({
+  workflow: one(workflows, { fields: [workflowEdges.workflowId], references: [workflows.id] }),
+}));
+
+export const workflowRunsRelations = relations(workflowRuns, ({ one, many }) => ({
+  workflow: one(workflows, { fields: [workflowRuns.workflowId], references: [workflows.id] }),
+  nodeExecutions: many(nodeExecutions),
+}));
+
+export const nodeExecutionsRelations = relations(nodeExecutions, ({ one }) => ({
+  run: one(workflowRuns, { fields: [nodeExecutions.runId], references: [workflowRuns.id] }),
+}));
