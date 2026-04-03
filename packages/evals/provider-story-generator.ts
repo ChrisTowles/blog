@@ -5,9 +5,9 @@
 import {
   PHONICS_SEED,
   SIGHT_WORDS_BY_PHASE,
-} from '../../packages/blog/server/utils/reading/phonics-seed.ts';
-import { generateStory } from '../../packages/blog/server/utils/reading/story-generator.ts';
-import type { PhonicsPhase } from '../../packages/blog/shared/reading-types.ts';
+} from '../layers/reading/server/utils/reading/phonics-seed.ts';
+import { generateStory } from '../layers/reading/server/utils/reading/story-generator.ts';
+import type { PhonicsPhase } from '../layers/reading/shared/reading-types.ts';
 
 interface StoryProviderConfig {
   phase: PhonicsPhase;
