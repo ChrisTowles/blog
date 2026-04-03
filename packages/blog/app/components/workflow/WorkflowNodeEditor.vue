@@ -97,7 +97,5 @@ function updateData(key: string, value: unknown) {
     </UFormGroup>
   </div>
 
-  <div v-else class="p-6 text-center text-gray-400 text-sm">
-    Select a node to edit its configuration
-  </div>
+  <div v-else class="p-6 text-center text-gray-400 text-sm">Select a node to edit</div>
 </template>

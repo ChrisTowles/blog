@@ -40,7 +40,9 @@ const config = useRuntimeConfig();
 const { setViewport, project, addNodes, onNodeClick, getViewport } = useVueFlow();
 
 const selectedNode = ref<Node | null>(null);
-const viewport = ref<{ x: number; y: number; zoom: number }>({ x: 0, y: 0, zoom: 1 });
+const viewport = ref<{ x: number; y: number; zoom: number }>(
+  workflow.value?.viewport ?? { x: 0, y: 0, zoom: 1 },
+);
 
 const { save, saveStatus } = useWorkflowAutoSave(workflowId, nodes, edges, viewport);
 
