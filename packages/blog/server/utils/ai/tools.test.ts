@@ -124,7 +124,7 @@ describe('getToolsByNames', () => {
   it('filters out invalid tool names', () => {
     const tools = getToolsByNames(['getCurrentDateTime', 'invalidTool']);
     expect(tools).toHaveLength(1);
-    expect(tools[0].name).toBe('getCurrentDateTime');
+    expect(tools[0]!.name).toBe('getCurrentDateTime');
   });
 
   it('returns empty array for empty input', () => {

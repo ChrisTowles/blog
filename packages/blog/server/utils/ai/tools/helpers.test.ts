@@ -11,25 +11,25 @@ describe('tool helpers', () => {
       const result = toolResult(data);
 
       expect(result.content).toHaveLength(1);
-      expect(result.content[0].type).toBe('text');
-      expect(JSON.parse(result.content[0].text)).toEqual(data);
+      expect(result.content[0]!.type).toBe('text');
+      expect(JSON.parse(result.content[0]!.text)).toEqual(data);
     });
 
     it('should format JSON with indentation', () => {
       const result = toolResult({ a: 1 });
-      expect(result.content[0].text).toContain('\n');
+      expect(result.content[0]!.text).toContain('\n');
     });
 
     it('should handle arrays', () => {
       const data = [1, 2, 3];
       const result = toolResult(data);
-      expect(JSON.parse(result.content[0].text)).toEqual(data);
+      expect(JSON.parse(result.content[0]!.text)).toEqual(data);
     });
 
     it('should handle null and primitives', () => {
-      expect(JSON.parse(toolResult(null).content[0].text)).toBeNull();
-      expect(JSON.parse(toolResult('string').content[0].text)).toBe('string');
-      expect(JSON.parse(toolResult(123).content[0].text)).toBe(123);
+      expect(JSON.parse(toolResult(null).content[0]!.text)).toBeNull();
+      expect(JSON.parse(toolResult('string').content[0]!.text)).toBe('string');
+      expect(JSON.parse(toolResult(123).content[0]!.text)).toBe(123);
     });
   });
 
@@ -38,8 +38,8 @@ describe('tool helpers', () => {
       const result = toolError('Something went wrong');
 
       expect(result.content).toHaveLength(1);
-      expect(result.content[0].type).toBe('text');
-      expect(JSON.parse(result.content[0].text)).toEqual({ error: 'Something went wrong' });
+      expect(result.content[0]!.type).toBe('text');
+      expect(JSON.parse(result.content[0]!.text)).toEqual({ error: 'Something went wrong' });
     });
 
     it('should set isError flag', () => {

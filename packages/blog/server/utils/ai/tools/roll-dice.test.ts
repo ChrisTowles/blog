@@ -9,7 +9,7 @@ describe('rollDice', () => {
     const result = (await rollDice.handler({ notation: '1d6', label: undefined }, undefined)) as {
       content: Array<{ text: string }>;
     };
-    const data = JSON.parse(result.content[0].text);
+    const data = JSON.parse(result.content[0]!.text);
 
     expect(data.notation).toBe('1d6');
     expect(data.total).toBeGreaterThanOrEqual(1);
@@ -24,7 +24,7 @@ describe('rollDice', () => {
     )) as {
       content: Array<{ text: string }>;
     };
-    const data = JSON.parse(result.content[0].text);
+    const data = JSON.parse(result.content[0]!.text);
 
     expect(data.modifier).toBe(5);
     expect(data.total).toBeGreaterThanOrEqual(6);
@@ -38,7 +38,7 @@ describe('rollDice', () => {
     )) as {
       content: Array<{ text: string }>;
     };
-    const data = JSON.parse(result.content[0].text);
+    const data = JSON.parse(result.content[0]!.text);
 
     expect(data.modifier).toBe(-2);
   });
@@ -47,7 +47,7 @@ describe('rollDice', () => {
     const result = (await rollDice.handler({ notation: '3d6', label: undefined }, undefined)) as {
       content: Array<{ text: string }>;
     };
-    const data = JSON.parse(result.content[0].text);
+    const data = JSON.parse(result.content[0]!.text);
 
     expect(data.rolls).toHaveLength(3);
     expect(data.total).toBeGreaterThanOrEqual(3);
@@ -61,7 +61,7 @@ describe('rollDice', () => {
     )) as {
       content: Array<{ text: string }>;
     };
-    const data = JSON.parse(result.content[0].text);
+    const data = JSON.parse(result.content[0]!.text);
 
     expect(data.rolls).toHaveLength(4);
     const keptRolls = data.rolls.filter((r: { kept: boolean }) => r.kept);
@@ -75,7 +75,7 @@ describe('rollDice', () => {
     )) as {
       content: Array<{ text: string }>;
     };
-    const data = JSON.parse(result.content[0].text);
+    const data = JSON.parse(result.content[0]!.text);
 
     expect(data.rolls).toHaveLength(2);
     const keptRolls = data.rolls.filter((r: { kept: boolean }) => r.kept);
@@ -87,7 +87,7 @@ describe('rollDice', () => {
       { notation: '1d20', label: 'Attack roll' },
       undefined,
     )) as { content: Array<{ text: string }> };
-    const data = JSON.parse(result.content[0].text);
+    const data = JSON.parse(result.content[0]!.text);
 
     expect(data.label).toBe('Attack roll');
   });
@@ -102,7 +102,7 @@ describe('rollDice', () => {
     };
 
     expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain('Invalid dice notation');
+    expect(result.content[0]!.text).toContain('Invalid dice notation');
   });
 
   it('should reject too many dice', async () => {
@@ -112,7 +112,7 @@ describe('rollDice', () => {
     };
 
     expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain('between 1 and 100');
+    expect(result.content[0]!.text).toContain('between 1 and 100');
   });
 
   it('should reject invalid die sides', async () => {
@@ -122,14 +122,14 @@ describe('rollDice', () => {
     };
 
     expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain('between 2 and 100');
+    expect(result.content[0]!.text).toContain('between 2 and 100');
   });
 
   it('should generate breakdown string', async () => {
     const result = (await rollDice.handler({ notation: '2d6+3', label: undefined }, undefined)) as {
       content: Array<{ text: string }>;
     };
-    const data = JSON.parse(result.content[0].text);
+    const data = JSON.parse(result.content[0]!.text);
 
     expect(data.breakdown).toMatch(/\d+ \+ \d+.*\+3 = \d+/);
   });
@@ -143,7 +143,7 @@ describe('rollDice', () => {
       )) as {
         content: Array<{ text: string }>;
       };
-      const data = JSON.parse(result.content[0].text);
+      const data = JSON.parse(result.content[0]!.text);
 
       expect(data.rolls).toHaveLength(4);
       const keptRolls = data.rolls.filter((r: { kept: boolean }) => r.kept);
@@ -157,7 +157,7 @@ describe('rollDice', () => {
       )) as {
         content: Array<{ text: string }>;
       };
-      const data = JSON.parse(result.content[0].text);
+      const data = JSON.parse(result.content[0]!.text);
 
       expect(data.rolls).toHaveLength(4);
       const keptRolls = data.rolls.filter((r: { kept: boolean }) => r.kept);
@@ -171,7 +171,7 @@ describe('rollDice', () => {
       )) as {
         content: Array<{ text: string }>;
       };
-      const data = JSON.parse(result.content[0].text);
+      const data = JSON.parse(result.content[0]!.text);
 
       expect(data.rolls).toHaveLength(2);
       const keptRolls = data.rolls.filter((r: { kept: boolean }) => r.kept);
@@ -185,7 +185,7 @@ describe('rollDice', () => {
       )) as {
         content: Array<{ text: string }>;
       };
-      const data = JSON.parse(result.content[0].text);
+      const data = JSON.parse(result.content[0]!.text);
 
       expect(data.rolls).toHaveLength(2);
       const keptRolls = data.rolls.filter((r: { kept: boolean }) => r.kept);
@@ -199,7 +199,7 @@ describe('rollDice', () => {
       )) as {
         content: Array<{ text: string }>;
       };
-      const data = JSON.parse(result.content[0].text);
+      const data = JSON.parse(result.content[0]!.text);
 
       expect(data.rolls).toHaveLength(4);
       const keptRolls = data.rolls.filter((r: { kept: boolean }) => r.kept);
@@ -213,7 +213,7 @@ describe('rollDice', () => {
       )) as {
         content: Array<{ text: string }>;
       };
-      const data = JSON.parse(result.content[0].text);
+      const data = JSON.parse(result.content[0]!.text);
 
       expect(data.modifier).toBe(5);
       expect(data.total).toBeGreaterThanOrEqual(6);

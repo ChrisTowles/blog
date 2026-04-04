@@ -39,9 +39,9 @@ const edges = ref<Edge[]>(workflow.value.edges ?? []);
 const config = useRuntimeConfig();
 const { setViewport, project, addNodes, onNodeClick } = useVueFlow();
 
-const selectedNode = computed(() => {
+const selectedNode = computed((): Node | null => {
   const nodeId = route.query.node as string | undefined;
-  return nodeId ? (nodes.value.find((n) => n.id === nodeId) ?? null) : null;
+  return nodeId ? (nodes.value.find((n: Node) => n.id === nodeId) ?? null) : null;
 });
 const viewport = ref<{ x: number; y: number; zoom: number }>(
   workflow.value?.viewport ?? { x: 0, y: 0, zoom: 1 },
@@ -61,6 +61,7 @@ const tabItems = [
 ];
 
 const { startRun, runStatus, isRunning, finalOutput, runError } = useWorkflowRun(workflowId);
+// @ts-expect-error Vue ref<Node[]> triggers TS2589 due to deep VueFlow generic types
 const { save, saveStatus } = useWorkflowAutoSave(workflowId, nodes, edges, viewport);
 
 watch(

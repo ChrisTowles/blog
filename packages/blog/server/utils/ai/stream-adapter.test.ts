@@ -249,7 +249,7 @@ describe('stream-adapter', () => {
 
       // Should only have the done event
       expect(events.length).toBe(1);
-      expect(events[0].type).toBe('done');
+      expect(events[0]!.type).toBe('done');
     });
   });
 
