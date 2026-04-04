@@ -242,20 +242,7 @@ importers:
         specifier: ^3.2.1
         version: 3.2.2(typescript@5.9.3)
 
-  packages/layers/reading:
-    devDependencies:
-      '@google-cloud/storage':
-        specifier: ^7.19.0
-        version: 7.19.0
-      drizzle-orm:
-        specifier: ^0.44.7
-        version: 0.44.7(@opentelemetry/api@1.9.0)(better-sqlite3@12.5.0)(pg@8.16.3)(postgres@3.4.8)
-      ts-fsrs:
-        specifier: ^5.2.3
-        version: 5.2.3
-      zod:
-        specifier: ^4.3.4
-        version: 4.3.5
+  packages/layers/reading: {}
 
   packages/layers/workflows:
     devDependencies:
