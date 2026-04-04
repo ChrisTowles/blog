@@ -64,6 +64,13 @@
       "when": 1775433600000,
       "tag": "0008_fix_fulltext_search_extensions",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1775491200000,
+      "tag": "0009_add_google_provider",
+      "breakpoints": true
     }
   ]
 }
