@@ -23,7 +23,16 @@ export default defineNuxtConfig({
     '@nuxtjs/mdc',
     'nuxt-auth-utils',
     '@nuxt/test-utils/module',
+    'evlog/nuxt',
   ],
+
+  evlog: {
+    enabled: true,
+    env: {
+      service: 'blog',
+    },
+    exclude: ['/api/_nuxt_icon/**'],
+  },
 
   gtag: {
     id: process.env.NUXT_PUBLIC_GTAG_ID,

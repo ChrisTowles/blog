@@ -8,6 +8,7 @@
  */
 
 import type Anthropic from '@anthropic-ai/sdk';
+import { log } from 'evlog';
 import { retrieveRAG } from '../rag/retrieve';
 
 /**
@@ -23,9 +24,7 @@ export function getToolsByNames(names: string[]): Anthropic.Tool[] {
     .map((name) => {
       const tool = toolRegistry.get(name);
       if (!tool) {
-        console.warn(
-          `[tools] Tool "${name}" not found in registry. Check capability configuration.`,
-        );
+        log.warn('tools', `Tool "${name}" not found in registry. Check capability configuration.`);
       }
       return tool;
     })
@@ -308,8 +307,8 @@ async function fetchWeather(location: string): Promise<WeatherResult | { error: 
         condition: getCondition(daily.weather_code[i]),
       })),
     };
-  } catch (error) {
-    console.error('Weather fetch error:', error);
+  } catch {
+    log.error('tools', 'Weather fetch failed');
     return { error: 'Failed to fetch weather data' };
   }
 }
@@ -411,8 +410,8 @@ function rollDice(notation: string, label?: string): DiceResult | { error: strin
       isCriticalHit,
       isCriticalMiss,
     };
-  } catch (error) {
-    console.error('Dice roll error:', error);
+  } catch {
+    log.error('tools', 'Dice roll failed');
     return { error: 'Failed to roll dice' };
   }
 }

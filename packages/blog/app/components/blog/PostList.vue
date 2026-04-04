@@ -3,9 +3,13 @@ import { TEST_IDS } from '~~/shared/test-ids';
 
 const route = useRoute();
 
-const { data: posts } = await useAsyncData(route.path, () =>
-  queryCollection('posts').order('date', 'DESC').all(),
-);
+const { data: posts } = await useAsyncData(route.path, () => {
+  const query = queryCollection('posts');
+  if (!import.meta.dev) {
+    query.where('status', '<>', 'draft');
+  }
+  return query.order('date', 'DESC').all();
+});
 </script>
 
 <template>
@@ -27,8 +31,8 @@ const { data: posts } = await useAsyncData(route.path, () =>
       :authors="post.authors"
       :data-testid="TEST_IDS.BLOG.POST_CARD"
       :badge="{
-        label: post.badge ? post.badge.label : '',
-        color: 'primary',
+        label: post.status === 'draft' ? 'Draft' : post.badge ? post.badge.label : '',
+        color: post.status === 'draft' ? 'warning' : 'primary',
       }"
       :orientation="index === 0 ? 'horizontal' : 'vertical'"
       :class="[index === 0 && 'col-span-full']"

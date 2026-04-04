@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { log } from 'evlog';
 import type { MessageParam } from '@anthropic-ai/sdk/resources/messages';
 import type { ChatMessage, SSEEvent } from '~~/shared/chat-types';
 import type { LoanApplicationData } from '~~/shared/loan-types';
@@ -219,7 +220,7 @@ export default defineEventHandler(async (event) => {
         sendSSE(controller, { type: 'done', messageId });
         controller.close();
       } catch (error) {
-        console.error('Loan chat stream error:', error);
+        log.error('loan', 'Loan chat stream error');
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         sendSSE(controller, { type: 'error', error: errorMessage });
         controller.close();

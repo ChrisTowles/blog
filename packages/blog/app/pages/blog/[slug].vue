@@ -8,10 +8,22 @@ if (!post.value) {
   throw createError({ statusCode: 404, statusMessage: 'Post not found', fatal: true });
 }
 
-const { data: surround } = await useAsyncData(`${route.path}-surround`, () => {
-  return queryCollectionItemSurroundings('posts', route.path, {
-    fields: ['description'],
+const isDraft = post.value.status === 'draft';
+if (isDraft && !import.meta.dev) {
+  throw createError({ statusCode: 404, statusMessage: 'Post not found', fatal: true });
+}
+
+const { data: surround } = await useAsyncData(`${route.path}-surround`, async () => {
+  const items = await queryCollectionItemSurroundings('posts', route.path, {
+    fields: ['description', 'status'],
   });
+  if (!items) return items;
+  // Replace draft neighbors with undefined (prev/next slot stays empty)
+  const [prev, next] = items;
+  return [
+    prev?.status === 'draft' ? undefined : prev,
+    next?.status === 'draft' ? undefined : next,
+  ] as typeof items;
 });
 
 useSeoMeta({
@@ -42,6 +54,12 @@ onMounted(() => {
 
 <template>
   <UContainer v-if="post">
+    <div
+      v-if="isDraft"
+      class="mb-4 rounded-lg bg-warning/10 border border-warning/30 p-4 text-center text-(--ui-text-muted)"
+    >
+      This post is a draft and is not publicly listed.
+    </div>
     <UPageHeader :title="post.title" :description="post.description">
       <template #headline>
         <UBadge v-bind="post.badge" variant="subtle" />

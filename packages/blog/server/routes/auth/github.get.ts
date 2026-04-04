@@ -1,3 +1,5 @@
+import { log } from 'evlog';
+
 export default defineOAuthGitHubEventHandler({
   async onSuccess(event, { user: ghUser }) {
     const db = useDrizzle();
@@ -36,7 +38,7 @@ export default defineOAuthGitHubEventHandler({
   },
   // Optional, will return a json error and 401 status code by default
   onError(event, error) {
-    console.error('GitHub OAuth error:', error);
+    log.error({ tag: 'auth', message: 'GitHub OAuth error', error: String(error) });
     return sendRedirect(event, '/');
   },
 });

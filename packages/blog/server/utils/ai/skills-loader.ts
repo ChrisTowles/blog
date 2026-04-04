@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join } from 'path';
+import { log } from 'evlog';
 import { getProjectRoot } from './skill-config';
 
 export interface CustomSkill {
@@ -38,8 +39,8 @@ export function loadCustomSkills(): CustomSkill[] {
       if (parsed.name && parsed.description) {
         skills.push(parsed);
       }
-    } catch (e) {
-      console.warn(`[skills-loader] Failed to parse ${skillFile}:`, e);
+    } catch {
+      log.warn('skills-loader', `Failed to parse ${skillFile}`);
     }
   }
 

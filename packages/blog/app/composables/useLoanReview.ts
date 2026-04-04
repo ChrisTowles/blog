@@ -1,3 +1,4 @@
+import { log } from 'evlog';
 import type { ReviewerName, ReviewDecision, LoanReviewSSEEvent } from '~~/shared/loan-types';
 
 export interface ReviewState {
@@ -72,8 +73,8 @@ export function useLoanReview(options: UseLoanReviewOptions) {
           try {
             const event: LoanReviewSSEEvent = JSON.parse(line.slice(6));
             handleEvent(event);
-          } catch (e) {
-            console.error('Error parsing review SSE:', e, line);
+          } catch {
+            log.error('loan-review', 'Error parsing review SSE');
           }
         }
       }

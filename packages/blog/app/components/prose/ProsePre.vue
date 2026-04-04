@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ShikiCachedRenderer } from 'shiki-stream/vue';
 import mermaid from 'mermaid';
+import { log } from 'evlog';
 
 const colorMode = useColorMode();
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shiki version mismatch between shiki and shiki-stream
@@ -83,8 +84,8 @@ async function renderMermaid() {
   try {
     const { svg } = await mermaid.render(mermaidId, props.code.trim());
     mermaidSvg.value = svg;
-  } catch (e) {
-    console.error('Mermaid render error:', e);
+  } catch {
+    log.error('mermaid', 'Mermaid render error');
     mermaidSvg.value = '';
   }
 }

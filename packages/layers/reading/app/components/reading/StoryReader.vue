@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { log } from 'evlog';
 import type {
   StoryContent,
   StoryWord,
@@ -203,7 +204,7 @@ function saveSession(sessionData: {
         storyId: props.storyId,
         ...sessionData,
       },
-    }).catch((err) => console.error('Failed to save reading session:', err));
+    }).catch(() => log.warn('reading', 'Failed to save reading session'));
   }
 }
 
