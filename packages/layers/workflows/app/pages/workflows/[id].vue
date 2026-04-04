@@ -6,26 +6,37 @@ import { MiniMap } from '@vue-flow/minimap';
 import '@vue-flow/core/dist/style.css';
 import '@vue-flow/core/dist/theme-default.css';
 import type { Node, Edge, NodeTypesObject, ViewportTransform } from '@vue-flow/core';
+import { log } from 'evlog';
 import type { WorkflowNodeType } from '../../../shared/workflow-types';
 import { NODE_TYPE_DEFAULTS } from '../../../shared/workflow-types';
+import {
+  workflowDetailResponseSchema,
+  workflowEditorQuerySchema,
+} from '../../../shared/workflow-schemas';
 
 definePageMeta({ middleware: 'auth' });
-
-interface WorkflowResponse {
-  id: string;
-  name: string;
-  description: string | null;
-  viewport: ViewportTransform | null;
-  version: number;
-  nodes: Node[];
-  edges: Edge[];
-}
 
 const route = useRoute();
 const router = useRouter();
 const workflowId = route.params.id as string;
 
-const { data: workflow } = await useFetch<WorkflowResponse>(`/api/workflows/${workflowId}`);
+// Validate URL query params at page load
+const queryResult = workflowEditorQuerySchema.safeParse(route.query);
+if (!queryResult.success) {
+  log.warn('workflow-editor', `Invalid URL query params, resetting: ${String(queryResult.error)}`);
+  await router.replace({ query: {} });
+}
+
+const { data: workflow } = await useFetch(`/api/workflows/${workflowId}`, {
+  transform: (raw) => {
+    const result = workflowDetailResponseSchema.safeParse(raw);
+    if (!result.success) {
+      log.warn('workflow-editor', `Invalid workflow API response: ${String(result.error)}`);
+      return null;
+    }
+    return result.data;
+  },
+});
 
 if (!workflow.value) {
   throw createError({ statusCode: 404, message: 'Workflow not found' });
