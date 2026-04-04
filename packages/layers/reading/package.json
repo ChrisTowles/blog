@@ -3,5 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "./nuxt.config.ts"
+  "main": "./nuxt.config.ts",
+  "devDependencies": {
+    "@google-cloud/storage": "^7.19.0",
+    "drizzle-orm": "^0.44.7",
+    "ts-fsrs": "^5.2.3",
+    "zod": "^4.3.4"
+  }
 }
