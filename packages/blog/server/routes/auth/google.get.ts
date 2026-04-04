@@ -1,25 +1,25 @@
 import { log } from 'evlog';
 
-export default defineOAuthGitHubEventHandler({
-  async onSuccess(event, { user: ghUser }) {
+export default defineOAuthGoogleEventHandler({
+  async onSuccess(event, { user: googleUser }) {
     const db = useDrizzle();
     const session = await getUserSession(event);
 
     let user = await db.query.users.findFirst({
       where: (user, { eq }) =>
-        and(eq(user.provider, 'github'), eq(user.providerId, ghUser.id.toString())),
+        and(eq(user.provider, 'google'), eq(user.providerId, googleUser.sub)),
     });
     if (!user) {
       [user] = await db
         .insert(tables.users)
         .values({
           id: session.id,
-          name: ghUser.name || '',
-          email: ghUser.email || '',
-          avatar: ghUser.avatar_url || '',
-          username: ghUser.login,
-          provider: 'github',
-          providerId: ghUser.id.toString(),
+          name: googleUser.name || '',
+          email: googleUser.email || '',
+          avatar: googleUser.picture || '',
+          username: googleUser.email?.split('@')[0] || '',
+          provider: 'google',
+          providerId: googleUser.sub,
         })
         .returning();
     } else {
@@ -37,9 +37,8 @@ export default defineOAuthGitHubEventHandler({
     const redirectTo = (getQuery(event).redirect as string) || '/';
     return sendRedirect(event, redirectTo);
   },
-  // Optional, will return a json error and 401 status code by default
   onError(event, error) {
-    log.error({ tag: 'auth', message: 'GitHub OAuth error', error: String(error) });
+    log.error({ tag: 'auth', message: 'Google OAuth error', error: String(error) });
     return sendRedirect(event, '/login');
   },
 });

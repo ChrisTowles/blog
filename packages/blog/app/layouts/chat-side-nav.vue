@@ -7,7 +7,7 @@ const route = useRoute();
 const toast = useToast();
 const overlay = useOverlay();
 const appConfig = useAppConfig();
-const { loggedIn, openInPopup } = useUserSession();
+const { loggedIn } = useUserSession();
 
 const open = ref(false);
 
@@ -203,12 +203,12 @@ defineShortcuts({
         <UserMenu v-if="loggedIn" :collapsed="collapsed" :block="true" />
         <UButton
           v-if="!loggedIn"
-          :label="collapsed ? '' : 'Login with GitHub'"
-          icon="i-simple-icons-github"
+          :label="collapsed ? '' : 'Sign in'"
+          icon="i-lucide-log-in"
           color="neutral"
           variant="ghost"
           class="w-full"
-          @click="openInPopup('/auth/github')"
+          to="/login?redirect=/chat"
         />
       </template>
     </UDashboardSidebar>

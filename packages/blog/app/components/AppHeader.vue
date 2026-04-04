@@ -2,7 +2,7 @@
 import { TEST_IDS } from '~~/shared/test-ids';
 
 const route = useRoute();
-const { loggedIn, openInPopup } = useUserSession();
+const { loggedIn } = useUserSession();
 const items = computed(() => [
   {
     label: 'Home',
@@ -77,11 +77,11 @@ const items = computed(() => [
 
       <UButton
         v-if="!loggedIn"
-        :label="(slotProps as Record<string, unknown>)?.collapsed ? '' : 'Login with GitHub'"
-        icon="i-simple-icons-github"
+        :label="(slotProps as Record<string, unknown>)?.collapsed ? '' : 'Sign in'"
+        icon="i-lucide-log-in"
         color="neutral"
         variant="ghost"
-        @click="openInPopup('/auth/github')"
+        to="/login"
       />
     </template>
 

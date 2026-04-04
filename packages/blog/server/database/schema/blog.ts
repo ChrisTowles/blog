@@ -16,7 +16,7 @@ const timestamps = {
   createdAt: timestamp().defaultNow().notNull(),
 };
 
-export const providerEnum = pgEnum('provider', ['github']);
+export const providerEnum = pgEnum('provider', ['github', 'google']);
 export const roleEnum = pgEnum('role', ['user', 'assistant']);
 
 export const users = pgTable(
