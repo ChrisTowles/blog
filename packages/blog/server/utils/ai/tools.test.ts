@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { chatTools, toolRegistry, executeTool, getToolsByNames } from './tools';
+import { chatTools, toolRegistry, executeTool, getToolsByNames, getAllToolNames } from './tools';
 
 // Register tools before tests
 beforeEach(() => {
@@ -130,6 +130,48 @@ describe('getToolsByNames', () => {
   it('returns empty array for empty input', () => {
     const tools = getToolsByNames([]);
     expect(tools).toHaveLength(0);
+  });
+});
+
+describe('getAllToolNames', () => {
+  it('returns all registered tool names', () => {
+    const names = getAllToolNames();
+    expect(names).toContain('searchBlogContent');
+    expect(names).toContain('getCurrentDateTime');
+    expect(names).toContain('getAuthorInfo');
+    expect(names).toContain('getBlogTopics');
+    expect(names).toContain('getWeather');
+    expect(names).toContain('rollDice');
+  });
+
+  it('returns same count as chatTools', () => {
+    expect(getAllToolNames().length).toBe(chatTools.length);
+  });
+});
+
+describe('chatTools structure', () => {
+  it('has expected tool count', () => {
+    expect(chatTools.length).toBe(6);
+  });
+
+  it('each tool has name, description, and input_schema', () => {
+    for (const tool of chatTools) {
+      expect(tool.name).toBeTruthy();
+      expect(tool.description).toBeTruthy();
+      expect(tool.input_schema).toBeDefined();
+      expect(tool.input_schema.type).toBe('object');
+    }
+  });
+
+  it('tools with required params declare them in input_schema', () => {
+    const searchTool = chatTools.find((t) => t.name === 'searchBlogContent');
+    expect(searchTool?.input_schema.required).toContain('query');
+
+    const weatherTool = chatTools.find((t) => t.name === 'getWeather');
+    expect(weatherTool?.input_schema.required).toContain('location');
+
+    const diceTool = chatTools.find((t) => t.name === 'rollDice');
+    expect(diceTool?.input_schema.required).toContain('notation');
   });
 });
 
