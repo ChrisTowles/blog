@@ -72,8 +72,8 @@ export function useLoanReview(options: UseLoanReviewOptions) {
           try {
             const event: LoanReviewSSEEvent = JSON.parse(line.slice(6));
             handleEvent(event);
-          } catch (e) {
-            console.error('Error parsing review SSE:', e, line);
+          } catch {
+            // Ignore malformed SSE lines (partial chunks, keep-alive)
           }
         }
       }

@@ -43,7 +43,6 @@ const chat = useChat({
   initialMessages,
   model,
   onError(error) {
-    console.error('Chat error:', error.message);
     toast.add({
       description: error.message,
       icon: 'i-lucide-alert-circle',

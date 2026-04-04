@@ -94,8 +94,8 @@ export function useArtifact(options: UseArtifactOptions = {}) {
           try {
             const event: ArtifactSSEEvent = JSON.parse(line.slice(6));
             processEvent(event);
-          } catch (e) {
-            console.error('Error parsing artifact SSE event:', e, line);
+          } catch {
+            // Ignore malformed SSE lines (partial chunks, keep-alive)
           }
         }
       }

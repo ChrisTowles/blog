@@ -169,8 +169,8 @@ export function useChat(options: UseChatOptions) {
                 codeExecutions,
               );
             }
-          } catch (e) {
-            console.error('Error parsing SSE event:', e, line);
+          } catch {
+            // Ignore malformed SSE lines (partial chunks, keep-alive)
           }
         }
       }
@@ -181,7 +181,6 @@ export function useChat(options: UseChatOptions) {
         status.value = 'ready';
         return;
       }
-      console.error('Chat error:', err);
       error.value = err instanceof Error ? err : new Error('Unknown error');
       status.value = 'error';
       options.onError?.(error.value);

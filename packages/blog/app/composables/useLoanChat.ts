@@ -85,7 +85,7 @@ export function useLoanChat(options: UseLoanChatOptions) {
             }
           } catch (e) {
             if (e instanceof Error && e.message.startsWith('HTTP')) throw e;
-            console.error('Error parsing SSE event:', e, line);
+            // Ignore malformed SSE lines (partial chunks, keep-alive)
           }
         }
       }

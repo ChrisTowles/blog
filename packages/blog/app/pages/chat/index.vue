@@ -27,15 +27,12 @@ async function createChat(prompt: string) {
       method: 'POST',
       body: { input: prompt },
     });
-    console.log('chat', chat);
     refreshNuxtData('chats');
     const { gtag } = useGtag();
     gtag('event', 'chat_started');
     await navigateTo(`/chat/${chat.id}`);
     // no loading state to reset, because we are navigating away.
   } catch (error) {
-    console.error('error', error);
-
     loading.value = false;
     toast.add({
       description: extractErrorMessage(error),
