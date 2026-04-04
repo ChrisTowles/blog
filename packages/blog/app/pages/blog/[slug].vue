@@ -34,11 +34,14 @@ useSeoMeta({
 });
 
 if (post.value.image?.src) {
-  defineOgImage({
-    url: post.value.image.src,
+  useSeoMeta({
+    ogImage: post.value.image.src,
+    ogImageWidth: 1200,
+    ogImageHeight: 600,
+    ogImageAlt: post.value.image.alt || post.value.title,
   });
 } else {
-  defineOgImageComponent('Saas', {
+  defineOgImage('SaaS', {
     headline: 'Blog',
   });
 }

@@ -22,11 +22,14 @@ useSeoMeta({
 });
 
 if (appEntry.value.image?.src) {
-  defineOgImage({
-    url: appEntry.value.image.src,
+  useSeoMeta({
+    ogImage: appEntry.value.image.src,
+    ogImageWidth: 1200,
+    ogImageHeight: 600,
+    ogImageAlt: appEntry.value.image.alt || appEntry.value.title,
   });
 } else {
-  defineOgImageComponent('App', {
+  defineOgImage('SaaS', {
     headline: 'App',
   });
 }

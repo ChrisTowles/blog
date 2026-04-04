@@ -21,7 +21,7 @@ describe('searchBlogContent', () => {
         content: Array<{ text: string }>;
       };
 
-      const data = JSON.parse(result.content[0].text);
+      const data = JSON.parse(result.content[0]!.text);
 
       expect(data.results).toBeDefined();
       expect(Array.isArray(data.results)).toBe(true);
@@ -37,7 +37,7 @@ describe('searchBlogContent', () => {
         content: Array<{ text: string }>;
       };
 
-      const data = JSON.parse(result.content[0].text);
+      const data = JSON.parse(result.content[0]!.text);
 
       if (data.results.length > 0) {
         const firstResult = data.results[0];
@@ -55,7 +55,7 @@ describe('searchBlogContent', () => {
         content: Array<{ text: string }>;
       };
 
-      const data = JSON.parse(result.content[0].text);
+      const data = JSON.parse(result.content[0]!.text);
 
       // RAG may still return low-relevance results, just verify structure
       expect(data.results).toBeDefined();
@@ -70,7 +70,7 @@ describe('searchBlogContent', () => {
         content: Array<{ text: string }>;
       };
 
-      const data = JSON.parse(result.content[0].text);
+      const data = JSON.parse(result.content[0]!.text);
 
       expect(data.results).toBeDefined();
       if (data.results.length > 0) {
@@ -92,7 +92,7 @@ describe('searchBlogContent', () => {
         content: Array<{ text: string }>;
       };
 
-      const data = JSON.parse(result.content[0].text);
+      const data = JSON.parse(result.content[0]!.text);
 
       expect(data.results.length).toBeLessThanOrEqual(5);
     });
@@ -109,7 +109,7 @@ describe('searchBlogContent', () => {
         content: Array<{ text: string }>;
       };
 
-      const data = JSON.parse(result.content[0].text);
+      const data = JSON.parse(result.content[0]!.text);
 
       // Should return empty results array with helpful hint
       expect(data.results).toBeDefined();

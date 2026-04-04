@@ -21,9 +21,13 @@ onMounted(() => {
 
   const waitForWidget = () => {
     if (window.twttr?.widgets) {
-      window.twttr.widgets.createTweet(url.match(/status\/(\d+)/)?.[1] ?? '', container, {
-        theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
-      });
+      window.twttr.widgets.createTweet(
+        url.match(/status\/(\d+)/)?.[1] ?? '',
+        container as unknown as HTMLElement,
+        {
+          theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
+        },
+      );
     } else {
       setTimeout(waitForWidget, 200);
     }

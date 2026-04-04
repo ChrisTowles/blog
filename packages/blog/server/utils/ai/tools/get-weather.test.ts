@@ -10,7 +10,7 @@ describe('getWeather', () => {
     const result = (await getWeather.handler({ location: 'London' }, undefined)) as {
       content: Array<{ text: string }>;
     };
-    const data = JSON.parse(result.content[0].text);
+    const data = JSON.parse(result.content[0]!.text);
 
     expect(data.location).toBe('London, United Kingdom');
     expect(data.temperature).toBeLessThan(100);
@@ -26,7 +26,7 @@ describe('getWeather', () => {
     const result = (await getWeather.handler({ location: 'London' }, undefined)) as {
       content: Array<{ text: string }>;
     };
-    const data = JSON.parse(result.content[0].text);
+    const data = JSON.parse(result.content[0]!.text);
 
     expect(data.dailyForecast[0].day).toBe('Today');
     expect(data.dailyForecast[0].high).toBeLessThan(100);
@@ -41,7 +41,7 @@ describe('getWeather', () => {
       isError: boolean;
       content: Array<{ text: string }>;
     };
-    const data = JSON.parse(result.content[0].text);
+    const data = JSON.parse(result.content[0]!.text);
 
     expect(result.isError).toBe(true);
     expect(data.error).toContain('Nonexistent City XYZ');

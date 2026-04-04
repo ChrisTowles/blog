@@ -44,8 +44,8 @@ describe('topologicalSort', () => {
     expect(result.map((n) => n.id)).toContain('a');
     expect(result.map((n) => n.id)).toContain('d');
     // a must be first, d must be last
-    expect(result[0].id).toBe('a');
-    expect(result[result.length - 1].id).toBe('d');
+    expect(result[0]!.id).toBe('a');
+    expect(result[result.length - 1]!.id).toBe('d');
   });
 
   it('throws on cycle', () => {
