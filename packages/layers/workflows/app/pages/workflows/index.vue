@@ -1,8 +1,20 @@
 <script setup lang="ts">
+import { log } from 'evlog';
+import { workflowListResponseSchema } from '../../../shared/workflow-schemas';
+
 definePageMeta({ middleware: 'auth' });
 useSeoMeta({ title: 'Workflows' });
 
-const { data: workflows, refresh } = await useFetch('/api/workflows');
+const { data: workflows, refresh } = await useFetch('/api/workflows', {
+  transform: (raw) => {
+    const result = workflowListResponseSchema.safeParse(raw);
+    if (!result.success) {
+      log.warn('workflow-list', `Invalid workflow list API response: ${String(result.error)}`);
+      return [];
+    }
+    return result.data;
+  },
+});
 
 const newName = ref('');
 const creating = ref(false);

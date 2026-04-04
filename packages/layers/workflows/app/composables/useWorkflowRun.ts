@@ -1,4 +1,29 @@
+import { log } from 'evlog';
+import { z } from 'zod';
 import type { NodeRunStatus } from '../../shared/workflow-types';
+import {
+  startRunResponseSchema,
+  sseNodeStartSchema,
+  sseNodeCompleteSchema,
+  sseNodeErrorSchema,
+  sseRunCompleteSchema,
+  sseRunErrorSchema,
+} from '../../shared/workflow-schemas';
+
+function safeParse<T>(schema: z.ZodType<T>, raw: string, eventName: string): T | null {
+  try {
+    const json = JSON.parse(raw);
+    const result = schema.safeParse(json);
+    if (!result.success) {
+      log.warn('workflow-run', `Invalid ${eventName} SSE payload: ${String(result.error)}`);
+      return null;
+    }
+    return result.data;
+  } catch {
+    log.warn('workflow-run', `Failed to parse ${eventName} SSE data`);
+    return null;
+  }
+}
 
 export function useWorkflowRun(workflowId: string) {
   const runStatus = ref(new Map<string, NodeRunStatus>());
@@ -22,10 +47,12 @@ export function useWorkflowRun(workflowId: string) {
 
     let runId: string;
     try {
-      ({ runId } = await $fetch<{ runId: string }>(`/api/workflows/${workflowId}/run`, {
+      const raw = await $fetch(`/api/workflows/${workflowId}/run`, {
         method: 'POST',
         body: { input },
-      }));
+      });
+      const parsed = startRunResponseSchema.parse(raw);
+      runId = parsed.runId;
     } catch (err) {
       runError.value = err instanceof Error ? err.message : 'Failed to start run';
       isRunning.value = false;
@@ -38,20 +65,16 @@ export function useWorkflowRun(workflowId: string) {
     eventSource.value = es;
 
     es.addEventListener('node:start', (e) => {
-      const { nodeId } = JSON.parse(e.data) as { nodeId: string };
+      const data = safeParse(sseNodeStartSchema, e.data, 'node:start');
+      if (!data) return;
       const next = new Map(runStatus.value);
-      next.set(nodeId, { status: 'running' });
+      next.set(data.nodeId, { status: 'running' });
       runStatus.value = next;
     });
 
     es.addEventListener('node:complete', (e) => {
-      const data = JSON.parse(e.data) as {
-        nodeId: string;
-        output: Record<string, unknown>;
-        tokensIn: number;
-        tokensOut: number;
-        latencyMs: number;
-      };
+      const data = safeParse(sseNodeCompleteSchema, e.data, 'node:complete');
+      if (!data) return;
       const next = new Map(runStatus.value);
       next.set(data.nodeId, {
         status: 'completed',
@@ -64,22 +87,25 @@ export function useWorkflowRun(workflowId: string) {
     });
 
     es.addEventListener('node:error', (e) => {
-      const { nodeId, error } = JSON.parse(e.data) as { nodeId: string; error: string };
+      const data = safeParse(sseNodeErrorSchema, e.data, 'node:error');
+      if (!data) return;
       const next = new Map(runStatus.value);
-      next.set(nodeId, { status: 'failed', error });
+      next.set(data.nodeId, { status: 'failed', error: data.error });
       runStatus.value = next;
     });
 
     es.addEventListener('run:complete', (e) => {
-      finalOutput.value = (
-        JSON.parse(e.data) as { output: Record<string, Record<string, unknown>> }
-      ).output;
+      const data = safeParse(sseRunCompleteSchema, e.data, 'run:complete');
+      if (!data) return;
+      finalOutput.value = data.output;
       isRunning.value = false;
       closeEventSource();
     });
 
     es.addEventListener('run:error', (e) => {
-      runError.value = (JSON.parse(e.data) as { error: string }).error;
+      const data = safeParse(sseRunErrorSchema, e.data, 'run:error');
+      if (!data) return;
+      runError.value = data.error;
       isRunning.value = false;
       closeEventSource();
     });

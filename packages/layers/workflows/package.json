@@ -4,6 +4,10 @@
   "private": true,
   "type": "module",
   "main": "./nuxt.config.ts",
+  "dependencies": {
+    "evlog": "^2.11.0",
+    "zod": "^4.3.4"
+  },
   "devDependencies": {
     "@vue-flow/background": "^1.3.2",
     "@vue-flow/controls": "^1.1.3",
