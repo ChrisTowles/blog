@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { log } from 'evlog';
 import type { ArtifactSSEEvent, ArtifactFile } from '~~/shared/artifact-types';
 import type { AnthropicBetaClient } from '~~/server/utils/ai/anthropic-beta-types';
 
@@ -123,8 +124,8 @@ export default defineEventHandler(async (event) => {
             });
             fileName = meta.filename || fileName;
             mediaType = meta.mime_type || mediaType;
-          } catch (e) {
-            console.warn(`[artifact] Failed to fetch metadata for file ${fileId}:`, e);
+          } catch {
+            log.warn('artifact', `Failed to fetch metadata for file ${fileId}`);
           }
           const file: ArtifactFile = {
             fileId,
@@ -181,7 +182,7 @@ export default defineEventHandler(async (event) => {
         sendSSE(controller, { type: 'artifact_done' });
         controller.close();
       } catch (err) {
-        console.error('Artifact execution error:', err);
+        log.error('artifact', 'Artifact execution error');
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         sendSSE(controller, { type: 'artifact_error', error: errorMessage });
         controller.close();

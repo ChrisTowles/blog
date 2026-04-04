@@ -1,5 +1,6 @@
 import type { MessageParam } from '@anthropic-ai/sdk/resources/messages';
 import { z } from 'zod';
+import { log } from 'evlog';
 import type {
   ChatMessage,
   CodeExecutionPart,
@@ -65,8 +66,8 @@ async function resolveFileMetadata(
     });
     fileName = meta.filename || fileName;
     mediaType = meta.mime_type || mediaType;
-  } catch (e) {
-    console.warn(`[chat] Failed to fetch file metadata for ${fileId}:`, e);
+  } catch {
+    log.warn('chat', `Failed to fetch file metadata for ${fileId}`);
   }
 
   return {
@@ -341,11 +342,12 @@ export default defineEventHandler(async (event) => {
                     toolArgs = JSON.parse(toolInputJson);
                   }
                 } catch (parseError) {
-                  console.error('Failed to parse tool input JSON:', {
-                    toolName: currentToolName,
+                  log.error({
+                    tag: 'chat',
+                    message: `Failed to parse tool input JSON for ${currentToolName}`,
                     toolUseId: currentToolUseId,
                     rawInput: toolInputJson?.substring(0, 200),
-                    error: parseError,
+                    error: String(parseError),
                   });
                   toolResults.push({
                     type: 'tool_result',
@@ -398,9 +400,9 @@ export default defineEventHandler(async (event) => {
               containerId = finalMessage.container.id;
               sendSSE(controller, { type: 'container', containerId: finalMessage.container.id });
             }
-          } catch (e) {
+          } catch {
             // finalMessage() may fail if the stream was incomplete — log and continue
-            console.warn('[chat] Failed to process final message:', e);
+            log.warn('chat', 'Failed to process final message');
           }
 
           if (!hasToolUse || toolResults.length === 0) {
@@ -467,7 +469,7 @@ export default defineEventHandler(async (event) => {
         sendSSE(controller, { type: 'done', messageId });
         controller.close();
       } catch (error) {
-        console.error('Stream error:', error);
+        log.error('chat', 'Stream error');
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         sendSSE(controller, { type: 'error', error: errorMessage });
         controller.close();

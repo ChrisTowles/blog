@@ -1,3 +1,4 @@
+import { log } from 'evlog';
 import type { ChatMessage, ChatStatus, MessagePart } from '~~/shared/chat-types';
 import type { LoanApplicationData } from '~~/shared/loan-types';
 
@@ -85,7 +86,7 @@ export function useLoanChat(options: UseLoanChatOptions) {
             }
           } catch (e) {
             if (e instanceof Error && e.message.startsWith('HTTP')) throw e;
-            console.error('Error parsing SSE event:', e, line);
+            log.error('loan-chat', 'Error parsing SSE event');
           }
         }
       }

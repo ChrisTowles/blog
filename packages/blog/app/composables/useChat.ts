@@ -1,3 +1,4 @@
+import { log } from 'evlog';
 import type {
   ChatMessage,
   ChatStatus,
@@ -169,8 +170,8 @@ export function useChat(options: UseChatOptions) {
                 codeExecutions,
               );
             }
-          } catch (e) {
-            console.error('Error parsing SSE event:', e, line);
+          } catch {
+            log.error('chat', 'Error parsing SSE event');
           }
         }
       }
@@ -181,7 +182,7 @@ export function useChat(options: UseChatOptions) {
         status.value = 'ready';
         return;
       }
-      console.error('Chat error:', err);
+      log.error('chat', 'Chat streaming error');
       error.value = err instanceof Error ? err : new Error('Unknown error');
       status.value = 'error';
       options.onError?.(error.value);

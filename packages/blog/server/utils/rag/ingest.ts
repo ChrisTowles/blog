@@ -1,6 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { eq } from 'drizzle-orm';
+import { log } from 'evlog';
 import { chunkText, parseBlogMarkdown, hashContent } from './chunker';
 import { embedTexts } from '../ai/bedrock';
 import { getAnthropicClient } from '../ai/anthropic';
@@ -169,11 +170,11 @@ export async function ingestBlogPosts(): Promise<IngestResult> {
       }
 
       result.documentsProcessed++;
-      console.log(`Ingested: ${parsed.title} (${chunks.length} chunks)`);
+      log.info('rag', `Ingested: ${parsed.title} (${chunks.length} chunks)`);
     } catch (error) {
       const errorMsg = `Failed to process ${file}: ${error}`;
       result.errors.push(errorMsg);
-      console.error(errorMsg);
+      log.error('rag', errorMsg);
     }
   }
 

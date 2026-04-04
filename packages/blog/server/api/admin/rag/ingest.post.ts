@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { log } from 'evlog';
 
 defineRouteMeta({
   openAPI: {
@@ -18,7 +19,7 @@ export default defineEventHandler(async (event) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- types.d.ts augmentation not picked up in server context
   const username = (session.user as any)?.username || '';
   if (!adminNames.includes(username)) {
-    console.log(`Forbidden access attempt by user: ${session}`);
+    log.warn('admin', `Forbidden access attempt by user: ${username}`);
     throw createError({ statusCode: 403, statusMessage: `Forbidden, session user: ${username}` });
   }
 

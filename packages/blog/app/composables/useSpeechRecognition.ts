@@ -1,3 +1,5 @@
+import { log } from 'evlog';
+
 export type WordFeedback = 'pending' | 'correct' | 'incorrect';
 
 interface SpeechRecognitionOptions {
@@ -105,7 +107,7 @@ export function useSpeechRecognition(options: SpeechRecognitionOptions) {
 
     recognition.onerror = (event: any) => {
       if (event.error !== 'no-speech' && event.error !== 'aborted') {
-        console.warn('Speech recognition error:', event.error);
+        log.warn('speech', `Speech recognition error: ${event.error}`);
       }
     };
 

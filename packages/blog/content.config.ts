@@ -97,6 +97,7 @@ export default defineContentConfig({
       schema: z.object({
         title: z.string().nonempty(),
         description: z.string().nonempty(),
+        status: z.enum(['draft', 'published']).default('published'),
         image: z.object({ src: z.string().nonempty(), alt: z.string().optional() }),
         authors: z.array(
           z.object({

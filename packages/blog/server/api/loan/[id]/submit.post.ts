@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { log } from 'evlog';
 import type { LoanApplicationData, ReviewDecision, LoanReviewSSEEvent } from '~~/shared/loan-types';
 import { REVIEWERS, REVIEWER_DISPLAY_NAMES, isApplicationComplete } from '~~/shared/loan-types';
 import {
@@ -132,7 +133,7 @@ export default defineEventHandler(async (event) => {
 
         controller.close();
       } catch (error) {
-        console.error('Review stream error:', error);
+        log.error('loan', 'Review stream error');
         sendReviewSSE(controller, {
           type: 'error',
           error: error instanceof Error ? error.message : 'Unknown error',

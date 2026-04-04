@@ -1,5 +1,6 @@
 import { tool } from '@anthropic-ai/claude-agent-sdk';
 import { z } from 'zod';
+import { log } from 'evlog';
 import { toolResult, toolError } from './helpers';
 
 /**
@@ -92,8 +93,8 @@ export const getWeather = tool(
           condition: getCondition(daily.weather_code[i]),
         })),
       });
-    } catch (error) {
-      console.error('Weather fetch error:', error);
+    } catch {
+      log.error('tools', 'Weather fetch error');
       return toolError('Failed to fetch weather data');
     }
   },

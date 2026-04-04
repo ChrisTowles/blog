@@ -1,4 +1,5 @@
 import { sql } from 'drizzle-orm';
+import { log } from 'evlog';
 import { useDrizzle } from '../drizzle';
 import { embedText, rerankDocuments } from '../ai/bedrock';
 
@@ -75,8 +76,8 @@ async function semanticSearch(
     }
 
     return results.rows as Array<ChunkCandidate & { distance: number }>;
-  } catch (error) {
-    console.error('Semantic search failed:', error);
+  } catch {
+    log.error('rag', 'Semantic search failed');
     return [];
   }
 }
@@ -114,8 +115,8 @@ async function bm25Search(
     }
 
     return results.rows as Array<ChunkCandidate & { rank: number }>;
-  } catch (error) {
-    console.error('BM25 search failed:', error);
+  } catch {
+    log.error('rag', 'BM25 search failed');
     return [];
   }
 }
@@ -181,8 +182,8 @@ export async function retrieveRAG(
   let queryEmbedding: number[];
   try {
     queryEmbedding = await embedText(query);
-  } catch (error) {
-    console.error('Failed to generate embedding:', error);
+  } catch {
+    log.error('rag', 'Failed to generate embedding');
     return [];
   }
 

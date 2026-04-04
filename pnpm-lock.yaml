@@ -114,6 +114,9 @@ importers:
       echarts:
         specifier: ^6.0.0
         version: 6.0.0
+      evlog:
+        specifier: ^2.11.0
+        version: 2.11.0(@nuxt/kit@4.4.2(magicast@0.5.1))(ofetch@1.5.1)(vite@7.3.1(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))
       find-up:
         specifier: ^6.3.0
         version: 6.3.0
@@ -250,6 +253,9 @@ importers:
       drizzle-orm:
         specifier: ^0.44.7
         version: 0.44.7(@opentelemetry/api@1.9.0)(better-sqlite3@12.5.0)(pg@8.16.3)(postgres@3.4.8)
+      evlog:
+        specifier: ^2.11.0
+        version: 2.11.0(@nuxt/kit@4.4.2(magicast@0.5.1))(ofetch@1.5.1)(vite@7.3.1(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))
       ts-fsrs:
         specifier: ^5.2.3
         version: 5.2.3
@@ -5316,6 +5322,59 @@ packages:
   eventsource-parser@1.1.2:
     resolution: {integrity: sha512-v0eOBUbiaFojBu2s2NPBfYUoRR9GjcDNvCXVaqEf5vVfpIAh9f8RCo4vXTP8c63QRKCFwoLpMpTdPwwhEKVgzA==}
     engines: {node: '>=14.18'}
+
+  evlog@2.11.0:
+    resolution: {integrity: sha512-JsPxRLZOn9vVNZvtehoGcIPMS089ZfgW2PtarZgpz/U6gJ0Zl9wIPtOjP0KSAFrwX7ZOIyAhZTdZoI0v9L6o5A==}
+    peerDependencies:
+      '@nestjs/common': '>=11.1.17'
+      '@nuxt/kit': ^4.4.2
+      '@tanstack/start-client-core': ^1.161.0
+      ai: '>=6.0.142'
+      elysia: '>=1.4.28'
+      express: '>=5.2.1'
+      fastify: '>=5.8.4'
+      h3: ^1.15.10
+      hono: ''
+      next: '>=16.2.2'
+      nitro: ^3.0.260311-beta
+      nitropack: ^2.13.2
+      ofetch: ^1.5.1
+      react: '>=19.2.4'
+      react-router: '>=7.13.2'
+      vite: ^7.0.0 || ^8.0.0
+    peerDependenciesMeta:
+      '@nestjs/common':
+        optional: true
+      '@nuxt/kit':
+        optional: true
+      '@tanstack/start-client-core':
+        optional: true
+      ai:
+        optional: true
+      elysia:
+        optional: true
+      express:
+        optional: true
+      fastify:
+        optional: true
+      h3:
+        optional: true
+      hono:
+        optional: true
+      next:
+        optional: true
+      nitro:
+        optional: true
+      nitropack:
+        optional: true
+      ofetch:
+        optional: true
+      react:
+        optional: true
+      react-router:
+        optional: true
+      vite:
+        optional: true
 
   execa@8.0.1:
     resolution: {integrity: sha512-VyhnebXciFV2DESc+p6B+y0LjSm0krU4OgJN44qFAhBY0TJ+1V61tYD2+wHusZ6F9n5K+vl8k0sTy7PEfV4qpg==}
@@ -15569,6 +15628,18 @@ snapshots:
   events@3.3.0: {}
 
   eventsource-parser@1.1.2: {}
+
+  evlog@2.11.0(@nuxt/kit@4.4.2(magicast@0.5.1))(ofetch@1.5.1)(vite@7.3.1(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)):
+    optionalDependencies:
+      '@nuxt/kit': 4.4.2(magicast@0.5.1)
+      ofetch: 1.5.1
+      vite: 7.3.1(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)
+
+  evlog@2.11.0(@nuxt/kit@4.4.2(magicast@0.5.1))(ofetch@1.5.1)(vite@7.3.1(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)):
+    optionalDependencies:
+      '@nuxt/kit': 4.4.2(magicast@0.5.1)
+      ofetch: 1.5.1
+      vite: 7.3.1(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)
 
   execa@8.0.1:
     dependencies:

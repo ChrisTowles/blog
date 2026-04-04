@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { log } from 'evlog';
 import type { AnthropicBetaClient } from '~~/server/utils/ai/anthropic-beta-types';
 
 defineRouteMeta({
@@ -54,8 +55,8 @@ export default defineEventHandler(async (event) => {
       return fileResponse.body;
     }
     return fileResponse;
-  } catch (err) {
-    console.error('File download error:', err);
+  } catch {
+    log.error('artifact', 'File download error');
     throw createError({
       statusCode: 404,
       statusMessage: 'File not found or expired',

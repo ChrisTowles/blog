@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { count, gte } from 'drizzle-orm';
+import { log } from 'evlog';
 import type { PhonicsPhase } from '../../../../shared/reading-types';
 
 const bodySchema = z.object({
@@ -122,8 +123,8 @@ export default defineEventHandler(async (event) => {
         .returning();
 
       return updated;
-    } catch (e) {
-      console.warn('Image generation failed, returning story without illustrations:', e);
+    } catch {
+      log.warn('reading', 'Image generation failed, returning story without illustrations');
     }
   }
 
