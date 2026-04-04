@@ -1,8 +1,4 @@
-<script setup lang="ts">
-import type { ThemeConfig } from '../../composables/useReadingTheme';
-
-const { addTheme, setTheme } = useReadingTheme();
-
+<script lang="ts">
 const PRESET_COLORS = [
   '#4da8da',
   '#ffb5c2',
@@ -53,6 +49,22 @@ const MASCOT_EMOJIS = [
   '🐮',
 ];
 
+type ColorKey = 'primary' | 'secondary' | 'accent' | 'success' | 'highlight';
+
+const COLOR_FIELDS: { label: string; key: ColorKey }[] = [
+  { label: 'Primary', key: 'primary' },
+  { label: 'Secondary', key: 'secondary' },
+  { label: 'Accent', key: 'accent' },
+  { label: 'Success', key: 'success' },
+  { label: 'Highlight', key: 'highlight' },
+];
+</script>
+
+<script setup lang="ts">
+import type { ThemeConfig } from '../../composables/useReadingTheme';
+
+const { addTheme, setTheme } = useReadingTheme();
+
 const themeName = ref('');
 const primaryColor = ref(PRESET_COLORS[0]!);
 const secondaryColor = ref(PRESET_COLORS[1]!);
@@ -77,8 +89,6 @@ function loadTheme(theme: ThemeConfig) {
 
 defineExpose({ loadTheme });
 
-type ColorKey = 'primary' | 'secondary' | 'accent' | 'success' | 'highlight';
-
 const colorRefs: Record<ColorKey, Ref<string>> = {
   primary: primaryColor,
   secondary: secondaryColor,
@@ -94,14 +104,6 @@ function getColor(key: ColorKey): string {
 function setColor(key: ColorKey, value: string) {
   colorRefs[key].value = value;
 }
-
-const colorFields: { label: string; key: ColorKey }[] = [
-  { label: 'Primary', key: 'primary' },
-  { label: 'Secondary', key: 'secondary' },
-  { label: 'Accent', key: 'accent' },
-  { label: 'Success', key: 'success' },
-  { label: 'Highlight', key: 'highlight' },
-];
 
 const activeFieldKey = ref<ColorKey>('primary');
 
@@ -204,7 +206,7 @@ async function generateMagicTheme() {
     <div>
       <div class="flex gap-2 mb-2">
         <button
-          v-for="field in colorFields"
+          v-for="field in COLOR_FIELDS"
           :key="field.key"
           class="px-3 py-1 rounded-full text-xs font-bold transition-all"
           :class="

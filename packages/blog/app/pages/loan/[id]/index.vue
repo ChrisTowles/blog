@@ -1,13 +1,16 @@
-<script setup lang="ts">
+<script lang="ts">
 import type { DefineComponent } from 'vue';
-import type { LoanApplicationData } from '~~/shared/loan-types';
-import { isApplicationComplete } from '~~/shared/loan-types';
-import { TEST_IDS } from '~~/shared/test-ids';
 import ProsePre from '../../../components/prose/ProsePre.vue';
 
 const components = {
   pre: ProsePre as unknown as DefineComponent,
 };
+</script>
+
+<script setup lang="ts">
+import type { LoanApplicationData } from '~~/shared/loan-types';
+import { isApplicationComplete } from '~~/shared/loan-types';
+import { TEST_IDS } from '~~/shared/test-ids';
 
 definePageMeta({
   layout: 'loan',

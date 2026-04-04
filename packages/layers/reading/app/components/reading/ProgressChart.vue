@@ -1,3 +1,13 @@
+<script lang="ts">
+const COLORS = {
+  skyBlue: '#4da8da',
+  orange: '#f4845f',
+  green: '#7ec8a0',
+  yellow: '#ffd166',
+  pink: '#ffb5c2',
+};
+</script>
+
 <script setup lang="ts">
 import { TEST_IDS } from '~~/shared/test-ids';
 import type { PhonicsMapUnit, SrsStatsResponse } from '../../../shared/reading-types';
@@ -7,14 +17,6 @@ const props = defineProps<{
   phonicsProgress: ReadonlyArray<{ status: string; name?: string }>;
   srsStats: SrsStatsResponse | null | undefined;
 }>();
-
-const COLORS = {
-  skyBlue: '#4da8da',
-  orange: '#f4845f',
-  green: '#7ec8a0',
-  yellow: '#ffd166',
-  pink: '#ffb5c2',
-};
 
 // WCPM trend line chart
 const wcpmOption = computed(() => {

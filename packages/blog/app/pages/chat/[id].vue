@@ -1,5 +1,13 @@
-<script setup lang="ts">
+<script lang="ts">
 import type { DefineComponent } from 'vue';
+import ProsePre from '../../components/prose/ProsePre.vue';
+
+const components = {
+  pre: ProsePre as unknown as DefineComponent,
+};
+</script>
+
+<script setup lang="ts">
 import { useClipboard } from '@vueuse/core';
 import type {
   ChatMessage,
@@ -8,15 +16,10 @@ import type {
   ToolUsePart,
   ToolResultPart,
 } from '~~/shared/chat-types';
-import ProsePre from '../../components/prose/ProsePre.vue';
 
 definePageMeta({
   layout: 'chat-side-nav',
 });
-
-const components = {
-  pre: ProsePre as unknown as DefineComponent,
-};
 
 const route = useRoute();
 const toast = useToast();

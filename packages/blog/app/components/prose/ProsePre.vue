@@ -1,3 +1,10 @@
+<script lang="ts">
+const LANG_MAP: Record<string, string> = {
+  javascript: 'js',
+  typescript: 'ts',
+};
+</script>
+
 <script setup lang="ts">
 import { ShikiCachedRenderer } from 'shiki-stream/vue';
 import mermaid from 'mermaid';
@@ -95,10 +102,6 @@ watch(() => colorMode.value, renderMermaid);
 const trimmedCode = computed(() => {
   return props.code.trim().replace(/`+$/, '');
 });
-const LANG_MAP: Record<string, string> = {
-  javascript: 'js',
-  typescript: 'ts',
-};
 
 const lang = computed(() => LANG_MAP[props.language] || props.language);
 const key = computed(() => {

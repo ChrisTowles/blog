@@ -1,12 +1,15 @@
-<script setup lang="ts">
+<script lang="ts">
 import type { DefineComponent } from 'vue';
-import type { ReviewState } from '~/composables/useLoanReview';
-import { TEST_IDS } from '~~/shared/test-ids';
 import ProsePre from '~/components/prose/ProsePre.vue';
 
 const components = {
   pre: ProsePre as unknown as DefineComponent,
 };
+</script>
+
+<script setup lang="ts">
+import type { ReviewState } from '~/composables/useLoanReview';
+import { TEST_IDS } from '~~/shared/test-ids';
 
 const props = defineProps<{
   review: ReviewState;

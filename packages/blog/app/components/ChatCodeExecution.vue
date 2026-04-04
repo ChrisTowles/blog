@@ -1,3 +1,14 @@
+<script lang="ts">
+const LANG_MAP: Record<string, string> = {
+  python: 'python',
+  py: 'python',
+  bash: 'bash',
+  sh: 'bash',
+  javascript: 'js',
+  typescript: 'ts',
+};
+</script>
+
 <script setup lang="ts">
 import { ShikiCachedRenderer } from 'shiki-stream/vue';
 import type { CodeExecutionPart } from '~~/shared/chat-types';
@@ -10,15 +21,6 @@ const colorMode = useColorMode();
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shiki version mismatch between shiki and shiki-stream
 const highlighter = (await useHighlighter()) as any;
 const showCode = ref(false);
-
-const LANG_MAP: Record<string, string> = {
-  python: 'python',
-  py: 'python',
-  bash: 'bash',
-  sh: 'bash',
-  javascript: 'js',
-  typescript: 'ts',
-};
 
 const lang = computed(() => LANG_MAP[props.execution.language] || props.execution.language);
 const theme = computed(() =>

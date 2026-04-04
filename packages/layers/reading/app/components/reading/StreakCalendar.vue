@@ -1,10 +1,4 @@
-<script setup lang="ts">
-import { TEST_IDS } from '~~/shared/test-ids';
-
-const props = defineProps<{
-  sessions: Array<{ completedAt: string }>;
-}>();
-
+<script lang="ts">
 const COLORS = {
   skyBlue: '#4da8da',
   orange: '#f4845f',
@@ -12,6 +6,14 @@ const COLORS = {
   yellow: '#ffd166',
   cream: '#fff8f0',
 };
+</script>
+
+<script setup lang="ts">
+import { TEST_IDS } from '~~/shared/test-ids';
+
+const props = defineProps<{
+  sessions: Array<{ completedAt: string }>;
+}>();
 
 const now = new Date();
 const year = now.getFullYear();

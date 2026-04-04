@@ -1,5 +1,15 @@
+<script lang="ts">
+function cleanMarkdown(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '$1') // Remove bold
+    .replace(/\*(.+?)\*/g, '$1') // Remove italic
+    .replace(/`(.+?)`/g, '$1') // Remove inline code
+    .replace(/^#+\s+/gm, ''); // Remove headers
+}
+</script>
+
 <script setup lang="ts">
-const { isStreaming = false } = defineProps<{
+const { text, isStreaming = false } = defineProps<{
   text: string;
   isStreaming?: boolean;
 }>();
@@ -14,13 +24,7 @@ watch(
   { immediate: true },
 );
 
-function cleanMarkdown(text: string): string {
-  return text
-    .replace(/\*\*(.+?)\*\*/g, '$1') // Remove bold
-    .replace(/\*(.+?)\*/g, '$1') // Remove italic
-    .replace(/`(.+?)`/g, '$1') // Remove inline code
-    .replace(/^#+\s+/gm, ''); // Remove headers
-}
+const lines = computed(() => cleanMarkdown(text).split('\n').filter(Boolean));
 </script>
 
 <template>
@@ -40,7 +44,7 @@ function cleanMarkdown(text: string): string {
     />
 
     <template #content>
-      <div v-for="(value, index) in cleanMarkdown(text).split('\n').filter(Boolean)" :key="index">
+      <div v-for="(value, index) in lines" :key="index">
         <span class="whitespace-pre-wrap text-sm text-muted font-normal">{{ value }}</span>
       </div>
     </template>

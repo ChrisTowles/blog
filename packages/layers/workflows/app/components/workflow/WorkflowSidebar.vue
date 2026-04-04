@@ -1,13 +1,16 @@
-<script setup lang="ts">
+<script lang="ts">
 import type { WorkflowNodeType } from '../../../shared/workflow-types';
-import { NODE_TYPE_DEFAULTS } from '../../../shared/workflow-types';
 
-const nodeTypes: { type: WorkflowNodeType; label: string; description: string }[] = [
+const NODE_TYPES: { type: WorkflowNodeType; label: string; description: string }[] = [
   { type: 'prompt', label: 'Prompt', description: 'Freeform LLM call → structured output' },
   { type: 'transform', label: 'Transform', description: 'Reshape/extract upstream data' },
   { type: 'classifier', label: 'Classifier', description: 'Categorize into predefined classes' },
   { type: 'validator', label: 'Validator', description: 'Check constraints, return pass/fail' },
 ];
+</script>
+
+<script setup lang="ts">
+import { NODE_TYPE_DEFAULTS } from '../../../shared/workflow-types';
 
 function onDragStart(event: DragEvent, type: WorkflowNodeType) {
   if (!event.dataTransfer) return;
@@ -26,7 +29,7 @@ function onDragStart(event: DragEvent, type: WorkflowNodeType) {
 
     <div class="p-3 space-y-2 flex-1 overflow-y-auto">
       <div
-        v-for="n in nodeTypes"
+        v-for="n in NODE_TYPES"
         :key="n.type"
         draggable="true"
         class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 cursor-grab hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors select-none"
