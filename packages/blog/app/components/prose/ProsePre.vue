@@ -2,9 +2,10 @@
 import { ShikiCachedRenderer } from 'shiki-stream/vue';
 import mermaid from 'mermaid';
 
+type ShikiHighlighter = InstanceType<typeof ShikiCachedRenderer>['$props']['highlighter'];
+
 const colorMode = useColorMode();
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- shiki version mismatch between shiki and shiki-stream
-const highlighter = (await useHighlighter()) as any;
+const highlighter = (await useHighlighter()) as unknown as ShikiHighlighter;
 const props = defineProps<{
   code: string;
   language: string;
