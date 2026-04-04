@@ -25,8 +25,7 @@ export function useSpeechRecognition(options: SpeechRecognitionOptions) {
     }>
   >([]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let recognition: any = null;
+  let recognition: SpeechRecognition | null = null;
 
   function initFeedbacks() {
     wordFeedbacks.value = options.expectedWords.value.map(() => 'pending');
@@ -95,7 +94,7 @@ export function useSpeechRecognition(options: SpeechRecognitionOptions) {
     recognition.interimResults = true;
     recognition.lang = 'en-US';
 
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       // Process only the latest final result
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
@@ -105,7 +104,7 @@ export function useSpeechRecognition(options: SpeechRecognitionOptions) {
       }
     };
 
-    recognition.onerror = (event: any) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       if (event.error !== 'no-speech' && event.error !== 'aborted') {
         log.warn('speech', `Speech recognition error: ${event.error}`);
       }
