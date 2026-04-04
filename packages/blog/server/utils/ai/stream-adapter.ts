@@ -31,12 +31,18 @@ export interface AgentAssistantMessage {
   };
 }
 
+export interface AgentToolResultPart {
+  type: 'tool_result';
+  tool_use_id: string;
+  content: string | unknown;
+}
+
 export interface AgentUserMessage {
   type: 'user';
   session_id: string;
   message: {
     role: 'user';
-    content: string | Array<{ type: 'text'; text: string }>;
+    content: string | Array<{ type: 'text'; text: string } | AgentToolResultPart>;
   };
 }
 
@@ -173,13 +179,14 @@ function processMessage(message: AgentMessage, state: StreamState): SSEEvent[] {
       // User messages with tool results - extract tool results
       if (Array.isArray(message.message.content)) {
         for (const part of message.message.content) {
-          const partObj = part as unknown as Record<string, unknown>;
-          if (partObj.type === 'tool_result' && typeof partObj.tool_use_id === 'string') {
-            const toolUseId = partObj.tool_use_id;
+          if (typeof part === 'object' && part.type === 'tool_result') {
+            const toolResult = part as AgentToolResultPart;
+            const toolUseId = toolResult.tool_use_id;
+            if (typeof toolUseId !== 'string') continue;
             const content =
-              typeof partObj.content === 'string'
-                ? partObj.content
-                : JSON.stringify(partObj.content);
+              typeof toolResult.content === 'string'
+                ? toolResult.content
+                : JSON.stringify(toolResult.content);
             // Parse the result if it's JSON
             let result: unknown;
             try {
@@ -226,8 +233,8 @@ function processMessage(message: AgentMessage, state: StreamState): SSEEvent[] {
             if (state.toolInputJson) {
               toolArgs = JSON.parse(state.toolInputJson);
             }
-          } catch {
-            // Invalid JSON, use empty args
+          } catch (e) {
+            console.warn('[stream-adapter] Failed to parse tool input JSON:', e);
           }
           events.push({
             type: 'tool_start',

@@ -371,7 +371,15 @@ export default defineEventHandler(async (event) => {
                   args: toolArgs,
                 });
 
-                const toolResult = await executeTool(currentToolName, toolArgs, { baseUrl });
+                let toolResult: unknown;
+                try {
+                  toolResult = await executeTool(currentToolName, toolArgs, { baseUrl });
+                } catch (toolError) {
+                  console.error(`Tool "${currentToolName}" execution failed:`, toolError);
+                  const errorMsg =
+                    toolError instanceof Error ? toolError.message : 'Tool execution failed';
+                  toolResult = { error: errorMsg };
+                }
                 toolResults.push({
                   type: 'tool_result',
                   tool_use_id: currentToolUseId,

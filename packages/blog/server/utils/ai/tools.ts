@@ -140,9 +140,15 @@ export async function executeTool(
       if (!query) {
         return { error: 'Query is required' };
       }
-      const results = await retrieveRAG(query, {
-        topK: 5,
-      });
+      let results;
+      try {
+        results = await retrieveRAG(query, {
+          topK: 5,
+        });
+      } catch (error) {
+        console.error('Blog search tool failed:', error);
+        return { error: 'Search is temporarily unavailable', results: [] };
+      }
       const baseUrl = options?.baseUrl || '';
       return {
         results: results.map((r) => ({

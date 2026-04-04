@@ -77,7 +77,9 @@ async function semanticSearch(
     return results.rows as Array<ChunkCandidate & { distance: number }>;
   } catch (error) {
     console.error('Semantic search failed:', error);
-    return [];
+    throw new Error(`Semantic search failed: ${error instanceof Error ? error.message : error}`, {
+      cause: error,
+    });
   }
 }
 
@@ -116,7 +118,9 @@ async function bm25Search(
     return results.rows as Array<ChunkCandidate & { rank: number }>;
   } catch (error) {
     console.error('BM25 search failed:', error);
-    return [];
+    throw new Error(`BM25 search failed: ${error instanceof Error ? error.message : error}`, {
+      cause: error,
+    });
   }
 }
 
@@ -178,13 +182,7 @@ export async function retrieveRAG(
   const candidateCount = opts.topK * opts.candidateMultiplier;
 
   // Step 1: Generate query embedding
-  let queryEmbedding: number[];
-  try {
-    queryEmbedding = await embedText(query);
-  } catch (error) {
-    console.error('Failed to generate embedding:', error);
-    return [];
-  }
+  const queryEmbedding = await embedText(query);
 
   // Step 2: Parallel semantic and BM25 search
   const [semanticResults, bm25Results] = await Promise.all([

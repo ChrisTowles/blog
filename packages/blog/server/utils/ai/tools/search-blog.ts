@@ -13,7 +13,16 @@ export const searchBlogContent = tool(
     query: z.string().describe('The search query to find relevant blog content'),
   },
   async (args) => {
-    const results = await retrieveRAG(args.query, { topK: 5 });
+    let results;
+    try {
+      results = await retrieveRAG(args.query, { topK: 5 });
+    } catch (error) {
+      console.error('Blog search tool failed:', error);
+      return toolResult({
+        error: 'Search is temporarily unavailable',
+        results: [],
+      });
+    }
 
     if (!results || results.length === 0) {
       return toolResult({
