@@ -104,5 +104,9 @@ function updateData(key: string, value: unknown) {
     </UFormGroup>
   </div>
 
-  <div v-else class="p-6 text-center text-gray-400 text-sm">Select a node to edit</div>
+  <div v-else class="p-6 flex flex-col items-center justify-center gap-3 text-center">
+    <UIcon name="i-lucide-mouse-pointer-click" class="w-8 h-8 text-gray-500" />
+    <p class="text-sm text-gray-400">Click a node on the canvas to edit its properties</p>
+    <p class="text-xs text-gray-500">Or drag a node type from the left sidebar to add one</p>
+  </div>
 </template>

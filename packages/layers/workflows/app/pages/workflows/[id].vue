@@ -77,6 +77,24 @@ const tabItems = [
 const { startRun, runStatus, isRunning, finalOutput, runError } = useWorkflowRun(workflowId);
 const { save, saveStatus } = useWorkflowAutoSave(workflowId, nodes, edges, viewport);
 
+const saveStatusClass = computed(() => {
+  const map: Record<string, string> = {
+    saving: 'text-yellow-500',
+    saved: 'text-green-500',
+    error: 'text-red-500',
+  };
+  return map[saveStatus.value] ?? 'text-gray-400';
+});
+
+const saveStatusText = computed(() => {
+  const map: Record<string, string> = {
+    saving: 'Saving…',
+    saved: 'Saved',
+    error: 'Save failed',
+  };
+  return map[saveStatus.value] ?? '';
+});
+
 watch(
   [nodes, edges],
   () => {
@@ -179,90 +197,83 @@ const nodeTypes: NodeTypesObject = {
 </script>
 
 <template>
-  <div class="flex h-screen overflow-hidden">
-    <!-- Left sidebar: node palette (editing only) -->
-    <WorkflowSidebar v-if="canEdit" />
-
-    <!-- Center: VueFlow canvas -->
-    <div class="flex-1 relative" @dragover.prevent @drop="canEdit && onDrop($event)">
-      <VueFlow
-        v-model:nodes="nodes"
-        v-model:edges="edges"
-        :node-types="nodeTypes"
-        :default-edge-options="{ type: 'smoothstep', animated: true }"
-        :nodes-draggable="canEdit"
-        :nodes-connectable="canEdit"
-        :elements-selectable="canEdit"
-        fit-view-on-init
-        class="h-full"
-        @move-end="onViewportChange"
-      >
-        <Background />
-        <Controls />
-        <MiniMap />
-      </VueFlow>
+  <div class="flex flex-col h-screen overflow-hidden">
+    <!-- Top bar: workflow name + back nav -->
+    <div
+      class="flex items-center gap-3 px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shrink-0"
+    >
+      <UButton
+        variant="ghost"
+        icon="i-lucide-arrow-left"
+        size="sm"
+        to="/workflows"
+        aria-label="Back to workflows"
+      />
+      <h1 class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
+        {{ workflow?.name }}
+      </h1>
+      <span class="text-xs ml-auto" :class="saveStatusClass">
+        {{ saveStatusText }}
+      </span>
     </div>
 
-    <!-- Right panel: tabbed editor + run panel -->
-    <div
-      class="w-96 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex flex-col"
-    >
-      <UTabs v-model="activeTab" :items="tabItems" class="flex-1 min-h-0">
-        <template #edit>
-          <template v-if="canEdit">
-            <!-- Save status -->
-            <div
-              class="px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between"
-            >
-              <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Node Editor</span>
-              <span
-                class="text-xs"
-                :class="
-                  saveStatus === 'saving'
-                    ? 'text-yellow-500'
-                    : saveStatus === 'saved'
-                      ? 'text-green-500'
-                      : saveStatus === 'error'
-                        ? 'text-red-500'
-                        : 'text-gray-400'
-                "
-              >
-                {{
-                  saveStatus === 'saving'
-                    ? 'Saving…'
-                    : saveStatus === 'saved'
-                      ? 'Saved ✓'
-                      : saveStatus === 'error'
-                        ? 'Save failed'
-                        : ''
-                }}
-              </span>
+    <div class="flex flex-1 min-h-0">
+      <!-- Left sidebar: node palette (editing only) -->
+      <WorkflowSidebar v-if="canEdit" />
+
+      <!-- Center: VueFlow canvas -->
+      <div class="flex-1 relative" @dragover.prevent @drop="canEdit && onDrop($event)">
+        <VueFlow
+          v-model:nodes="nodes"
+          v-model:edges="edges"
+          :node-types="nodeTypes"
+          :default-edge-options="{ type: 'smoothstep', animated: true }"
+          :nodes-draggable="canEdit"
+          :nodes-connectable="canEdit"
+          :elements-selectable="canEdit"
+          fit-view-on-init
+          class="h-full"
+          @move-end="onViewportChange"
+        >
+          <Background />
+          <Controls />
+          <MiniMap />
+        </VueFlow>
+      </div>
+
+      <!-- Right panel: tabbed editor + run panel -->
+      <div
+        class="w-96 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex flex-col"
+      >
+        <UTabs v-model="activeTab" :items="tabItems" class="flex-1 min-h-0">
+          <template #edit>
+            <template v-if="canEdit">
+              <WorkflowNodeEditor :node="selectedNode" @update:node="onNodeUpdated" />
+            </template>
+            <div v-else class="p-4 text-sm text-gray-500">
+              <p class="mb-2">This is a read-only template. Log in to clone and edit it.</p>
+              <WorkflowNodeEditor :node="selectedNode" :readonly="true" />
             </div>
-            <WorkflowNodeEditor :node="selectedNode" @update:node="onNodeUpdated" />
           </template>
-          <div v-else class="p-4 text-sm text-gray-500">
-            <p class="mb-2">This is a read-only template. Log in to clone and edit it.</p>
-            <WorkflowNodeEditor :node="selectedNode" :readonly="true" />
-          </div>
-        </template>
-        <template #run>
-          <WorkflowRunPanel
-            :workflow-id="workflowId"
-            :is-running="isRunning"
-            :final-output="finalOutput"
-            :run-error="runError"
-            :run-status="runStatus"
-            :nodes="nodes"
-            @run="startRun()"
-            @select-node="
-              (id: string) => {
-                selectNode(id);
-                activeTab = 'edit';
-              }
-            "
-          />
-        </template>
-      </UTabs>
+          <template #run>
+            <WorkflowRunPanel
+              :workflow-id="workflowId"
+              :is-running="isRunning"
+              :final-output="finalOutput"
+              :run-error="runError"
+              :run-status="runStatus"
+              :nodes="nodes"
+              @run="(input: Record<string, unknown>) => startRun(input)"
+              @select-node="
+                (id: string) => {
+                  selectNode(id);
+                  activeTab = 'edit';
+                }
+              "
+            />
+          </template>
+        </UTabs>
+      </div>
     </div>
   </div>
 </template>

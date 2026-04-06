@@ -12,13 +12,35 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'run'): void;
+  (e: 'run', input: Record<string, unknown>): void;
   (e: 'select-node', nodeId: string): void;
 }>();
 
 const { data: runs, refresh } = useFetch(`/api/workflows/${props.workflowId}/runs`);
 
 const expandedNodes = ref<Set<string>>(new Set());
+const inputValues = ref<Record<string, string>>({});
+
+// Detect {{input.*}} references across all node prompts
+const inputFields = computed(() => {
+  const fields = new Set<string>();
+  for (const node of props.nodes) {
+    const prompt = (node.data?.prompt as string) ?? '';
+    const matches = prompt.matchAll(/\{\{input\.(\w+)\}\}/g);
+    for (const m of matches) {
+      if (m[1]) fields.add(m[1]);
+    }
+  }
+  return Array.from(fields);
+});
+
+function handleRun() {
+  const input: Record<string, unknown> = {};
+  for (const field of inputFields.value) {
+    input[field] = inputValues.value[field] ?? '';
+  }
+  emit('run', input);
+}
 
 function toggleNode(nodeId: string) {
   const next = new Set(expandedNodes.value);
@@ -65,14 +87,28 @@ watch(
 
 <template>
   <div class="flex flex-col h-full">
-    <!-- Run button -->
-    <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+    <!-- Input fields + Run button -->
+    <div class="p-4 border-b border-gray-200 dark:border-gray-700 space-y-3">
+      <!-- Dynamic input fields based on {{input.*}} in prompts -->
+      <div v-if="inputFields.length" class="space-y-2">
+        <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500">Workflow Input</h4>
+        <div v-for="field in inputFields" :key="field">
+          <UFormGroup :label="field" size="sm">
+            <UInput
+              v-model="inputValues[field]"
+              :placeholder="`Enter ${field}…`"
+              :disabled="isRunning"
+            />
+          </UFormGroup>
+        </div>
+      </div>
+
       <UButton
         :loading="isRunning"
         :disabled="isRunning"
         icon="i-lucide-play"
         block
-        @click="emit('run')"
+        @click="handleRun"
       >
         {{ isRunning ? 'Running…' : 'Run Workflow' }}
       </UButton>
