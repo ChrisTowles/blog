@@ -21,13 +21,13 @@ const { data: runs, refresh } = useFetch(`/api/workflows/${props.workflowId}/run
 const expandedNodes = ref<Set<string>>(new Set());
 const inputValues = ref<Record<string, string>>({});
 
-// Detect {{input.*}} references across all node prompts
+const INPUT_PLACEHOLDER_RE = /\{\{input\.(\w+)\}\}/g;
+
 const inputFields = computed(() => {
   const fields = new Set<string>();
   for (const node of props.nodes) {
     const prompt = (node.data?.prompt as string) ?? '';
-    const matches = prompt.matchAll(/\{\{input\.(\w+)\}\}/g);
-    for (const m of matches) {
+    for (const m of prompt.matchAll(INPUT_PLACEHOLDER_RE)) {
       if (m[1]) fields.add(m[1]);
     }
   }
