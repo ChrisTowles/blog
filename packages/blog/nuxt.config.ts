@@ -80,6 +80,12 @@ export default defineNuxtConfig({
   runtimeConfig: {
     anthropicApiKey: process.env.ANTHROPIC_API_KEY!,
     awsRegion: process.env.AWS_REGION || 'us-east-1',
+    oauth: {
+      google: {
+        clientId: '',
+        clientSecret: '',
+      },
+    },
     public: {
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://chris.towles.dev',
       model_fast: MODEL_HAIKU,
