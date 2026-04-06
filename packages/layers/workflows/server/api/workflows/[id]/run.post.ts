@@ -11,7 +11,7 @@ const bodySchema = z.object({
 export default defineEventHandler(async (event) => {
   const { id } = await getValidatedRouterParams(event, z.object({ id: z.string() }).parse);
   const { input } = await readValidatedBody(event, bodySchema.parse);
-  await requireWorkflowOwner(event, id);
+  await requireWorkflowOrTemplate(event, id);
   const db = useDrizzle();
 
   const [run] = await db

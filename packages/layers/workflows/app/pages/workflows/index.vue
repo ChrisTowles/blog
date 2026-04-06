@@ -2,8 +2,9 @@
 import { log } from 'evlog';
 import { workflowListResponseSchema } from '../../../shared/workflow-schemas';
 
-definePageMeta({ middleware: 'auth' });
 useSeoMeta({ title: 'Workflows' });
+
+const { loggedIn } = useUserSession();
 
 const { data: workflows, refresh } = await useFetch('/api/workflows', {
   transform: (raw) => {
@@ -78,7 +79,7 @@ const userWorkflows = computed(() => workflows.value?.filter((w) => !w.isTemplat
       <UPageHeader title="Workflows" description="Visual AI prompt chains" />
     </div>
 
-    <form class="flex gap-2 mb-8" @submit.prevent="createWorkflow">
+    <form v-if="loggedIn" class="flex gap-2 mb-8" @submit.prevent="createWorkflow">
       <UInput
         v-model="newName"
         placeholder="New workflow name…"
@@ -116,18 +117,30 @@ const userWorkflows = computed(() => workflows.value?.filter((w) => !w.isTemplat
           :key="w.id"
           :title="w.name"
           :description="w.description ?? 'No description'"
+          :to="`/workflows/${w.id}`"
         >
           <template #footer>
             <div class="flex items-center justify-between">
               <UBadge variant="subtle" color="info" size="xs">Template</UBadge>
               <UButton
+                v-if="loggedIn"
                 size="xs"
                 variant="outline"
                 icon="i-lucide-copy"
                 :loading="cloning === w.id"
-                @click="cloneWorkflow(w.id)"
+                @click.prevent="cloneWorkflow(w.id)"
               >
                 Use Template
+              </UButton>
+              <UButton
+                v-else
+                size="xs"
+                variant="outline"
+                icon="i-lucide-play"
+                :to="`/workflows/${w.id}?tab=run`"
+                @click.stop
+              >
+                Try It
               </UButton>
             </div>
           </template>

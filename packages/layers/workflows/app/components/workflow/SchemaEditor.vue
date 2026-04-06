@@ -3,6 +3,7 @@ import type { SchemaField } from '../../../shared/workflow-types';
 
 const props = defineProps<{
   schema: Record<string, unknown>;
+  readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -123,7 +124,7 @@ function onRawBlur() {
     </div>
 
     <!-- Visual field editor -->
-    <div v-else class="space-y-2">
+    <fieldset v-else class="space-y-2" :disabled="readonly">
       <div
         v-for="(field, i) in fields"
         :key="field.name || i"
@@ -133,6 +134,7 @@ function onRawBlur() {
           <UInput v-model="field.name" placeholder="fieldName" size="xs" class="flex-1 font-mono" />
           <USelect v-model="field.type" :options="TYPE_OPTIONS" size="xs" class="w-28" />
           <UButton
+            v-if="!readonly"
             size="xs"
             color="error"
             variant="ghost"
@@ -155,9 +157,16 @@ function onRawBlur() {
         </div>
       </div>
 
-      <UButton size="xs" variant="outline" icon="i-lucide-plus" block @click="addField">
+      <UButton
+        v-if="!readonly"
+        size="xs"
+        variant="outline"
+        icon="i-lucide-plus"
+        block
+        @click="addField"
+      >
         Add field
       </UButton>
-    </div>
+    </fieldset>
   </div>
 </template>

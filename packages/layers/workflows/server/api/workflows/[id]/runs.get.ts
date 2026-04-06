@@ -7,7 +7,7 @@ defineRouteMeta({
 
 export default defineEventHandler(async (event) => {
   const { id } = await getValidatedRouterParams(event, z.object({ id: z.string() }).parse);
-  await requireWorkflowOwner(event, id);
+  await requireWorkflowOrTemplate(event, id);
   const db = useDrizzle();
 
   const runs = await db

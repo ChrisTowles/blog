@@ -14,7 +14,7 @@ import {
   workflowEditorQuerySchema,
 } from '../../../shared/workflow-schemas';
 
-definePageMeta({ middleware: 'auth' });
+const { loggedIn } = useUserSession();
 
 const route = useRoute();
 const router = useRouter();
@@ -43,6 +43,9 @@ if (!workflow.value) {
 }
 
 useSeoMeta({ title: workflow.value.name });
+
+const isTemplate = Boolean(workflow.value.isTemplate);
+const canEdit = loggedIn.value && !isTemplate;
 
 const nodes = shallowRef<Node[]>((workflow.value.nodes ?? []) as Node[]);
 const edges = shallowRef<Edge[]>((workflow.value.edges ?? []) as Edge[]);
@@ -77,7 +80,7 @@ const { save, saveStatus } = useWorkflowAutoSave(workflowId, nodes, edges, viewp
 watch(
   [nodes, edges],
   () => {
-    if (!isRunning.value) save();
+    if (!isRunning.value && canEdit) save();
   },
   { deep: true },
 );
@@ -92,7 +95,7 @@ onNodeClick(({ node }) => {
 
 function onViewportChange({ flowTransform }: { event: unknown; flowTransform: ViewportTransform }) {
   viewport.value = flowTransform;
-  save();
+  if (canEdit) save();
 }
 
 function onNodeUpdated(updatedNode: Node) {
@@ -177,16 +180,19 @@ const nodeTypes: NodeTypesObject = {
 
 <template>
   <div class="flex h-screen overflow-hidden">
-    <!-- Left sidebar: node palette -->
-    <WorkflowSidebar />
+    <!-- Left sidebar: node palette (editing only) -->
+    <WorkflowSidebar v-if="canEdit" />
 
     <!-- Center: VueFlow canvas -->
-    <div class="flex-1 relative" @dragover.prevent @drop="onDrop">
+    <div class="flex-1 relative" @dragover.prevent @drop="canEdit && onDrop($event)">
       <VueFlow
         v-model:nodes="nodes"
         v-model:edges="edges"
         :node-types="nodeTypes"
         :default-edge-options="{ type: 'smoothstep', animated: true }"
+        :nodes-draggable="canEdit"
+        :nodes-connectable="canEdit"
+        :elements-selectable="canEdit"
         fit-view-on-init
         class="h-full"
         @move-end="onViewportChange"
@@ -203,35 +209,41 @@ const nodeTypes: NodeTypesObject = {
     >
       <UTabs v-model="activeTab" :items="tabItems" class="flex-1 min-h-0">
         <template #edit>
-          <!-- Save status -->
-          <div
-            class="px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between"
-          >
-            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Node Editor</span>
-            <span
-              class="text-xs"
-              :class="
-                saveStatus === 'saving'
-                  ? 'text-yellow-500'
-                  : saveStatus === 'saved'
-                    ? 'text-green-500'
-                    : saveStatus === 'error'
-                      ? 'text-red-500'
-                      : 'text-gray-400'
-              "
+          <template v-if="canEdit">
+            <!-- Save status -->
+            <div
+              class="px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between"
             >
-              {{
-                saveStatus === 'saving'
-                  ? 'Saving…'
-                  : saveStatus === 'saved'
-                    ? 'Saved ✓'
-                    : saveStatus === 'error'
-                      ? 'Save failed'
-                      : ''
-              }}
-            </span>
+              <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Node Editor</span>
+              <span
+                class="text-xs"
+                :class="
+                  saveStatus === 'saving'
+                    ? 'text-yellow-500'
+                    : saveStatus === 'saved'
+                      ? 'text-green-500'
+                      : saveStatus === 'error'
+                        ? 'text-red-500'
+                        : 'text-gray-400'
+                "
+              >
+                {{
+                  saveStatus === 'saving'
+                    ? 'Saving…'
+                    : saveStatus === 'saved'
+                      ? 'Saved ✓'
+                      : saveStatus === 'error'
+                        ? 'Save failed'
+                        : ''
+                }}
+              </span>
+            </div>
+            <WorkflowNodeEditor :node="selectedNode" @update:node="onNodeUpdated" />
+          </template>
+          <div v-else class="p-4 text-sm text-gray-500">
+            <p class="mb-2">This is a read-only template. Log in to clone and edit it.</p>
+            <WorkflowNodeEditor :node="selectedNode" :readonly="true" />
           </div>
-          <WorkflowNodeEditor :node="selectedNode" @update:node="onNodeUpdated" />
         </template>
         <template #run>
           <WorkflowRunPanel
