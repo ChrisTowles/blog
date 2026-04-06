@@ -238,6 +238,16 @@ const nodeTypes: NodeTypesObject = {
         Read-only — <NuxtLink to="/login" class="underline">sign in</NuxtLink> to clone &amp; edit
       </UBadge>
       <UBadge v-else-if="isTemplate" variant="subtle" color="info" size="xs">Template</UBadge>
+      <UButton
+        v-if="isTemplate && loggedIn"
+        size="xs"
+        variant="soft"
+        icon="i-lucide-copy"
+        :loading="cloning"
+        @click="cloneWorkflow"
+      >
+        Clone & Edit
+      </UButton>
       <span v-if="canEdit" class="text-xs ml-auto" :class="saveStatusDisplay.class">
         {{ saveStatusDisplay.text }}
       </span>

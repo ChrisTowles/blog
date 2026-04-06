@@ -7,7 +7,11 @@ defineRouteMeta({
 
 export default defineEventHandler(async (event) => {
   const { id } = await getValidatedRouterParams(event, z.object({ id: z.string() }).parse);
-  const source = await requireWorkflowOwner(event, id);
+  const source = await requireWorkflowOrTemplate(event, id);
+  const session = await getUserSession(event);
+  if (!session.user) {
+    throw createError({ statusCode: 401, message: 'Unauthorized' });
+  }
   const db = useDrizzle();
 
   // Load source nodes and edges
@@ -22,7 +26,7 @@ export default defineEventHandler(async (event) => {
     .values({
       name: `${source.name} (copy)`,
       description: source.description,
-      ownerId: source.ownerId,
+      ownerId: session.user.id,
       isPublished: 0,
       viewport: source.viewport,
     })
