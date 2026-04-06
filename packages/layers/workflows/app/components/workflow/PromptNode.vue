@@ -46,6 +46,14 @@ const outputPreview = computed(() => {
   return str.length > 120 ? str.slice(0, 120) + '…' : str;
 });
 
+const modelShortName = computed(() => {
+  const model = props.data?.model ?? '';
+  if (model.includes('haiku')) return 'haiku';
+  if (model.includes('sonnet')) return 'sonnet';
+  if (model.includes('opus')) return 'opus';
+  return model.split('-').slice(0, 2).join(' ');
+});
+
 const accentColorClass = computed(() => {
   const map: Record<string, string> = {
     blue: 'bg-blue-500',
@@ -69,7 +77,7 @@ const accentColorClass = computed(() => {
       <span class="flex-1 truncate text-sm font-semibold text-white">{{
         data?.label || type
       }}</span>
-      <span class="text-xs text-white/70 font-mono">{{ data?.model?.split('-')[1] ?? '' }}</span>
+      <span class="text-xs text-white/70 font-mono">{{ modelShortName }}</span>
     </div>
 
     <div class="px-3 py-2 space-y-1.5">
@@ -99,7 +107,7 @@ const accentColorClass = computed(() => {
     <div v-if="runStatus?.status === 'completed'" class="px-3 pb-2 space-y-1">
       <div class="text-xs text-gray-400 flex gap-2">
         <span>{{ runStatus.tokensIn }}+{{ runStatus.tokensOut }} tok</span>
-        <span>{{ (runStatus.latencyMs ?? 0) / 1000 }}s</span>
+        <span>{{ ((runStatus.latencyMs ?? 0) / 1000).toFixed(1) }}s</span>
       </div>
       <div
         v-if="outputPreview"
