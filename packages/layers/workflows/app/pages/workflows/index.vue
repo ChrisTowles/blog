@@ -19,19 +19,7 @@ const { data: workflows, refresh } = await useFetch('/api/workflows', {
 
 const newName = ref('');
 const creating = ref(false);
-const seeding = ref(false);
 const cloning = ref<string | null>(null);
-
-async function seedExamples() {
-  if (seeding.value) return;
-  seeding.value = true;
-  try {
-    await $fetch('/api/workflows/seed', { method: 'POST' });
-    await refresh();
-  } finally {
-    seeding.value = false;
-  }
-}
 
 async function createWorkflow() {
   const name = newName.value.trim();
@@ -97,15 +85,6 @@ const userWorkflows = computed(() => workflows.value?.filter((w) => !w.isTemplat
       >
         Create
       </UButton>
-      <UButton
-        variant="outline"
-        icon="i-lucide-download"
-        size="lg"
-        :loading="seeding"
-        @click="seedExamples"
-      >
-        Load Examples
-      </UButton>
     </form>
 
     <!-- Templates section -->
@@ -117,30 +96,28 @@ const userWorkflows = computed(() => workflows.value?.filter((w) => !w.isTemplat
           :key="w.id"
           :title="w.name"
           :description="w.description ?? 'No description'"
-          :to="`/workflows/${w.id}`"
         >
           <template #footer>
-            <div class="flex items-center justify-between">
-              <UBadge variant="subtle" color="info" size="xs">Template</UBadge>
+            <div class="flex items-center gap-2">
               <UButton
                 v-if="loggedIn"
                 size="xs"
-                variant="outline"
+                variant="soft"
+                color="primary"
                 icon="i-lucide-copy"
                 :loading="cloning === w.id"
-                @click.prevent="cloneWorkflow(w.id)"
+                @click="cloneWorkflow(w.id)"
               >
-                Use Template
+                Clone
               </UButton>
               <UButton
-                v-else
                 size="xs"
-                variant="outline"
+                variant="soft"
+                color="success"
                 icon="i-lucide-play"
                 :to="`/workflows/${w.id}?tab=run`"
-                @click.stop
               >
-                Try It
+                Run
               </UButton>
             </div>
           </template>
@@ -172,7 +149,7 @@ const userWorkflows = computed(() => workflows.value?.filter((w) => !w.isTemplat
                 color="error"
                 variant="ghost"
                 icon="i-lucide-trash-2"
-                @click.prevent="deleteWorkflow(w.id)"
+                @click.stop.prevent="deleteWorkflow(w.id)"
               />
             </div>
           </template>
@@ -181,7 +158,13 @@ const userWorkflows = computed(() => workflows.value?.filter((w) => !w.isTemplat
     </div>
 
     <div v-if="!templates.length && !userWorkflows.length" class="text-center py-16 text-gray-500">
-      No workflows yet. Type a name above or load examples to get started.
+      <template v-if="loggedIn">
+        <p>No workflows yet. Create one above to get started.</p>
+      </template>
+      <template v-else>
+        <p class="mb-3">Sign in to create and manage your own workflows.</p>
+        <UButton to="/login" icon="i-lucide-log-in" variant="outline">Sign in</UButton>
+      </template>
     </div>
   </UContainer>
 </template>

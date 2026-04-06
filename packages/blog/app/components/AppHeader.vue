@@ -19,11 +19,11 @@ const items = computed(() => [
     'data-testid': TEST_IDS.NAVIGATION.BLOG_LINK,
   },
   {
-    label: 'Apps',
-    to: '/apps',
-    icon: 'i-heroicons-device-phone-mobile',
-    active: route.path.startsWith('/apps'),
-    'data-testid': TEST_IDS.NAVIGATION.APPS_LINK,
+    label: 'Workflows',
+    to: '/workflows',
+    icon: 'i-lucide-workflow',
+    active: route.path.startsWith('/workflows'),
+    'data-testid': TEST_IDS.NAVIGATION.WORKFLOWS_LINK,
   },
   {
     label: 'Search',

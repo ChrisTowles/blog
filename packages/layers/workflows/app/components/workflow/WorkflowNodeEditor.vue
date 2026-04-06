@@ -2,6 +2,7 @@
 import type { Node } from '@vue-flow/core';
 import type { WorkflowNodeType } from '../../../shared/workflow-types';
 import { NODE_TYPE_DEFAULTS } from '../../../shared/workflow-types';
+import { MODEL_HAIKU, MODEL_SONNET, MODEL_OPUS } from '~~/shared/models';
 
 const props = defineProps<{
   node: Node | null;
@@ -10,12 +11,13 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:node', node: Node): void;
+  (e: 'delete-node', nodeId: string): void;
 }>();
 
 const MODELS = [
-  { label: 'Claude Sonnet 4', value: 'claude-sonnet-4-20250514' },
-  { label: 'Claude Haiku 4.5', value: 'claude-haiku-4-5-20251001' },
-  { label: 'Claude Opus 4', value: 'claude-opus-4-20250514' },
+  { label: 'Haiku', value: MODEL_HAIKU },
+  { label: 'Sonnet', value: MODEL_SONNET },
+  { label: 'Opus', value: MODEL_OPUS },
 ];
 
 function updateData(key: string, value: unknown) {
@@ -33,9 +35,17 @@ function updateData(key: string, value: unknown) {
       <span class="text-lg">{{
         NODE_TYPE_DEFAULTS[node.type as WorkflowNodeType]?.icon ?? '⚡'
       }}</span>
-      <h3 class="font-semibold text-gray-800 dark:text-gray-200 capitalize">
+      <h3 class="flex-1 font-semibold text-gray-800 dark:text-gray-200 capitalize">
         {{ node.type }} Node
       </h3>
+      <UButton
+        v-if="!readonly"
+        color="error"
+        variant="ghost"
+        icon="i-lucide-trash-2"
+        size="xs"
+        @click="emit('delete-node', node.id)"
+      />
     </div>
 
     <UFormGroup label="Label">

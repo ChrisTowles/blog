@@ -197,6 +197,9 @@ DB test helpers in `server/test-utils/db-helper.ts`: `cleanupDatabase()`, `creat
 - **MDC slots parse as markdown** — code in `::component` body loses indentation and `[x]` becomes links. Use `code` prop with `\n` escapes for code content.
 - **Nuxt auto-imports don't work in Vitest** — test files need explicit imports (`import { chatTools } from './tools'`).
 - **Vue ref unwrapping** — nested refs in objects returned from composables are NOT auto-unwrapped in templates. Destructure to top-level: `const { status, code } = useMyComposable()`.
+- **Vue emit naming** — don't use colon-prefixed custom event names (`delete:node`). The `update:xxx` pattern is reserved for v-model; other colon events silently fail. Use kebab-case instead: `delete-node`.
+- **URL query race conditions** — never have multiple independent `router.replace({ query: { ...route.query, key: val } })` calls on the same page. If two fire close together, the second uses a stale `route.query` snapshot and overwrites the first. Instead, create a single `updateQuery(updates)` helper that merges into the current query atomically, and use it everywhere on the page.
+- **UTabs slot rendering** — Nuxt UI's `UTabs` may render all slot content regardless of the active tab (CSS-based show/hide). Don't rely on UTabs to conditionally render content. For panels where only the active tab's content should be mounted, use plain `v-if`/`v-else-if` with manual tab buttons instead.
 - **Auth pattern** — every AI-calling route must call `await getUserSession(event)` at the top of the handler.
 - **Syntax highlighting** — use `useHighlighter()` composable with `material-theme-palenight` theme (Shiki).
 - **Shiki in custom components** — use `ShikiCachedRenderer` from `shiki-stream/vue` with `await useHighlighter()`. See `ChatCodeExecution.vue` and `ProsePre.vue` for the pattern.

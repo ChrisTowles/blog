@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MODEL_HAIKU } from '~~/shared/models';
 
 const bodySchema = z.object({
   prompt: z.string().min(1).max(200),
@@ -24,7 +25,7 @@ export default defineEventHandler(async (event) => {
 
   const client = getAnthropicClient();
   const response = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: MODEL_HAIKU,
     max_tokens: 256,
     messages: [
       {

@@ -6,7 +6,7 @@ import { TEST_IDS } from '~~/shared/test-ids';
 const route = useRoute();
 const toast = useToast();
 const overlay = useOverlay();
-const appConfig = useAppConfig();
+const appConfig = useAppConfig() as { author: { name: string; github: string } };
 const { loggedIn } = useUserSession();
 
 const open = ref(false);

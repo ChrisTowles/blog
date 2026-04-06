@@ -21,7 +21,7 @@ describe('useModels', () => {
   it('should return available models from runtime config', () => {
     const { models } = useModels();
 
-    expect(models).toEqual(['claude-sonnet-4-5', 'claude-haiku-4-5']);
+    expect(models).toEqual(['claude-sonnet-4-6', 'claude-haiku-4-5']);
   });
 });
 
@@ -34,7 +34,7 @@ describe('useModels - when invalid cookie', () => {
   it('should force user to valid model', () => {
     const modelConfig = useModels();
 
-    expect(modelConfig.models).toEqual(['claude-sonnet-4-5', 'claude-haiku-4-5']);
+    expect(modelConfig.models).toEqual(['claude-sonnet-4-6', 'claude-haiku-4-5']);
     expect(modelConfig.model.value).toBe('claude-haiku-4-5');
   });
 });

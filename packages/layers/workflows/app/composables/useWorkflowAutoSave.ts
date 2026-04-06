@@ -7,6 +7,7 @@ export function useWorkflowAutoSave(
   nodes: Ref<Node[]>,
   edges: Ref<Edge[]>,
   viewport: Ref<{ x: number; y: number; zoom: number }>,
+  name?: Ref<string>,
 ) {
   const saveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
@@ -24,6 +25,7 @@ export function useWorkflowAutoSave(
       await $fetch(`/api/workflows/${workflowId}`, {
         method: 'PUT',
         body: {
+          ...(name ? { name: name.value } : {}),
           nodes: nodes.value,
           edges: edges.value,
           viewport: viewport.value,

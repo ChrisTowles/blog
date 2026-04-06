@@ -37,6 +37,7 @@ const vueFlowEdgeSchema = z.object({
 });
 
 const saveSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
   nodes: z.array(vueFlowNodeSchema),
   edges: z.array(vueFlowEdgeSchema),
   viewport: z.object({ x: z.number(), y: z.number(), zoom: z.number() }).optional(),
@@ -44,7 +45,7 @@ const saveSchema = z.object({
 
 export default defineEventHandler(async (event) => {
   const { id } = await getValidatedRouterParams(event, z.object({ id: z.string() }).parse);
-  const { nodes, edges, viewport } = await readValidatedBody(event, saveSchema.parse);
+  const { name, nodes, edges, viewport } = await readValidatedBody(event, saveSchema.parse);
   const workflow = await requireWorkflowOwner(event, id);
   if (workflow.isPublished) {
     throw createError({ statusCode: 403, message: 'Cannot edit a template workflow' });
@@ -57,6 +58,9 @@ export default defineEventHandler(async (event) => {
       updatedAt: new Date().toISOString(),
       version: sql`version + 1`,
     };
+    if (name !== undefined) {
+      updates.name = name;
+    }
     if (viewport !== undefined) {
       updates.viewport = JSON.stringify(viewport);
     }

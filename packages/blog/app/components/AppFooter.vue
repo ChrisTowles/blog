@@ -1,5 +1,7 @@
 <script setup lang="ts">
-const appConfig = useAppConfig();
+const appConfig = useAppConfig() as {
+  author: { github: string; twitter: string; bluesky: string };
+};
 
 const columns = [
   {

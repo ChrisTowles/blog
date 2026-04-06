@@ -51,31 +51,38 @@ const nodes = shallowRef<Node[]>((workflow.value.nodes ?? []) as Node[]);
 const edges = shallowRef<Edge[]>((workflow.value.edges ?? []) as Edge[]);
 
 const config = useRuntimeConfig();
-const { setViewport, project, addNodes, onNodeClick } = useVueFlow();
+const { setViewport, project, addNodes, onNodeClick, onConnect, addEdges } = useVueFlow();
+
+onConnect((params) => {
+  addEdges([params]);
+});
+
+// --- UI state: local refs, initialized from URL, synced back as side effect ---
+const selectedNodeId = ref<string | null>((route.query.node as string) ?? null);
+const activeTab = ref(route.query.tab === 'run' ? 'run' : 'edit');
 
 const selectedNode = computed((): Node | null => {
-  const nodeId = route.query.node as string | undefined;
-  return nodeId ? (nodes.value.find((n: Node) => n.id === nodeId) ?? null) : null;
+  return selectedNodeId.value
+    ? (nodes.value.find((n: Node) => n.id === selectedNodeId.value) ?? null)
+    : null;
 });
+
 const viewport = ref<{ x: number; y: number; zoom: number }>(
   workflow.value?.viewport ?? { x: 0, y: 0, zoom: 1 },
 );
 
-// URL-driven active tab (edit | run)
-const activeTab = computed({
-  get: () => (route.query.tab === 'run' ? 'run' : 'edit'),
-  set: (val: string | number) => {
-    router.replace({ query: { ...route.query, tab: val === 'run' ? 'run' : undefined } });
-  },
+// Single watcher syncs all UI state to URL
+watch([selectedNodeId, activeTab], ([nodeId, tab]) => {
+  const query: Record<string, string> = {};
+  if (nodeId) query.node = nodeId;
+  if (tab === 'run') query.tab = 'run';
+  router.replace({ query });
 });
 
-const tabItems = [
-  { label: 'Edit', slot: 'edit', value: 'edit' },
-  { label: 'Run', slot: 'run', value: 'run' },
-];
+const workflowName = ref(workflow.value!.name);
 
 const { startRun, runStatus, isRunning, finalOutput, runError } = useWorkflowRun(workflowId);
-const { save, saveStatus } = useWorkflowAutoSave(workflowId, nodes, edges, viewport);
+const { save, saveStatus } = useWorkflowAutoSave(workflowId, nodes, edges, viewport, workflowName);
 
 const saveStatusClass = computed(() => {
   const map: Record<string, string> = {
@@ -96,19 +103,35 @@ const saveStatusText = computed(() => {
 });
 
 watch(
-  [nodes, edges],
+  [nodes, edges, workflowName],
   () => {
     if (!isRunning.value && canEdit) save();
   },
   { deep: true },
 );
 
+const cloning = ref(false);
+
+async function cloneWorkflow() {
+  if (cloning.value) return;
+  cloning.value = true;
+  try {
+    const { id } = await $fetch<{ id: string }>(`/api/workflows/${workflowId}/clone`, {
+      method: 'POST',
+    });
+    await navigateTo(`/workflows/${id}`);
+  } finally {
+    cloning.value = false;
+  }
+}
+
 function selectNode(nodeId: string | null) {
-  router.replace({ query: { ...route.query, node: nodeId || undefined } });
+  selectedNodeId.value = nodeId;
 }
 
 onNodeClick(({ node }) => {
   selectNode(node.id);
+  activeTab.value = 'edit';
 });
 
 function onViewportChange({ flowTransform }: { event: unknown; flowTransform: ViewportTransform }) {
@@ -117,10 +140,13 @@ function onViewportChange({ flowTransform }: { event: unknown; flowTransform: Vi
 }
 
 function onNodeUpdated(updatedNode: Node) {
-  const idx = nodes.value.findIndex((n) => n.id === updatedNode.id);
-  if (idx !== -1) {
-    nodes.value[idx] = updatedNode;
-  }
+  nodes.value = nodes.value.map((n) => (n.id === updatedNode.id ? updatedNode : n));
+}
+
+function onNodeDeleted(nodeId: string) {
+  nodes.value = nodes.value.filter((n) => n.id !== nodeId);
+  edges.value = edges.value.filter((e) => e.source !== nodeId && e.target !== nodeId);
+  selectNode(null);
 }
 
 // Update __runStatus on existing node objects in-place to avoid VueFlow re-render
@@ -177,7 +203,7 @@ function onDrop(event: DragEvent) {
       data: {
         label: `${type.charAt(0).toUpperCase() + type.slice(1)} Node`,
         prompt: '',
-        model: config.public.model as string,
+        model: config.public.model_fast as string,
         temperature: defaults.temperature,
         maxTokens: defaults.maxTokens,
         outputSchema: { type: 'object', properties: {}, required: [] },
@@ -209,10 +235,19 @@ const nodeTypes: NodeTypesObject = {
         to="/workflows"
         aria-label="Back to workflows"
       />
-      <h1 class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
+      <input
+        v-if="canEdit"
+        v-model="workflowName"
+        class="text-sm font-semibold text-gray-800 dark:text-gray-200 bg-transparent border-none outline-none truncate min-w-0 flex-1 focus:ring-1 focus:ring-primary-500 rounded px-1 -mx-1"
+      />
+      <h1 v-else class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
         {{ workflow?.name }}
       </h1>
-      <span class="text-xs ml-auto" :class="saveStatusClass">
+      <UBadge v-if="isTemplate && !loggedIn" variant="subtle" color="warning" size="xs">
+        Read-only — <NuxtLink to="/login" class="underline">sign in</NuxtLink> to clone &amp; edit
+      </UBadge>
+      <UBadge v-else-if="isTemplate" variant="subtle" color="info" size="xs">Template</UBadge>
+      <span v-if="canEdit" class="text-xs ml-auto" :class="saveStatusClass">
         {{ saveStatusText }}
       </span>
     </div>
@@ -241,21 +276,60 @@ const nodeTypes: NodeTypesObject = {
         </VueFlow>
       </div>
 
-      <!-- Right panel: tabbed editor + run panel -->
+      <!-- Right panel: tab bar + content -->
       <div
         class="w-96 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex flex-col"
       >
-        <UTabs v-model="activeTab" :items="tabItems" class="flex-1 min-h-0">
-          <template #edit>
+        <!-- Tab bar -->
+        <div class="flex border-b border-gray-200 dark:border-gray-700 shrink-0">
+          <button
+            class="flex-1 px-4 py-2 text-sm font-medium transition-colors"
+            :class="
+              activeTab === 'edit'
+                ? 'text-primary-500 border-b-2 border-primary-500'
+                : 'text-gray-400 hover:text-gray-300'
+            "
+            @click="activeTab = 'edit'"
+          >
+            Edit
+          </button>
+          <button
+            class="flex-1 px-4 py-2 text-sm font-medium transition-colors"
+            :class="
+              activeTab === 'run'
+                ? 'text-primary-500 border-b-2 border-primary-500'
+                : 'text-gray-400 hover:text-gray-300'
+            "
+            @click="activeTab = 'run'"
+          >
+            Run
+          </button>
+        </div>
+
+        <!-- Tab content -->
+        <div class="flex-1 min-h-0 overflow-y-auto">
+          <div v-if="activeTab === 'edit'">
             <template v-if="canEdit">
-              <WorkflowNodeEditor :node="selectedNode" @update:node="onNodeUpdated" />
+              <WorkflowNodeEditor
+                :node="selectedNode"
+                @update:node="onNodeUpdated"
+                @delete-node="onNodeDeleted"
+              />
             </template>
-            <div v-else class="p-4 text-sm text-gray-500">
-              <p class="mb-2">This is a read-only template. Log in to clone and edit it.</p>
+            <div v-else>
+              <div
+                class="px-4 py-3 bg-yellow-500/10 border-b border-yellow-500/20 text-sm text-yellow-600 dark:text-yellow-400 flex items-center gap-2"
+              >
+                <UIcon name="i-lucide-lock" class="w-4 h-4 shrink-0" />
+                <span>Read-only template.</span>
+                <UButton v-if="!loggedIn" to="/login" size="xs" variant="link" class="ml-auto"
+                  >Sign in to edit</UButton
+                >
+              </div>
               <WorkflowNodeEditor :node="selectedNode" :readonly="true" />
             </div>
-          </template>
-          <template #run>
+          </div>
+          <div v-else-if="activeTab === 'run'">
             <WorkflowRunPanel
               :workflow-id="workflowId"
               :is-running="isRunning"
@@ -271,8 +345,8 @@ const nodeTypes: NodeTypesObject = {
                 }
               "
             />
-          </template>
-        </UTabs>
+          </div>
+        </div>
       </div>
     </div>
   </div>
