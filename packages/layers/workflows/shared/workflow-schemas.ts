@@ -65,6 +65,7 @@ export const workflowDetailResponseSchema = z.object({
   description: z.string().nullable(),
   viewport: viewportSchema,
   version: z.number(),
+  isTemplate: z.number(),
   nodes: z.array(workflowNodeSchema),
   edges: z.array(workflowEdgeSchema),
 });

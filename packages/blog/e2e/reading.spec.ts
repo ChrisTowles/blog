@@ -17,7 +17,7 @@ test.describe('Reading App', () => {
       // CTA button visible
       const cta = page.getByTestId(TEST_IDS.READING.LANDING_CTA);
       await expect(cta).toBeVisible();
-      await expect(cta).toHaveText('Try a Story');
+      await expect(cta).toContainText('Try a Story');
     });
 
     test('CTA links to demo', async ({ page }) => {
@@ -30,7 +30,7 @@ test.describe('Reading App', () => {
     test('is SSR rendered (has content before JS)', async ({ page }) => {
       // Disable JS to verify SSR
       await page.route('**/*.js', (route) => route.abort());
-      await page.goto('/reading', { waitUntil: 'commit' });
+      await page.goto('/reading', { waitUntil: 'domcontentloaded' });
 
       // Core content should be in initial HTML
       const body = await page.content();

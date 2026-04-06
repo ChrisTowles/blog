@@ -1,16 +1,21 @@
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, or } from 'drizzle-orm';
 
 defineRouteMeta({
-  openAPI: { description: 'List workflows owned by the current user', tags: ['workflows'] },
+  openAPI: {
+    description: 'List templates (public) and user-owned workflows (authenticated)',
+    tags: ['workflows'],
+  },
 });
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event);
-  if (!session.user) {
-    throw createError({ statusCode: 401, message: 'Unauthorized' });
+  const db = useDrizzle();
+
+  const conditions = [eq(tables.workflows.isPublished, 1)];
+  if (session.user) {
+    conditions.push(eq(tables.workflows.ownerId, session.user.id));
   }
 
-  const db = useDrizzle();
   const rows = await db
     .select({
       id: tables.workflows.id,
@@ -21,7 +26,7 @@ export default defineEventHandler(async (event) => {
       updatedAt: tables.workflows.updatedAt,
     })
     .from(tables.workflows)
-    .where(eq(tables.workflows.ownerId, session.user.id))
+    .where(or(...conditions))
     .orderBy(desc(tables.workflows.updatedAt));
 
   return rows;

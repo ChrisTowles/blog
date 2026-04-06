@@ -5,6 +5,7 @@ import { NODE_TYPE_DEFAULTS } from '../../../shared/workflow-types';
 
 const props = defineProps<{
   node: Node | null;
+  readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -40,12 +41,18 @@ function updateData(key: string, value: unknown) {
     <UFormGroup label="Label">
       <UInput
         :value="node.data.label"
+        :disabled="readonly"
         @input="updateData('label', ($event.target as HTMLInputElement).value)"
       />
     </UFormGroup>
 
     <UFormGroup label="Model">
-      <USelect :value="node.data.model" :options="MODELS" @change="updateData('model', $event)" />
+      <USelect
+        :value="node.data.model"
+        :options="MODELS"
+        :disabled="readonly"
+        @change="updateData('model', $event)"
+      />
     </UFormGroup>
 
     <div class="grid grid-cols-2 gap-3">
@@ -56,6 +63,7 @@ function updateData(key: string, value: unknown) {
           :min="0"
           :max="2"
           :step="0.1"
+          :disabled="readonly"
           @input="updateData('temperature', parseFloat(($event.target as HTMLInputElement).value))"
         />
       </UFormGroup>
@@ -65,6 +73,7 @@ function updateData(key: string, value: unknown) {
           :value="node.data.maxTokens"
           :min="1"
           :max="8192"
+          :disabled="readonly"
           @input="updateData('maxTokens', parseInt(($event.target as HTMLInputElement).value))"
         />
       </UFormGroup>
@@ -76,6 +85,7 @@ function updateData(key: string, value: unknown) {
         :rows="6"
         placeholder="What is {{input.query}}?"
         class="font-mono text-sm"
+        :disabled="readonly"
         @input="updateData('prompt', ($event.target as HTMLTextAreaElement).value)"
       />
       <template #hint>
@@ -88,6 +98,7 @@ function updateData(key: string, value: unknown) {
     <UFormGroup label="Output Schema">
       <WorkflowSchemaEditor
         :schema="node.data.outputSchema"
+        :readonly="readonly"
         @update:schema="updateData('outputSchema', $event)"
       />
     </UFormGroup>

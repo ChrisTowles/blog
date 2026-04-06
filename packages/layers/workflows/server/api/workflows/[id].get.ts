@@ -10,7 +10,7 @@ defineRouteMeta({
 
 export default defineEventHandler(async (event) => {
   const { id } = await getValidatedRouterParams(event, z.object({ id: z.string() }).parse);
-  const workflow = await requireWorkflowOwner(event, id);
+  const workflow = await requireWorkflowOrTemplate(event, id);
   const db = useDrizzle();
 
   const [dbNodes, dbEdges] = await Promise.all([
@@ -60,6 +60,7 @@ export default defineEventHandler(async (event) => {
     description: workflow.description,
     viewport: workflow.viewport ? JSON.parse(workflow.viewport) : { x: 0, y: 0, zoom: 1 },
     version: workflow.version,
+    isTemplate: workflow.isPublished,
     nodes,
     edges,
   };
