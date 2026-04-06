@@ -74,7 +74,9 @@ function updateData(key: string, value: unknown) {
           :max="2"
           :step="0.1"
           :disabled="readonly"
-          @input="updateData('temperature', parseFloat(($event.target as HTMLInputElement).value))"
+          @input="
+            updateData('temperature', parseFloat(($event.target as HTMLInputElement).value) || 0)
+          "
         />
       </UFormGroup>
       <UFormGroup label="Max Tokens">
@@ -84,7 +86,7 @@ function updateData(key: string, value: unknown) {
           :min="1"
           :max="8192"
           :disabled="readonly"
-          @input="updateData('maxTokens', parseInt(($event.target as HTMLInputElement).value))"
+          @input="updateData('maxTokens', parseInt(($event.target as HTMLInputElement).value) || 1)"
         />
       </UFormGroup>
     </div>

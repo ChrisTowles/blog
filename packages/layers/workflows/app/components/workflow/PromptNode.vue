@@ -51,7 +51,7 @@ const modelShortName = computed(() => {
   if (model.includes('haiku')) return 'haiku';
   if (model.includes('sonnet')) return 'sonnet';
   if (model.includes('opus')) return 'opus';
-  return model.split('-').slice(0, 2).join(' ');
+  return model;
 });
 
 const accentColorClass = computed(() => {

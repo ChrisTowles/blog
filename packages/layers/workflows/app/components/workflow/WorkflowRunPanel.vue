@@ -21,6 +21,7 @@ const { data: runs, refresh } = useFetch(`/api/workflows/${props.workflowId}/run
 const expandedNodes = ref<Set<string>>(new Set());
 const inputValues = ref<Record<string, string>>({});
 
+// Used only with matchAll() which resets lastIndex — safe as module-level const
 const INPUT_PLACEHOLDER_RE = /\{\{input\.(\w+)\}\}/g;
 
 const inputFields = computed(() => {
@@ -33,6 +34,10 @@ const inputFields = computed(() => {
   }
   return Array.from(fields);
 });
+
+const hasEmptyInputs = computed(() =>
+  inputFields.value.some((field) => !inputValues.value[field]?.trim()),
+);
 
 function handleRun() {
   const input: Record<string, unknown> = {};
@@ -105,7 +110,7 @@ watch(
 
       <UButton
         :loading="isRunning"
-        :disabled="isRunning"
+        :disabled="isRunning || hasEmptyInputs"
         icon="i-lucide-play"
         block
         @click="handleRun"
