@@ -103,6 +103,16 @@ variable "github_oauth_client_secret_secret_id" {
   type        = string
 }
 
+variable "google_oauth_client_id_secret_id" {
+  description = "Secret Manager secret ID for Google OAuth client ID"
+  type        = string
+}
+
+variable "google_oauth_client_secret_secret_id" {
+  description = "Secret Manager secret ID for Google OAuth client secret"
+  type        = string
+}
+
 variable "braintrust_api_key_secret_id" {
   description = "Secret Manager secret ID for Braintrust API key"
   type        = string

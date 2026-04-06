@@ -55,6 +55,8 @@ module "cloud_run" {
   aws_secret_access_key_secret_id      = module.shared.aws_secret_access_key_secret_id
   github_oauth_client_id_secret_id     = module.shared.github_oauth_client_id_secret_id
   github_oauth_client_secret_secret_id = module.shared.github_oauth_client_secret_secret_id
+  google_oauth_client_id_secret_id     = module.shared.google_oauth_client_id_secret_id
+  google_oauth_client_secret_secret_id = module.shared.google_oauth_client_secret_secret_id
   braintrust_api_key_secret_id         = module.shared.braintrust_api_key_secret_id
   braintrust_project_name              = var.braintrust_project_name
   site_url                             = var.site_url
