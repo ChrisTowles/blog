@@ -91,7 +91,7 @@
     "*.{ts,tsx,mts,cts,js,cjs,mjs}": [
       "oxlint --fix"
     ],
-    "*.{ts,tsx,mts,cts,js,cjs,mjs,json,css,html,vue,yaml,yml}": [
+    "*.{ts,tsx,mts,cts,js,cjs,mjs,json,css,html,vue}": [
       "oxfmt --write"
     ]
   },
@@ -108,6 +108,13 @@
       "sharp",
       "unrs-resolver",
       "vue-demi"
-    ]
+    ],
+    "packageExtensions": {
+      "vue-router": {
+        "peerDependencies": {
+          "@vue/language-core": "*"
+        }
+      }
+    }
   }
 }

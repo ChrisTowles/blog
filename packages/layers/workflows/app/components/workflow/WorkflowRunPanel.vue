@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { Node } from '@vue-flow/core';
 import type { NodeRunStatus } from '../../../shared/workflow-types';
 
 const props = defineProps<{
@@ -7,7 +8,7 @@ const props = defineProps<{
   finalOutput: Record<string, Record<string, unknown>> | null;
   runError: string | null;
   runStatus: Map<string, NodeRunStatus>;
-  nodes: Array<{ id: string; [key: string]: unknown }>;
+  nodes: Node[];
 }>();
 
 const emit = defineEmits<{

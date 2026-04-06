@@ -64,6 +64,7 @@ Wait for all to complete.
 ## Phase 4: Report
 
 Apply any revisions from voice-reviewer and qa-checker. Report summary to user:
+
 - Post path and title
 - Image status
 - QA results
