@@ -1,3 +1,5 @@
+import { MODEL_HAIKU } from '~~/shared/models';
+
 export const BLOCKLIST = [
   'kill',
   'murder',
@@ -44,7 +46,7 @@ export async function reviewStorySafety(storyText: string): Promise<SafetyResult
   // Stage 2: AI review
   const client = getAnthropicClient();
   const response = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: MODEL_HAIKU,
     max_tokens: 256,
     temperature: 0,
     system: `You are a children's content safety reviewer. Classify the following story as SAFE or UNSAFE for children ages 7-11. Check for: violence, scary themes, stereotypes, age-inappropriate content, bullying.

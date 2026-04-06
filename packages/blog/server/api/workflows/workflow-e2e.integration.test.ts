@@ -74,7 +74,7 @@ describe.skipIf(!hasDatabase || !hasAnthropicKey)(
           type: n.type,
           label: n.label,
           prompt: n.prompt,
-          model: n.model ?? 'claude-haiku-4-5-20251001',
+          model: n.model ?? 'claude-haiku-4-5',
           temperature: n.temperature ?? 0.3,
           maxTokens: n.maxTokens ?? 512,
           outputSchema: JSON.stringify(n.outputSchema),

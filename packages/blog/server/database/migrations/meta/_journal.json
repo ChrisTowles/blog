@@ -71,6 +71,13 @@
       "when": 1775491200000,
       "tag": "0009_add_google_provider",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1775577600000,
+      "tag": "0010_seed_workflow_templates",
+      "breakpoints": true
     }
   ]
 }

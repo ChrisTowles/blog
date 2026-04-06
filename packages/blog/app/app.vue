@@ -46,9 +46,9 @@ const links = [
     to: '/blog',
   },
   {
-    label: 'Apps',
-    icon: 'i-lucide-book',
-    to: '/apps',
+    label: 'Workflows',
+    icon: 'i-lucide-workflow',
+    to: '/workflows',
   },
 ];
 

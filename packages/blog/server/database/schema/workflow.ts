@@ -28,7 +28,7 @@ export const workflowNodes = pgTable('workflow_nodes', {
   positionX: real().notNull().default(0),
   positionY: real().notNull().default(0),
   prompt: text().notNull().default(''),
-  model: text().notNull().default('claude-sonnet-4-20250514'),
+  model: text().notNull().default('claude-haiku-4-5'),
   temperature: real().notNull().default(0.7),
   maxTokens: integer().notNull().default(1024),
   outputSchema: text().notNull().default('{"type":"object","properties":{},"required":[]}'),

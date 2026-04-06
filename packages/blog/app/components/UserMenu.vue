@@ -7,7 +7,7 @@ defineProps<{
 }>();
 
 const colorMode = useColorMode();
-const appConfig = useAppConfig();
+const appConfig = useAppConfig() as { ui: { colors: { primary: string; neutral: string } } };
 const { user, clear } = useUserSession();
 
 const colors = [

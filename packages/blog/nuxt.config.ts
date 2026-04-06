@@ -2,6 +2,7 @@
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
+import { MODEL_HAIKU, MODEL_SONNET } from './shared/models';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -81,8 +82,8 @@ export default defineNuxtConfig({
     awsRegion: process.env.AWS_REGION || 'us-east-1',
     public: {
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://chris.towles.dev',
-      model_fast: 'claude-haiku-4-5',
-      model: 'claude-sonnet-4-5',
+      model_fast: MODEL_HAIKU,
+      model: MODEL_SONNET,
     },
   },
   ignore: [

@@ -1,4 +1,5 @@
 import { eq, and } from 'drizzle-orm';
+import { MODEL_HAIKU } from '~~/shared/models';
 
 defineRouteMeta({
   openAPI: {
@@ -161,115 +162,7 @@ const EXAMPLES: SeedWorkflow[] = [
     ],
   },
 
-  // ── 2. Code Review Pipeline (5 nodes, fan-out/fan-in) ──
-  {
-    name: 'Code Review Pipeline',
-    description:
-      'Analyze code for style, logic, and security issues in parallel, then synthesize a final review.',
-    nodes: [
-      {
-        id: 'describe',
-        type: 'prompt',
-        label: 'Describe Code',
-        x: 300,
-        y: 0,
-        prompt: 'Describe what this code does in 1-2 sentences: {{input.code}}',
-        outputSchema: {
-          type: 'object',
-          properties: {
-            description: { type: 'string', description: 'What the code does' },
-            language: { type: 'string', description: 'Programming language' },
-          },
-          required: ['description', 'language'],
-        },
-      },
-      {
-        id: 'style',
-        type: 'validator',
-        label: 'Style Check',
-        x: 50,
-        y: 200,
-        prompt:
-          'Check code style issues: {{input.code}}. Context: {{describe.description}}. List 1-3 style issues.',
-        temperature: 0.2,
-        outputSchema: {
-          type: 'object',
-          properties: {
-            issues: { type: 'array', description: 'Style issues found' },
-            pass: { type: 'boolean', description: 'Passes style check' },
-          },
-          required: ['issues', 'pass'],
-        },
-      },
-      {
-        id: 'logic',
-        type: 'validator',
-        label: 'Logic Check',
-        x: 300,
-        y: 200,
-        prompt:
-          'Check logic issues in: {{input.code}}. Context: {{describe.description}}. List 1-3 logic issues.',
-        temperature: 0.2,
-        outputSchema: {
-          type: 'object',
-          properties: {
-            issues: { type: 'array', description: 'Logic issues found' },
-            pass: { type: 'boolean', description: 'Passes logic check' },
-          },
-          required: ['issues', 'pass'],
-        },
-      },
-      {
-        id: 'security',
-        type: 'validator',
-        label: 'Security Check',
-        x: 550,
-        y: 200,
-        prompt:
-          'Check security vulnerabilities: {{input.code}}. Context: {{describe.description}}. List 1-3 security issues.',
-        temperature: 0.2,
-        outputSchema: {
-          type: 'object',
-          properties: {
-            issues: { type: 'array', description: 'Security vulnerabilities' },
-            severity: {
-              type: 'string',
-              description: 'Overall severity',
-              enum: ['low', 'medium', 'high', 'critical'],
-            },
-          },
-          required: ['issues', 'severity'],
-        },
-      },
-      {
-        id: 'review',
-        type: 'prompt',
-        label: 'Final Review',
-        x: 300,
-        y: 420,
-        prompt:
-          'Synthesize a code review. Style: {{style.issues}} (pass={{style.pass}}). Logic: {{logic.issues}} (pass={{logic.pass}}). Security: {{security.issues}} (severity={{security.severity}}). Give a 1-sentence verdict and letter grade.',
-        outputSchema: {
-          type: 'object',
-          properties: {
-            verdict: { type: 'string', description: 'Final review verdict' },
-            grade: { type: 'string', description: 'Letter grade', enum: ['A', 'B', 'C', 'D', 'F'] },
-          },
-          required: ['verdict', 'grade'],
-        },
-      },
-    ],
-    edges: [
-      { source: 'describe', target: 'style' },
-      { source: 'describe', target: 'logic' },
-      { source: 'describe', target: 'security' },
-      { source: 'style', target: 'review' },
-      { source: 'logic', target: 'review' },
-      { source: 'security', target: 'review' },
-    ],
-  },
-
-  // ── 3. Translation Quality Check (4 nodes, linear) ──
+  // ── 2. Translation Quality Check (4 nodes, linear) ──
   {
     name: 'Translation Quality Check',
     description:
@@ -545,6 +438,71 @@ const EXAMPLES: SeedWorkflow[] = [
       { source: 'topics', target: 'report' },
     ],
   },
+  // ── 6. Dad Joke Generator (3 nodes, linear) ──
+  {
+    name: 'Dad Joke Generator',
+    description: 'Generate a dad joke on a topic, rate its quality, then refine it.',
+    nodes: [
+      {
+        id: 'generate',
+        type: 'prompt',
+        label: 'Generate Joke',
+        x: 300,
+        y: 0,
+        prompt:
+          'Write an original dad joke about: {{input.topic}}. It should be family-friendly, use a pun or wordplay, and make someone groan. Do NOT use the atoms joke ("they make up everything") or any other overused classic. Be creative.',
+        temperature: 0.9,
+        outputSchema: {
+          type: 'object',
+          properties: {
+            joke: { type: 'string', description: 'The dad joke' },
+          },
+          required: ['joke'],
+        },
+      },
+      {
+        id: 'rate',
+        type: 'validator',
+        label: 'Rate Joke',
+        x: 300,
+        y: 250,
+        prompt:
+          'Rate this dad joke on a scale of 1-10 for groan-worthiness and explain why:\n\n{{generate.joke}}',
+        temperature: 0.3,
+        maxTokens: 256,
+        outputSchema: {
+          type: 'object',
+          properties: {
+            score: { type: 'number', description: 'Groan-worthiness score 1-10' },
+            reason: { type: 'string', description: 'Why this score' },
+          },
+          required: ['score', 'reason'],
+        },
+      },
+      {
+        id: 'refine',
+        type: 'prompt',
+        label: 'Refine Joke',
+        x: 300,
+        y: 500,
+        prompt:
+          'Here is a dad joke that scored {{rate.score}}/10:\n\n{{generate.joke}}\n\nFeedback: {{rate.reason}}\n\nIf the score is below 7, improve it. If 7 or above, keep it but add a bonus follow-up joke. Return the final joke(s).',
+        temperature: 0.8,
+        outputSchema: {
+          type: 'object',
+          properties: {
+            finalJoke: { type: 'string', description: 'The final dad joke' },
+            bonusJoke: { type: 'string', description: 'Optional bonus joke' },
+          },
+          required: ['finalJoke'],
+        },
+      },
+    ],
+    edges: [
+      { source: 'generate', target: 'rate' },
+      { source: 'rate', target: 'refine' },
+    ],
+  },
 ];
 
 export default defineEventHandler(async (event) => {
@@ -601,7 +559,7 @@ export default defineEventHandler(async (event) => {
         positionX: n.x,
         positionY: n.y,
         prompt: n.prompt,
-        model: n.model ?? 'claude-haiku-4-5-20251001',
+        model: n.model ?? MODEL_HAIKU,
         temperature: n.temperature ?? 0.7,
         maxTokens: n.maxTokens ?? 1024,
         outputSchema: JSON.stringify(n.outputSchema),

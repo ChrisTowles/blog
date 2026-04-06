@@ -82,7 +82,7 @@ test.describe('Workflow Builder', () => {
             data: {
               label: 'Input Parser',
               prompt: 'Parse the input: {{input.text}}',
-              model: 'claude-haiku-4-5-20251001',
+              model: 'claude-haiku-4-5',
               temperature: 0.3,
               maxTokens: 512,
               outputSchema: {
@@ -98,7 +98,7 @@ test.describe('Workflow Builder', () => {
             data: {
               label: 'Transformer',
               prompt: 'Transform: {{node1.parsed}}',
-              model: 'claude-haiku-4-5-20251001',
+              model: 'claude-haiku-4-5',
               temperature: 0.5,
               maxTokens: 512,
               outputSchema: {
@@ -114,7 +114,7 @@ test.describe('Workflow Builder', () => {
             data: {
               label: 'Classifier',
               prompt: 'Classify: {{node2.result}}',
-              model: 'claude-haiku-4-5-20251001',
+              model: 'claude-haiku-4-5',
               temperature: 0.3,
               maxTokens: 256,
               outputSchema: {
@@ -132,7 +132,7 @@ test.describe('Workflow Builder', () => {
             data: {
               label: 'Validator',
               prompt: 'Validate: {{node3.category}}',
-              model: 'claude-haiku-4-5-20251001',
+              model: 'claude-haiku-4-5',
               temperature: 0.1,
               maxTokens: 256,
               outputSchema: {

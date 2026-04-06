@@ -42,7 +42,7 @@ export const TEST_IDS = {
     FOOTER: 'app-footer',
     HOME_LINK: 'nav-home',
     BLOG_LINK: 'nav-blog',
-    APPS_LINK: 'nav-apps',
+    WORKFLOWS_LINK: 'nav-workflows',
     CHAT_LINK: 'nav-chat',
     USER_MENU: 'user-menu',
     LOGIN_BUTTON: 'login-button',

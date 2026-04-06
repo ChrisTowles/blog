@@ -1,5 +1,6 @@
 import { annotateWords, calculateDecodability } from './phonics-validator';
 import type { StoryContent, StoryPreview } from '../../../shared/reading-types';
+import { MODEL_HAIKU } from '~~/shared/models';
 
 interface GenerateOptions {
   allowedPatterns: string[];
@@ -60,7 +61,7 @@ export async function generateStoryPreviews(options: PreviewOptions): Promise<St
   }
 
   const response = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: MODEL_HAIKU,
     max_tokens: 512,
     temperature: 0.7,
     system: `You generate story previews for children ages 7-11. Create exactly 4 unique story concepts.
@@ -103,7 +104,7 @@ export async function generateStory(options: GenerateOptions): Promise<Generated
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     const response = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: MODEL_HAIKU,
       max_tokens: 1024,
       temperature: 0.3,
       system: `You are a decodable story writer for children ages 7-11. Follow these constraints EXACTLY:
