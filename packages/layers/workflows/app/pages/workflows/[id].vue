@@ -84,22 +84,13 @@ const workflowName = ref(workflow.value!.name);
 const { startRun, runStatus, isRunning, finalOutput, runError } = useWorkflowRun(workflowId);
 const { save, saveStatus } = useWorkflowAutoSave(workflowId, nodes, edges, viewport, workflowName);
 
-const saveStatusClass = computed(() => {
-  const map: Record<string, string> = {
-    saving: 'text-yellow-500',
-    saved: 'text-green-500',
-    error: 'text-red-500',
+const saveStatusDisplay = computed(() => {
+  const map: Record<string, { class: string; text: string }> = {
+    saving: { class: 'text-yellow-500', text: 'Saving…' },
+    saved: { class: 'text-green-500', text: 'Saved' },
+    error: { class: 'text-red-500', text: 'Save failed' },
   };
-  return map[saveStatus.value] ?? 'text-gray-400';
-});
-
-const saveStatusText = computed(() => {
-  const map: Record<string, string> = {
-    saving: 'Saving…',
-    saved: 'Saved',
-    error: 'Save failed',
-  };
-  return map[saveStatus.value] ?? '';
+  return map[saveStatus.value] ?? { class: 'text-gray-400', text: '' };
 });
 
 watch(
@@ -247,8 +238,8 @@ const nodeTypes: NodeTypesObject = {
         Read-only — <NuxtLink to="/login" class="underline">sign in</NuxtLink> to clone &amp; edit
       </UBadge>
       <UBadge v-else-if="isTemplate" variant="subtle" color="info" size="xs">Template</UBadge>
-      <span v-if="canEdit" class="text-xs ml-auto" :class="saveStatusClass">
-        {{ saveStatusText }}
+      <span v-if="canEdit" class="text-xs ml-auto" :class="saveStatusDisplay.class">
+        {{ saveStatusDisplay.text }}
       </span>
     </div>
 
@@ -283,6 +274,7 @@ const nodeTypes: NodeTypesObject = {
         <!-- Tab bar -->
         <div class="flex border-b border-gray-200 dark:border-gray-700 shrink-0">
           <button
+            type="button"
             class="flex-1 px-4 py-2 text-sm font-medium transition-colors"
             :class="
               activeTab === 'edit'
@@ -294,6 +286,7 @@ const nodeTypes: NodeTypesObject = {
             Edit
           </button>
           <button
+            type="button"
             class="flex-1 px-4 py-2 text-sm font-medium transition-colors"
             :class="
               activeTab === 'run'
