@@ -44,8 +44,8 @@ if (!workflow.value) {
 
 useSeoMeta({ title: workflow.value.name });
 
-const nodes = ref<Node[]>(workflow.value.nodes ?? []);
-const edges = ref<Edge[]>(workflow.value.edges ?? []);
+const nodes = shallowRef<Node[]>((workflow.value.nodes ?? []) as Node[]);
+const edges = shallowRef<Edge[]>((workflow.value.edges ?? []) as Edge[]);
 
 const config = useRuntimeConfig();
 const { setViewport, project, addNodes, onNodeClick } = useVueFlow();
@@ -72,7 +72,6 @@ const tabItems = [
 ];
 
 const { startRun, runStatus, isRunning, finalOutput, runError } = useWorkflowRun(workflowId);
-// @ts-expect-error Vue ref<Node[]> triggers TS2589 due to deep VueFlow generic types
 const { save, saveStatus } = useWorkflowAutoSave(workflowId, nodes, edges, viewport);
 
 watch(

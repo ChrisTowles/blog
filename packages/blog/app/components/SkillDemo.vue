@@ -13,17 +13,19 @@
  * 4. Same prompt reruns — Claude now uses the skill and responds with their knowledge
  */
 
-const step = ref(1)
-const isAnimating = ref(false)
-const skillInstalled = ref(false)
-const showEnhancedResponse = ref(false)
+const step = ref(1);
+const isAnimating = ref(false);
+const skillInstalled = ref(false);
+const showEnhancedResponse = ref(false);
 
 // User-editable fields for the skill
-const companyName = ref('Acme Corp')
-const deployProcess = ref('run the full integration test suite, get sign-off from the on-call engineer, then deploy to canary (10% traffic) for 30 minutes before full rollout')
+const companyName = ref('Acme Corp');
+const deployProcess = ref(
+  'run the full integration test suite, get sign-off from the on-call engineer, then deploy to canary (10% traffic) for 30 minutes before full rollout',
+);
 
 // Drag state
-const isDragOver = ref(false)
+const isDragOver = ref(false);
 
 const skillMdContent = computed(() => {
   return `---
@@ -43,68 +45,68 @@ When deploying to production at ${companyName.value}, we always ${deployProcess.
 ## Deploy
 - Use \`pnpm deploy:canary\` first (10% traffic)
 - Monitor error rates for 30 minutes
-- If clean, run \`pnpm deploy:full\``
-})
+- If clean, run \`pnpm deploy:full\``;
+});
 
 function advanceStep(target: number) {
-  if (isAnimating.value) return
-  step.value = target
+  if (isAnimating.value) return;
+  step.value = target;
 }
 
 function handleDragStart(e: DragEvent) {
-  e.dataTransfer?.setData('text/plain', 'SKILL.md')
+  e.dataTransfer?.setData('text/plain', 'SKILL.md');
   if (e.dataTransfer) {
-    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.effectAllowed = 'move';
   }
 }
 
 function handleDragOver(e: DragEvent) {
-  e.preventDefault()
+  e.preventDefault();
   if (e.dataTransfer) {
-    e.dataTransfer.dropEffect = 'move'
+    e.dataTransfer.dropEffect = 'move';
   }
-  isDragOver.value = true
+  isDragOver.value = true;
 }
 
 function handleDragLeave() {
-  isDragOver.value = false
+  isDragOver.value = false;
 }
 
 function handleDrop(e: DragEvent) {
-  e.preventDefault()
-  isDragOver.value = false
-  installSkill()
+  e.preventDefault();
+  isDragOver.value = false;
+  installSkill();
 }
 
 function installSkill() {
-  if (skillInstalled.value) return
-  isAnimating.value = true
-  skillInstalled.value = true
+  if (skillInstalled.value) return;
+  isAnimating.value = true;
+  skillInstalled.value = true;
 
   setTimeout(() => {
-    isAnimating.value = false
-    step.value = 4
-  }, 600)
+    isAnimating.value = false;
+    step.value = 4;
+  }, 600);
 }
 
 function rerunPrompt() {
-  isAnimating.value = true
-  showEnhancedResponse.value = false
+  isAnimating.value = true;
+  showEnhancedResponse.value = false;
 
   setTimeout(() => {
-    showEnhancedResponse.value = true
-    isAnimating.value = false
-  }, 1200)
+    showEnhancedResponse.value = true;
+    isAnimating.value = false;
+  }, 1200);
 }
 
 function resetDemo() {
-  step.value = 1
-  skillInstalled.value = false
-  showEnhancedResponse.value = false
-  isAnimating.value = false
+  step.value = 1;
+  skillInstalled.value = false;
+  showEnhancedResponse.value = false;
+  isAnimating.value = false;
 }
 
-const stepLabels = ['Ask Claude', 'Write skill', 'Install skill', 'Ask again']
+const stepLabels = ['Ask Claude', 'Write skill', 'Install skill', 'Ask again'];
 </script>
 
 <template>
@@ -161,7 +163,8 @@ const stepLabels = ['Ask Claude', 'Write skill', 'Install skill', 'Ask again']
     <!-- Step 1: Ask Claude without a skill -->
     <div v-if="step === 1" class="p-4 space-y-4">
       <p class="text-sm text-zinc-400">
-        You ask Claude Code to help with a deployment. Without any skills, it gives a reasonable but generic answer.
+        You ask Claude Code to help with a deployment. Without any skills, it gives a reasonable but
+        generic answer.
       </p>
 
       <!-- Terminal simulation -->
@@ -208,8 +211,8 @@ const stepLabels = ['Ask Claude', 'Write skill', 'Install skill', 'Ask again']
     <!-- Step 2: Write the SKILL.md -->
     <div v-if="step === 2" class="p-4 space-y-4">
       <p class="text-sm text-zinc-400">
-        Now encode your team's deployment process into a skill.
-        Edit the fields below — this is YOUR knowledge that Claude doesn't have.
+        Now encode your team's deployment process into a skill. Edit the fields below — this is YOUR
+        knowledge that Claude doesn't have.
       </p>
 
       <div class="rounded-md border border-zinc-800 bg-zinc-950 overflow-hidden">
@@ -234,7 +237,7 @@ const stepLabels = ['Ask Claude', 'Write skill', 'Install skill', 'Ask again']
               v-model="companyName"
               class="bg-zinc-800 border border-zinc-700 rounded px-1.5 py-0.5 text-amber-300 text-sm font-mono w-28 focus:outline-none focus:border-sky-500"
               placeholder="Company"
-            >
+            />
             <span class="text-emerald-400">production deployment process</span>
             <span class="text-zinc-500">"</span>
           </div>
@@ -273,8 +276,9 @@ const stepLabels = ['Ask Claude', 'Write skill', 'Install skill', 'Ask again']
     <!-- Step 3: Drag into .claude/skills/ -->
     <div v-if="step === 3" class="p-4 space-y-4">
       <p class="text-sm text-zinc-400">
-        Drag your SKILL.md into the <code class="text-sky-400 text-xs bg-zinc-800 px-1 py-0.5 rounded">.claude/skills/</code> folder.
-        That's all it takes — Claude discovers it automatically.
+        Drag your SKILL.md into the
+        <code class="text-sky-400 text-xs bg-zinc-800 px-1 py-0.5 rounded">.claude/skills/</code>
+        folder. That's all it takes — Claude discovers it automatically.
       </p>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-[180px]">
@@ -352,7 +356,8 @@ const stepLabels = ['Ask Claude', 'Write skill', 'Install skill', 'Ask again']
     <!-- Step 4: Rerun the same prompt -->
     <div v-if="step === 4" class="p-4 space-y-4">
       <p class="text-sm text-zinc-400">
-        Now ask the exact same question. Claude discovers your skill, loads it, and responds with YOUR process.
+        Now ask the exact same question. Claude discovers your skill, loads it, and responds with
+        YOUR process.
       </p>
 
       <div class="rounded-md border border-zinc-800 bg-zinc-950 overflow-hidden">
@@ -389,24 +394,27 @@ const stepLabels = ['Ask Claude', 'Write skill', 'Install skill', 'Ask again']
           </div>
 
           <!-- Enhanced response -->
-          <div
-            v-if="showEnhancedResponse"
-            class="pl-4 border-l-2 border-emerald-500/30 space-y-2"
-          >
+          <div v-if="showEnhancedResponse" class="pl-4 border-l-2 border-emerald-500/30 space-y-2">
             <div class="flex items-center gap-1.5 text-emerald-400 text-xs mb-2">
               <UIcon name="i-lucide-sparkles" class="size-3" />
               Using skill: deploy-checklist
             </div>
             <p class="text-zinc-300">
-              I found a deployment skill for <span class="text-amber-300 font-medium">{{ companyName }}</span>. Here's the process:
+              I found a deployment skill for
+              <span class="text-amber-300 font-medium">{{ companyName }}</span
+              >. Here's the process:
             </p>
             <p class="text-zinc-300">
-              At <span class="text-amber-300 font-medium">{{ companyName }}</span>, we always
-              <span class="text-amber-300">{{ deployProcess }}</span>.
+              At <span class="text-amber-300 font-medium">{{ companyName }}</span
+              >, we always <span class="text-amber-300">{{ deployProcess }}</span
+              >.
             </p>
             <p class="text-zinc-400 mt-1">Let me walk through this step by step:</p>
             <p class="text-zinc-400">
-              <span class="text-emerald-400">1.</span> Running <code class="text-sky-300 text-xs bg-zinc-800 px-1 rounded">pnpm test:integration</code>...
+              <span class="text-emerald-400">1.</span> Running
+              <code class="text-sky-300 text-xs bg-zinc-800 px-1 rounded"
+                >pnpm test:integration</code
+              >...
             </p>
             <p class="text-zinc-400">
               <span class="text-emerald-400">2.</span> Checking staging smoke tests...
@@ -415,7 +423,8 @@ const stepLabels = ['Ask Claude', 'Write skill', 'Install skill', 'Ask again']
               <span class="text-emerald-400">3.</span> Confirming on-call engineer availability...
             </p>
             <p class="text-zinc-400">
-              <span class="text-emerald-400">4.</span> Deploying to canary (10% traffic) with <code class="text-sky-300 text-xs bg-zinc-800 px-1 rounded">pnpm deploy:canary</code>
+              <span class="text-emerald-400">4.</span> Deploying to canary (10% traffic) with
+              <code class="text-sky-300 text-xs bg-zinc-800 px-1 rounded">pnpm deploy:canary</code>
             </p>
             <p class="text-zinc-600 text-xs mt-3 italic">
               ...your specific process, not a generic checklist.
