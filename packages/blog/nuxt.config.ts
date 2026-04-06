@@ -82,8 +82,8 @@ export default defineNuxtConfig({
     awsRegion: process.env.AWS_REGION || 'us-east-1',
     oauth: {
       google: {
-        clientId: '',
-        clientSecret: '',
+        clientId: process.env.NUXT_OAUTH_GOOGLE_CLIENT_ID || 'placeholder',
+        clientSecret: process.env.NUXT_OAUTH_GOOGLE_CLIENT_SECRET || 'placeholder',
       },
     },
     public: {
