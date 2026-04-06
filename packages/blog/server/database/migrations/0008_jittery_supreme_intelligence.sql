@@ -1,0 +1,1 @@
+ALTER TABLE "workflow_runs" ADD COLUMN "version" integer DEFAULT 1 NOT NULL;
