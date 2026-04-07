@@ -20,6 +20,9 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Copy package files for all workspaces (blog + all layers)
+# Layers are Nuxt layers extended by packages/blog via nuxt.config.ts `extends`.
+# They contain server API routes, components, and composables that must be
+# present at build time or their features silently won't be included.
 COPY packages/blog/package.json ./packages/blog/
 COPY packages/layers/ ./packages/layers/
 
