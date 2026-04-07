@@ -80,12 +80,6 @@ export default defineNuxtConfig({
   runtimeConfig: {
     anthropicApiKey: process.env.ANTHROPIC_API_KEY!,
     awsRegion: process.env.AWS_REGION || 'us-east-1',
-    oauth: {
-      google: {
-        clientId: process.env.NUXT_OAUTH_GOOGLE_CLIENT_ID || 'placeholder',
-        clientSecret: process.env.NUXT_OAUTH_GOOGLE_CLIENT_SECRET || 'placeholder',
-      },
-    },
     public: {
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://chris.towles.dev',
       model_fast: MODEL_HAIKU,
@@ -99,6 +93,8 @@ export default defineNuxtConfig({
 
   routeRules: {
     '/': { prerender: true },
+    // Auth routes must NOT be pre-rendered — they are server-side OAuth handlers
+    '/auth/**': { prerender: false },
     // Chat pages don't need SSR (no SEO benefit, authenticated feature)
     // Note: There's a pre-existing Vite 8 beta + debug ESM issue affecting chat pages
     '/chat': { ssr: false },
