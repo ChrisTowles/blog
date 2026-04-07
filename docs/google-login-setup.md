@@ -29,12 +29,12 @@ Each GCP project (prod, staging) needs its own OAuth client with environment-spe
 
 Go to: `https://console.cloud.google.com/auth/overview/create?project=<PROJECT_ID>`
 
-| Field | Value |
-|-------|-------|
-| App name | Chris Towles Blog |
+| Field              | Value                  |
+| ------------------ | ---------------------- |
+| App name           | Chris Towles Blog      |
 | User support email | chris.towles@gmail.com |
-| Audience | External |
-| Contact email | support@towles.dev |
+| Audience           | External               |
+| Contact email      | support@towles.dev     |
 
 After creation, go to **Audience** and publish the app to move from Testing to Production mode.
 
@@ -42,19 +42,19 @@ After creation, go to **Audience** and publish the app to move from Testing to P
 
 Go to: `https://console.cloud.google.com/auth/clients/create?project=<PROJECT_ID>`
 
-| Field | Value |
-|-------|-------|
-| Application type | Web application |
-| Name | Blog Web Client |
+| Field                    | Value           |
+| ------------------------ | --------------- |
+| Application type         | Web application |
+| Name                     | Blog Web Client |
 | Authorized redirect URIs | See table below |
 
 #### Redirect URIs by Environment
 
-| Environment | Redirect URI |
-|-------------|-------------|
-| Production | `https://chris.towles.dev/auth/google` |
-| Staging | `https://staging-chris.towles.dev/auth/google` |
-| Local dev | `http://localhost:3000/auth/google` |
+| Environment | Redirect URI                                   |
+| ----------- | ---------------------------------------------- |
+| Production  | `https://chris.towles.dev/auth/google`         |
+| Staging     | `https://staging-chris.towles.dev/auth/google` |
+| Local dev   | `http://localhost:3000/auth/google`            |
 
 Add the local dev URI to whichever OAuth client you use for development.
 
@@ -115,7 +115,7 @@ NUXT_OAUTH_GOOGLE_CLIENT_SECRET=<client-secret-from-gcp>
 
 ## GCP Projects
 
-| Environment | Project ID | Domain |
-|-------------|-----------|--------|
-| Production | blog-towles-production | chris.towles.dev |
-| Staging | blog-towles-staging | staging-chris.towles.dev |
+| Environment | Project ID             | Domain                   |
+| ----------- | ---------------------- | ------------------------ |
+| Production  | blog-towles-production | chris.towles.dev         |
+| Staging     | blog-towles-staging    | staging-chris.towles.dev |
