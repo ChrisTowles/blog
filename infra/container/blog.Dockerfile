@@ -21,6 +21,8 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Copy package files for all workspaces
 COPY packages/blog/package.json ./packages/blog/
+COPY packages/layers/workflows/package.json ./packages/layers/workflows/
+COPY packages/layers/reading/package.json ./packages/layers/reading/
 
 # Install dependencies with cached pnpm store
 # Cache mount persists /pnpm/store between builds - packages only download when lockfile changes
@@ -28,6 +30,8 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 # Copy source code
 COPY packages/blog ./packages/blog
+COPY packages/layers/workflows ./packages/layers/workflows
+COPY packages/layers/reading ./packages/layers/reading
 
 # Build the application
 WORKDIR /app/packages/blog
