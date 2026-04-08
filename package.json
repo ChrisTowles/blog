@@ -110,6 +110,9 @@
       "unrs-resolver",
       "vue-demi"
     ],
+    "overrides": {
+      "pg-pool": "3.7.1"
+    },
     "packageExtensions": {
       "vue-router": {
         "peerDependencies": {
