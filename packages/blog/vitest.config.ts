@@ -7,6 +7,22 @@ export default defineConfig({
   test: {
     projects: [
       await defineVitestProject({
+        plugins: [
+          {
+            // Nuxt adds 'import' to SSR resolve conditions, which causes
+            // Node 24's require() to load ESM pg-pool instead of CJS,
+            // breaking pg's class extends. See vitest-dev/vitest#10012
+            name: 'fix-pg-pool-esm',
+            enforce: 'post',
+            configEnvironment(name, config) {
+              if (name === 'ssr') {
+                config.resolve!.conditions = config.resolve!.conditions!.filter(
+                  (c: string) => c !== 'import',
+                );
+              }
+            },
+          },
+        ],
         test: {
           name: 'nuxt',
           testTimeout: 60_000,
