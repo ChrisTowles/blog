@@ -93,6 +93,11 @@ data "google_secret_manager_secret" "braintrust_api_key" {
   project   = var.project_id
 }
 
+data "google_secret_manager_secret" "nuxt_og_image_secret" {
+  secret_id = "nuxt-og-image-secret"
+  project   = var.project_id
+}
+
 # GCS bucket for media (story illustrations, etc.)
 resource "google_storage_bucket" "media" {
   name                        = "${var.project_id}-media"

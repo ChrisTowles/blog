@@ -167,6 +167,19 @@ resource "google_cloud_run_v2_service" "main" {
       }
 
       dynamic "env" {
+        for_each = var.nuxt_og_image_secret_secret_id != "" ? [1] : []
+        content {
+          name = "NUXT_OG_IMAGE_SECRET"
+          value_source {
+            secret_key_ref {
+              secret  = var.nuxt_og_image_secret_secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
+
+      dynamic "env" {
         for_each = var.additional_env_vars
         content {
           name  = env.key

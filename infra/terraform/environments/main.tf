@@ -58,6 +58,7 @@ module "cloud_run" {
   google_oauth_client_id_secret_id     = module.shared.google_oauth_client_id_secret_id
   google_oauth_client_secret_secret_id = module.shared.google_oauth_client_secret_secret_id
   braintrust_api_key_secret_id         = module.shared.braintrust_api_key_secret_id
+  nuxt_og_image_secret_secret_id       = module.shared.nuxt_og_image_secret_secret_id
   braintrust_project_name              = var.braintrust_project_name
   site_url                             = var.site_url
   min_instances                        = var.min_instances

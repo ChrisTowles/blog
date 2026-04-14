@@ -26,6 +26,9 @@ export const envSchema = z.object({
   NUXT_OAUTH_GOOGLE_CLIENT_ID: z.string().min(1, 'NUXT_OAUTH_GOOGLE_CLIENT_ID is required'),
   NUXT_OAUTH_GOOGLE_CLIENT_SECRET: z.string().min(1, 'NUXT_OAUTH_GOOGLE_CLIENT_SECRET is required'),
 
+  // Nuxt OG Image signing secret — prevents arbitrary image generation
+  NUXT_OG_IMAGE_SECRET: z.string().optional().default(''),
+
   // Google AI (Gemini) — optional, used for story illustrations
   GOOGLE_AI_API_KEY: z.string().optional().default(''),
 

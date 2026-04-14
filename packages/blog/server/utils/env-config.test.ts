@@ -80,6 +80,7 @@ describe('getMaskedConfig', () => {
       NUXT_OAUTH_GITHUB_CLIENT_SECRET: 'github-secret',
       NUXT_OAUTH_GOOGLE_CLIENT_ID: 'google-client-id',
       NUXT_OAUTH_GOOGLE_CLIENT_SECRET: 'google-secret',
+      NUXT_OG_IMAGE_SECRET: '',
       GOOGLE_AI_API_KEY: '',
       GCS_BUCKET_NAME: 'blog-towles-test-media',
       AWS_REGION: 'us-east-1',

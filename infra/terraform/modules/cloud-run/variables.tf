@@ -118,6 +118,11 @@ variable "braintrust_api_key_secret_id" {
   type        = string
 }
 
+variable "nuxt_og_image_secret_secret_id" {
+  description = "Secret Manager secret ID for Nuxt OG image signing secret"
+  type        = string
+}
+
 variable "braintrust_project_name" {
   description = "Braintrust project name"
   type        = string

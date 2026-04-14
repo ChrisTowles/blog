@@ -63,6 +63,11 @@ output "braintrust_api_key_secret_id" {
   value       = data.google_secret_manager_secret.braintrust_api_key.secret_id
 }
 
+output "nuxt_og_image_secret_secret_id" {
+  description = "Secret Manager secret ID for Nuxt OG image signing secret"
+  value       = data.google_secret_manager_secret.nuxt_og_image_secret.secret_id
+}
+
 output "media_bucket_name" {
   description = "GCS media bucket name"
   value       = google_storage_bucket.media.name
