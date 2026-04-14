@@ -99,26 +99,29 @@ const accentColorClass = computed(() => {
 
     <!-- Running indicator -->
     <div v-if="runStatus?.status === 'running'" class="px-3 pb-2 flex items-center gap-1.5">
-      <span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-      <span class="text-xs text-blue-400">Running…</span>
+      <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+      <span class="text-xs text-blue-600 dark:text-blue-400">Running…</span>
     </div>
 
     <!-- Completed: metrics + output preview -->
     <div v-if="runStatus?.status === 'completed'" class="px-3 pb-2 space-y-1">
-      <div class="text-xs text-gray-400 flex gap-2">
+      <div class="text-xs text-gray-600 dark:text-gray-400 flex gap-2">
         <span>{{ runStatus.tokensIn }}+{{ runStatus.tokensOut }} tok</span>
         <span>{{ ((runStatus.latencyMs ?? 0) / 1000).toFixed(1) }}s</span>
       </div>
       <div
         v-if="outputPreview"
-        class="text-xs bg-green-900/20 text-green-300 rounded px-1.5 py-1 line-clamp-3 break-all"
+        class="text-xs bg-green-100 text-green-900 dark:bg-green-900/20 dark:text-green-300 rounded px-1.5 py-1 line-clamp-3 break-all"
       >
         {{ outputPreview }}
       </div>
     </div>
 
     <!-- Failed -->
-    <div v-if="runStatus?.status === 'failed'" class="px-3 pb-2 text-xs text-red-400 truncate">
+    <div
+      v-if="runStatus?.status === 'failed'"
+      class="px-3 pb-2 text-xs text-red-600 dark:text-red-400 truncate"
+    >
       {{ runStatus.error }}
     </div>
 

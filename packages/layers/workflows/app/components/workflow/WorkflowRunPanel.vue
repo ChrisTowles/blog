@@ -184,30 +184,34 @@ watch(
           >
             <!-- Running spinner -->
             <div v-if="entry.status.status === 'running'" class="flex items-center gap-2 pt-2">
-              <UIcon name="i-lucide-loader-2" class="w-4 h-4 text-blue-400 animate-spin" />
-              <span class="text-xs text-blue-400">Calling Claude API…</span>
+              <UIcon
+                name="i-lucide-loader-2"
+                class="w-4 h-4 text-blue-600 dark:text-blue-400 animate-spin"
+              />
+              <span class="text-xs text-blue-600 dark:text-blue-400">Calling Claude API…</span>
             </div>
 
             <!-- Output -->
             <div v-if="entry.status.output" class="pt-2">
-              <div class="text-xs font-medium text-gray-500 mb-1">Output</div>
+              <div class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Output</div>
               <pre
-                class="text-xs bg-gray-800/50 rounded p-2 overflow-auto max-h-40 text-green-300 whitespace-pre-wrap"
+                class="text-xs bg-gray-100 text-green-800 dark:bg-gray-800/50 dark:text-green-300 rounded p-2 overflow-auto max-h-40 whitespace-pre-wrap"
                 >{{ JSON.stringify(entry.status.output, null, 2) }}</pre
               >
             </div>
 
             <!-- Error -->
             <div v-if="entry.status.error" class="pt-2">
-              <div class="text-xs font-medium text-red-400 mb-1">Error</div>
-              <pre class="text-xs bg-red-900/20 rounded p-2 text-red-300 whitespace-pre-wrap">{{
-                entry.status.error
-              }}</pre>
+              <div class="text-xs font-medium text-red-600 dark:text-red-400 mb-1">Error</div>
+              <pre
+                class="text-xs bg-red-100 text-red-900 dark:bg-red-900/20 dark:text-red-300 rounded p-2 whitespace-pre-wrap"
+                >{{ entry.status.error }}</pre
+              >
             </div>
 
             <!-- Link to node -->
             <button
-              class="text-xs text-blue-400 hover:underline mt-1"
+              class="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-1"
               @click="emit('select-node', entry.nodeId)"
             >
               View node on canvas
@@ -218,11 +222,13 @@ watch(
 
       <!-- Final output -->
       <div v-if="finalOutput" class="p-3 border-t border-gray-200 dark:border-gray-700">
-        <h4 class="text-xs font-semibold uppercase tracking-wide text-green-500 mb-2">
+        <h4
+          class="text-xs font-semibold uppercase tracking-wide text-green-700 dark:text-green-500 mb-2"
+        >
           Final Output
         </h4>
         <pre
-          class="text-xs bg-gray-800/50 rounded p-2 overflow-auto max-h-48 text-gray-300 whitespace-pre-wrap"
+          class="text-xs bg-gray-100 text-gray-900 dark:bg-gray-800/50 dark:text-gray-300 rounded p-2 overflow-auto max-h-48 whitespace-pre-wrap"
           >{{ JSON.stringify(finalOutput, null, 2) }}</pre
         >
       </div>
