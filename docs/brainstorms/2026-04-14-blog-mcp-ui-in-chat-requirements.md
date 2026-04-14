@@ -31,7 +31,7 @@ The hardest constraint is that the same MCP server must render identically in **
 
 - R7. One MCP tool call produces one iframe UI that renders identically in Claude Desktop (consuming the MCP Apps extension) and in the blog's AI chat surface.
 - R8. The blog's AI chat at `packages/blog/app/pages/chat/` is extended to (a) consume a remote Streamable HTTP MCP server alongside its existing in-process MCP server (`createSdkMcpServer` in `packages/blog/server/utils/ai/tools/index.ts`) and (b) render `ui://` resources as sandboxed iframes the same way Claude Desktop does.
-- R9. When a user clicks a follow-up question inside the iframe, the click reaches the enclosing host (Claude Desktop or blog chat) as a new prompt — via a single `postMessage` contract that both hosts implement.
+- R9. When a user clicks a follow-up question inside the iframe, the click is delivered to the enclosing host via the spec's `ui/message` method (role=`user`, content=prompt text). The host adds it to the conversation and submits it as a new turn. No MCP-server-side state is required; context lives in the host's existing conversation thread. If richer context is warranted, the iframe MAY additionally use `ui/update-model-context`. Both mechanisms are SEP-1865 spec methods — not a bespoke protocol.
 
 **Data & Query Layer**
 
@@ -61,7 +61,7 @@ The hardest constraint is that the same MCP server must render identically in **
 - Not a wrapper around the blog's existing workflow engine. (Considered and rejected during brainstorm — demo quality would inherit the ceiling of the workflow templates.)
 - Not multi-dataset at launch — one aviation dataset is sufficient for the portfolio goal.
 - No authentication for blog visitors — public. Abuse posture is "hard cost cap, soft traffic controls": the blog's GCP project has a $10 spend cap that auto-stops if exceeded, so worst-case DoS takes the demo temporarily offline rather than running up a bill. Per-query DuckDB timeout/memory-cap and basic per-IP request throttling are still wanted as a usability floor (one bad actor shouldn't brick the demo for everyone else), but belt-and-suspenders abuse controls are out of scope.
-- No persistent session/history per visitor — every question is stateless.
+- **Stateless at the MCP server and iframe layer.** Every tool call is a fresh invocation against Parquet; every iframe render is a fresh instance of the `ui://` resource. Per-visitor session storage is not kept server-side. **The Host (Claude Desktop or the blog chat) naturally owns conversation context** — that is what a chat is — and the spec sanctions this explicitly: follow-up chips use the spec's `ui/message` method to push a new user-role message into the Host's conversation, and the Host threads it with prior turns. If needed, the iframe may additionally push structured context to the Host's model via `ui/update-model-context` (spec method) — still no MCP-server-side state.
 - Not real-time — BTS T-100 is loaded as a historical snapshot (BTS publishes monthly with a few months' lag anyway).
 
 ### Deferred to Separate Tasks
