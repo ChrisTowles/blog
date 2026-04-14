@@ -38,6 +38,47 @@ module "github_oidc" {
   depends_on = [module.shared]
 }
 
+# The CI pipeline uses a single service account (from the prod project) for
+# every job: build, deploy-staging, and deploy-prod. The build step pushes the
+# same image to both prod and staging Artifact Registries, and deploy-staging
+# updates Cloud Run + wakes Cloud SQL on this project. Grant the prod CI SA
+# all the staging-side permissions it needs for those jobs.
+locals {
+  prod_ci_sa = "serviceAccount:github-actions-ci@blog-towles-production.iam.gserviceaccount.com"
+}
+
+# Allow pushing images to the staging Artifact Registry (build step)
+resource "google_artifact_registry_repository_iam_member" "prod_ci_writer" {
+  project    = var.project_id
+  location   = var.region
+  repository = module.shared.artifact_registry_repository
+  role       = "roles/artifactregistry.writer"
+  member     = local.prod_ci_sa
+
+  depends_on = [module.shared]
+}
+
+# Allow updating Cloud Run services in staging (deploy-staging step)
+resource "google_project_iam_member" "prod_ci_run_developer" {
+  project = var.project_id
+  role    = "roles/run.developer"
+  member  = local.prod_ci_sa
+}
+
+# Allow acting as the staging Cloud Run service account during deploy
+resource "google_service_account_iam_member" "prod_ci_act_as_cloud_run" {
+  service_account_id = "projects/${var.project_id}/serviceAccounts/${module.shared.service_account_email}"
+  role               = "roles/iam.serviceAccountUser"
+  member             = local.prod_ci_sa
+}
+
+# Allow starting/patching Cloud SQL instances (deploy-staging wakes the DB)
+resource "google_project_iam_member" "prod_ci_cloud_sql_admin" {
+  project = var.project_id
+  role    = "roles/cloudsql.admin"
+  member  = local.prod_ci_sa
+}
+
 module "cloud_sql" {
   source = "../../modules/cloud-sql"
 
