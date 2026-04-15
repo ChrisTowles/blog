@@ -37,6 +37,8 @@
     "@duckdb/node-api": "^1.5.2-r.1",
     "@google-cloud/storage": "^7.19.0",
     "@iconify-json/simple-icons": "^1.2.64",
+    "@modelcontextprotocol/ext-apps": "^1.6.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@nuxt/ui": "^4.6.1",
     "@nuxtjs/mdc": "^0.21.1",
     "@vue-flow/background": "^1.3.2",
