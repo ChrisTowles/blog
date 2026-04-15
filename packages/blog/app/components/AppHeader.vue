@@ -4,7 +4,7 @@ import { TEST_IDS } from '~~/shared/test-ids';
 const route = useRoute();
 const { loggedIn } = useUserSession();
 const runtimeConfig = useRuntimeConfig();
-const mcpDemoEnabled = computed(() => Boolean(runtimeConfig.public.mcpDemoEnabled));
+const mcpDemoEnabled = computed(() => String(runtimeConfig.public.mcpDemoEnabled) === 'true');
 
 const items = computed(() => [
   {

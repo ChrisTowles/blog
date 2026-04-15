@@ -9,7 +9,7 @@ definePageMeta({
 
 const toast = useToast();
 const runtimeConfig = useRuntimeConfig();
-const mcpDemoEnabled = computed(() => Boolean(runtimeConfig.public.mcpDemoEnabled));
+const mcpDemoEnabled = computed(() => String(runtimeConfig.public.mcpDemoEnabled) === 'true');
 
 const input = ref('');
 const loading = ref(false);
