@@ -1,0 +1,9 @@
+{
+  "name": "billing-kill-switch",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.4.0",
+    "googleapis": "^140.0.1"
+  }
+}
