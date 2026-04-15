@@ -1,0 +1,30 @@
+# Cloudflare Pages static header rules.
+#
+# The /sandbox.html path is handled by functions/sandbox.html.ts which sets
+# a per-request Content-Security-Policy from the ?csp= query param. The rules
+# below apply to every response and provide baseline hardening.
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: interest-cohort=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+# The landing page must not be embeddable in a third-party iframe, since it's
+# informational only. The sandbox itself is intentionally embeddable (that's
+# its whole purpose) and is handled by the Pages Function, which sets the CSP.
+/
+  X-Frame-Options: DENY
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'
+
+# Static JS modules used by sandbox.html. These must be loadable by the iframe
+# that serves from /sandbox.html.
+/sandbox.js
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: public, max-age=300, must-revalidate
+
+/relay.js
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: public, max-age=300, must-revalidate
