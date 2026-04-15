@@ -49,8 +49,23 @@ export interface ConsumeResult {
   retryAfterSeconds: number;
 }
 
+// Sweep stale buckets every Nth call so the Map stays bounded under
+// long-lived processes seeing many unique IPs.
+const SWEEP_EVERY_N_CALLS = 256;
+let callsSinceSweep = 0;
+
+function sweepStale(now: number, windowMs: number): void {
+  for (const [ip, bucket] of buckets) {
+    if (now - bucket.windowStartedAt >= windowMs) buckets.delete(ip);
+  }
+}
+
 export function consumeToken(input: ConsumeInput): ConsumeResult {
   const { ip, limit, windowMs, now } = input;
+  if (++callsSinceSweep >= SWEEP_EVERY_N_CALLS) {
+    callsSinceSweep = 0;
+    sweepStale(now, windowMs);
+  }
   let b = buckets.get(ip);
   if (!b || now - b.windowStartedAt >= windowMs) {
     b = { remaining: limit, windowStartedAt: now };
@@ -72,6 +87,7 @@ export function consumeToken(input: ConsumeInput): ConsumeResult {
 /** @internal reset module state between tests. */
 export function __resetRateLimitForTests(): void {
   buckets.clear();
+  callsSinceSweep = 0;
 }
 
 /** Reads `MCP_RATE_LIMIT_RPM` with a default of 60/5min per plan line 633. */

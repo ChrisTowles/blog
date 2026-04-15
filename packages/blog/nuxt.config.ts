@@ -89,14 +89,6 @@ export default defineNuxtConfig({
       // NUXT_PUBLIC_MCP_SANDBOX_URL to point at a hermetic test server.
       mcpSandboxUrl:
         process.env.NUXT_PUBLIC_MCP_SANDBOX_URL || 'https://sandbox.towles.dev/sandbox.html',
-      // Feature flag: show the MCP aviation demo CTA (starter pill grid on
-      // /chat, nav link in AppHeader, landing-page link). Default 'false' —
-      // staging sets it to 'true' via tfvars; prod flips on launch day
-      // (plan Operational/Rollout notes, line 851).
-      // Stored as a string so Nuxt's runtime env override
-      // (NUXT_PUBLIC_MCP_DEMO_ENABLED) doesn't lose the boolean coercion;
-      // consumers compare to 'true'.
-      mcpDemoEnabled: process.env.NUXT_PUBLIC_MCP_DEMO_ENABLED || 'false',
     },
   },
   ignore: [

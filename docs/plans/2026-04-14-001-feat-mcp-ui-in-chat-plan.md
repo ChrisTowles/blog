@@ -115,7 +115,7 @@ No `docs/solutions/` directory exists. Closest internal memory:
 - **ECharts only — geo/map components dropped from launch.** Original plan included `geo` + `lines-on-geo` for route/airport maps, but design review surfaced a hard conflict: `connectDomains: []` (CSP) blocks runtime fetches, and inlining a US-airports/routes GeoJSON topology in the bundle pushes past the 500KB budget. **Decision: drop geo charts entirely from launch.** Bar/line/scatter/treemap/table cover every starter question against the FAA Registry + BTS T-100 datasets without geo viz. Map-as-hero gets demoted to a v2 / blog-post-future-work item. Custom ECharts build shrinks accordingly (target ~150-200KB gzipped). Blog already has `echarts` installed. Reference: `gluip/chart-canvas`.
 - **LLM emits the full ECharts option object as structured output alongside SQL** — not rule-based chart selection. The `ask_aviation` tool's model call returns `{ sql, answer, hero_number?, chart_option, followups }`. Iframe calls `chart.setOption(chart_option)` blindly. Rationale: model-driven beats heuristic (per research); matches the pattern in `hustcc/mcp-echarts`; covers every chart type with one render path.
 - **DuckDB + Parquet on GCS, not Postgres** — keeps the brainstorm's lakehouse-flavored story, aligns with chart-canvas prior art, supports the "how this scales to Iceberg" blog-post narrative.
-- **Parquet bucket is publicly readable** — data is public under its licenses (BTS US public domain, OpenFlights ODbL). Bucket-level `allUsers:objectViewer`. Removes the GCS auth problem (core httpfs uses HMAC for GCS — this sidesteps it). Downside: the bucket is world-readable, which is fine because the contents are publicly redistributable.
+- **Parquet bucket is private; DuckDB httpfs authenticates via HMAC keys scoped to the Cloud Run SA.** Original plan called for `allUsers:objectViewer` to sidestep GCS auth; revised 2026-04-15 to remove public access. Terraform generates a `google_storage_hmac_key` for the service account, stores the access_id/secret in Secret Manager, and injects them as `GCS_HMAC_KEY_ID` / `GCS_HMAC_SECRET` env vars. DuckDB's `gs://` path goes through the S3-compat API, which only supports HMAC (no ADC / OAuth) — so this is the one auth path available to us. Readers reproducing the demo set up their own bucket in their own GCP project and run the ETL script against it; the demo is no longer "point your client at our bucket."
 - **SQL safety is layered** — (a) read-only DuckDB connection (`access_mode: 'READ_ONLY'`), (b) DuckDB startup lockdown (`SET allow_community_extensions = false`, `SET autoload_known_extensions = false`, `SET autoinstall_known_extensions = false`, `SET disabled_filesystems = 'LocalFileSystem'`; _do not_ set `enable_external_access=false` because it disables httpfs), (c) AST-level statement allowlist — parse with DuckDB's own parser, reject anything that isn't a single `SELECT`/`WITH` against allowlisted relations, (d) schema-scoped generation prompt, (e) app-side query timeout via `AbortController` + DuckDB `interrupt()`, (f) `LIMIT 10000` injected into any query missing a limit. Defense-in-depth; no single layer is trusted.
 - **Sandbox proxy at `sandbox.towles.dev` (new subdomain)** — required by SEP-1865 (origin isolation, MUST be a different origin from the host). Simplest path is a new DNS A-record + a minimal static site (Cloudflare Pages or a new Cloud Run service), serving `sandbox.html` that mirrors `~/code/f/ext-apps/examples/basic-host/sandbox.html` pattern (HTTP CSP headers via query-string config, `document.write` of inner HTML, upward `ui/notifications/sandbox-proxy-ready`). Path-scoped proxies (`/sandbox/...`) break origin isolation — rejected.
 - **MCP server co-hosted with the Nuxt app on the same Cloud Run service** — adds a new Nitro route (`/mcp/aviation` via `server/routes/mcp/aviation/index.ts`) rather than a sibling Cloud Run deployment. Rationale: co-hosting is cheaper, simpler, and fine for a personal-blog traffic profile; the $10 spend cap makes the abuse/scaling story moot.
@@ -255,7 +255,7 @@ The `ui://aviation-answer` HTML resource is a single bundle (~400-500KB gzipped)
 
 - [ ] **Unit 1: Aviation dataset ETL → Parquet → GCS (FAA Registry + BTS T-100 + OpenFlights)**
 
-**Goal:** Land a one-shot ETL script that downloads three public-domain aviation sources, transforms them to Parquet, uploads them to a public-read GCS bucket, and documents the resulting schema. Produce a tiny "pre-warm" Parquet (1 row) that the MCP server uses to amortize DuckDB httpfs cold-start.
+**Goal:** Land a one-shot ETL script that downloads three public-domain aviation sources, transforms them to Parquet, uploads them to a private GCS bucket, and documents the resulting schema. Produce a tiny "pre-warm" Parquet (1 row) that the MCP server uses to amortize DuckDB httpfs cold-start.
 
 **Requirements:** R10, R11
 
@@ -276,7 +276,7 @@ The `ui://aviation-answer` HTML resource is a single bundle (~400-500KB gzipped)
 - **Join key architecture:** BTS T-100 carriers map to FAA Registry operators via a small curated lookup (`ref/carrier_to_operator.parquet`) maintained in the ETL script — BTS carrier codes and FAA registrant names don't align directly; the demo's interesting queries depend on the join working. Document known unmatched carriers and leave them as nulls.
 - **Transform:** CSVs → Parquet via DuckDB (`COPY … TO '...parquet' (FORMAT PARQUET, COMPRESSION ZSTD)`). Deterministic column order and naming so the schema doc is the source of truth.
 - **Upload:** `gs://blog-mcp-aviation-<env>/` with `dims/`, `facts/`, `ref/`, plus `pre-warm.parquet` and `LICENSE.txt` at the root.
-- **Public read:** bucket-level `allUsers:objectViewer`. Safe because all three datasets are publicly redistributable (attribution required for OpenFlights, handled via the co-hosted `LICENSE.txt`).
+- **Private bucket:** no `allUsers` IAM. Cloud Run authenticates via HMAC keys (see Key Decisions — "Parquet bucket is private"). The underlying datasets are still publicly redistributable per their licenses (attribution for OpenFlights preserved via the co-hosted `LICENSE.txt`); we just don't expose the bucket itself.
 - Emit `pre-warm.parquet` (1 row) for Unit 3's httpfs warmup.
 
 **Execution note:** Test-first for the CSV→Parquet transforms (small deterministic fixtures per source) so schema drift is caught early. ETL is one-shot; one green integration run is the release signal.
@@ -298,13 +298,13 @@ The `ui://aviation-answer` HTML resource is a single bundle (~400-500KB gzipped)
 - Edge case: BTS row with negative delay (arrival earlier than scheduled) → preserved, not clamped.
 - Edge case: Duplicate N-numbers in FAA registry (historical reserved records) → latest-wins rule produces single row per current N-number.
 - Error path: Network failure during source download → script exits non-zero with a clear message and partial state is cleaned up.
-- Integration: After ETL, DuckDB can read `read_parquet('gs://...')` anonymously (no credentials) from a separate process — signals bucket public-read is correctly set.
+- Integration: After ETL, DuckDB with an HMAC-authenticated GCS secret can read `read_parquet('gs://...')` from a separate process — signals HMAC plumbing is correctly set and the SA has read access to the bucket.
 
 **Verification:**
 
 - All five output Parquet trees exist in the bucket; checksums captured.
 - `gsutil ls gs://blog-mcp-aviation-*/` lists `dims/`, `facts/`, `ref/`, `pre-warm.parquet`, `LICENSE.txt`.
-- A throwaway DuckDB session reads the bucket anonymously.
+- A throwaway DuckDB session with HMAC creds reads the bucket successfully; the same session without creds receives `SignatureDoesNotMatch` (confirms lockdown).
 - Row counts match schema-doc expectations.
 - `pre-warm.parquet` is <10KB and reads in <500ms via httpfs.
 
@@ -627,12 +627,13 @@ _Unit 5 has been collapsed into Unit 3 per plan-review findings (coherence P1 + 
 
 **Approach:**
 
-- **New GCS bucket:** `blog-mcp-aviation-<env>`, `uniform_bucket_level_access=true`, `public_access_prevention` NOT enforced (the data needs to be publicly readable). Add IAM binding: `allUsers` → `roles/storage.objectViewer`. Separate bucket from the existing `${project_id}-media` (cleaner separation of concerns).
+- **New GCS bucket:** `blog-mcp-aviation-<env>`, `uniform_bucket_level_access=true`, private (no `allUsers` IAM — revised 2026-04-15). Terraform grants the Cloud Run SA `roles/storage.objectViewer` + `roles/storage.objectCreator` explicitly. Authentication to DuckDB httpfs is via a `google_storage_hmac_key` for the SA, with the access_id/secret stored in Secret Manager and injected as `GCS_HMAC_KEY_ID` / `GCS_HMAC_SECRET` env vars. Separate bucket from the existing `${project_id}-media` (cleaner separation of concerns).
 - **Cloud Run memory:** bump to 2Gi. DuckDB in-process can spike during aggregation on the 15M-row fact table; 512Mi is not enough. Note: 2Gi costs more per idle minute — min-instances=1 is necessary anyway for R6, and max-instances=2 keeps the cost bounded.
 - **`--session-affinity`:** instructs Cloud Run to prefer the same instance for the same client, reducing session-state-across-instances risk for `Mcp-Session-Id`. Best-effort, not a guarantee — but paired with min/max=1/2, good enough.
 - **Rate limit middleware:** simple in-process Map<ip, tokenBucket>. Limit default: 60 requests per 5 minutes per IP. On limit hit, return 429 with `Retry-After`. Scoped to `/mcp/aviation` only — other routes untouched. Module-level Map is OK here (not request-scoped state): per-process rate limiting is acceptable given the single-instance posture.
 - **Env vars:**
   - `AVIATION_BUCKET` — GCS bucket name (e.g., `blog-mcp-aviation-prod`)
+  - `GCS_HMAC_KEY_ID` / `GCS_HMAC_SECRET` — HMAC credentials for the private bucket (from Secret Manager)
   - `MCP_RATE_LIMIT_RPM` — tunable rate limit (default 12 = 60/5min)
   - Reuse existing `ANTHROPIC_API_KEY`, `BRAINTRUST_API_KEY`, `BRAINTRUST_PROJECT_NAME`
 - **Dockerfile:** verify DuckDB's prebuilt Linux binaries work on `node:24-slim`. If not, add `apt-get install libstdc++6` (unlikely needed; validate in Unit 3 dev).

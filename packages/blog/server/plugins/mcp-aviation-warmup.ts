@@ -6,15 +6,25 @@
  * Key Decisions — "Pre-warm DuckDB on cold start".
  *
  * Expected duration: <2s on a cold container (plan verification bar, line 453).
- * Failures are logged but don't block startup — the tool will still work, just
- * with a first-query latency penalty.
+ *
+ * Two failure modes, handled differently:
+ *   - Missing HMAC creds → hard fail at startup. The tool is structurally broken
+ *     without them, so crash loudly with an actionable message.
+ *   - Prewarm network error → logged, non-fatal. The first real request will
+ *     re-await the same singleton promise and pay the cold-start latency.
  */
 
 import { defineNitroPlugin } from 'nitropack/runtime';
 import { log } from 'evlog';
-import { prewarmAviationDuckDb } from '../utils/mcp/aviation/duckdb';
+import { prewarmAviationDuckDb, requireAviationGcsCredentials } from '../utils/mcp/aviation/duckdb';
+import { extractErrorMessage } from '../../shared/error-util';
 
 export default defineNitroPlugin(() => {
+  // Hard-fail startup if HMAC creds are missing. The aviation bucket is private
+  // and the MCP tool will never work without them, so surface the misconfig
+  // immediately instead of later as an opaque 403 from the first user request.
+  requireAviationGcsCredentials();
+
   // Fire-and-forget so we don't block the server from accepting traffic if GCS
   // is slow. The first MCP request will await the same promise via the singleton.
   void (async () => {
@@ -30,7 +40,7 @@ export default defineNitroPlugin(() => {
       log.warn({
         tag: 'mcp-aviation',
         message: `nitro startup prewarm failed (non-fatal)`,
-        error: e instanceof Error ? e.message : String(e),
+        error: extractErrorMessage(e),
       });
     }
   })();

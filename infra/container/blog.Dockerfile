@@ -43,12 +43,6 @@ ENV NITRO_PRESET=node-server
 ARG NUXT_PUBLIC_GTAG_ID=""
 ENV NUXT_PUBLIC_GTAG_ID=$NUXT_PUBLIC_GTAG_ID
 
-# MCP aviation demo CTA flag — needs to be at build time so it's baked into
-# Nuxt's prerendered runtimeConfig.public blob (runtime env override doesn't
-# propagate from / through to crawled child routes).
-ARG NUXT_PUBLIC_MCP_DEMO_ENABLED="false"
-ENV NUXT_PUBLIC_MCP_DEMO_ENABLED=$NUXT_PUBLIC_MCP_DEMO_ENABLED
-
 # Build the Nuxt application
 ENV NODE_OPTIONS="--max-old-space-size=8192"
 RUN cd /app && pnpm --filter @chris-towles/blog exec nuxt build

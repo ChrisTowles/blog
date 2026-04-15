@@ -118,13 +118,10 @@ export function useAviationMcp(options: UseAviationMcpOptions = {}) {
     }
   }
 
-  function disposeClient(): void {
+  async function dispose(): Promise<void> {
     const prev = state.client;
     state.client = null;
-    if (prev) {
-      // Close is best-effort; swallow errors.
-      void prev.close().catch(() => undefined);
-    }
+    if (prev) await prev.close().catch(() => undefined);
   }
 
   async function callAskOnce(question: string): Promise<AviationAskPayload> {
@@ -158,15 +155,9 @@ export function useAviationMcp(options: UseAviationMcpOptions = {}) {
       return await callAskOnce(question);
     } catch (err) {
       if (!looksLikeSessionExpired(err)) throw err;
-      disposeClient();
+      await dispose();
       return await callAskOnce(question);
     }
-  }
-
-  async function dispose(): Promise<void> {
-    const prev = state.client;
-    state.client = null;
-    if (prev) await prev.close().catch(() => undefined);
   }
 
   return { callAsk, dispose };

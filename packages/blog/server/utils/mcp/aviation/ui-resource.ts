@@ -20,6 +20,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { AVIATION_UI_RESOURCE_URI } from '../../../../shared/mcp-aviation-types';
+import { extractErrorMessage } from '../../../../shared/error-util';
 import { registerAppResource } from '@modelcontextprotocol/ext-apps/server';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
@@ -54,7 +55,7 @@ function loadBundle(): string {
     // eslint-disable-next-line no-console
     console.warn(
       `[ui-resource] failed to read aviation-answer bundle at ${BUNDLE_PATH}; serving placeholder. Did you run \`pnpm build:ui-bundle\`?`,
-      err,
+      extractErrorMessage(err),
     );
     cachedBundle = MISSING_BUNDLE_HTML;
     return cachedBundle;

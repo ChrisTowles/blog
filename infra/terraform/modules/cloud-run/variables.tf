@@ -84,12 +84,6 @@ variable "aviation_duckdb_threads" {
   default     = "4"
 }
 
-variable "mcp_demo_enabled" {
-  description = "Feature flag for the MCP aviation demo CTA. Injected as NUXT_PUBLIC_MCP_DEMO_ENABLED."
-  type        = bool
-  default     = false
-}
-
 variable "min_instances" {
   description = "Minimum number of instances"
   type        = number
@@ -169,6 +163,18 @@ variable "braintrust_api_key_secret_id" {
 variable "nuxt_og_image_secret_secret_id" {
   description = "Secret Manager secret ID for Nuxt OG image signing secret"
   type        = string
+}
+
+variable "gcs_hmac_key_id_secret_id" {
+  description = "Secret Manager secret ID for GCS HMAC access key ID (aviation bucket)"
+  type        = string
+  default     = ""
+}
+
+variable "gcs_hmac_secret_secret_id" {
+  description = "Secret Manager secret ID for GCS HMAC secret (aviation bucket)"
+  type        = string
+  default     = ""
 }
 
 variable "braintrust_project_name" {

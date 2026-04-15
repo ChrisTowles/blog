@@ -48,21 +48,46 @@ Aviation's DuckDB connection is hardened at startup:
 - `autoload_known_extensions=false`, `autoinstall_known_extensions=false`,
   `allow_community_extensions=false`, `allow_unsigned_extensions=false`.
 - `httpfs` explicitly installed + loaded (needed for `gs://` reads).
+- `CREATE SECRET (TYPE GCS, KEY_ID, SECRET)` with HMAC creds for the private
+  aviation bucket. Without this, DuckDB picks up `AWS_*` env vars (used for
+  Bedrock) as S3-style HMAC signatures and fails with `SignatureDoesNotMatch`.
 - `disabled_filesystems='LocalFileSystem'` applied after `httpfs` load.
 - `memory_limit` / `threads` configurable via `AVIATION_DUCKDB_MEMORY_LIMIT`
   (default `768MB`) / `AVIATION_DUCKDB_THREADS` (default `4`).
 
-## Feature flag
+## Bucket auth
 
-`NUXT_PUBLIC_MCP_DEMO_ENABLED` (bool, default `false`) gates the
-user-visible CTA surfaces:
+The aviation Parquet bucket is **private** — no `allUsers` IAM. Reads are
+authenticated via GCS HMAC keys:
 
-- Aviation starter-question pill grid on `/chat`.
-- "Aviation MCP" nav link in the site header.
-- Auxiliary `/aviation` landing page ("Add to Claude Desktop").
+- **Cloud Run**: Terraform creates a `google_storage_hmac_key` for the Cloud
+  Run service account (`infra/terraform/modules/shared/main.tf`), stores the
+  access_id and secret in Secret Manager (`gcs-hmac-key-id-{env}` /
+  `gcs-hmac-secret-{env}`), and injects them as `GCS_HMAC_KEY_ID` /
+  `GCS_HMAC_SECRET` env vars into the service.
+- **Rotate**: `terraform taint module.shared.google_storage_hmac_key.aviation`
+  then apply. Regenerates the key and pushes a new Secret Manager version;
+  Cloud Run picks it up on next revision.
+- **Startup validation**: `server/plugins/mcp-aviation-warmup.ts` calls
+  `requireAviationGcsCredentials()` synchronously at boot. Missing creds crash
+  the process with an actionable error.
 
-Staging tfvars sets it to `true`. Prod keeps it `false` until launch day —
-flip via `prod.tfvars` + `pnpm gcp:prod:apply`.
+## Local dev setup
+
+The bucket is not shared — set up your own:
+
+1. Create your own GCS bucket in your dev GCP project.
+2. Create a service account and grant it `roles/storage.objectViewer` on the
+   bucket (and `objectCreator` if you'll re-run the ETL).
+3. Generate HMAC keys: `gcloud storage hmac create <SA_EMAIL>`. Note the
+   `access_id` and `secret`.
+4. Run the ETL into your bucket:
+   `GCS_AVIATION_BUCKET=your-bucket pnpm etl:aviation` (from
+   `packages/blog/scripts/etl-aviation.ts`).
+5. In `.env`, set `AVIATION_BUCKET`, `GCS_HMAC_KEY_ID`, `GCS_HMAC_SECRET`.
+
+`pnpm dev` hard-fails at startup if the HMAC vars are missing — the error
+message points back here.
 
 ## Replay-fetch endpoint
 
@@ -74,7 +99,4 @@ future second ui resource has to be opted in.
 ## Rollback
 
 All aviation-demo surfaces are additive. A rollback to a pre-Unit-3 revision
-leaves the rest of the blog intact. If a specific aviation bug needs to be
-hot-patched without a full revert, set `NUXT_PUBLIC_MCP_DEMO_ENABLED=false`
-via the env var and redeploy — the server endpoint stays reachable for any
-already-configured Claude Desktop users but the blog-side CTA disappears.
+leaves the rest of the blog intact.

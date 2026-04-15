@@ -190,15 +190,12 @@ async function deployContainer() {
   // Step 3: Get git SHA
   const gitSha = (await $`git rev-parse --short HEAD`.quiet()).stdout.trim();
 
-  // Step 3b: Read gtag_id + MCP demo flag from tfvars for prerendered pages.
-  // Nuxt bakes runtimeConfig.public.* into the prerendered HTML; runtime
-  // env-var override doesn't propagate to crawlable child routes, so flags
-  // that gate UI surfaces must be known at build time.
+  // Step 3b: Read gtag_id from tfvars. Nuxt bakes runtimeConfig.public.* into
+  // prerendered HTML, so build-time values for prerendered surfaces must come
+  // from tfvars rather than a runtime env override.
   const tfvarsContent = fs.readFileSync(`${terraformDir}/${environment}.tfvars`, 'utf-8');
   const gtagMatch = tfvarsContent.match(/gtag_id\s*=\s*"([^"]*)"/);
   const gtagId = gtagMatch?.[1] || '';
-  const mcpDemoMatch = tfvarsContent.match(/mcp_demo_enabled\s*=\s*(true|false)/);
-  const mcpDemoEnabled = mcpDemoMatch?.[1] === 'true' ? 'true' : 'false';
 
   // Step 4: Build the image with both date tag and latest
   const imageWithDateTag = `${registry}/blog:${dateTag}`;
@@ -206,8 +203,7 @@ async function deployContainer() {
   console.log(chalk.yellow(`\n🔨 Building Docker image: ${imageWithDateTag}`));
   console.log(chalk.gray(`   Git SHA: ${gitSha}`));
   if (gtagId) console.log(chalk.gray(`   Gtag ID: ${gtagId}`));
-  console.log(chalk.gray(`   MCP demo enabled: ${mcpDemoEnabled}`));
-  await $`docker build -f infra/container/blog.Dockerfile --build-arg GIT_SHA=${gitSha} --build-arg BUILD_TAG=${dateTag} --build-arg NUXT_PUBLIC_GTAG_ID=${gtagId} --build-arg NUXT_PUBLIC_MCP_DEMO_ENABLED=${mcpDemoEnabled} -t ${imageWithDateTag} -t ${imageWithLatest} .`;
+  await $`docker build -f infra/container/blog.Dockerfile --build-arg GIT_SHA=${gitSha} --build-arg BUILD_TAG=${dateTag} --build-arg NUXT_PUBLIC_GTAG_ID=${gtagId} -t ${imageWithDateTag} -t ${imageWithLatest} .`;
 
   // Step 5: Push both tags
   console.log(chalk.yellow(`\n📤 Pushing images to registry...`));

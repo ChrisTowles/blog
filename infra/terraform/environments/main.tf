@@ -60,6 +60,8 @@ module "cloud_run" {
   google_oauth_client_secret_secret_id = module.shared.google_oauth_client_secret_secret_id
   braintrust_api_key_secret_id         = module.shared.braintrust_api_key_secret_id
   nuxt_og_image_secret_secret_id       = module.shared.nuxt_og_image_secret_secret_id
+  gcs_hmac_key_id_secret_id            = module.shared.gcs_hmac_key_id_secret_id
+  gcs_hmac_secret_secret_id            = module.shared.gcs_hmac_secret_secret_id
   braintrust_project_name              = var.braintrust_project_name
   site_url                             = var.site_url
   min_instances                        = var.min_instances
@@ -71,7 +73,6 @@ module "cloud_run" {
   aviation_bucket    = module.shared.aviation_parquet_bucket_name
   mcp_rate_limit_rpm = var.mcp_rate_limit_rpm
   mcp_sandbox_url    = var.mcp_sandbox_url
-  mcp_demo_enabled   = var.mcp_demo_enabled
 
   depends_on = [module.cloud_sql]
 }

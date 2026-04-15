@@ -3,19 +3,16 @@
  *
  * ask_aviation flow:
  *   1. Validate input (Zod, <500 chars).
- *   2. Call Anthropic via getAnthropicClient() with a schema-scoped system prompt,
- *      using tool_use "structured output" — i.e. we declare a single `emit_answer`
- *      tool whose input_schema is AVIATION_STRUCTURED_OUTPUT_SCHEMA, then the model
- *      must call that tool.
+ *   2. Call Anthropic with a schema-scoped system prompt using tool_use "structured
+ *      output" — i.e. a single `emit_answer` tool whose input_schema is
+ *      AVIATION_STRUCTURED_OUTPUT_SCHEMA, which the model must call.
  *   3. Run sql-safety.validateSql on the emitted SQL.
  *   4. Execute under a hard 5s timeout. Count rows; set truncated if the cap hit.
  *   5. Return CallToolResult with text answer + EmbeddedResource(ui://aviation-answer)
  *      and structuredContent = AviationToolResult.
  *
- * Progress notifications (per plan line 149 — deferred, resolved here):
- *   We send notifications/progress at: LLM call start ("planning"),
- *   SQL execution start ("querying"), complete ("done"). Each is emitted via the
- *   SDK's `sendNotification` from RequestHandlerExtra when available.
+ * Progress notifications: planning → validating → querying → done, emitted via the
+ * SDK's `sendNotification` from RequestHandlerExtra when available.
  */
 
 import { z } from 'zod';
@@ -27,6 +24,7 @@ import type {
 } from '@modelcontextprotocol/sdk/types.js';
 import { getAnthropicClient } from '../../ai/anthropic';
 import { MODEL_SONNET } from '../../../../shared/models';
+import { extractErrorMessage } from '../../../../shared/error-util';
 import {
   AVIATION_TOOL_NAMES,
   AVIATION_UI_RESOURCE_URI,
@@ -38,7 +36,12 @@ import {
   AVIATION_STRUCTURED_OUTPUT_SCHEMA,
   buildAviationSystemPrompt,
 } from './aviation-prompt';
-import { openAviationConnection, runWithTimeout, DEFAULT_QUERY_TIMEOUT_MS } from './duckdb';
+import {
+  AVIATION_BUCKET,
+  openAviationConnection,
+  runWithTimeout,
+  DEFAULT_QUERY_TIMEOUT_MS,
+} from './duckdb';
 import { validateSql } from './sql-safety';
 import { readAviationBundle } from './ui-resource';
 
@@ -86,14 +89,15 @@ export async function executeAskAviation(
   try {
     rows = await runSelect(sqlToRun);
   } catch (e) {
+    const errorMessage = extractErrorMessage(e);
     log.error({
       tag: 'mcp-aviation',
       message: `SQL execution failed`,
-      error: describe(e),
+      error: errorMessage,
       sql: sqlToRun,
     });
     return toolErrorResult(
-      `The query failed to execute: ${describe(e)}. Try rephrasing or narrowing the question.`,
+      `The query failed to execute: ${errorMessage}. Try rephrasing or narrowing the question.`,
     );
   }
 
@@ -110,10 +114,10 @@ export async function executeAskAviation(
     truncated,
   };
 
-  // Per Unit 4: the EmbeddedResource carries the same immutable iframe bundle
-  // that `resources/read` returns. The structuredContent is what the iframe
-  // renders — delivered to the App via `sendToolResult` at runtime, not
-  // templated into HTML.
+  // EmbeddedResource carries the same immutable iframe bundle that
+  // `resources/read` returns. structuredContent is what the iframe renders —
+  // delivered to the App via `sendToolResult` at runtime, never templated into
+  // the HTML. Hosts without ui-resource support still get the text answer.
   const html = readAviationBundle();
 
   const textContent: TextContent = { type: 'text', text: llmOutput.answer };
@@ -211,11 +215,6 @@ function toolErrorResult(message: string): CallToolResult & {
   } as CallToolResult & { structuredContent: AviationToolResult };
 }
 
-function describe(e: unknown): string {
-  if (e instanceof Error) return e.message;
-  return String(e);
-}
-
 // ---------------- list_questions ----------------
 
 export function executeListQuestions(): CallToolResult {
@@ -232,7 +231,7 @@ export function executeSchemaTool(): CallToolResult {
   return {
     content: [{ type: 'text', text: AVIATION_SCHEMA_BLOCK }],
     structuredContent: {
-      bucket: 'gs://blog-mcp-aviation-staging',
+      bucket: `gs://${AVIATION_BUCKET}`,
       schema_markdown: AVIATION_SCHEMA_BLOCK,
     },
   };

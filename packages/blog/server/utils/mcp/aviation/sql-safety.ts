@@ -1,35 +1,30 @@
 /**
  * SQL safety layer — the security boundary for ask_aviation.
  *
- * Strategy (chosen: use DuckDB's own parser):
- *   - DuckDB's `connection.extractStatements(sql)` and `getTableNames(sql, true)` use
- *     the real DuckDB parser (not a JS re-implementation), so dialect quirks and future
- *     syntax changes are handled for us.
- *   - Rationale: a JS-side parser like `pg-query-emscripten` doesn't understand DuckDB
- *     dialect (e.g. `read_parquet(...)` as table function, `EXPORT DATABASE`, Hive-style
- *     partitions), so it would either accept unsafe queries or reject safe ones. Using
- *     DuckDB's own parser is the authoritative choice.
+ * Why DuckDB's own parser: a JS-side parser like `pg-query-emscripten` doesn't
+ * understand DuckDB dialect (e.g. `read_parquet(...)` as table function,
+ * `EXPORT DATABASE`, Hive-style partitions), so it would either accept unsafe
+ * queries or reject safe ones. `extractStatements` + `getTableNames` use the
+ * authoritative DuckDB parser, so dialect quirks and future syntax changes are
+ * handled for us.
  *
- * Layers applied here:
- *   1. Parse: must be exactly one statement that parses cleanly.
- *   2. Banned top-level keyword check on the raw SQL (belt-and-suspenders against parser
- *      edge cases and multi-statement injection).
- *   3. Table-reference allowlist via `getTableNames`. Any referenced relation must be:
- *        - `read_parquet(...)` against the aviation bucket prefix, OR
- *        - a CTE name defined in the same query (DuckDB reports CTEs here too).
- *      Any other table-valued function (read_csv, read_json, url_decode-style) is rejected.
- *   4. LIMIT injection: if the SQL has no trailing LIMIT clause at the top level, wrap it
- *      in `SELECT * FROM (<sql>) LIMIT 10000`.
- *
- * Notes:
- *   - `getTableNames` returns fully-qualified identifiers when `qualified=true`. For
- *     `read_parquet('gs://...')` the parser surfaces the URL in the returned list; that's
- *     how we detect SSRF attempts.
- *   - The banned-keyword regex is case-insensitive and word-boundary scoped so column
- *     names like `attach_date` don't trip it.
+ * Layers:
+ *   1. Banned top-level keyword scan on raw SQL (fail fast, catches multi-statement
+ *      injection the parser may otherwise accept).
+ *   2. Exactly one statement must parse cleanly.
+ *   3. Banned table-valued function scan on raw SQL (read_csv/read_json/etc).
+ *      Done textually because the function name doesn't reliably surface via
+ *      `getTableNames` (which returns file paths for read_parquet but nothing
+ *      for read_csv).
+ *   4. Every referenced relation must be either a CTE name or a read_parquet URL
+ *      pointing at the aviation bucket prefix. `getTableNames(qualified=true)`
+ *      surfaces the URL string for `read_parquet('gs://...')`, which is how
+ *      we detect SSRF attempts.
+ *   5. If no trailing LIMIT, wrap in `SELECT * FROM (<sql>) LIMIT 10000`.
  */
 
 import { openAviationConnection, AVIATION_BUCKET_URL_PREFIX } from './duckdb';
+import { extractErrorMessage } from '../../../../shared/error-util';
 
 export type SqlValidationResult =
   | { ok: true; sql: string; limitInjected: boolean }
@@ -68,7 +63,7 @@ const BANNED_KEYWORDS = [
   'START',
 ];
 
-const BANNED_TABLE_FNS = new Set([
+const BANNED_TABLE_FNS = [
   'read_csv',
   'read_csv_auto',
   'read_json',
@@ -91,7 +86,10 @@ const BANNED_TABLE_FNS = new Set([
   'duckdb_databases',
   'duckdb_tables',
   'duckdb_columns',
-]);
+];
+
+const BANNED_KEYWORDS_RE = new RegExp(`\\b(${BANNED_KEYWORDS.join('|')})\\b`, 'i');
+const BANNED_TABLE_FNS_RE = new RegExp(`\\b(${BANNED_TABLE_FNS.join('|')})\\s*\\(`, 'i');
 
 export async function validateSql(sql: string): Promise<SqlValidationResult> {
   if (!sql || !sql.trim()) {
@@ -99,13 +97,10 @@ export async function validateSql(sql: string): Promise<SqlValidationResult> {
   }
   const trimmed = sql.trim().replace(/;\s*$/, '');
 
-  // Layer 1: raw-text banned-keyword scan. Runs before parsing so we fail fast
-  // and we catch anything that might slip through a parse-succeeds path.
-  for (const kw of BANNED_KEYWORDS) {
-    const re = new RegExp(`\\b${kw}\\b`, 'i');
-    if (re.test(trimmed)) {
-      return { ok: false, error: `statement type not allowed (found: ${kw})` };
-    }
+  // Layer 1: raw-text banned-keyword scan. Runs before parsing so we fail fast.
+  const kwMatch = BANNED_KEYWORDS_RE.exec(trimmed);
+  if (kwMatch) {
+    return { ok: false, error: `statement type not allowed (found: ${kwMatch[1]})` };
   }
 
   // Parse with DuckDB's own parser.
@@ -122,7 +117,7 @@ export async function validateSql(sql: string): Promise<SqlValidationResult> {
         };
       }
     } catch (e) {
-      return { ok: false, error: `SQL failed to parse: ${describe(e)}` };
+      return { ok: false, error: `SQL failed to parse: ${extractErrorMessage(e)}` };
     }
 
     // getTableNames surfaces every table reference (CTE names + physical/functional relations).
@@ -130,21 +125,18 @@ export async function validateSql(sql: string): Promise<SqlValidationResult> {
     try {
       tableNames = conn.getTableNames(trimmed, true);
     } catch (e) {
-      return { ok: false, error: `SQL failed to parse: ${describe(e)}` };
+      return { ok: false, error: `SQL failed to parse: ${extractErrorMessage(e)}` };
     }
 
-    // Scan the raw SQL for any disallowed table-valued function invocation.
-    // DuckDB parses `read_csv('...')` into a table function call, but the *name*
-    // doesn't reliably surface via getTableNames (which returns the file path for
-    // read_parquet but nothing for read_csv). So scan textually.
-    for (const fn of BANNED_TABLE_FNS) {
-      const re = new RegExp(`\\b${fn}\\s*\\(`, 'i');
-      if (re.test(trimmed)) {
-        return {
-          ok: false,
-          error: `table function not allowlisted: ${fn}() — only read_parquet against the aviation bucket is permitted`,
-        };
-      }
+    // DuckDB parses `read_csv('...')` as a table function call but the name
+    // doesn't surface via getTableNames (it returns a file path for read_parquet,
+    // nothing for read_csv). Scan textually instead.
+    const fnMatch = BANNED_TABLE_FNS_RE.exec(trimmed);
+    if (fnMatch) {
+      return {
+        ok: false,
+        error: `table function not allowlisted: ${fnMatch[1]}() — only read_parquet against the aviation bucket is permitted`,
+      };
     }
 
     // Every referenced relation must be either a CTE name or a read_parquet URL pointing
@@ -198,9 +190,4 @@ function injectLimit(sql: string): { sql: string; limitInjected: boolean } {
   const hasLimit = /\blimit\s+\d+\s*(offset\s+\d+\s*)?$/i.test(sql.trim());
   if (hasLimit) return { sql, limitInjected: false };
   return { sql: `SELECT * FROM (${sql}) LIMIT 10000`, limitInjected: true };
-}
-
-function describe(e: unknown): string {
-  if (e instanceof Error) return e.message;
-  return String(e);
 }

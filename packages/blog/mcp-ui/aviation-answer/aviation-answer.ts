@@ -193,6 +193,7 @@ table.aviation-table th { background: var(--aa-chip-bg); color: var(--aa-chip-fg
 
 interface IframeState {
   chart?: echarts.ECharts;
+  chartResizeObserver?: ResizeObserver;
   theme: 'light' | 'dark';
   streaming: boolean;
   result?: AviationToolResult;
@@ -267,7 +268,11 @@ function renderTable(rows: Array<Record<string, unknown>>): HTMLElement {
 }
 
 function renderChart(container: HTMLElement, option: Record<string, unknown>): void {
-  // Dispose prior instance if re-rendering (theme change).
+  // Dispose prior instance + observer if re-rendering (theme change).
+  if (state.chartResizeObserver) {
+    state.chartResizeObserver.disconnect();
+    state.chartResizeObserver = undefined;
+  }
   if (state.chart) {
     state.chart.dispose();
     state.chart = undefined;
@@ -278,9 +283,9 @@ function renderChart(container: HTMLElement, option: Record<string, unknown>): v
   state.chart = chart;
   chart.setOption(option, true);
 
-  // Keep chart sized to container. ResizeObserver is cheap and reliable.
   const ro = new ResizeObserver(() => chart.resize());
   ro.observe(container);
+  state.chartResizeObserver = ro;
 }
 
 function renderFallback(answer: string, reason: string): HTMLElement {
@@ -515,7 +520,7 @@ export function createBootstrap(deps: BootstrapDeps = {}): {
     };
     const sc = params.structuredContent;
     if (!sc || typeof sc !== 'object') {
-      renderFallbackShell(mount, 'Tool result missing structuredContent', onFollowup);
+      renderFallbackShell(mount, 'Tool result missing structuredContent');
       return;
     }
     renderResult(mount, sc as AviationToolResult, onFollowup);
@@ -535,8 +540,7 @@ export function createBootstrap(deps: BootstrapDeps = {}): {
   };
 
   app.ontoolcancelled = () => {
-    // TODO(Unit 4 follow-up): dedicated cancellation state + retry affordance.
-    renderFallbackShell(mount, 'Tool call cancelled.', onFollowup);
+    renderFallbackShell(mount, 'Tool call cancelled.');
   };
 
   app.onerror = (err: Error) => {
@@ -547,11 +551,7 @@ export function createBootstrap(deps: BootstrapDeps = {}): {
   return { app, mount, handleToolResult, handleHostContextChanged };
 }
 
-function renderFallbackShell(
-  mount: HTMLElement,
-  message: string,
-  _onFollowup: (text: string) => void,
-): void {
+function renderFallbackShell(mount: HTMLElement, message: string): void {
   mount.replaceChildren();
   const wrap = document.createElement('div');
   wrap.className = 'wrap';

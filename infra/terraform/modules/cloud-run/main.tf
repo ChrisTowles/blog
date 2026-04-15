@@ -186,6 +186,33 @@ resource "google_cloud_run_v2_service" "main" {
         }
       }
 
+      # GCS HMAC credentials for DuckDB httpfs → aviation bucket (private).
+      dynamic "env" {
+        for_each = var.gcs_hmac_key_id_secret_id != "" ? [1] : []
+        content {
+          name = "GCS_HMAC_KEY_ID"
+          value_source {
+            secret_key_ref {
+              secret  = var.gcs_hmac_key_id_secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
+
+      dynamic "env" {
+        for_each = var.gcs_hmac_secret_secret_id != "" ? [1] : []
+        content {
+          name = "GCS_HMAC_SECRET"
+          value_source {
+            secret_key_ref {
+              secret  = var.gcs_hmac_secret_secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
+
       dynamic "env" {
         for_each = var.additional_env_vars
         content {
@@ -232,11 +259,6 @@ resource "google_cloud_run_v2_service" "main" {
       env {
         name  = "AVIATION_DUCKDB_THREADS"
         value = var.aviation_duckdb_threads
-      }
-
-      env {
-        name  = "NUXT_PUBLIC_MCP_DEMO_ENABLED"
-        value = var.mcp_demo_enabled ? "true" : "false"
       }
 
       dynamic "volume_mounts" {

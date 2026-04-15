@@ -70,8 +70,3 @@ variable "mcp_sandbox_url" {
   default     = ""
 }
 
-variable "mcp_demo_enabled" {
-  description = "Feature flag: show MCP aviation demo CTA on blog (true on staging, false on prod until launch day)"
-  type        = bool
-  default     = false
-}

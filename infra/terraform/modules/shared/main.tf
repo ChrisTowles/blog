@@ -124,10 +124,10 @@ resource "google_storage_bucket_iam_member" "media_cloud_run_writer" {
 }
 
 # GCS bucket for MCP aviation-demo Parquet dataset (Unit 1 of MCP UI-in-Chat plan).
-# Contents are publicly redistributable (BTS T-100 US public domain, FAA Registry
-# US public domain, OpenFlights under ODbL with attribution in bucket root LICENSE.txt).
-# DuckDB httpfs reads this bucket anonymously from Cloud Run and from the reader's
-# Claude Desktop for demo reproducibility.
+# Private bucket — DuckDB httpfs reads go through HMAC credentials scoped to the
+# Cloud Run service account (see aviation_hmac_key below). Readers who want to
+# reproduce the demo against their own data run the ETL script into their own
+# GCP project's bucket; this bucket is not shared.
 resource "google_storage_bucket" "aviation_parquet" {
   name                        = "blog-mcp-aviation-${var.environment_suffix}"
   location                    = var.region
@@ -136,13 +136,6 @@ resource "google_storage_bucket" "aviation_parquet" {
   force_destroy               = false
 
   depends_on = [google_project_service.required_apis]
-}
-
-# Bucket-level public read so DuckDB httpfs can fetch Parquet without credentials.
-resource "google_storage_bucket_iam_member" "aviation_parquet_public_read" {
-  bucket = google_storage_bucket.aviation_parquet.name
-  role   = "roles/storage.objectViewer"
-  member = "allUsers"
 }
 
 # Grant Cloud Run service account write access to the aviation bucket so the ETL
@@ -154,15 +147,54 @@ resource "google_storage_bucket_iam_member" "aviation_parquet_cloud_run_writer" 
   member = "serviceAccount:${google_service_account.cloud_run.email}"
 }
 
-# Explicit read-side grant for Cloud Run SA on the aviation bucket (plan Unit 7
-# line 619). Objects are already world-readable via allUsers, but DuckDB httpfs
-# reads from Cloud Run go through the SA's credentials by default, so naming
-# the grant explicitly keeps intent auditable and survives any future lockdown
-# that flips public_access_prevention on.
+# Read-side grant for Cloud Run SA on the aviation bucket. Required because the
+# bucket is private: DuckDB httpfs authenticates via HMAC keys derived from this
+# SA (see aviation_hmac_key) and the HMAC identity inherits the SA's IAM.
 resource "google_storage_bucket_iam_member" "aviation_parquet_cloud_run_reader" {
   bucket = google_storage_bucket.aviation_parquet.name
   role   = "roles/storage.objectViewer"
   member = "serviceAccount:${google_service_account.cloud_run.email}"
+}
+
+# HMAC key for the Cloud Run SA. DuckDB httpfs talks to GCS via the S3-compat
+# interoperability API, which only accepts HMAC credentials (not ADC / OAuth).
+# Rotate by `terraform taint module.shared.google_storage_hmac_key.aviation` +
+# apply, which regenerates the key and pushes a new Secret Manager version.
+resource "google_storage_hmac_key" "aviation" {
+  project               = var.project_id
+  service_account_email = google_service_account.cloud_run.email
+}
+
+resource "google_secret_manager_secret" "gcs_hmac_key_id" {
+  secret_id = "gcs-hmac-key-id-${var.environment_suffix}"
+  project   = var.project_id
+
+  replication {
+    auto {}
+  }
+
+  depends_on = [google_project_service.required_apis]
+}
+
+resource "google_secret_manager_secret_version" "gcs_hmac_key_id" {
+  secret      = google_secret_manager_secret.gcs_hmac_key_id.id
+  secret_data = google_storage_hmac_key.aviation.access_id
+}
+
+resource "google_secret_manager_secret" "gcs_hmac_secret" {
+  secret_id = "gcs-hmac-secret-${var.environment_suffix}"
+  project   = var.project_id
+
+  replication {
+    auto {}
+  }
+
+  depends_on = [google_project_service.required_apis]
+}
+
+resource "google_secret_manager_secret_version" "gcs_hmac_secret" {
+  secret      = google_secret_manager_secret.gcs_hmac_secret.id
+  secret_data = google_storage_hmac_key.aviation.secret
 }
 
 # Removed blocks to safely remove resources from state without deleting them

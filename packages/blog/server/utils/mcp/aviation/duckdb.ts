@@ -21,6 +21,11 @@
  *   - allow_unsigned_extensions=false
  *   - disabled_filesystems='LocalFileSystem'
  *   - INSTALL httpfs; LOAD httpfs; (required for gs:// reads)
+ *   - CREATE SECRET (TYPE GCS, KEY_ID, SECRET) from GCS_HMAC_KEY_ID / GCS_HMAC_SECRET
+ *     env vars. The bucket is private; DuckDB httpfs talks to GCS via its S3-compat
+ *     interoperability API which only accepts HMAC creds (not ADC / OAuth). Without
+ *     an explicit GCS secret, DuckDB falls back to AWS_* env vars (set for Bedrock)
+ *     and signs requests with those — fails with SignatureDoesNotMatch.
  *
  * Deliberately NOT set:
  *   - enable_external_access=false  (would kill httpfs)
@@ -49,6 +54,29 @@ export const PREWARM_PARQUET_URL = `${AVIATION_BUCKET_URL_PREFIX}pre-warm.parque
 
 export const DEFAULT_QUERY_TIMEOUT_MS = 5_000;
 
+/**
+ * Validate that HMAC credentials for the private aviation bucket are present.
+ * Throws with a clear, actionable message if either env var is missing. Call at
+ * startup (from the nitro warmup plugin) so the process crashes loudly instead
+ * of limping along and failing on the first MCP request with an opaque 403.
+ */
+export function requireAviationGcsCredentials(): { keyId: string; secret: string } {
+  const keyId = process.env.GCS_HMAC_KEY_ID;
+  const secret = process.env.GCS_HMAC_SECRET;
+  if (!keyId || !secret) {
+    const missing = [!keyId && 'GCS_HMAC_KEY_ID', !secret && 'GCS_HMAC_SECRET']
+      .filter(Boolean)
+      .join(', ');
+    throw new Error(
+      `aviation MCP: missing ${missing}. The aviation Parquet bucket is private; ` +
+        `DuckDB httpfs needs HMAC creds to read it. See .env.example and ` +
+        `docs/mcp-aviation-ops.md "Local dev setup" for how to create an HMAC key ` +
+        `for your own dev GCP project.`,
+    );
+  }
+  return { keyId, secret };
+}
+
 async function createInstance(): Promise<DuckDBInstance> {
   const memory = process.env.AVIATION_DUCKDB_MEMORY_LIMIT || '768MB';
   const threads = process.env.AVIATION_DUCKDB_THREADS || '4';
@@ -56,6 +84,11 @@ async function createInstance(): Promise<DuckDBInstance> {
     memory_limit: memory,
     threads,
   });
+}
+
+/** Escape a single-quoted SQL string literal by doubling embedded quotes. */
+function sqlQuote(value: string): string {
+  return `'${value.replace(/'/g, "''")}'`;
 }
 
 async function applyLockdownAndLoadHttpfs(conn: DuckDBConnection): Promise<void> {
@@ -70,6 +103,13 @@ async function applyLockdownAndLoadHttpfs(conn: DuckDBConnection): Promise<void>
   // httpfs is a *core signed extension* — it can still be loaded explicitly.
   await conn.run(`INSTALL httpfs`);
   await conn.run(`LOAD httpfs`);
+  // Authenticate to the private aviation bucket. MUST come after LOAD httpfs
+  // and BEFORE the first gs:// read. Without this, DuckDB falls back to AWS_*
+  // env vars as S3-style HMAC and fails with SignatureDoesNotMatch.
+  const { keyId, secret } = requireAviationGcsCredentials();
+  await conn.run(
+    `CREATE OR REPLACE SECRET aviation_gcs (TYPE GCS, KEY_ID ${sqlQuote(keyId)}, SECRET ${sqlQuote(secret)})`,
+  );
   // After httpfs is loaded, block local filesystem access.
   await conn.run(`SET disabled_filesystems = 'LocalFileSystem'`);
 }
@@ -111,8 +151,6 @@ export async function prewarmAviationDuckDb(): Promise<{ ms: number; skipped: bo
   const instance = await getAviationDuckDb();
   const conn = await instance.connect();
   try {
-    // Any connection needs httpfs loaded locally to it too.
-    await conn.run(`LOAD httpfs`);
     const reader = await conn.runAndReadAll(
       `SELECT COUNT(*) AS n FROM read_parquet('${PREWARM_PARQUET_URL}')`,
     );
@@ -126,17 +164,11 @@ export async function prewarmAviationDuckDb(): Promise<{ ms: number; skipped: bo
   }
 }
 
-/** Open a fresh connection ready for a query (httpfs loaded, lockdown applied). */
+/** Open a fresh connection ready for a query. httpfs + lockdown are applied
+ * once at instance bootstrap and inherited by every subsequent connection. */
 export async function openAviationConnection(): Promise<DuckDBConnection> {
   const instance = await getAviationDuckDb();
-  const conn = await instance.connect();
-  try {
-    await conn.run(`LOAD httpfs`);
-  } catch (e) {
-    conn.closeSync();
-    throw e;
-  }
-  return conn;
+  return instance.connect();
 }
 
 /**
