@@ -1,5 +1,5 @@
 ---
-title: "feat: MCP UI-in-Chat Aviation Demo"
+title: 'feat: MCP UI-in-Chat Aviation Demo'
 type: feat
 status: active
 date: 2026-04-14
@@ -17,7 +17,7 @@ Two user-visible entry points:
 - **Blog chat** (`/chat`) — cold blog visitor clicks a starter question, sees a chart/map answer inline. The blog acts as its own MCP client.
 - **Claude Desktop** — a developer wires up the MCP server via copy-paste config and sees the same iframe rendering inside their Claude Desktop conversation.
 
-Both entry points hit the *same* public MCP server over Streamable HTTP at `/mcp/aviation`. In the blog-chat path, the browser (or a thin server-side proxy) acts as an MCP client directly — it does NOT route MCP traffic through Anthropic's service, because the `mcp-client-2025-04-04` beta does not appear to forward `ui://` EmbeddedResource content to its clients (per the installed SDK's type shape). The blog's existing Anthropic agent loop stays as-is for general chat; aviation queries take a dedicated browser→`/mcp/aviation` path using `@modelcontextprotocol/sdk`'s `StreamableHTTPClientTransport` and render iframes via `@modelcontextprotocol/ext-apps/app-bridge`. This clean separation avoids beta-feature conflicts and gives both host surfaces identical MCP-client semantics.
+Both entry points hit the _same_ public MCP server over Streamable HTTP at `/mcp/aviation`. In the blog-chat path, the browser (or a thin server-side proxy) acts as an MCP client directly — it does NOT route MCP traffic through Anthropic's service, because the `mcp-client-2025-04-04` beta does not appear to forward `ui://` EmbeddedResource content to its clients (per the installed SDK's type shape). The blog's existing Anthropic agent loop stays as-is for general chat; aviation queries take a dedicated browser→`/mcp/aviation` path using `@modelcontextprotocol/sdk`'s `StreamableHTTPClientTransport` and render iframes via `@modelcontextprotocol/ext-apps/app-bridge`. This clean separation avoids beta-feature conflicts and gives both host surfaces identical MCP-client semantics.
 
 ## Problem Frame
 
@@ -28,6 +28,7 @@ The full problem frame lives in the origin requirements doc. Short version: a po
 This plan satisfies every requirement in the origin. Requirement IDs below map verbatim to the origin's R1-R17.
 
 **Demo Experience**
+
 - R1. NL question → plain-English answer + auto-selected visualization — Unit 4 (UI bundle) + Unit 5 (server tools)
 - R2. 6-10 curated starter questions — Unit 4 (UI) + Unit 5 (`list_questions` tool)
 - R3. Collapsible "show SQL" section — Unit 4
@@ -36,11 +37,13 @@ This plan satisfies every requirement in the origin. Requirement IDs below map v
 - R6. Cold visitor gets a useful, visual answer without needing to read documentation. The iframe is self-explanatory. Exact latency budget TBD: a measurement spike in Unit 3 captures the end-to-end time; if the p50 feels slow to a first-time visitor, Units 3/7 optimize (min-instances=1, pre-warm, cache warming). The review pushed back on "within 5 seconds" as unrealistic given the architecture; the plan relaxes it to "make it work, measure, then budget."
 
 **Bidirectional Rendering**
+
 - R7. Same tool call → identical iframe in Claude Desktop + blog chat — all units; acceptance-gated by cross-host test matrix in Unit 6
 - R8. Blog chat acts as an MCP client, connects to `/mcp/aviation` via `StreamableHTTPClientTransport`, and renders `ui://` resources as sandboxed iframes via `@modelcontextprotocol/ext-apps/app-bridge` — Unit 6 (`ToolUiResource` component + MCP client setup) + Unit 2 (sandbox proxy subdomain). The blog's existing Anthropic agent loop is NOT modified for aviation queries; aviation is a dedicated direct-to-`/mcp/aviation` path triggered by starter-question clicks and follow-up chips.
 - R9. Follow-up chip click inside the iframe → `ui/message` (per SEP-1865) → the blog chat host's AppBridge handler kicks off a new direct call to `/mcp/aviation` with the chip's text, resulting in a new iframe rendering in the chat thread. Not an Anthropic agent turn — the aviation path is independent of the LLM agent loop. (Claude Desktop path is symmetric: its own MCP client handles everything natively.) — Unit 6
 
 **Data & Query Layer**
+
 - R10. Parquet files in GCS, DuckDB reading direct — Unit 1 (ETL) + Unit 3 (MCP server)
 - R11. OpenFlights (ODbL) + BTS T-100 (US public domain) — Unit 1
 - R12. Read-only DuckDB + DuckDB-specific threat blocklist — Unit 3 (safety layer)
@@ -48,6 +51,7 @@ This plan satisfies every requirement in the origin. Requirement IDs below map v
 - R14. DuckDB embedded in MCP server process — Unit 3
 
 **Portfolio Artifact**
+
 - R15. Public Streamable HTTP endpoint reachable by Claude Desktop — Unit 7 (Terraform + Cloud Run)
 - R16. Companion blog post explains architecture — Unit 8
 - R17. Copy-paste "Add to Claude Desktop" instructions — Unit 7 (docs page + config snippet)
@@ -108,11 +112,11 @@ No `docs/solutions/` directory exists. Closest internal memory:
 ## Key Technical Decisions
 
 - **Blog runs its own MCP client; aviation queries bypass the Anthropic agent loop entirely** — starter-question clicks and follow-up chips trigger a direct browser (or Nuxt server-side proxy) call to `/mcp/aviation` using `@modelcontextprotocol/sdk`'s `StreamableHTTPClientTransport`. The iframe is rendered via `@modelcontextprotocol/ext-apps/app-bridge`'s `AppBridge` + `PostMessageTransport`, exactly mirroring the reference host at `~/code/f/ext-apps/examples/basic-host/`. The blog's existing live chat endpoint at `packages/blog/server/api/chats/[id].post.ts` is NOT modified — it continues to serve general chat with its current beta features (code-execution, files-api, skills) intact. Aviation is a separate, parallel surface in the chat page, not a new tool in the agent loop. Rationale: (a) the Anthropic `mcp_servers` beta does not forward `ui://` EmbeddedResource content to clients per installed SDK types; (b) separating aviation from the agent loop preserves every beta feature for general chat; (c) both host surfaces (Claude Desktop and blog chat) now use identical MCP-client semantics, making "bidirectional UI contract" verifiable by testing both clients against the same server.
-- **ECharts only, no Leaflet** — native `geo` + `lines-on-geo` handle the aviation route maps. One library, one contract (full ECharts option object emitted by the LLM), one render path. Blog already has `echarts` installed. Reference: `gluip/chart-canvas`.
+- **ECharts only — geo/map components dropped from launch.** Original plan included `geo` + `lines-on-geo` for route/airport maps, but design review surfaced a hard conflict: `connectDomains: []` (CSP) blocks runtime fetches, and inlining a US-airports/routes GeoJSON topology in the bundle pushes past the 500KB budget. **Decision: drop geo charts entirely from launch.** Bar/line/scatter/treemap/table cover every starter question against the FAA Registry + BTS T-100 datasets without geo viz. Map-as-hero gets demoted to a v2 / blog-post-future-work item. Custom ECharts build shrinks accordingly (target ~150-200KB gzipped). Blog already has `echarts` installed. Reference: `gluip/chart-canvas`.
 - **LLM emits the full ECharts option object as structured output alongside SQL** — not rule-based chart selection. The `ask_aviation` tool's model call returns `{ sql, answer, hero_number?, chart_option, followups }`. Iframe calls `chart.setOption(chart_option)` blindly. Rationale: model-driven beats heuristic (per research); matches the pattern in `hustcc/mcp-echarts`; covers every chart type with one render path.
 - **DuckDB + Parquet on GCS, not Postgres** — keeps the brainstorm's lakehouse-flavored story, aligns with chart-canvas prior art, supports the "how this scales to Iceberg" blog-post narrative.
 - **Parquet bucket is publicly readable** — data is public under its licenses (BTS US public domain, OpenFlights ODbL). Bucket-level `allUsers:objectViewer`. Removes the GCS auth problem (core httpfs uses HMAC for GCS — this sidesteps it). Downside: the bucket is world-readable, which is fine because the contents are publicly redistributable.
-- **SQL safety is layered** — (a) read-only DuckDB connection (`access_mode: 'READ_ONLY'`), (b) DuckDB startup lockdown (`SET allow_community_extensions = false`, `SET autoload_known_extensions = false`, `SET autoinstall_known_extensions = false`, `SET disabled_filesystems = 'LocalFileSystem'`; *do not* set `enable_external_access=false` because it disables httpfs), (c) AST-level statement allowlist — parse with DuckDB's own parser, reject anything that isn't a single `SELECT`/`WITH` against allowlisted relations, (d) schema-scoped generation prompt, (e) app-side query timeout via `AbortController` + DuckDB `interrupt()`, (f) `LIMIT 10000` injected into any query missing a limit. Defense-in-depth; no single layer is trusted.
+- **SQL safety is layered** — (a) read-only DuckDB connection (`access_mode: 'READ_ONLY'`), (b) DuckDB startup lockdown (`SET allow_community_extensions = false`, `SET autoload_known_extensions = false`, `SET autoinstall_known_extensions = false`, `SET disabled_filesystems = 'LocalFileSystem'`; _do not_ set `enable_external_access=false` because it disables httpfs), (c) AST-level statement allowlist — parse with DuckDB's own parser, reject anything that isn't a single `SELECT`/`WITH` against allowlisted relations, (d) schema-scoped generation prompt, (e) app-side query timeout via `AbortController` + DuckDB `interrupt()`, (f) `LIMIT 10000` injected into any query missing a limit. Defense-in-depth; no single layer is trusted.
 - **Sandbox proxy at `sandbox.towles.dev` (new subdomain)** — required by SEP-1865 (origin isolation, MUST be a different origin from the host). Simplest path is a new DNS A-record + a minimal static site (Cloudflare Pages or a new Cloud Run service), serving `sandbox.html` that mirrors `~/code/f/ext-apps/examples/basic-host/sandbox.html` pattern (HTTP CSP headers via query-string config, `document.write` of inner HTML, upward `ui/notifications/sandbox-proxy-ready`). Path-scoped proxies (`/sandbox/...`) break origin isolation — rejected.
 - **MCP server co-hosted with the Nuxt app on the same Cloud Run service** — adds a new Nitro route (`/mcp/aviation` via `server/routes/mcp/aviation/index.ts`) rather than a sibling Cloud Run deployment. Rationale: co-hosting is cheaper, simpler, and fine for a personal-blog traffic profile; the $10 spend cap makes the abuse/scaling story moot.
 - **`min_instances=1` for blog service** — cold-start latency would break R6. Cost impact is small given the cap. Set `--session-affinity` so a visitor who opens multiple iframes in one session hits the same instance.
@@ -126,23 +130,23 @@ No `docs/solutions/` directory exists. Closest internal memory:
 
 ### Resolved During Planning
 
-- *How does the blog chat render `ui://` resources?* — The blog runs its own MCP client against `/mcp/aviation` via `@modelcontextprotocol/sdk`'s `StreamableHTTPClientTransport`, and renders the iframe via `@modelcontextprotocol/ext-apps/app-bridge` — the reference pattern at `~/code/f/ext-apps/examples/basic-host/`. Aviation queries bypass the Anthropic agent loop; the live chat endpoint is unmodified. The Anthropic `mcp_servers` beta was considered and rejected after plan review surfaced that the installed SDK types suggest `ui://` EmbeddedResource content is stripped by the service relay.
-- *Chart auto-selection mechanism (rule-based vs model-driven)?* — Model-driven. LLM emits full ECharts option object as structured output alongside SQL.
-- *What dataset?* — **FAA Aircraft Registry (fleet composition) joined with BTS T-100 (route operations)**. Resolved during plan review: T-100 alone is airline operations (not aerospace engineering) and failed the GE audience-fit claim. Adding FAA Registry (manufacturer/model/age/operator) produces queries recognizably aerospace. Both datasets are US government public domain.
-- *Viz library choice?* — ECharts only (handles geo too). Blog already has it installed; chart-canvas validates the pattern.
-- *Co-host vs sibling Cloud Run service?* — Co-host, new Nitro route. Simpler.
-- *SQL safety enforcement?* — Layered: read-only connection + startup lockdown + AST allowlist + schema-scoped prompt + timeout + row cap.
-- *Sandbox proxy hosting?* — Separate subdomain (`sandbox.towles.dev`) required by spec.
+- _How does the blog chat render `ui://` resources?_ — The blog runs its own MCP client against `/mcp/aviation` via `@modelcontextprotocol/sdk`'s `StreamableHTTPClientTransport`, and renders the iframe via `@modelcontextprotocol/ext-apps/app-bridge` — the reference pattern at `~/code/f/ext-apps/examples/basic-host/`. Aviation queries bypass the Anthropic agent loop; the live chat endpoint is unmodified. The Anthropic `mcp_servers` beta was considered and rejected after plan review surfaced that the installed SDK types suggest `ui://` EmbeddedResource content is stripped by the service relay.
+- _Chart auto-selection mechanism (rule-based vs model-driven)?_ — Model-driven. LLM emits full ECharts option object as structured output alongside SQL.
+- _What dataset?_ — **FAA Aircraft Registry (fleet composition) joined with BTS T-100 (route operations)**. Resolved during plan review: T-100 alone is airline operations (not aerospace engineering) and failed the GE audience-fit claim. Adding FAA Registry (manufacturer/model/age/operator) produces queries recognizably aerospace. Both datasets are US government public domain.
+- _Viz library choice?_ — ECharts only. Bar/line/scatter/treemap/table at launch; geo/map components dropped after design review surfaced the CSP-vs-bundle conflict (see Key Decisions). Blog already has `echarts` installed.
+- _Co-host vs sibling Cloud Run service?_ — Co-host, new Nitro route. Simpler.
+- _SQL safety enforcement?_ — Layered: read-only connection + startup lockdown + AST allowlist + schema-scoped prompt + timeout + row cap.
+- _Sandbox proxy hosting?_ — Separate subdomain (`sandbox.towles.dev`) required by spec.
 
 ### Deferred to Implementation
 
-- *Exact DuckDB memory + thread limits.* Pick based on a latency spike in Unit 3 using the actual BTS data.
-- *Per-IP rate-limit numbers.* Pick based on observed traffic after launch; default to something like 60 req / 5min per IP.
-- *Pre-warmed Parquet file path.* A tiny known file for startup warmup — pick a 1-row Parquet during ETL in Unit 1.
-- *AST-allowlist implementation.* Either use DuckDB's own parser (`PREPARE` + inspect `EXPLAIN (FORMAT JSON)`) or a standalone parser (`pg-query-emscripten` doesn't support DuckDB dialects fully). Settle during Unit 3 spike.
-- *Exact Claude Desktop config snippet format.* Depends on which Claude Desktop version ships the MCP Apps + remote Streamable HTTP flow; verify at Unit 7 time.
-- *ECharts tree-shaking / custom build config.* Pick based on measured bundle size during Unit 4; target <500KB gzipped.
-- *Whether to emit `notifications/progress` from the server mid-tool-call* for sub-5s UX feedback. Likely yes; exact event shape in Unit 3.
+- _Exact DuckDB memory + thread limits._ Pick based on a latency spike in Unit 3 using the actual BTS data.
+- _Per-IP rate-limit numbers._ Pick based on observed traffic after launch; default to something like 60 req / 5min per IP.
+- _Pre-warmed Parquet file path._ A tiny known file for startup warmup — pick a 1-row Parquet during ETL in Unit 1.
+- _AST-allowlist implementation._ Either use DuckDB's own parser (`PREPARE` + inspect `EXPLAIN (FORMAT JSON)`) or a standalone parser (`pg-query-emscripten` doesn't support DuckDB dialects fully). Settle during Unit 3 spike.
+- _Exact Claude Desktop config snippet format._ Depends on which Claude Desktop version ships the MCP Apps + remote Streamable HTTP flow; verify at Unit 7 time.
+- _ECharts tree-shaking / custom build config._ Pick based on measured bundle size during Unit 4; target <500KB gzipped.
+- _Whether to emit `notifications/progress` from the server mid-tool-call_ for sub-5s UX feedback. Likely yes; exact event shape in Unit 3.
 
 ## Output Structure
 
@@ -200,7 +204,7 @@ Shows only newly-created files and their expected locations. Modifications to ex
 
 ## High-Level Technical Design
 
-> *This illustrates the intended approach and is directional guidance for review, not implementation specification. The implementing agent should treat it as context, not code to reproduce.*
+> _This illustrates the intended approach and is directional guidance for review, not implementation specification. The implementing agent should treat it as context, not code to reproduce._
 
 ### Request flow (blog chat path)
 
@@ -258,12 +262,14 @@ The `ui://aviation-answer` HTML resource is a single bundle (~400-500KB gzipped)
 **Dependencies:** None
 
 **Files:**
+
 - Create: `packages/blog/scripts/etl-aviation.ts`
 - Create: `packages/blog/scripts/etl-aviation.integration.test.ts`
 - Modify: `packages/blog/package.json` (add `scripts.etl:aviation`)
 - Create: `docs/plans/2026-04-14-001-aviation-schema.md` (dataset schema reference — used by Unit 3's prompt design)
 
 **Approach:**
+
 - **FAA Aircraft Registry** (US government, public domain). Source: `registry.faa.gov` — downloadable as a monthly CSV bundle (`MASTER.txt`, `ACFTREF.txt`, `RESERVED.txt`, etc. per FAA convention). Core fact: ~300k active N-numbers with manufacturer, model, type, year manufactured, operator/registrant, home-base airport, certification class. Output: `dims/aircraft.parquet`, `dims/aircraft_types.parquet`. Small (< 100MB).
 - **BTS T-100 Market (All Carriers)** (US government, public domain). Source: `transtats.bts.gov`. Download the most recent 12 full months at run date. ~15M rows total, 1-2 GB as Parquet. Partition by year-month: `facts/bts_t100_<yyyymm>.parquet` so DuckDB predicate pushdown filters efficiently by date.
 - **OpenFlights** (ODbL + attribution). Source: `openflights.org/data`. `airports.dat`, `airlines.dat`, `routes.dat`. Global dimensional data; ~100k rows total. Output: `dims/airports.parquet`, `dims/airlines.parquet`, `dims/routes.parquet`. ODbL attribution is preserved in a `LICENSE.txt` co-hosted in the bucket and cited in the blog post.
@@ -276,23 +282,26 @@ The `ui://aviation-answer` HTML resource is a single bundle (~400-500KB gzipped)
 **Execution note:** Test-first for the CSV→Parquet transforms (small deterministic fixtures per source) so schema drift is caught early. ETL is one-shot; one green integration run is the release signal.
 
 **Patterns to follow:**
+
 - GCS client singleton pattern from `packages/layers/reading/server/utils/reading/image-generator.ts:117-121` (no-arg `new Storage()` relying on ADC).
 - Chart-canvas reference data layout (`~/code/f/chart-canvas/data/`) for file-naming conventions.
 
 **Test scenarios:**
+
 - Happy path: Known-fixture FAA CSV (20 aircraft rows) → Parquet → DuckDB can `SELECT manufacturer_name, COUNT(*) FROM read_parquet('...')` and returns expected counts.
 - Happy path: Known-fixture BTS T-100 CSV (50 rows) → Parquet → partition-by-yyyymm file-name pattern validated.
 - Happy path: Known-fixture OpenFlights airports CSV (10 rows) → Parquet → routes table references exist.
 - Happy path: Three-way join (FAA aircraft ↔ BTS T-100 via carrier_to_operator ↔ OpenFlights airports) returns expected aggregate (e.g., `SUM(passengers) GROUP BY manufacturer_name`).
 - Edge case: NULL home-base airport in FAA registry row → preserved, no NaN in join.
 - Edge case: BTS carrier code not found in `ref/carrier_to_operator` → row preserved with NULL operator; documented in schema doc as a known-unmatched case.
-- Edge case: OpenFlights airport with NULL lat/lon → preserved; geo queries filter nulls.
+- Edge case: OpenFlights airport with NULL lat/lon → preserved (lat/lon columns retained for v2 geo work even though launch doesn't render maps).
 - Edge case: BTS row with negative delay (arrival earlier than scheduled) → preserved, not clamped.
 - Edge case: Duplicate N-numbers in FAA registry (historical reserved records) → latest-wins rule produces single row per current N-number.
 - Error path: Network failure during source download → script exits non-zero with a clear message and partial state is cleaned up.
 - Integration: After ETL, DuckDB can read `read_parquet('gs://...')` anonymously (no credentials) from a separate process — signals bucket public-read is correctly set.
 
 **Verification:**
+
 - All five output Parquet trees exist in the bucket; checksums captured.
 - `gsutil ls gs://blog-mcp-aviation-*/` lists `dims/`, `facts/`, `ref/`, `pre-warm.parquet`, `LICENSE.txt`.
 - A throwaway DuckDB session reads the bucket anonymously.
@@ -310,6 +319,7 @@ The `ui://aviation-answer` HTML resource is a single bundle (~400-500KB gzipped)
 **Dependencies:** None (parallel to Unit 1)
 
 **Files:**
+
 - Create: `sandbox-proxy/sandbox.html`
 - Create: `sandbox-proxy/sandbox.js`
 - Create: `sandbox-proxy/index.html` (landing page or 404)
@@ -318,6 +328,7 @@ The `ui://aviation-answer` HTML resource is a single bundle (~400-500KB gzipped)
 - Modify: DNS records (manual or via terraform-managed DNS)
 
 **Approach:**
+
 - Mirror the pattern from `~/code/f/ext-apps/examples/basic-host/sandbox.html` + `src/sandbox.ts`: inner iframe built via `document.write` (not `srcdoc` — some libraries break), CSP applied via HTTP headers or `<meta http-equiv>`, validate `event.origin` on every message from the parent, emit `ui/notifications/sandbox-proxy-ready` upward, relay all non-`ui/notifications/sandbox-*` messages bidirectionally.
 - Host choice — the preference is Cloudflare Pages for static hosting (cheapest, fastest CDN, separate origin) but a secondary Cloud Run service or a GCS static bucket works equivalently. Resolve during implementation based on infra familiarity.
 - Accept `?csp=<json>` query param to apply per-load CSP (as the reference implementation does).
@@ -326,10 +337,12 @@ The `ui://aviation-answer` HTML resource is a single bundle (~400-500KB gzipped)
 **Execution note:** Before writing any code, read `~/code/f/ext-apps/examples/basic-host/sandbox.html`, `src/sandbox.ts`, and `serve.ts`'s `buildCspHeader`/`sanitizeCspDomains` end-to-end. The reference-implementation fidelity story is that this sandbox behaves identically to Claude Desktop's.
 
 **Patterns to follow:**
+
 - `~/code/f/ext-apps/examples/basic-host/src/sandbox.ts` (the sandbox implementation).
 - `~/code/f/ext-apps/examples/basic-host/serve.ts:buildCspHeader` (CSP header construction).
 
 **Test scenarios:**
+
 - Happy path: Load `sandbox.html?csp={"connectDomains":["https://example.com"]}` → inner iframe rendered with `connect-src https://example.com` in CSP.
 - Happy path: Parent posts `ui/notifications/sandbox-resource-ready` → inner iframe receives HTML content and loads.
 - Edge case: `csp` param is malformed JSON → sandbox falls back to restrictive default CSP.
@@ -339,6 +352,7 @@ The `ui://aviation-answer` HTML resource is a single bundle (~400-500KB gzipped)
 - Integration: Load sandbox in a Playwright test, post a trivial inner HTML, verify inner iframe renders.
 
 **Verification:**
+
 - `curl https://sandbox.towles.dev/sandbox.html` returns 200.
 - Browser load of `sandbox.html` fires `ui/notifications/sandbox-proxy-ready` upward within 500ms of load.
 - Inner iframe's `window.top` access throws `SecurityError` (origin isolation verified).
@@ -354,6 +368,7 @@ The `ui://aviation-answer` HTML resource is a single bundle (~400-500KB gzipped)
 **Dependencies:** Unit 1 (needs Parquet bucket). Can parallelize with Unit 2.
 
 **Files:**
+
 - Create: `packages/blog/server/routes/mcp/aviation/index.ts` (Streamable HTTP endpoint registering server/transport)
 - Create: `packages/blog/server/utils/mcp/aviation/duckdb.ts` (singleton `DuckDBInstance`, pre-warm on first use)
 - Create: `packages/blog/server/utils/mcp/aviation/sql-safety.ts` (AST allowlist, LIMIT injection, schema validation)
@@ -368,6 +383,7 @@ The `ui://aviation-answer` HTML resource is a single bundle (~400-500KB gzipped)
 - Modify: `infra/container/blog.Dockerfile` (verify DuckDB prebuilt binaries install cleanly; may need `apt-get install libstdc++` etc. — validated during implementation)
 
 **Approach:**
+
 - **Transport:** Use `StreamableHTTPServerTransport` from `@modelcontextprotocol/sdk/server/streamableHttp.js`. Session state lives in-process (accept single-instance caveat).
 - **DuckDB singleton:** one `DuckDBInstance.create(':memory:', { access_mode: 'READ_ONLY' })` per process (not per-request — avoids Issue #8 thread-safety scar). Pre-warm on startup: `INSTALL httpfs; LOAD httpfs;` + `SELECT COUNT(*) FROM read_parquet('gs://.../pre-warm.parquet')` before serving traffic. Startup lockdown: `SET autoload_known_extensions=false`, `SET autoinstall_known_extensions=false`, `SET allow_community_extensions=false`, `SET allow_unsigned_extensions=false`, `SET disabled_filesystems='LocalFileSystem'`. Deliberately do NOT set `enable_external_access=false` — it would kill httpfs.
 - **SQL safety — AST allowlist:** parse the LLM-generated SQL with DuckDB's own parser (`conn.run('EXPLAIN (FORMAT JSON) ' + sql)` or a lighter parser-only call). Reject anything that isn't a top-level `SELECT` or `WITH` node. Allowlist the relation names the LLM is permitted to reference. Reject if the AST contains `Attach`, `Install`, `Load`, `Pragma`, `Call`, `Set`, `Copy`, `Export`, `Import`, or any DDL.
@@ -387,7 +403,7 @@ The `ui://aviation-answer` HTML resource is a single bundle (~400-500KB gzipped)
 
 **Execution note:** Start with a failing integration test for the transport contract (tool-call happy path → valid tool-result) before implementing the tool bodies. Test the SQL-safety layer test-first — it's the security boundary, and it's easier to get specs right with test coverage anchoring them.
 
-**Technical design:** *(directional guidance, not implementation specification — illustrates the tool-result shape only)*
+**Technical design:** _(directional guidance, not implementation specification — illustrates the tool-result shape only)_
 
 ```
 ask_aviation("What are the busiest US routes in 2025?")
@@ -405,19 +421,21 @@ ask_aviation("What are the busiest US routes in 2025?")
 ```
 
 **Patterns to follow:**
+
 - `~/code/f/ext-apps/src/server/index.ts` (`registerAppTool` + `registerAppResource`).
 - `~/code/f/mcp-echarts/src/` for LLM-prompt → ECharts option patterns.
 - `packages/blog/server/utils/ai/anthropic.ts:23-38` (`getAnthropicClient`, Braintrust wrap).
 - Thread-safety scar: see `packages/blog/server/utils/ai/tools.ts:1-8` comment on Issue #8. DuckDB singleton OK; no request-scoped mutable state.
 
 **Test scenarios:**
+
 - Happy path: `ask_aviation("busiest US routes in 2025")` → returns text answer + ui:// resource + structured content with valid ECharts option.
 - Happy path: `list_questions()` → returns 8-10 curated starters as text.
 - Happy path: `schema()` → returns dim + fact schema with column types.
 - Happy path (integration): End-to-end against a real Parquet fixture, result matches expected row-shape.
 - Edge case: Empty-result query → returned with `rows: []` + answer notes no matches + followups suggest broader query.
 - Edge case: Query hits `LIMIT 10000` → `truncated: true` flag; iframe will render a truncation banner.
-- Edge case: Query returns geo-shaped data (lat/lon columns) → LLM emits ECharts `geo` option with `lines-on-geo` series.
+- Edge case: Query returns geo-shaped data (lat/lon columns) → LLM falls back to a table/scatter representation; geo/map rendering is out of launch scope.
 - Edge case: NULL coord rows → ECharts option filters them; no NaN errors.
 - Error path: SQL contains `ATTACH` → rejected by AST allowlist; returns error with "this tool is read-only" hint.
 - Error path: SQL contains `INSERT` → rejected; returns error.
@@ -430,6 +448,7 @@ ask_aviation("What are the busiest US routes in 2025?")
 - Integration: MCP Inspector (`pnpm dlx @modelcontextprotocol/inspector --server-url http://localhost:3000/mcp/aviation`) successfully lists tools and calls `ask_aviation`.
 
 **Verification:**
+
 - `curl -X POST http://localhost:3000/mcp/aviation -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","method":"tools/list","id":1}'` returns the three tools.
 - DuckDB startup warmup completes in <2s on a cold container.
 - A query with a known-slow shape (cross-join over T-100) hits the 5s timeout and returns the timeout error, not an OOM.
@@ -447,6 +466,7 @@ ask_aviation("What are the busiest US routes in 2025?")
 **Dependencies:** Unit 3 (needs tool contract settled); Unit 2 (needs sandbox proxy deployed for end-to-end tests).
 
 **Files:**
+
 - Create: `packages/blog/ui-bundles/aviation-answer/` (new build target — pick a simple bundler, either the blog's existing Vite or a standalone esbuild config that outputs one HTML file with inlined JS/CSS)
   - `index.html` (entry)
   - `src/main.ts` (connects to MCP Apps client, wires ECharts)
@@ -460,8 +480,9 @@ ask_aviation("What are the busiest US routes in 2025?")
 - Modify: `packages/blog/server/utils/mcp/aviation/ui-resource.ts` (reads the built HTML and serves it — bundles embed via Vite/esbuild single-file mode)
 
 **Approach:**
+
 - Frameworkless — vanilla TypeScript + DOM. Matches ext-apps `basic-server-vanillajs` example and keeps the bundle small. (Vue would add ~70KB; we don't need it for one page.)
-- Use ECharts with a tree-shaken custom build including only the chart types we expect (bar, line, scatter, pie, table, geo, lines-on-geo). Target ECharts contribution: <300KB gzipped.
+- Use ECharts with a tree-shaken custom build including only launch chart types: bar, line, scatter, pie, treemap, table. Geo/map components excluded (decision: see Key Decisions). Target ECharts contribution: ~150-200KB gzipped.
 - Implement the iframe client using `@modelcontextprotocol/ext-apps` directly via the `PostMessageTransport` pattern shown in the spec's transport section, OR the `AppBridge` helpers (decide during implementation based on API ergonomics).
 - Layout (answer-first, per research):
   1. **Hero section** — the plain-English answer (1-2 sentences), large hero number if present.
@@ -477,13 +498,15 @@ ask_aviation("What are the busiest US routes in 2025?")
 **Execution note:** Scaffold with a mocked `PostMessageTransport` that plays back a canned tool-result, so Unit 4 can progress independently of Unit 3's tool bodies landing. Exchange with Unit 3 happens via the shared structured-content shape defined in `aviation-prompt.ts`.
 
 **Patterns to follow:**
+
 - `~/code/f/ext-apps/examples/basic-server-vanillajs/` (frameworkless server-UI pattern).
 - `~/code/f/chart-canvas/frontend/` (ECharts rendering patterns).
 - `~/code/f/mcp-echarts/src/` (ECharts option validation / error handling).
 
 **Test scenarios:**
+
 - Happy path: Receive tool-result with a bar `chart_option` → ECharts renders; answer hero shows; 3 chips visible; SQL collapsed.
-- Happy path: Receive tool-result with a geo `chart_option` (lines-on-geo) → map renders with route arcs; pan/zoom/tooltip work.
+- Happy path: Receive tool-result with a treemap `chart_option` (e.g., aircraft fleet by manufacturer/model) → treemap renders with hover tooltips.
 - Happy path: Receive tool-result with a table-shaped result → HTML table renders; ECharts not loaded.
 - Happy path: Click a follow-up chip → `ui/message` dispatched upward with role=user and correct text.
 - Happy path: `HostContext` theme toggles dark → ECharts re-renders with dark palette.
@@ -498,14 +521,15 @@ ask_aviation("What are the busiest US routes in 2025?")
 - Integration (Playwright): Mock a host, post a resource-ready + tool-input + tool-result sequence, assert the DOM shape.
 
 **Verification:**
+
 - Built bundle is a single HTML file; `wc -c` of gzipped is under 500KB.
-- Playwright test renders bar / geo / table flavors against a mocked host.
+- Playwright test renders bar / line / treemap / table flavors against a mocked host (no geo at launch).
 - Bundle loads in <1s on a cold browser tab (lab measurement).
 - A11y audit passes (axe-core quick pass).
 
 ---
 
-*Unit 5 has been collapsed into Unit 3 per plan-review findings (coherence P1 + scope-guardian P2 both flagged it as a sub-task of Unit 3, not a standalone unit). Its work — finalizing 8-10 starter questions and the schema-scoped system prompt — lives inside Unit 3's `aviation-prompt.ts` and `aviation-tools.ts` files, with golden-file tests in Unit 3's test suite. The starter questions now draw from the FAA Registry + BTS T-100 join (e.g., "Which operators have the oldest Boeing 737 fleets?", "Map A321neo vs 737 MAX deliveries by operator", "Which US routes use the largest aircraft?"). Unit numbering intentionally leaves a gap so downstream references to "Unit 6" remain stable.*
+_Unit 5 has been collapsed into Unit 3 per plan-review findings (coherence P1 + scope-guardian P2 both flagged it as a sub-task of Unit 3, not a standalone unit). Its work — finalizing 8-10 starter questions and the schema-scoped system prompt — lives inside Unit 3's `aviation-prompt.ts` and `aviation-tools.ts` files, with golden-file tests in Unit 3's test suite. The starter questions now draw from the FAA Registry + BTS T-100 join (e.g., "Which operators have the oldest Boeing 737 fleets?", "Map A321neo vs 737 MAX deliveries by operator", "Which US routes use the largest aircraft?"). Unit numbering intentionally leaves a gap so downstream references to "Unit 6" remain stable._
 
 ---
 
@@ -518,6 +542,7 @@ ask_aviation("What are the busiest US routes in 2025?")
 **Dependencies:** Units 2, 3, 4 all deployed and reachable.
 
 **Files:**
+
 - Create: `packages/blog/app/composables/useAviationMcp.ts` — thin wrapper around `StreamableHTTPClientTransport` + MCP `Client`: one connection per chat session, reused across starter clicks and follow-ups. Handles 404-session-expired reconnect (per research: expired sessions return 404, not 400). Exposes `callAsk(question: string): Promise<UiResourcePayload>`.
 - Create: `packages/blog/app/components/aviation/StarterQuestions.vue` — pill grid rendered above the chat input on zero-turn chats; calls `useAviationMcp().callAsk(question)` on click and inserts the resulting part into `useChat`'s message list as a synthetic `ui-resource` part. The chat page's existing per-part render ladder picks it up.
 - Create: `packages/blog/app/components/tool/UiResource.vue` — the renderer: embeds a sandbox-proxy iframe (src = `https://sandbox.towles.dev/sandbox.html?csp=…`), instantiates `AppBridge` + `PostMessageTransport`, sends `sendSandboxResourceReady({ html, csp, permissions })` + `sendToolInput` + `sendToolResult`, wires `appBridge.onmessage` (follow-up click) → `useAviationMcp().callAsk(params.content.text)` → new `UiResourcePart` appended to messages.
@@ -532,6 +557,7 @@ ask_aviation("What are the busiest US routes in 2025?")
 - Create: `docs/plans/2026-04-14-001-cross-host-test-matrix.md` — the cross-host acceptance-gate artifact. Columns: [ScenarioID, Chart type/state, Blog-chat result (PASS/FAIL + date), Claude Desktop result (PASS/FAIL + date), Notes]. Unit 7 prod-promote workflow reads this file (per adversarial finding: must be machine-enforceable, not documentary).
 
 **Approach:**
+
 - **No mediation through the Anthropic agent loop.** Aviation queries are first-class in the chat page UI but do not pass through the Anthropic Messages API. The same `messages` table stores them as `UiResourcePart` entries alongside regular agent turns. Both the user and the agent see "an assistant turn rendered as an iframe" without a semantic distinction.
 - **One MCP client per chat session.** The Nuxt composable `useAviationMcp` opens a `StreamableHTTPClientTransport` on first use and holds it for the page lifetime. `Mcp-Session-Id` is managed automatically by the SDK. On a 404 from an expired session, reconnect once silently; on failure, surface a user-visible retry.
 - **Starter questions render as a pill grid above the chat input when the conversation has zero turns** (resolves design P1-#19). List content comes from a compile-time constant mirror of the server's `list_questions` tool (product-lens P3 — avoid an extra round-trip at page load).
@@ -546,12 +572,14 @@ ask_aviation("What are the busiest US routes in 2025?")
 **Execution note:** Start with a failing Playwright test for the end-to-end flow (click starter → iframe renders → click follow-up → second iframe renders → reload page → both iframes re-hydrate without token spend) before building the Vue component. The iframe lifecycle has many small gotchas; the e2e test is the fastest way to catch them. TDD the `origin` validation specifically — it's a security property.
 
 **Patterns to follow:**
+
 - `packages/blog/app/components/artifact/Output.vue:108-114` — existing sandboxed iframe rendering.
 - `packages/blog/app/components/tool/Weather.vue` + ToolInvocation.vue — tool-renderer convention.
 - `~/code/f/ext-apps/examples/basic-host/src/implementation.ts` — authoritative reference for `AppBridge` wiring, `loadSandboxProxy`, `initializeApp`, `newAppBridge`, follow-up callbacks (adapt from TSX to Vue).
 - `~/code/f/chart-canvas/frontend/` — ECharts + iframe patterns in a Vue context.
 
 **Test scenarios:**
+
 - Happy path: Cold chat page → starter pill grid visible → click "oldest 737 fleets by operator" → iframe renders inline with bar chart + answer + 3 chips + collapsed SQL.
 - Happy path: Click a follow-up chip → second iframe renders below the first (chat thread grows); no impact on the original iframe.
 - Happy path: Reload the chat → both historical iframes re-hydrate from persisted `UiResourcePart`s with NO new tool calls (verified via Braintrust trace count).
@@ -570,6 +598,7 @@ ask_aviation("What are the busiest US routes in 2025?")
 - Cross-host: Manual test of each scenario in Claude Desktop using the Add-to-Claude-Desktop config (per Unit 7) — iframe visually matches the blog-chat rendering; results recorded in the cross-host matrix file.
 
 **Verification:**
+
 - Playwright e2e suite green on staging.
 - Cross-host acceptance matrix (`docs/plans/2026-04-14-001-cross-host-test-matrix.md`) has at least one green row per scenario in both host columns, dated within the last 7 days. Unit 7 prod-promote reads this file.
 - Persisted chat history replays without re-spending Anthropic tokens (Braintrust trace count for ask_aviation is unchanged across a reload).
@@ -586,6 +615,7 @@ ask_aviation("What are the busiest US routes in 2025?")
 **Dependencies:** Units 1-6 landed (at least on staging) so the deploy targets real code.
 
 **Files:**
+
 - Modify: `infra/terraform/modules/shared/main.tf` (add `google_storage_bucket` for aviation Parquet; add `storage.objectViewer` IAM for Cloud Run SA; add new env secrets if any)
 - Modify: `infra/terraform/modules/cloud-run/main.tf` (bump `memory` to `2Gi`; set `min_instances = 1`; **add `timeout = "300s"` to the `google_cloud_run_v2_service.main.template` block — this attribute does not exist in the current resource and must be added explicitly**; add `--session-affinity`; inject new env vars: `AVIATION_BUCKET`, `MCP_RATE_LIMIT_RPM`)
 - Modify: `infra/terraform/environments/prod/main.tf`, `.../staging/main.tf` (pass the new bucket + settings)
@@ -596,6 +626,7 @@ ask_aviation("What are the busiest US routes in 2025?")
 - Create: `packages/blog/e2e/mcp-aviation-public.spec.ts` (Playwright that unauthenticated-hits `/mcp/aviation` and asserts JSON-RPC responses)
 
 **Approach:**
+
 - **New GCS bucket:** `blog-mcp-aviation-<env>`, `uniform_bucket_level_access=true`, `public_access_prevention` NOT enforced (the data needs to be publicly readable). Add IAM binding: `allUsers` → `roles/storage.objectViewer`. Separate bucket from the existing `${project_id}-media` (cleaner separation of concerns).
 - **Cloud Run memory:** bump to 2Gi. DuckDB in-process can spike during aggregation on the 15M-row fact table; 512Mi is not enough. Note: 2Gi costs more per idle minute — min-instances=1 is necessary anyway for R6, and max-instances=2 keeps the cost bounded.
 - **`--session-affinity`:** instructs Cloud Run to prefer the same instance for the same client, reducing session-state-across-instances risk for `Mcp-Session-Id`. Best-effort, not a guarantee — but paired with min/max=1/2, good enough.
@@ -627,10 +658,12 @@ ask_aviation("What are the busiest US routes in 2025?")
 **Execution note:** The infra changes should land on staging first, fully pass the cross-host e2e test matrix, before promoting to prod. Follow the existing `pnpm gcp:staging:apply` → `pnpm gcp:staging:deploy` → `pnpm gcp:prod:apply` → `pnpm gcp:prod:deploy` sequence.
 
 **Patterns to follow:**
+
 - `infra/terraform/modules/cloud-run/main.tf` env block pattern (conditional env vars, referencing secrets).
 - Existing Nuxt Content / `content/3.apps/` layout (for the MCP demo page — though this may fit better as a static page than a content-collection entry).
 
 **Test scenarios:**
+
 - Happy path: Unauthenticated `POST /mcp/aviation` with valid JSON-RPC returns valid tool-list response.
 - Happy path: `GET /mcp/aviation` (streaming) connects and returns `Mcp-Session-Id` header.
 - Edge case: 61 requests in 5 minutes from same IP → 61st returns 429 with `Retry-After`.
@@ -641,6 +674,7 @@ ask_aviation("What are the busiest US routes in 2025?")
 - Integration: Playwright loads the Add-to-Claude-Desktop page, verifies the config snippet is visible and copy-pasteable.
 
 **Verification:**
+
 - Prod deploy succeeds; `curl https://<blog-domain>/mcp/aviation` returns a valid JSON-RPC tool list.
 - Rate-limit load test caps appropriately.
 - `claude_desktop_config.json` snippet works end-to-end in a fresh Claude Desktop install (manual verification on a throwaway install).
@@ -656,6 +690,7 @@ ask_aviation("What are the busiest US routes in 2025?")
 **Dependencies:** Units 1-7 landed (so the post can link to the live demo).
 
 **Files:**
+
 - Create: `packages/blog/content/2.blog/20260430.mcp-ui-in-chat.md` (date TBD at ship — use the actual publish date)
 - Create: supporting screenshots / diagrams in `packages/blog/public/images/mcp-ui-in-chat/`
 - Modify: `packages/blog/content/2.blog.yml` (add the post to the index if manual entries are used)
@@ -679,12 +714,14 @@ Writing cadence: outline lands in Unit 1's start-of-work; draft iterates alongsi
 **Execution note:** No execution posture beyond standard. Treat this as editorial work; verify every architecture claim against the shipping code before hitting publish.
 
 **Patterns to follow:**
+
 - Blog's existing post format: `packages/blog/content/2.blog/20260327.the-hardest-part-of-ai-isnt-the-ai.md` is a recent example of the tone and depth.
 - Include a "key decisions" table like the one in this plan.
 
 **Test expectation: none — this is editorial/prose content with no behavioral surface.**
 
 **Verification:**
+
 - Post renders correctly on the blog (link checking, screenshot verification).
 - All code snippets in the post actually run.
 - At least one architecture diagram (mermaid) renders correctly on the blog's mermaid support.
@@ -725,21 +762,21 @@ Writing cadence: outline lands in Unit 1's start-of-work; draft iterates alongsi
 
 ## Risks & Dependencies
 
-| Risk | Likelihood | Impact | Mitigation |
-|---|---|---|---|
-| Claude Desktop's MCP Apps spec version drifts, breaking the iframe contract within 12 months | Medium | High on live demo, low on blog post | Blog post remains the durable artifact; monitor `ext-apps` release notes; pin to a known-good spec version if spec adds breaking changes. Explicit 12-month shelf-life relaxation in success criteria |
-| DuckDB httpfs cold-start pushes R6 (5s) past budget | Medium | High | Pre-warm in Nitro plugin; `min_instances=1`; session-affinity; measured latency spike in Unit 3 before shipping |
-| LLM emits SQL that passes AST allowlist but produces a huge cross-join | Medium | Medium | `LIMIT 10000` injection + 5s query timeout + DuckDB `memory_limit` per connection |
-| Prompt injection causes LLM to bypass schema-scoped prompt | Medium | Low (AST allowlist is the hard gate) | Defense-in-depth: schema-scoped prompt + structured output + AST allowlist + row cap. No single layer is trusted |
-| Sandbox proxy subdomain adds deploy complexity (DNS, TLS, separate ops target) | Medium | Low | Start with Cloudflare Pages — cheapest + fastest; fallback to second Cloud Run service if CFP has issues |
-| Bundle size exceeds MCP Apps payload expectations | Low | Medium | Measure during Unit 4; ECharts custom build; if over, drop features or switch to Chart.js |
-| Anthropic API-key-level spend uncapped (separate from GCP $10 cap) | Medium | High | **Set an Anthropic account-level spend limit before launch.** GCP cap doesn't cover Anthropic billing; a scraper hitting `/mcp/aviation` triggers nested LLM calls that bill directly to the Anthropic key. Rate limit + spend cap are both required floors |
-| CSP query-string header injection in sandbox proxy | Low | High | Whitelist allowed CSP directives and parse as structured JSON, not character-strip. Cap CSP param length. Prefer HTTP headers over meta-tag delivery; enforce via Unit 2 tests |
-| DuckDB `read_parquet('https://attacker.com/...')` SSRF via the httpfs path the plan intentionally leaves enabled | Medium | Medium | AST allowlist must reject table-valued functions by name; only pre-registered named VIEWs are legal relations in a query |
-| Claude Desktop remote Streamable HTTP config format unverified — may require `mcp-remote` wrapper | Medium | Medium | Resolve before Unit 7; if wrapper is needed, the Add-to-Claude-Desktop snippet becomes `{ command: "npx", args: ["-y", "mcp-remote", "https://..."] }` — still copy-pasteable |
-| Cross-host rendering parity regression goes undetected | Medium | High (portfolio claim collapses silently) | The cross-host test matrix is machine-readable; Unit 7 prod-promote workflow reads the file and fails on stale/FAIL rows (per adversarial review) |
-| Cloud Run memory bump (512Mi → 2Gi) affects billing | Low | Low | Apply `SET memory_limit='768MB'` in DuckDB config so the container can be right-sized to 1Gi after Unit 3 measurement; $10 cap auto-stops anyway |
-| Playwright e2e test against deployed staging is flaky | Medium | Low | Mark MCP-cross-host tests as "must pass before prod promote" separately from existing test suite; retry with exponential backoff |
+| Risk                                                                                                             | Likelihood | Impact                                    | Mitigation                                                                                                                                                                                                                                                  |
+| ---------------------------------------------------------------------------------------------------------------- | ---------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Claude Desktop's MCP Apps spec version drifts, breaking the iframe contract within 12 months                     | Medium     | High on live demo, low on blog post       | Blog post remains the durable artifact; monitor `ext-apps` release notes; pin to a known-good spec version if spec adds breaking changes. Explicit 12-month shelf-life relaxation in success criteria                                                       |
+| DuckDB httpfs cold-start pushes R6 (5s) past budget                                                              | Medium     | High                                      | Pre-warm in Nitro plugin; `min_instances=1`; session-affinity; measured latency spike in Unit 3 before shipping                                                                                                                                             |
+| LLM emits SQL that passes AST allowlist but produces a huge cross-join                                           | Medium     | Medium                                    | `LIMIT 10000` injection + 5s query timeout + DuckDB `memory_limit` per connection                                                                                                                                                                           |
+| Prompt injection causes LLM to bypass schema-scoped prompt                                                       | Medium     | Low (AST allowlist is the hard gate)      | Defense-in-depth: schema-scoped prompt + structured output + AST allowlist + row cap. No single layer is trusted                                                                                                                                            |
+| Sandbox proxy subdomain adds deploy complexity (DNS, TLS, separate ops target)                                   | Medium     | Low                                       | Start with Cloudflare Pages — cheapest + fastest; fallback to second Cloud Run service if CFP has issues                                                                                                                                                    |
+| Bundle size exceeds MCP Apps payload expectations                                                                | Low        | Medium                                    | Measure during Unit 4; ECharts custom build; if over, drop features or switch to Chart.js                                                                                                                                                                   |
+| Anthropic API-key-level spend uncapped (separate from GCP $10 cap)                                               | Medium     | High                                      | **Set an Anthropic account-level spend limit before launch.** GCP cap doesn't cover Anthropic billing; a scraper hitting `/mcp/aviation` triggers nested LLM calls that bill directly to the Anthropic key. Rate limit + spend cap are both required floors |
+| CSP query-string header injection in sandbox proxy                                                               | Low        | High                                      | Whitelist allowed CSP directives and parse as structured JSON, not character-strip. Cap CSP param length. Prefer HTTP headers over meta-tag delivery; enforce via Unit 2 tests                                                                              |
+| DuckDB `read_parquet('https://attacker.com/...')` SSRF via the httpfs path the plan intentionally leaves enabled | Medium     | Medium                                    | AST allowlist must reject table-valued functions by name; only pre-registered named VIEWs are legal relations in a query                                                                                                                                    |
+| Claude Desktop remote Streamable HTTP config format unverified — may require `mcp-remote` wrapper                | Medium     | Medium                                    | Resolve before Unit 7; if wrapper is needed, the Add-to-Claude-Desktop snippet becomes `{ command: "npx", args: ["-y", "mcp-remote", "https://..."] }` — still copy-pasteable                                                                               |
+| Cross-host rendering parity regression goes undetected                                                           | Medium     | High (portfolio claim collapses silently) | The cross-host test matrix is machine-readable; Unit 7 prod-promote workflow reads the file and fails on stale/FAIL rows (per adversarial review)                                                                                                           |
+| Cloud Run memory bump (512Mi → 2Gi) affects billing                                                              | Low        | Low                                       | Apply `SET memory_limit='768MB'` in DuckDB config so the container can be right-sized to 1Gi after Unit 3 measurement; $10 cap auto-stops anyway                                                                                                            |
+| Playwright e2e test against deployed staging is flaky                                                            | Medium     | Low                                       | Mark MCP-cross-host tests as "must pass before prod promote" separately from existing test suite; retry with exponential backoff                                                                                                                            |
 
 ## Alternative Approaches Considered
 
@@ -762,7 +799,7 @@ Writing cadence: outline lands in Unit 1's start-of-work; draft iterates alongsi
 
 Updated from the origin doc to reflect plan-review relaxations:
 
-- **Primary:** A cold visitor clicks a starter question and sees a map or chart *reliably* — no docs, no setup. Exact latency target TBD after Unit 3 spike measurement; the original "<5 seconds" claim is relaxed per review because the architecture (LLM structured-output call + DuckDB httpfs + iframe handshake) cannot credibly promise 5s without unverifiable claims. Make it work, measure, budget.
+- **Primary:** A cold visitor clicks a starter question and sees a map or chart _reliably_ — no docs, no setup. Exact latency target TBD after Unit 3 spike measurement; the original "<5 seconds" claim is relaxed per review because the architecture (LLM structured-output call + DuckDB httpfs + iframe handshake) cannot credibly promise 5s without unverifiable claims. Make it work, measure, budget.
 - **Primary:** The companion blog post is referenced externally (not just retweeted — a substantive link or citation) within 6 months.
 - A developer with Claude Desktop already installed adds the MCP server in under 2 minutes using the copy-paste snippet.
 - The live demo works for at least 6 months after launch; the blog post is the durable artifact and survives MCP Apps spec drift even if the live iframe contract breaks.
@@ -779,15 +816,19 @@ Updated from the origin doc to reflect plan-review relaxations:
 ## Phased Delivery
 
 ### Phase 1 — Foundation (Units 1, 2)
+
 ETL-to-Parquet pipeline + sandbox proxy subdomain. Parallelizable. Each is low-risk on its own; landing them together creates the substrate for Phase 2 without blocking it on a single long-running unit.
 
 ### Phase 2 — Server-side (Unit 3)
+
 MCP server with tools + safety + prompt + starter-question list (all in Unit 3 after Unit 5 was absorbed during review). Ends with an MCP server callable via MCP Inspector that returns correct `ui://` resources.
 
 ### Phase 3 — Client-side (Units 4, 6)
+
 UI bundle + blog chat host integration. Unit 4 is standalone (can be developed against a mocked host); Unit 6 integrates everything. Ends with an end-to-end path from blog chat → MCP → iframe render.
 
 ### Phase 4 — Ship (Units 7, 8)
+
 Deploy + Claude Desktop onboarding + blog post. Unit 7 bumps infra to production-ready; Unit 8 closes the portfolio artifact.
 
 **Across all phases:** Unit 8 (blog post) outlines from Phase 1 forward and iterates as decisions firm up. Final copy ships in Phase 4 and cannot land until the live demo deploys — architecture claims must be verifiable against shipping code.
