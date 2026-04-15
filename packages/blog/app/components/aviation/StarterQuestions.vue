@@ -15,7 +15,7 @@
  * avoids an extra round-trip at page load (plan line 563, product-lens).
  */
 
-import { AVIATION_STARTER_QUESTIONS } from './starter-questions';
+import { AVIATION_STARTER_QUESTIONS } from '~/utils/aviation-starter-questions';
 import { TEST_IDS } from '~~/shared/test-ids';
 
 defineProps<{

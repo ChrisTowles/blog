@@ -115,10 +115,9 @@ describe('useAviationMcp', () => {
     const transport = new FakeTransport({ askResult: STUB_RESULT });
     const mcp = useAviationMcp({
       endpoint: 'http://localhost/mcp/aviation',
-      createTransport: () => transport as unknown as Parameters<typeof mcp.callAsk>[0] extends unknown
-        ? never
-        : never,
-    } as Parameters<typeof useAviationMcp>[0]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      createTransport: () => transport as unknown as any,
+    });
 
     const payload = await mcp.callAsk('What is 1 + 1?');
     expect(payload.structuredContent).toEqual(STUB_RESULT);
@@ -137,16 +136,13 @@ describe('useAviationMcp', () => {
     let nextTransport: FakeTransport = transport1;
     const mcp = useAviationMcp({
       endpoint: 'http://localhost/mcp/aviation',
-      createTransport: () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      createTransport: (): any => {
         const t = nextTransport;
         nextTransport = transport2;
-        return t as unknown as Parameters<Parameters<typeof useAviationMcp>[0]['createTransport'] extends infer F
-          ? F extends (...a: never[]) => infer R
-            ? never
-            : never
-          : never>[0];
+        return t;
       },
-    } as Parameters<typeof useAviationMcp>[0]);
+    });
 
     const payload = await mcp.callAsk('q');
     expect(payload.structuredContent).toEqual(STUB_RESULT);
@@ -164,12 +160,13 @@ describe('useAviationMcp', () => {
     let nextTransport: FakeTransport = transport1;
     const mcp = useAviationMcp({
       endpoint: 'http://localhost/mcp/aviation',
-      createTransport: () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      createTransport: (): any => {
         const t = nextTransport;
         nextTransport = transport2;
-        return t as unknown as never;
+        return t;
       },
-    } as Parameters<typeof useAviationMcp>[0]);
+    });
 
     await expect(mcp.callAsk('q')).rejects.toThrow(/404/i);
   });

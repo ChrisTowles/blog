@@ -62,7 +62,8 @@ function extractUiResource(
     const resource = embedded.resource;
     if (!resource || typeof resource !== 'object') continue;
     if (resource.uri !== AVIATION_UI_RESOURCE_URI) continue;
-    const html = typeof resource.text === 'string' ? resource.text : '';
+    const textField = (resource as { text?: unknown }).text;
+    const html = typeof textField === 'string' ? textField : '';
     // CSP + permissions live on the resource's _meta.ui (spec) or .meta (python quirk).
     // biome-ignore lint: spec-level escape hatch.
     const meta = (resource as { _meta?: unknown; meta?: unknown })._meta ??
@@ -84,10 +85,10 @@ export interface UseAviationMcpOptions {
   endpoint?: string;
   /**
    * Injected for tests. Defaults to `StreamableHTTPClientTransport`.
+   * Typed loosely because the SDK's transport surface varies by version.
    */
-  createTransport?: (url: URL) => ConstructorParameters<typeof Client>[1] extends never
-    ? never
-    : Parameters<Client['connect']>[0];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  createTransport?: (url: URL) => any;
 }
 
 export function useAviationMcp(options: UseAviationMcpOptions = {}) {
@@ -99,11 +100,14 @@ export function useAviationMcp(options: UseAviationMcpOptions = {}) {
     if (state.connecting) return state.connecting;
 
     state.connecting = (async () => {
-      const url = new URL(endpoint, typeof window !== 'undefined' ? window.location.href : 'http://localhost');
+      const url = new URL(
+        endpoint,
+        typeof window !== 'undefined' ? window.location.href : 'http://localhost',
+      );
       const client = new Client(IMPLEMENTATION);
       const transport = options.createTransport
         ? options.createTransport(url)
-        : (new StreamableHTTPClientTransport(url) as unknown as Parameters<Client['connect']>[0]);
+        : new StreamableHTTPClientTransport(url);
       await client.connect(transport);
       state.client = client;
       return client;

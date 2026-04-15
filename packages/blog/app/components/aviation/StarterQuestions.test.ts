@@ -13,7 +13,7 @@
 import { describe, it, expect } from 'vitest';
 import { mountSuspended } from '@nuxt/test-utils/runtime';
 import StarterQuestions from './StarterQuestions.vue';
-import { AVIATION_STARTER_QUESTIONS as CLIENT_LIST } from './starter-questions';
+import { AVIATION_STARTER_QUESTIONS as CLIENT_LIST } from '~/utils/aviation-starter-questions';
 import { AVIATION_STARTER_QUESTIONS as SERVER_LIST } from '~~/server/utils/mcp/aviation/aviation-prompt';
 
 describe('StarterQuestions', () => {

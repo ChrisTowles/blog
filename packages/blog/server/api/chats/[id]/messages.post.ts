@@ -34,7 +34,11 @@ defineRouteMeta({
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event);
-  const { id: chatId } = getRouterParams(event);
+  const params = getRouterParams(event);
+  const chatId = params.id;
+  if (typeof chatId !== 'string') {
+    throw createError({ statusCode: 400, statusMessage: 'Chat id required' });
+  }
   const body = await readValidatedBody(event, bodySchema.parse);
 
   const db = useDrizzle();
@@ -42,7 +46,7 @@ export default defineEventHandler(async (event) => {
   // Ownership check.
   const chat = await db.query.chats.findFirst({
     where: (chat, { eq, and }) =>
-      and(eq(chat.id, chatId as string), eq(chat.userId, session.user?.id || session.id)),
+      and(eq(chat.id, chatId), eq(chat.userId, session.user?.id || session.id)),
   });
   if (!chat) {
     throw createError({ statusCode: 404, statusMessage: 'Chat not found' });
