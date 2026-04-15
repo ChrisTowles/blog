@@ -8,6 +8,8 @@ definePageMeta({
 });
 
 const toast = useToast();
+const runtimeConfig = useRuntimeConfig();
+const mcpDemoEnabled = computed(() => Boolean(runtimeConfig.public.mcpDemoEnabled));
 
 const input = ref('');
 const loading = ref(false);
@@ -154,8 +156,10 @@ const quickChats = [
 
         <!-- Aviation MCP starter questions (plan Unit 6): visible on zero-turn
              homepage; click creates a new chat with ?aviation=1 and runs
-             the MCP call directly (bypasses Anthropic agent loop). -->
-        <div class="mt-2">
+             the MCP call directly (bypasses Anthropic agent loop).
+             Gated on NUXT_PUBLIC_MCP_DEMO_ENABLED feature flag per plan
+             line 851 (prod hides until launch day). -->
+        <div v-if="mcpDemoEnabled" class="mt-2">
           <div class="text-sm text-muted mb-2">Ask about US commercial aviation:</div>
           <AviationStarterQuestions :disabled="loading" @click="onAviationStarter" />
         </div>

@@ -48,6 +48,7 @@ export const TEST_IDS = {
     LOGIN_BUTTON: 'login-button',
     THEME_TOGGLE: 'theme-toggle',
     READING_LINK: 'nav-reading',
+    AVIATION_LINK: 'nav-aviation',
   },
   SEARCH: {
     PAGE: 'search-page',

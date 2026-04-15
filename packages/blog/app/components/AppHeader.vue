@@ -3,6 +3,9 @@ import { TEST_IDS } from '~~/shared/test-ids';
 
 const route = useRoute();
 const { loggedIn } = useUserSession();
+const runtimeConfig = useRuntimeConfig();
+const mcpDemoEnabled = computed(() => Boolean(runtimeConfig.public.mcpDemoEnabled));
+
 const items = computed(() => [
   {
     label: 'Home',
@@ -46,6 +49,19 @@ const items = computed(() => [
     active: route.path.startsWith('/chat'),
     'data-testid': TEST_IDS.NAVIGATION.CHAT_LINK,
   },
+  // Aviation MCP demo nav link — gated behind NUXT_PUBLIC_MCP_DEMO_ENABLED
+  // per plan line 851 (hidden in prod until launch day).
+  ...(mcpDemoEnabled.value
+    ? [
+        {
+          label: 'Aviation MCP',
+          to: '/aviation',
+          icon: 'i-heroicons-paper-airplane',
+          active: route.path.startsWith('/aviation'),
+          'data-testid': TEST_IDS.NAVIGATION.AVIATION_LINK,
+        },
+      ]
+    : []),
   ...(loggedIn.value
     ? [
         {
