@@ -14,10 +14,7 @@
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import type {
-  CallToolResult,
-  EmbeddedResource,
-} from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, EmbeddedResource } from '@modelcontextprotocol/sdk/types.js';
 import {
   AVIATION_TOOL_NAMES,
   AVIATION_UI_RESOURCE_URI,
@@ -66,7 +63,8 @@ function extractUiResource(
     const html = typeof textField === 'string' ? textField : '';
     // CSP + permissions live on the resource's _meta.ui (spec) or .meta (python quirk).
     // biome-ignore lint: spec-level escape hatch.
-    const meta = (resource as { _meta?: unknown; meta?: unknown })._meta ??
+    const meta =
+      (resource as { _meta?: unknown; meta?: unknown })._meta ??
       (resource as { meta?: unknown }).meta;
     const uiMeta =
       meta && typeof meta === 'object' && 'ui' in meta

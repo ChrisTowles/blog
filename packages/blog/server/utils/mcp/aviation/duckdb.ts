@@ -37,7 +37,13 @@ let _instancePromise: Promise<DuckDBInstance> | null = null;
 let _prewarmed = false;
 let _prewarmMs = 0;
 
-export const AVIATION_BUCKET = 'blog-mcp-aviation-staging';
+/**
+ * GCS bucket name for the aviation Parquet dataset. Reads `AVIATION_BUCKET` at
+ * module import time — Cloud Run injects this from terraform (see
+ * `infra/terraform/modules/cloud-run/main.tf`). Falls back to the staging bucket
+ * so local/test runs work without explicit env wiring.
+ */
+export const AVIATION_BUCKET = process.env.AVIATION_BUCKET || 'blog-mcp-aviation-staging';
 export const AVIATION_BUCKET_URL_PREFIX = `gs://${AVIATION_BUCKET}/`;
 export const PREWARM_PARQUET_URL = `${AVIATION_BUCKET_URL_PREFIX}pre-warm.parquet`;
 

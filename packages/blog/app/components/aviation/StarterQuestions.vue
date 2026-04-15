@@ -32,10 +32,7 @@ function onClick(q: string) {
 </script>
 
 <template>
-  <div
-    class="flex flex-wrap gap-2"
-    :data-testid="TEST_IDS.AVIATION.STARTER_QUESTIONS"
-  >
+  <div class="flex flex-wrap gap-2" :data-testid="TEST_IDS.AVIATION.STARTER_QUESTIONS">
     <UButton
       v-for="q in AVIATION_STARTER_QUESTIONS"
       :key="q"
