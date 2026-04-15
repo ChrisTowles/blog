@@ -14,7 +14,8 @@ packages/
 infra/              # infrastructure
     container/       # block docker files
     aws_cloudformation/ # AWS Bedrock and IAM
-    terraform/          # GCP Cloud Run and Cloud SQL
+    terraform/          # GCP Cloud Run and Cloud SQL (blog hosting stack)
+    gcp-billing/        # GCP spend-cap kill-switch + BigQuery export (separate stack)
 ```
 
 ## Hosting
@@ -81,8 +82,16 @@ Don't claim a feature works without steps 4-6. Automated tests miss rendering is
 ## Pre-commit Hooks
 
 - Image compression requires `pngquant` (`sudo apt-get install pngquant`)
+- `oxlint --fix` + `oxfmt --write` run via lint-staged on staged JS/TS/MD files. They reformat markdown tables, emphasis (`*x*` → `_x_`), and string quotes. Expect a follow-up commit to reach formatter fixed-point after edits to docs.
+- Use conventional commits with scopes: `feat(scope):`, `fix(scope):`, `style(scope):`, `chore(scope):`. Match existing scopes from `git log` (e.g., `gcp-billing`, `og-image`, `workflows`, `terraform`).
 
 ## References
 
 - [GCP: Hosting](docs/hosting.md)
 - [Terraform Details](infra/terraform/README.md)
+- [GCP Spend-Cap Kill-Switch](infra/gcp-billing/README.md)
+
+## Terraform
+
+- Terraform state lives in GCS bucket `blog-towles-production-tfstate`, keyed per stack via `prefix` (e.g., `terraform/state` for blog hosting, `terraform/gcp-billing` for the kill-switch). New stacks should pick a new unique prefix rather than creating another bucket.
+- Cloud Function source convention: upload zips to `${project_id}-functions` GCS bucket (each stack creates its own objects keyed by content hash). See `infra/terraform/modules/cost-scheduler/` and `infra/gcp-billing/pubsub_function.tf` for examples.
