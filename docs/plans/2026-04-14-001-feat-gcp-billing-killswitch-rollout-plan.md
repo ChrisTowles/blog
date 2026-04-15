@@ -1,5 +1,5 @@
 ---
-title: "feat: Roll out GCP billing kill-switch + BigQuery export"
+title: 'feat: Roll out GCP billing kill-switch + BigQuery export'
 type: feat
 status: active
 date: 2026-04-14
@@ -23,7 +23,7 @@ GCP has no native hard spend cap. All six projects under billing account
 `015529-D0D3BB-5BEDEE` — including personal experiments like `jarvis-home-487516` —
 are currently exposed to unbounded spend if something goes wrong (runaway Cloud Run
 instances, buggy Cloud SQL query loops, API abuse). The stack built during the
-previous session implements Google's canonical pattern for a *reactive* kill-switch
+previous session implements Google's canonical pattern for a _reactive_ kill-switch
 (budget → Pub/Sub → function → `updateBillingInfo`). This plan is about safely putting
 it into operation without guessing at cap values that could trip under normal load.
 
@@ -39,13 +39,13 @@ it into operation without guessing at cap values that could trip under normal lo
 - **Preventive quotas are a separate, complementary mechanism** — not a replacement.
   Cloud Run `max_instances`, Cloud SQL tier limits, per-API quotas, and organization
   policies constrain resource creation in real time. They're out of scope here but
-  worth considering as a follow-up layer; the right overall design is *quotas for
-  prevention + kill-switch for the long tail*.
+  worth considering as a follow-up layer; the right overall design is _quotas for
+  prevention + kill-switch for the long tail_.
 - **Self-kill is acceptable.** If `blog-towles-production` (the host project) trips
   its own cap, the function calls `updateBillingInfo` synchronously before its own
   billing is disabled, so the kill itself completes. After that, the Pub/Sub topic
   and function go offline until the host is manually re-linked — meaning other
-  projects are temporarily unprotected from *new* trips. Accepted on the basis that
+  projects are temporarily unprotected from _new_ trips. Accepted on the basis that
   (a) trips are rare, (b) if prod blew its cap you have bigger problems and will
   notice, (c) the alternative (a dedicated admin project) is heavier than the risk
   warrants for a personal-scale setup.
@@ -116,7 +116,7 @@ context:
 - **Billing export cannot be provisioned by Terraform.** The google provider has no
   resource for `billingAccounts.updateBillingExport`. Dataset + IAM via TF; enable via
   console. This is why Unit 2 exists as a standalone manual step.
-- **`budget_filter.projects` requires project *numbers*, not IDs.** `budgets.tf`
+- **`budget_filter.projects` requires project _numbers_, not IDs.** `budgets.tf`
   already handles this via `data "google_project"` lookup — worth flagging if any of
   the 6 projects fail to resolve.
 - **`roles/billing.projectManager` on the billing account (not a project) is the
@@ -162,13 +162,13 @@ context:
 
 ### Resolved During Planning
 
-- *Which project hosts the infra?* `blog-towles-production`. Reuses existing TF state
+- _Which project hosts the infra?_ `blog-towles-production`. Reuses existing TF state
   bucket `blog-towles-production-tfstate` with prefix `terraform/gcp-billing`.
-- *BigQuery export cost at personal scale?* Effectively free. Storage ≪ 100 MB/year;
+- _BigQuery export cost at personal scale?_ Effectively free. Storage ≪ 100 MB/year;
   queries within 1 TB/month free tier.
-- *Run external research?* No — Google's pattern is canonical and already encoded in
+- _Run external research?_ No — Google's pattern is canonical and already encoded in
   the code.
-- *Should Phase 1 include a live trip test?* No. Dry-run only until Phase 2 caps are
+- _Should Phase 1 include a live trip test?_ No. Dry-run only until Phase 2 caps are
   armed. A live trip is Unit 6 and optional.
 
 ### Deferred to Implementation
@@ -191,8 +191,8 @@ context:
 
 ## High-Level Technical Design
 
-> *This illustrates the intended rollout sequence and is directional guidance for review,
-> not implementation specification.*
+> _This illustrates the intended rollout sequence and is directional guidance for review,
+> not implementation specification._
 
 ```mermaid
 flowchart TD
@@ -213,14 +213,13 @@ flowchart TD
 
 - [x] **Unit 1: Phase 1 apply — provision infra with empty `project_caps`** ✅ applied 2026-04-14
 
-    **Post-apply correction:** the two `*_iam_member` resources granting IAM to Google-managed
-    service agents (`gcp-sa-billing-bq-exp` and `gcp-sa-billingbudgets`) were **removed from
-    the Terraform** after the first apply failed with "Service account ... does not exist".
-    These agents are provisioned lazily by Google on first use of the corresponding service
-    (BQ billing export in Unit 2; first budget creation in Unit 5). Google auto-grants the
-    required roles at that time, so the removed bindings were redundant as well as
-    prematurely-referenced. Final resource count: 20 created (originally planned 22).
-
+  **Post-apply correction:** the two `*_iam_member` resources granting IAM to Google-managed
+  service agents (`gcp-sa-billing-bq-exp` and `gcp-sa-billingbudgets`) were **removed from
+  the Terraform** after the first apply failed with "Service account ... does not exist".
+  These agents are provisioned lazily by Google on first use of the corresponding service
+  (BQ billing export in Unit 2; first budget creation in Unit 5). Google auto-grants the
+  required roles at that time, so the removed bindings were redundant as well as
+  prematurely-referenced. Final resource count: 20 created (originally planned 22).
 
 **Goal:** Apply `infra/gcp-billing/` against billing account `015529-D0D3BB-5BEDEE` so
 that the Pub/Sub topic, runtime service account, IAM bindings, Cloud Function, and
@@ -230,6 +229,7 @@ BigQuery dataset exist. No budgets yet — `project_caps = {}` means zero
 **Requirements:** R1
 
 **Dependencies:**
+
 - The applying identity must be a **user account** (not a CI service account — existing CI
   SAs almost certainly lack `roles/billing.admin`) with:
   - `roles/billing.admin` on billing account `015529-D0D3BB-5BEDEE` (needed to grant
@@ -243,10 +243,12 @@ BigQuery dataset exist. No budgets yet — `project_caps = {}` means zero
   wrong project).
 
 **Files:**
+
 - Modify: `infra/gcp-billing/terraform.tfvars` (confirm `project_caps = {}`)
 - Artifacts (not committed): `.terraform/`, `.terraform.lock.hcl`, `function.zip`
 
 **Approach:**
+
 - Run `terraform init -backend-config=backend.tfvars` (first-time init against the
   GCS backend at `gs://blog-towles-production-tfstate/terraform/gcp-billing/`).
 - Run `terraform plan -var-file=terraform.tfvars`. Expect:
@@ -263,23 +265,26 @@ BigQuery dataset exist. No budgets yet — `project_caps = {}` means zero
 - Commit `.terraform.lock.hcl` so CI or future applies get the same provider versions.
 
 **Patterns to follow:**
+
 - `infra/terraform/modules/cost-scheduler/main.tf` — same `archive_file` + GCS object
-  + `google_cloudfunctions2_function` layout, already known to apply cleanly.
+  - `google_cloudfunctions2_function` layout, already known to apply cleanly.
 
 **Test scenarios:**
-- *Happy path:* `terraform apply` exits 0, `terraform state list` shows all expected
+
+- _Happy path:_ `terraform apply` exits 0, `terraform state list` shows all expected
   resources, no `google_billing_budget.*` entries present.
-- *Error path — billing account IAM missing:* if the applying identity lacks
+- _Error path — billing account IAM missing:_ if the applying identity lacks
   `roles/billing.admin`, the `google_billing_account_iam_member` resource fails with
   a permission error. Expected, recoverable.
-- *Error path — API not yet propagated:* first-time API enablement can take 1–2 min
+- _Error path — API not yet propagated:_ first-time API enablement can take 1–2 min
   to propagate; a retry of `apply` after the propagation error should succeed.
 
 **Verification:**
+
 - `gcloud pubsub topics describe billing-cap-alerts --project=blog-towles-production`
   returns a topic.
 - `gcloud functions describe billing-kill-switch --gen2 --region=us-central1
-  --project=blog-towles-production` returns `ACTIVE` state.
+--project=blog-towles-production` returns `ACTIVE` state.
 - `gcloud iam service-accounts list --project=blog-towles-production` includes
   `billing-kill-switch@…`.
 - `bq ls --project_id=blog-towles-production` shows `billing_export`.
@@ -288,12 +293,11 @@ BigQuery dataset exist. No budgets yet — `project_caps = {}` means zero
 
 - [x] **Unit 2: Enable BigQuery billing export in the Billing Console** ✅ enabled 2026-04-14
 
-    **Note for future reference:** the actual billing-export service agent granted access
-    when enabling Standard usage cost export was `billing-export-bigquery@system.gserviceaccount.com`
-    (the legacy format), not the `@gcp-sa-billing-bq-exp.iam.gserviceaccount.com` format
-    my original Terraform assumed. Confirming IAM auto-grant happens regardless — no manual
-    IAM step needed.
-
+  **Note for future reference:** the actual billing-export service agent granted access
+  when enabling Standard usage cost export was `billing-export-bigquery@system.gserviceaccount.com`
+  (the legacy format), not the `@gcp-sa-billing-bq-exp.iam.gserviceaccount.com` format
+  my original Terraform assumed. Confirming IAM auto-grant happens regardless — no manual
+  IAM step needed.
 
 **Goal:** Start data flowing from billing account `015529-D0D3BB-5BEDEE` into
 `blog-towles-production.billing_export`. This cannot be done via Terraform.
@@ -305,25 +309,27 @@ BigQuery dataset exist. No budgets yet — `project_caps = {}` means zero
 **Files:** None — console-only change.
 
 **Approach:**
+
 - Navigate to
   <https://console.cloud.google.com/billing/015529-D0D3BB-5BEDEE/export>.
-- Under *BigQuery export* → *Standard usage cost* → *Edit settings*:
+- Under _BigQuery export_ → _Standard usage cost_ → _Edit settings_:
   - Project: `blog-towles-production`
   - Dataset: `billing_export`
   - Save.
-- Decide on *Detailed usage cost* export (per-SKU granularity). Default: skip for now,
+- Decide on _Detailed usage cost_ export (per-SKU granularity). Default: skip for now,
   revisit in Unit 4 if needed.
-- Skip *Pricing* export (not useful for spend caps).
+- Skip _Pricing_ export (not useful for spend caps).
 
 **Test scenarios:**
-- *Happy path:* ~24h after save, `bq ls blog-towles-production:billing_export` lists
+
+- _Happy path:_ ~24h after save, `bq ls blog-towles-production:billing_export` lists
   a table named `gcp_billing_export_v1_015529_D0D3BB_5BEDEE`.
-- *Error path — IAM missing:* if the billing-export service agent
+- _Error path — IAM missing:_ if the billing-export service agent
   (`service-<project_number>@gcp-sa-billing-bq-exp.iam.gserviceaccount.com`) wasn't
   granted `roles/bigquery.dataEditor` on the dataset, the console save will fail with
   a permission error. Unit 1's `google_bigquery_dataset_iam_member` should have
   handled this — if it didn't, re-check the grant.
-- *Edge case — service agent not yet provisioned:* the billing-export service agent
+- _Edge case — service agent not yet provisioned:_ the billing-export service agent
   is typically created by Google the first time BQ export is configured on a billing
   account. Unit 1's `google_bigquery_dataset_iam_member` does not validate principals,
   so the grant is accepted regardless. After the console save in Unit 2, re-check the
@@ -331,7 +337,8 @@ BigQuery dataset exist. No budgets yet — `project_caps = {}` means zero
   relocated the agent, `terraform apply` again to refresh the binding.
 
 **Verification:**
-- Console shows the export as *Configured* with the correct project/dataset.
+
+- Console shows the export as _Configured_ with the correct project/dataset.
 - After 24h, a trivial BQ query returns rows:
   ```sql
   SELECT COUNT(*) AS row_count, MAX(usage_start_time) AS latest
@@ -342,16 +349,15 @@ BigQuery dataset exist. No budgets yet — `project_caps = {}` means zero
 
 - [x] **Unit 3: Smoke-test the kill-switch with a dry-run publish** ✅ passed 2026-04-14
 
-    **Note for future reference:** the initial function deploy used a bare
-    `exports.killSwitch = (cloudEvent) => {...}` export, which the Functions
-    Framework interpreted as a 1st-gen background signature — causing every invocation
-    to log "No Pub/Sub message payload; ignoring" because `cloudEvent.data.message.data`
-    was undefined under that shape. Fix: added `@google-cloud/functions-framework` as
-    a dependency and switched to explicit CloudEvent registration via
-    `functions.cloudEvent('killSwitch', async (cloudEvent) => {...})`. All 4 test
-    scenarios (dry-run, missing fields, below-cap, allowlist-reject) pass after
-    redeploy. Zero UpdateBillingInfo audit events, confirming guards are tight.
-
+  **Note for future reference:** the initial function deploy used a bare
+  `exports.killSwitch = (cloudEvent) => {...}` export, which the Functions
+  Framework interpreted as a 1st-gen background signature — causing every invocation
+  to log "No Pub/Sub message payload; ignoring" because `cloudEvent.data.message.data`
+  was undefined under that shape. Fix: added `@google-cloud/functions-framework` as
+  a dependency and switched to explicit CloudEvent registration via
+  `functions.cloudEvent('killSwitch', async (cloudEvent) => {...})`. All 4 test
+  scenarios (dry-run, missing fields, below-cap, allowlist-reject) pass after
+  redeploy. Zero UpdateBillingInfo audit events, confirming guards are tight.
 
 **Goal:** Verify the full path — Pub/Sub → Eventarc → Cloud Run function invocation
 → Cloud Logging — works end-to-end before any real budget is wired up. Use a payload
@@ -365,26 +371,29 @@ log-and-exits without touching billing.
 **Files:** None — runtime verification only.
 
 **Approach:**
+
 - Publish a synthetic payload via `gcloud pubsub topics publish billing-cap-alerts
-  --project=blog-towles-production --message='{"budgetDisplayName":"dry-run",…}'`
+--project=blog-towles-production --message='{"budgetDisplayName":"dry-run",…}'`
   (exact command in `infra/gcp-billing/README.md`).
 - Immediately tail the function logs:
   `gcloud functions logs read billing-kill-switch --gen2 --region=us-central1
-  --project=blog-towles-production --limit=50`.
+--project=blog-towles-production --limit=50`.
 - Expect a log line containing `Ignoring: budgetDisplayName "dry-run" does not match
-  spend-cap-<project>`.
+spend-cap-<project>`.
 
 **Test scenarios:**
-- *Happy path — dry-run message:* `budgetDisplayName: "dry-run"` → function logs
+
+- _Happy path — dry-run message:_ `budgetDisplayName: "dry-run"` → function logs
   "Ignoring…" and exits.
-- *Edge case — missing costAmount/budgetAmount:* payload with only `budgetDisplayName`
+- _Edge case — missing costAmount/budgetAmount:_ payload with only `budgetDisplayName`
   set → function logs "costAmount/budgetAmount missing or non-numeric" and exits.
-- *Edge case — below-threshold payload:* `budgetDisplayName: "spend-cap-fake-project"`,
+- _Edge case — below-threshold payload:_ `budgetDisplayName: "spend-cap-fake-project"`,
   `costAmount: 1`, `budgetAmount: 100` → function logs "Below cap (cost=1 <
   budget=100); no action" and exits. Proves the threshold guard works without
   requiring a real project.
 
 **Verification:**
+
 - All three log messages appear in Cloud Logging.
 - Function execution metrics show 3 successful invocations, 0 errors.
 - No `cloudbilling.googleapis.com` audit log entries for `UpdateBillingInfo` (the
@@ -402,11 +411,13 @@ baseline and pick cap values with enough headroom to avoid tripping under normal
 **Dependencies:** Unit 2 (export must be landing data ≥ 7 days).
 
 **Files:**
+
 - Modify: `infra/gcp-billing/terraform.tfvars` (fill in `project_caps` map)
 - Create (optional, not committed): a scratch notes file with the BQ query output
   for future reference
 
 **Approach:**
+
 - Run a per-project rollup query against
   `blog-towles-production.billing_export.gcp_billing_export_v1_015529_D0D3BB_5BEDEE`:
   ```sql
@@ -432,11 +443,12 @@ baseline and pick cap values with enough headroom to avoid tripping under normal
   amount spec anyway).
 - Commit the updated `terraform.tfvars`.
 
-**Test scenarios:** — *Test expectation: none — this is an analysis and configuration
+**Test scenarios:** — _Test expectation: none — this is an analysis and configuration
 unit with no behavioral change. Verification is the baseline documentation + tfvars
-diff.*
+diff._
 
 **Verification:**
+
 - Every project on billing account `015529-D0D3BB-5BEDEE` appears as a key in
   `project_caps` (enforce R4: no gaps).
 - Every cap value is ≥ 2× observed projected monthly spend, floored at the per-tier
@@ -463,11 +475,13 @@ ongoing spend anyway).
 canary cap is set below it).
 
 **Files:**
+
 - Modify: `infra/gcp-billing/terraform.tfvars` — temporarily set
   `project_caps = { "blog-towles-staging" = <N> }` where N is clearly below staging's
   current MTD spend. All other projects remain absent from the map for this step.
 
 **Approach:**
+
 - Confirm staging's current MTD spend from the BQ query in Unit 4 (e.g., if MTD is
   $3.50, set cap to `1`).
 - `terraform apply -var-file=terraform.tfvars` — creates only the staging budget
@@ -479,7 +493,7 @@ canary cap is set below it).
   - Budget notification published to topic (visible in Pub/Sub subscription metrics
     or `gcloud pubsub` read).
   - Cloud Function logs show: `"Disabling billing on blog-towles-staging (cost=X >=
-    budget=<N>)"`.
+budget=<N>)"`.
   - `gcloud billing projects describe blog-towles-staging` returns
     `billingEnabled: false`.
   - Cloud SQL instance in staging is unreachable; Cloud Run staging service returns
@@ -498,32 +512,35 @@ canary cap is set below it).
   real cap, not $1).
 
 **Patterns to follow:**
+
 - The existing `cost-scheduler` module in `infra/terraform/modules/cost-scheduler/`
   already uses `google_cloudfunctions2_function` and a Pub/Sub-adjacent trigger
   pattern; this unit's reasoning about re-enable and Cloud SQL recovery is informed
   by that module's operational behavior.
 
 **Test scenarios:**
-- *Happy path — real over-cap trip:* budget with `specified_amount < MTD cost` fires
+
+- _Happy path — real over-cap trip:_ budget with `specified_amount < MTD cost` fires
   within 1–24h, function disables billing on staging, `billingEnabled: false`.
-- *Edge case — idempotent retrips:* subsequent budget evaluations during the
+- _Edge case — idempotent retrips:_ subsequent budget evaluations during the
   billing-disabled window invoke the function; it log-and-exits without duplicate
   `updateBillingInfo` calls. Proves the `getBillingInfo` idempotency guard works
   with real API responses.
-- *Error path — IAM insufficient (diagnostic):* if `roles/billing.admin` on the
+- _Error path — IAM insufficient (diagnostic):_ if `roles/billing.admin` on the
   function SA is somehow not fully propagated, the function errors on
   `updateBillingInfo` with PERMISSION_DENIED and `RETRY_POLICY_RETRY` re-invokes.
   Cloud Logging shows the error. Expected diagnostic outcome — do NOT proceed to
   Unit 6 until this test passes cleanly.
-- *Edge case — ALLOWED_PROJECTS allowlist:* verify by publishing a synthetic payload
-  with `budgetDisplayName: "spend-cap-jarvis-home-487516"` *before* Unit 6 arms
+- _Edge case — ALLOWED_PROJECTS allowlist:_ verify by publishing a synthetic payload
+  with `budgetDisplayName: "spend-cap-jarvis-home-487516"` _before_ Unit 6 arms
   jarvis's cap. The allowlist contains only `blog-towles-staging` at this point, so
   the function must log `"Refusing: projectId \"jarvis-home-487516\" not in
-  ALLOWED_PROJECTS allowlist"` and exit. Proves the forged-trip defense.
+ALLOWED_PROJECTS allowlist"` and exit. Proves the forged-trip defense.
 
 **Verification:**
+
 - `gcloud billing projects describe blog-towles-staging` showed `billingEnabled:
-  false` during the window, then `true` after re-link.
+false` during the window, then `true` after re-link.
 - Cloud Audit Logs show exactly one successful `UpdateBillingInfo` call for the
   staging project during the window; subsequent retrips did not re-call it.
 - Staging site/services recovered without data loss after re-enable.
@@ -542,10 +559,12 @@ publish to the Pub/Sub topic; kill-switch will fire on a 100% crossing.
 **Dependencies:** Unit 5 must have passed cleanly (real IAM path proven).
 
 **Files:**
+
 - Modify: `infra/gcp-billing/terraform.tfvars` — set the full `project_caps` map
   from Unit 4 (not the sub-$1 staging-only map from Unit 5).
 
 **Approach:**
+
 - `terraform plan -var-file=terraform.tfvars` — verify:
   - Staging budget updates in place (from $1 back to its real cap).
   - All other project budgets are created.
@@ -556,24 +575,27 @@ publish to the Pub/Sub topic; kill-switch will fire on a 100% crossing.
   present and threshold rules at 50/90/100%.
 
 **Patterns to follow:**
+
 - Same apply procedure as Unit 1, with the full caps map.
 
 **Test scenarios:**
-- *Happy path:* `apply` exits 0. N−1 budget creations (all projects except staging)
-  + 1 budget update (staging: $1 → real cap) + 1 function update-in-place (for
-  `ALLOWED_PROJECTS` env var).
-- *Error path — project-number lookup fails:* if `data.google_project.capped[<id>]`
+
+- _Happy path:_ `apply` exits 0. N−1 budget creations (all projects except staging)
+  - 1 budget update (staging: $1 → real cap) + 1 function update-in-place (for
+    `ALLOWED_PROJECTS` env var).
+- _Error path — project-number lookup fails:_ if `data.google_project.capped[<id>]`
   can't resolve (project renamed or removed between tfvars edit and apply), apply
   fails at plan time. Expected and safe — correct the tfvars and retry.
-- *Integration:* After apply,
+- _Integration:_ After apply,
   `gcloud billing budgets list --billing-account=015529-D0D3BB-5BEDEE` shows N
   budgets, each with `displayName` matching `spend-cap-<project_id>`.
-- *R4 coverage check:* the set difference
+- _R4 coverage check:_ the set difference
   `gcloud billing projects list --billing-account=015529-D0D3BB-5BEDEE
-   --format='value(projectId)'` minus `keys(var.project_caps)` is empty. Any project
+ --format='value(projectId)'` minus `keys(var.project_caps)` is empty. Any project
   on the billing account without a cap is an R4 violation.
 
 **Verification:**
+
 - Every project listed by
   `gcloud billing projects list --billing-account=015529-D0D3BB-5BEDEE` has a
   corresponding budget (R4 coverage check, above).
@@ -582,8 +604,8 @@ publish to the Pub/Sub topic; kill-switch will fire on a 100% crossing.
 - Terraform state contains exactly N `google_billing_budget.project_cap` entries.
 - Function's deployed `ALLOWED_PROJECTS` env var contains every project_id (not just
   staging). Verify via `gcloud functions describe billing-kill-switch --gen2
-  --region=us-central1 --project=blog-towles-production
-  --format='value(serviceConfig.environmentVariables.ALLOWED_PROJECTS)'`.
+--region=us-central1 --project=blog-towles-production
+--format='value(serviceConfig.environmentVariables.ALLOWED_PROJECTS)'`.
 
 ## System-Wide Impact
 
@@ -612,19 +634,19 @@ publish to the Pub/Sub topic; kill-switch will fire on a 100% crossing.
 
 ## Risks & Dependencies
 
-| Risk | Mitigation |
-|------|------------|
-| **Budget-notification latency (4–24h) means spend can burn past cap before trip fires.** | Documented as a Known Limitation in Problem Frame. Cap sizing in Unit 4 should price in worst-case 1-day burn rate, not treat the cap as a real-time ceiling. Per-service preventive quotas (deferred to a separate task) are the complementary mechanism for real-time spend bounding. |
-| **Host project (`blog-towles-production`) self-kill takes the kill-switch offline.** | Accepted limitation: the in-flight kill completes synchronously before the function's own billing is disabled, so the trip itself isn't lost. Other projects are temporarily unprotected from *new* trips until the host is re-linked. Mitigation = keep prod's cap high enough that it rarely trips, and monitor the billing-admin email that fires on any trip. |
-| **A cap set too low trips the production blog.** | Unit 4 enforces `≥ 2× observed baseline` and a `$50` floor for `blog-towles-production`. If uncertain, err higher — the cap can always be lowered later. |
-| **BigQuery export never starts landing data.** | Unit 2 explicitly depends on the dataset-IAM grant from Unit 1. Verification query in Unit 2 checks for data within 24h. If absent, first place to check is the billing-export SA's `bigquery.dataEditor` grant on the dataset. |
-| **IAM insufficient or unpropagated when first real trip fires.** | Using `roles/billing.admin` (not the narrower `roles/billing.projectManager`) eliminates role-sufficiency uncertainty. Unit 5's staging sub-cap canary is mandatory and exercises the real `updateBillingInfo` IAM path end-to-end before Unit 6 arms any remaining caps. |
-| **Forged Pub/Sub message from an identity with project-level `roles/editor` could disable billing on an unrelated project.** | Function enforces an `ALLOWED_PROJECTS` allowlist derived from `var.project_caps`; any projectId not in the allowlist is rejected and logged. Topic-level IAM additionally grants publish only to the billing-budgets service agent (defense in depth; project-level IAM can still inherit publish). |
-| **Billing-admin email notifications are the only human signal of a trip.** | Acceptable for v1; default IAM recipients are enabled in `budgets.tf`. Notification upgrade (Slack/pager) is explicitly deferred. |
-| **`gen-lang-client-0238175572` is auto-provisioned by a Google service and can't be unlinked.** | Unit 4 inspects this specifically. Fallback: give it a minimal cap ($10) like any other project. |
-| **Provider version drift between `validate` time and real `apply` time.** | Commit `.terraform.lock.hcl` after Unit 1's `init` so subsequent applies are pinned. |
-| **Applying user's identity lacks `roles/billing.admin` on the billing account.** | Plan fails at `google_billing_account_iam_member` with a clear error. User elevates permissions and retries — no partial state because the resource hadn't been created yet. |
-| **Budget manually edited or deleted in the Billing Console** (e.g., display name changed, breaking the `spend-cap-<project_id>` convention) **causes silent Terraform drift.** | Accepted. Re-running `terraform apply` on this stack restores the intended state. No scheduled drift detection is configured. |
+| Risk                                                                                                                                                                           | Mitigation                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Budget-notification latency (4–24h) means spend can burn past cap before trip fires.**                                                                                       | Documented as a Known Limitation in Problem Frame. Cap sizing in Unit 4 should price in worst-case 1-day burn rate, not treat the cap as a real-time ceiling. Per-service preventive quotas (deferred to a separate task) are the complementary mechanism for real-time spend bounding.                                                                           |
+| **Host project (`blog-towles-production`) self-kill takes the kill-switch offline.**                                                                                           | Accepted limitation: the in-flight kill completes synchronously before the function's own billing is disabled, so the trip itself isn't lost. Other projects are temporarily unprotected from _new_ trips until the host is re-linked. Mitigation = keep prod's cap high enough that it rarely trips, and monitor the billing-admin email that fires on any trip. |
+| **A cap set too low trips the production blog.**                                                                                                                               | Unit 4 enforces `≥ 2× observed baseline` and a `$50` floor for `blog-towles-production`. If uncertain, err higher — the cap can always be lowered later.                                                                                                                                                                                                          |
+| **BigQuery export never starts landing data.**                                                                                                                                 | Unit 2 explicitly depends on the dataset-IAM grant from Unit 1. Verification query in Unit 2 checks for data within 24h. If absent, first place to check is the billing-export SA's `bigquery.dataEditor` grant on the dataset.                                                                                                                                   |
+| **IAM insufficient or unpropagated when first real trip fires.**                                                                                                               | Using `roles/billing.admin` (not the narrower `roles/billing.projectManager`) eliminates role-sufficiency uncertainty. Unit 5's staging sub-cap canary is mandatory and exercises the real `updateBillingInfo` IAM path end-to-end before Unit 6 arms any remaining caps.                                                                                         |
+| **Forged Pub/Sub message from an identity with project-level `roles/editor` could disable billing on an unrelated project.**                                                   | Function enforces an `ALLOWED_PROJECTS` allowlist derived from `var.project_caps`; any projectId not in the allowlist is rejected and logged. Topic-level IAM additionally grants publish only to the billing-budgets service agent (defense in depth; project-level IAM can still inherit publish).                                                              |
+| **Billing-admin email notifications are the only human signal of a trip.**                                                                                                     | Acceptable for v1; default IAM recipients are enabled in `budgets.tf`. Notification upgrade (Slack/pager) is explicitly deferred.                                                                                                                                                                                                                                 |
+| **`gen-lang-client-0238175572` is auto-provisioned by a Google service and can't be unlinked.**                                                                                | Unit 4 inspects this specifically. Fallback: give it a minimal cap ($10) like any other project.                                                                                                                                                                                                                                                                  |
+| **Provider version drift between `validate` time and real `apply` time.**                                                                                                      | Commit `.terraform.lock.hcl` after Unit 1's `init` so subsequent applies are pinned.                                                                                                                                                                                                                                                                              |
+| **Applying user's identity lacks `roles/billing.admin` on the billing account.**                                                                                               | Plan fails at `google_billing_account_iam_member` with a clear error. User elevates permissions and retries — no partial state because the resource hadn't been created yet.                                                                                                                                                                                      |
+| **Budget manually edited or deleted in the Billing Console** (e.g., display name changed, breaking the `spend-cap-<project_id>` convention) **causes silent Terraform drift.** | Accepted. Re-running `terraform apply` on this stack restores the intended state. No scheduled drift detection is configured.                                                                                                                                                                                                                                     |
 
 ## Documentation / Operational Notes
 
@@ -634,7 +656,7 @@ publish to the Pub/Sub topic; kill-switch will fire on a 100% crossing.
   cap-sizing methodology.
 - After Unit 4, consider leaving a comment in `terraform.tfvars` documenting the
   date and methodology of the cap numbers (e.g., `# Caps set 2026-04-28 from 14-day
-  baseline; see docs/plans/2026-04-14-001 for method`).
+baseline; see docs/plans/2026-04-14-001 for method`).
 - No runbook, no on-call impact — this is a defensive kill-switch for a personal
   billing account, not a production service.
 

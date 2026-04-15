@@ -30,17 +30,17 @@ Billing disabled on that project. Most services stop within minutes.
 
 ## Files
 
-| File | Purpose |
-|---|---|
-| `main.tf` | Provider, backend, API enablement |
-| `variables.tf` | Input variables |
-| `terraform.tfvars` | Billing account + host project + `project_caps` map |
-| `backend.tfvars` | GCS backend bucket |
-| `bigquery_export.tf` | BigQuery dataset for billing export |
-| `pubsub_function.tf` | Pub/Sub topic, service account, Cloud Function |
-| `budgets.tf` | Per-project `google_billing_budget` (for_each over `project_caps`) |
-| `outputs.tf` | Topic, function, dataset names |
-| `function/` | Node.js 20 Cloud Function source |
+| File                 | Purpose                                                            |
+| -------------------- | ------------------------------------------------------------------ |
+| `main.tf`            | Provider, backend, API enablement                                  |
+| `variables.tf`       | Input variables                                                    |
+| `terraform.tfvars`   | Billing account + host project + `project_caps` map                |
+| `backend.tfvars`     | GCS backend bucket                                                 |
+| `bigquery_export.tf` | BigQuery dataset for billing export                                |
+| `pubsub_function.tf` | Pub/Sub topic, service account, Cloud Function                     |
+| `budgets.tf`         | Per-project `google_billing_budget` (for_each over `project_caps`) |
+| `outputs.tf`         | Topic, function, dataset names                                     |
+| `function/`          | Node.js 20 Cloud Function source                                   |
 
 ## Phased rollout
 
@@ -61,7 +61,7 @@ After apply, **enable the BigQuery export manually** (Terraform can't do this �
 no GCP provider resource for the export itself):
 
 1. Open <https://console.cloud.google.com/billing/015529-D0D3BB-5BEDEE/export>
-2. Under **BigQuery export**, click **Edit settings** next to *Standard usage cost*.
+2. Under **BigQuery export**, click **Edit settings** next to _Standard usage cost_.
 3. Project: `blog-towles-production` · Dataset: `billing_export` · Click **Save**.
 4. Repeat for **Detailed usage cost** if you want per-SKU granularity.
 
@@ -151,7 +151,7 @@ gcloud billing projects link "${PROJECT_ID}" \
 Or in the console: **Billing → Account Management → Link a billing account → select
 `015529-D0D3BB-5BEDEE`**.
 
-Before re-linking, figure out *why* it tripped — check the BigQuery export or the
+Before re-linking, figure out _why_ it tripped — check the BigQuery export or the
 Billing Reports console, filtered to the affected project. Otherwise you'll just burn
 through the cap again.
 
