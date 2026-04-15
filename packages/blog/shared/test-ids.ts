@@ -116,6 +116,13 @@ export const TEST_IDS = {
     STORY_WIZARD_SUBMIT: 'reading-story-wizard-submit',
     STORY_PREVIEW_CARD: 'reading-story-preview-card',
   },
+  AVIATION: {
+    STARTER_QUESTIONS: 'aviation-starter-questions',
+    STARTER_QUESTION_BUTTON: 'aviation-starter-question',
+    UI_RESOURCE: 'aviation-ui-resource',
+    UI_RESOURCE_IFRAME: 'aviation-ui-resource-iframe',
+    UI_RESOURCE_FALLBACK: 'aviation-ui-resource-fallback',
+  },
   ADMIN: {
     GITHUB_DASHBOARD: 'admin-github-dashboard',
     GITHUB_SUMMARY_CARDS: 'admin-github-summary-cards',
