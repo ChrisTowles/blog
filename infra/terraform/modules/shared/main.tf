@@ -123,6 +123,37 @@ resource "google_storage_bucket_iam_member" "media_cloud_run_writer" {
   member = "serviceAccount:${google_service_account.cloud_run.email}"
 }
 
+# GCS bucket for MCP aviation-demo Parquet dataset (Unit 1 of MCP UI-in-Chat plan).
+# Contents are publicly redistributable (BTS T-100 US public domain, FAA Registry
+# US public domain, OpenFlights under ODbL with attribution in bucket root LICENSE.txt).
+# DuckDB httpfs reads this bucket anonymously from Cloud Run and from the reader's
+# Claude Desktop for demo reproducibility.
+resource "google_storage_bucket" "aviation_parquet" {
+  name                        = "blog-mcp-aviation-${var.environment_suffix}"
+  location                    = var.region
+  project                     = var.project_id
+  uniform_bucket_level_access = true
+  force_destroy               = false
+
+  depends_on = [google_project_service.required_apis]
+}
+
+# Bucket-level public read so DuckDB httpfs can fetch Parquet without credentials.
+resource "google_storage_bucket_iam_member" "aviation_parquet_public_read" {
+  bucket = google_storage_bucket.aviation_parquet.name
+  role   = "roles/storage.objectViewer"
+  member = "allUsers"
+}
+
+# Grant Cloud Run service account write access to the aviation bucket so the ETL
+# script (when run locally with user ADC) and any future server-side refresh can
+# upload Parquet files.
+resource "google_storage_bucket_iam_member" "aviation_parquet_cloud_run_writer" {
+  bucket = google_storage_bucket.aviation_parquet.name
+  role   = "roles/storage.objectCreator"
+  member = "serviceAccount:${google_service_account.cloud_run.email}"
+}
+
 # Removed blocks to safely remove resources from state without deleting them
 removed {
   from = google_secret_manager_secret.anthropic_api_key

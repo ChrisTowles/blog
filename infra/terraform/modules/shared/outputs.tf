@@ -72,3 +72,8 @@ output "media_bucket_name" {
   description = "GCS media bucket name"
   value       = google_storage_bucket.media.name
 }
+
+output "aviation_parquet_bucket_name" {
+  description = "GCS bucket name for MCP aviation-demo Parquet dataset (public-read)"
+  value       = google_storage_bucket.aviation_parquet.name
+}
