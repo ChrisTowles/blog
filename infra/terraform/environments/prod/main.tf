@@ -74,10 +74,14 @@ module "cloud_run" {
   braintrust_project_name              = "blog-prod"
   site_url                             = var.site_url
   cpu_limit                            = "1"
-  memory_limit                         = "512Mi"
-  min_instances                        = 0
+  memory_limit                         = "2Gi"
+  min_instances                        = 1
   max_instances                        = 2
   additional_env_vars                  = { NUXT_PUBLIC_GTAG_ID = var.gtag_id }
+  aviation_bucket                      = module.shared.aviation_parquet_bucket_name
+  mcp_rate_limit_rpm                   = 60
+  mcp_sandbox_url                      = "https://sandbox.towles.dev/sandbox.html"
+  mcp_demo_enabled                     = false
 
   depends_on = [module.cloud_sql]
 }

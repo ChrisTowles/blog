@@ -5,6 +5,13 @@ resource "google_cloud_run_v2_service" "main" {
 
   template {
     service_account = var.service_account_email
+    # MCP aviation demo: 300s lets the LLM → DuckDB → iframe handshake finish
+    # even on cold-start (plan Key Decisions line 123). Attribute previously
+    # absent; added explicitly per plan line 620.
+    timeout = var.request_timeout
+    # Route same-client requests to the same instance to reduce the
+    # Mcp-Session-Id-across-instances risk (plan Key Decisions line 124).
+    session_affinity = var.session_affinity
 
     containers {
       image = var.container_image
@@ -193,6 +200,43 @@ resource "google_cloud_run_v2_service" "main" {
           name  = "GCS_BUCKET_NAME"
           value = var.gcs_bucket_name
         }
+      }
+
+      # MCP aviation demo env vars (plan Unit 7 line 620, 634-637).
+      dynamic "env" {
+        for_each = var.aviation_bucket != "" ? [1] : []
+        content {
+          name  = "AVIATION_BUCKET"
+          value = var.aviation_bucket
+        }
+      }
+
+      env {
+        name  = "MCP_RATE_LIMIT_RPM"
+        value = tostring(var.mcp_rate_limit_rpm)
+      }
+
+      dynamic "env" {
+        for_each = var.mcp_sandbox_url != "" ? [1] : []
+        content {
+          name  = "NUXT_PUBLIC_MCP_SANDBOX_URL"
+          value = var.mcp_sandbox_url
+        }
+      }
+
+      env {
+        name  = "AVIATION_DUCKDB_MEMORY_LIMIT"
+        value = var.aviation_duckdb_memory_limit
+      }
+
+      env {
+        name  = "AVIATION_DUCKDB_THREADS"
+        value = var.aviation_duckdb_threads
+      }
+
+      env {
+        name  = "NUXT_PUBLIC_MCP_DEMO_ENABLED"
+        value = var.mcp_demo_enabled ? "true" : "false"
       }
 
       dynamic "volume_mounts" {

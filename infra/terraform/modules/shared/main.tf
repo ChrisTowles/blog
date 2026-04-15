@@ -154,6 +154,17 @@ resource "google_storage_bucket_iam_member" "aviation_parquet_cloud_run_writer" 
   member = "serviceAccount:${google_service_account.cloud_run.email}"
 }
 
+# Explicit read-side grant for Cloud Run SA on the aviation bucket (plan Unit 7
+# line 619). Objects are already world-readable via allUsers, but DuckDB httpfs
+# reads from Cloud Run go through the SA's credentials by default, so naming
+# the grant explicitly keeps intent auditable and survives any future lockdown
+# that flips public_access_prevention on.
+resource "google_storage_bucket_iam_member" "aviation_parquet_cloud_run_reader" {
+  bucket = google_storage_bucket.aviation_parquet.name
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:${google_service_account.cloud_run.email}"
+}
+
 # Removed blocks to safely remove resources from state without deleting them
 removed {
   from = google_secret_manager_secret.anthropic_api_key

@@ -57,3 +57,21 @@ variable "max_instances" {
   type        = number
   default     = 2
 }
+
+variable "mcp_rate_limit_rpm" {
+  description = "Per-IP rate limit for /mcp/* paths (requests per 5-minute window)"
+  type        = number
+  default     = 60
+}
+
+variable "mcp_sandbox_url" {
+  description = "Public sandbox-proxy URL for MCP UI iframes (e.g. https://sandbox.towles.dev/sandbox.html)"
+  type        = string
+  default     = ""
+}
+
+variable "mcp_demo_enabled" {
+  description = "Feature flag: show MCP aviation demo CTA on blog (true on staging, false on prod until launch day)"
+  type        = bool
+  default     = false
+}

@@ -67,6 +67,12 @@ module "cloud_run" {
   additional_env_vars                  = { NUXT_PUBLIC_GTAG_ID = var.gtag_id }
   gcs_bucket_name                      = module.shared.media_bucket_name
 
+  # MCP aviation demo wiring (plan Unit 7 line 621).
+  aviation_bucket    = module.shared.aviation_parquet_bucket_name
+  mcp_rate_limit_rpm = var.mcp_rate_limit_rpm
+  mcp_sandbox_url    = var.mcp_sandbox_url
+  mcp_demo_enabled   = var.mcp_demo_enabled
+
   depends_on = [module.cloud_sql]
 }
 

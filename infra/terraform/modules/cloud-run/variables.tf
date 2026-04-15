@@ -37,9 +37,57 @@ variable "cpu_limit" {
 }
 
 variable "memory_limit" {
-  description = "Memory limit"
+  description = "Memory limit. Bumped to 2Gi for MCP aviation demo (DuckDB in-process aggregation can spike on the 15M-row fact table; plan Key Decisions line 122)."
   type        = string
-  default     = "512Mi"
+  default     = "2Gi"
+}
+
+variable "request_timeout" {
+  description = "Cloud Run request timeout (seconds). 300s for MCP aviation ask_aviation LLM→DuckDB flow (plan Key Decisions line 123)."
+  type        = string
+  default     = "300s"
+}
+
+variable "session_affinity" {
+  description = "Route same-client requests to same instance. Reduces Mcp-Session-Id-across-instances risk (plan Key Decisions line 124)."
+  type        = bool
+  default     = true
+}
+
+variable "aviation_bucket" {
+  description = "GCS bucket for the MCP aviation Parquet dataset. Injected as AVIATION_BUCKET env var."
+  type        = string
+  default     = ""
+}
+
+variable "mcp_rate_limit_rpm" {
+  description = "Per-IP rate limit for /mcp/* paths (requests per 5-minute window). Injected as MCP_RATE_LIMIT_RPM."
+  type        = number
+  default     = 60
+}
+
+variable "mcp_sandbox_url" {
+  description = "Public sandbox-proxy URL used by MCP UI iframes. Injected as NUXT_PUBLIC_MCP_SANDBOX_URL."
+  type        = string
+  default     = ""
+}
+
+variable "aviation_duckdb_memory_limit" {
+  description = "DuckDB memory_limit pragma for the aviation tool. Injected as AVIATION_DUCKDB_MEMORY_LIMIT."
+  type        = string
+  default     = "768MB"
+}
+
+variable "aviation_duckdb_threads" {
+  description = "DuckDB threads pragma for the aviation tool. Injected as AVIATION_DUCKDB_THREADS."
+  type        = string
+  default     = "4"
+}
+
+variable "mcp_demo_enabled" {
+  description = "Feature flag for the MCP aviation demo CTA. Injected as NUXT_PUBLIC_MCP_DEMO_ENABLED."
+  type        = bool
+  default     = false
 }
 
 variable "min_instances" {
