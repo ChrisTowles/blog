@@ -1,118 +1,84 @@
 /**
  * UI resource — `ui://aviation-answer`.
  *
- * TODO(Unit 4): This is a placeholder HTML bundle. Unit 4 builds the real iframe
- * client (ECharts + ui/message handling + AppBridge). Until then, we ship a minimal
- * HTML document that:
- *   - Reads the bundled structuredContent (rendered server-side into a <script> tag)
- *   - Shows the text answer + the SQL + a JSON dump of chart_option
- *   - Links to the dataset schema
+ * Unit 4 wiring: reads the pre-built single-file HTML bundle at module-import
+ * time and serves its bytes as the resource contents. The bundle is produced by
+ * `pnpm --filter @chris-towles/blog build:ui-bundle` (Vite + vite-plugin-singlefile)
+ * from `packages/blog/mcp-ui/aviation-answer/` and lands at
+ * `mcp-ui/aviation-answer/dist/index.html`.
  *
- * The final bundle will be built as a separate Vite entry and inlined per Unit 4.
+ * The bundle is immutable per deploy (see plan Key Decision on persisted
+ * UiResourcePart), so reading once at startup + caching is correct. Hosts may
+ * `resources/read` the URI directly; they'll get the bundle and then drive its
+ * lifecycle via the AppBridge postMessage flow.
+ *
+ * The structuredContent payload (sql, answer, chart_option, etc.) is NOT embedded
+ * in the HTML — it arrives via `sendToolResult` at iframe runtime.
  */
 
-import {
-  AVIATION_UI_RESOURCE_URI,
-  type AviationToolResult,
-} from '../../../../shared/mcp-aviation-types';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { AVIATION_UI_RESOURCE_URI } from '../../../../shared/mcp-aviation-types';
 import { registerAppResource } from '@modelcontextprotocol/ext-apps/server';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 /**
- * Render the HTML document that will be embedded in the CallToolResult's
- * EmbeddedResource. The document contains the structured payload inline so
- * the iframe is self-contained — per plan line 495 (no side-channel fetches).
+ * Absolute path to the built iframe bundle.
+ * Source tree layout: packages/blog/server/utils/mcp/aviation/ui-resource.ts →
+ *                     packages/blog/mcp-ui/aviation-answer/dist/index.html
  */
-export async function renderAviationHtml(result: AviationToolResult): Promise<string> {
-  const payload = JSON.stringify(result).replace(/</g, '\\u003c');
-  return `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>Aviation answer</title>
-<style>
-  html,body { margin:0; padding:0; font-family: system-ui, -apple-system, sans-serif; color: #111; background: #fff; }
-  .wrap { padding: 1rem 1.25rem; }
-  h1 { font-size: 1.25rem; margin: 0 0 .5rem; }
-  .hero { font-size: 2rem; font-weight: 600; margin: .25rem 0; }
-  .answer { font-size: 1rem; line-height: 1.4; margin: .5rem 0 1rem; }
-  details { background: #f6f8fa; border-radius: 4px; padding: .5rem .75rem; margin: .5rem 0; font-size: .875rem; }
-  details pre { white-space: pre-wrap; word-break: break-all; }
-  .chips { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
-  .chip { background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; padding: .35rem .7rem; border-radius: 999px; font-size: .85rem; cursor: pointer; }
-  .truncated { background: #fff7e6; color: #92400e; padding: .5rem .75rem; border-radius: 4px; font-size: .85rem; margin: .5rem 0; }
-</style>
-</head>
-<body>
-<div class="wrap">
-  <h1>Aviation answer <small>(placeholder bundle — Unit 4)</small></h1>
-  ${result.hero_number ? `<div class="hero">${escapeHtml(result.hero_number)}</div>` : ''}
-  <p class="answer">${escapeHtml(result.answer)}</p>
-  ${result.truncated ? '<div class="truncated">Results were truncated at 10,000 rows.</div>' : ''}
-  <details>
-    <summary>Show SQL</summary>
-    <pre>${escapeHtml(result.sql)}</pre>
-  </details>
-  <details>
-    <summary>Show chart_option JSON</summary>
-    <pre id="chart-option"></pre>
-  </details>
-  <details>
-    <summary>Show rows (${result.rows.length})</summary>
-    <pre id="rows"></pre>
-  </details>
-  <div class="chips">
-    ${result.followups
-      .map((q) => `<button class="chip" data-followup="${escapeHtml(q)}">${escapeHtml(q)}</button>`)
-      .join('')}
-  </div>
-</div>
-<script id="aviation-payload" type="application/json">${payload}</script>
-<script>
-  (function() {
-    var el = document.getElementById('aviation-payload');
-    if (!el) return;
-    try {
-      var data = JSON.parse(el.textContent || '{}');
-      var opt = document.getElementById('chart-option');
-      if (opt) opt.textContent = JSON.stringify(data.chart_option, null, 2);
-      var rows = document.getElementById('rows');
-      if (rows) rows.textContent = JSON.stringify(data.rows, null, 2);
-    } catch (e) {
-      // no-op
-    }
-    // Wire up follow-up chips — Unit 4 replaces this with proper AppBridge ui/message.
-    document.querySelectorAll('[data-followup]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var text = btn.getAttribute('data-followup');
-        try {
-          if (window.parent) {
-            window.parent.postMessage({ type: 'ui/message', payload: { role: 'user', content: { type: 'text', text: text } } }, '*');
-          }
-        } catch (e) {}
-      });
-    });
-  })();
-</script>
-</body>
-</html>`;
-}
+const BUNDLE_PATH = resolve(__dirname, '../../../../mcp-ui/aviation-answer/dist/index.html');
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+/**
+ * Minimal placeholder used when the built bundle is missing — e.g. during
+ * test runs that start before `build:ui-bundle` has produced a dist. We log
+ * loudly so CI catches the drift; we do NOT fall back to a fake payload,
+ * because that would mask an actual build failure in production.
+ */
+const MISSING_BUNDLE_HTML = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Aviation answer (bundle missing)</title></head>
+<body><p>ui://aviation-answer bundle not built — run <code>pnpm build:ui-bundle</code>.</p></body></html>`;
+
+let cachedBundle: string | undefined;
+
+function loadBundle(): string {
+  if (cachedBundle !== undefined) return cachedBundle;
+  try {
+    cachedBundle = readFileSync(BUNDLE_PATH, 'utf8');
+    return cachedBundle;
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[ui-resource] failed to read aviation-answer bundle at ${BUNDLE_PATH}; serving placeholder. Did you run \`pnpm build:ui-bundle\`?`,
+      err,
+    );
+    cachedBundle = MISSING_BUNDLE_HTML;
+    return cachedBundle;
+  }
 }
 
 /**
- * Register the ui://aviation-answer resource. The resource read is a minimal
- * empty-state shell; the real payload comes back inside the ask_aviation
- * CallToolResult's EmbeddedResource. Hosts may still fetch the resource
- * directly (e.g. Claude Desktop's manual inspection), so we return a neutral
- * "ready" document here.
+ * Read the pre-built iframe bundle (cached after first read).
+ * Used both by the resource read handler and by aviation-tools to populate the
+ * EmbeddedResource returned from ask_aviation.
+ */
+export function readAviationBundle(): string {
+  return loadBundle();
+}
+
+/** Exported for tests — reset the in-memory cache between test files. */
+export function __resetAviationBundleCache(): void {
+  cachedBundle = undefined;
+}
+
+/**
+ * Register the ui://aviation-answer resource. The resource read always returns
+ * the same immutable HTML bundle; structuredContent is delivered via the
+ * CallToolResult → AppBridge `tool-result` notification at iframe runtime.
  */
 export function registerAviationUiResource(server: McpServer): void {
   registerAppResource(
@@ -137,18 +103,7 @@ export function registerAviationUiResource(server: McpServer): void {
         {
           uri: AVIATION_UI_RESOURCE_URI,
           mimeType: 'text/html;profile=mcp-app',
-          text: await renderAviationHtml({
-            sql: '',
-            answer: 'Run ask_aviation to populate this view.',
-            chart_option: { title: { text: 'Ready' } },
-            followups: [
-              'Which operators have the oldest Boeing 737 fleets?',
-              'What were the 10 busiest US routes in 2025?',
-              'Which aircraft models have the most seats on average?',
-            ],
-            rows: [],
-            truncated: false,
-          }),
+          text: readAviationBundle(),
         },
       ],
     }),

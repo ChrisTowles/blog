@@ -40,7 +40,7 @@ import {
 } from './aviation-prompt';
 import { openAviationConnection, runWithTimeout, DEFAULT_QUERY_TIMEOUT_MS } from './duckdb';
 import { validateSql } from './sql-safety';
-import { renderAviationHtml } from './ui-resource';
+import { readAviationBundle } from './ui-resource';
 
 const LIMIT_ROW_CAP = 10_000;
 
@@ -110,7 +110,11 @@ export async function executeAskAviation(
     truncated,
   };
 
-  const html = await renderAviationHtml(structured);
+  // Per Unit 4: the EmbeddedResource carries the same immutable iframe bundle
+  // that `resources/read` returns. The structuredContent is what the iframe
+  // renders — delivered to the App via `sendToolResult` at runtime, not
+  // templated into HTML.
+  const html = readAviationBundle();
 
   const textContent: TextContent = { type: 'text', text: llmOutput.answer };
   const uiContent: EmbeddedResource = {
