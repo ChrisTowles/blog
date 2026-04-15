@@ -98,6 +98,7 @@
   "packageManager": "pnpm@10.28.1",
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@duckdb/node-bindings",
       "@parcel/watcher",
       "@playwright/browser-chromium",
       "@swc/core",

@@ -28,11 +28,13 @@
     "cleanup": "npx nuxi cleanup",
     "docker:up": "docker compose up -d",
     "docker:stop": "docker compose stop",
-    "docker:reset": "docker compose down -v"
+    "docker:reset": "docker compose down -v",
+    "etl:aviation": "tsx scripts/etl-aviation.ts"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.1.76",
     "@anthropic-ai/sdk": "^0.52.0",
+    "@duckdb/node-api": "^1.5.2-r.1",
     "@google-cloud/storage": "^7.19.0",
     "@iconify-json/simple-icons": "^1.2.64",
     "@nuxt/ui": "^4.6.1",
