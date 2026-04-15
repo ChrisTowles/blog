@@ -6,12 +6,12 @@ service. Complements the architectural plan at
 
 ## Cloud Run posture
 
-| Setting | Value | Why |
-| --- | --- | --- |
-| `memory` | `2Gi` | DuckDB in-process aggregation on 15M-row fact table spikes over 512Mi. |
-| `min_instances` | `1` | Keep DuckDB + httpfs warm. Pre-warm plugin reads a 1-row parquet at boot. |
-| `max_instances` | `2` | Cost bound — demo should not runaway-scale under abuse. |
-| `timeout` | `300s` | Generous head-room for LLM → SQL → DuckDB → iframe handshake on cold-start. |
+| Setting            | Value  | Why                                                                               |
+| ------------------ | ------ | --------------------------------------------------------------------------------- |
+| `memory`           | `2Gi`  | DuckDB in-process aggregation on 15M-row fact table spikes over 512Mi.            |
+| `min_instances`    | `1`    | Keep DuckDB + httpfs warm. Pre-warm plugin reads a 1-row parquet at boot.         |
+| `max_instances`    | `2`    | Cost bound — demo should not runaway-scale under abuse.                           |
+| `timeout`          | `300s` | Generous head-room for LLM → SQL → DuckDB → iframe handshake on cold-start.       |
 | `session_affinity` | `true` | Reduces the `Mcp-Session-Id`-across-instances risk. Best-effort, not a guarantee. |
 
 ## Session semantics & reconnect

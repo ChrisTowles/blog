@@ -70,6 +70,14 @@ COPY --from=builder /app/packages/blog/.output /app/.output
 # Copy content directory for Nuxt Content (raw markdown files needed at runtime)
 COPY --from=builder /app/packages/blog/content /app/content
 
+# Copy MCP aviation iframe bundle (read at runtime by server/utils/mcp/aviation/ui-resource.ts).
+# After bundling, ui-resource.ts lives in `.output/server/chunks/nitro/nitro.mjs` and resolves
+# `../../../../mcp-ui/aviation-answer/dist/index.html` — four levels up from the chunk dir
+# lands at `/app/mcp-ui/aviation-answer/dist/index.html` (the four hops: nitro/ → chunks/ →
+# server/ → .output/ → /app/). Mirror the source-tree layout so the same path resolves both
+# in dev (running from packages/blog) and in prod (running from /app inside the container).
+COPY --from=builder /app/packages/blog/mcp-ui/aviation-answer/dist /app/mcp-ui/aviation-answer/dist
+
 # Copy loan reviewer skill files (system prompts for AI review agents)
 COPY .claude/skills/loan-the-bank/SKILL.md /app/.claude/skills/loan-the-bank/SKILL.md
 COPY .claude/skills/loan-market/SKILL.md /app/.claude/skills/loan-market/SKILL.md
