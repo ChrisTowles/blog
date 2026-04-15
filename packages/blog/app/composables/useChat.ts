@@ -258,6 +258,36 @@ export function useChat(options: UseChatOptions) {
     }
   }
 
+  /**
+   * Append an externally-sourced message (e.g. from the aviation MCP surface)
+   * to the chat list and persist it via the agent-loop-bypass endpoint.
+   *
+   * This is the seam that starter-question clicks + iframe follow-up chips
+   * use: the Anthropic agent loop is NOT invoked (plan line 114).
+   */
+  async function appendMessage(
+    message: Omit<ChatMessage, 'id' | 'createdAt'> & { id?: string },
+  ): Promise<ChatMessage> {
+    const full: ChatMessage = {
+      id: message.id ?? crypto.randomUUID(),
+      role: message.role,
+      parts: message.parts,
+    };
+    messages.value = [...messages.value, full];
+
+    try {
+      await $fetch(`/api/chats/${options.id}/messages`, {
+        method: 'POST',
+        body: { role: full.role, parts: full.parts },
+      });
+    } catch (err) {
+      log.error('chat', 'Failed to persist externally-inserted message');
+      error.value = err instanceof Error ? err : new Error(String(err));
+    }
+
+    return full;
+  }
+
   return {
     messages: computed(() => messages.value),
     status: computed(() => status.value),
@@ -265,5 +295,6 @@ export function useChat(options: UseChatOptions) {
     sendMessage,
     stop,
     regenerate,
+    appendMessage,
   };
 }
