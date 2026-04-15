@@ -1,0 +1,10 @@
+bts_carrier_code,faa_registrant_name,display_name,notes
+AA,AMERICAN AIRLINES INC,American Airlines,"Direct FAA registry match"
+DL,DELTA AIR LINES INC,Delta Air Lines,"Direct FAA registry match"
+UA,UNITED AIRLINES INC,United Airlines,"FAA uses AIRLINES (plural), BTS uses Air Lines"
+WN,SOUTHWEST AIRLINES CO,Southwest Airlines,"Direct FAA registry match"
+B6,JETBLUE AIRWAYS CORP,JetBlue Airways,"Direct FAA registry match"
+FX,FEDEX CORPORATION,FedEx,"FAA registers under parent company name"
+AS,ALASKA AIRLINES INC,Alaska Airlines,"Direct FAA registry match"
+NK,SPIRIT AIRLINES INC,Spirit Airlines,"Direct FAA registry match"
+HA,HAWAIIAN AIRLINES INC,Hawaiian Airlines,"Direct FAA registry match"
