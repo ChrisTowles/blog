@@ -591,7 +591,7 @@ publish to the Pub/Sub topic; kill-switch will fire on a 100% crossing.
   budgets, each with `displayName` matching `spend-cap-<project_id>`.
 - _R4 coverage check:_ the set difference
   `gcloud billing projects list --billing-account=015529-D0D3BB-5BEDEE
- --format='value(projectId)'` minus `keys(var.project_caps)` is empty. Any project
+--format='value(projectId)'` minus `keys(var.project_caps)` is empty. Any project
   on the billing account without a cap is an R4 violation.
 
 **Verification:**
