@@ -128,6 +128,25 @@ Database: `documents` + `document_chunks` tables with pgvector HNSW index and GI
 - `/api/admin/rag/search-test` (POST, auth) — Debug endpoint with pipeline details and timings
 - `/search` page — Public search UI with URL query params (`?q=`)
 
+## MCP Servers (co-hosted)
+
+The blog hosts MCP servers at sibling route paths under `/mcp/*`. Currently:
+
+- `/mcp/aviation` — Streamable HTTP endpoint for the aviation demo (Unit 3). Tools:
+  `ask_aviation`, `list_questions`, `schema`. Implementation: `server/routes/mcp/aviation/index.ts` +
+  tools in `server/utils/mcp/aviation/*.ts` (mirrors the existing "tools in two places"
+  pattern below — MCP tools live alongside `server/utils/ai/tools/` but are registered via
+  the MCP SDK, not the chat tool registry).
+- `/mcp/aviation/resource?uri=ui://aviation-answer` — HTTP-cached UI-bundle fetcher used
+  by the chat iframe on persisted-replay hydration.
+
+All `/mcp/*` requests are rate-limited via `server/middleware/mcp-rate-limit.ts`
+(per-IP token bucket, default 60/5min, tunable via `MCP_RATE_LIMIT_RPM`).
+`Mcp-Session-Id` lives in-process; Cloud Run `min_instances=1` + session-affinity keep it
+mostly-sticky, and clients silently reconnect on 404 (see `useAviationMcp.ts`).
+
+Operational notes: `docs/mcp-aviation-ops.md`.
+
 ## Chat System
 
 ### Tool Pattern
