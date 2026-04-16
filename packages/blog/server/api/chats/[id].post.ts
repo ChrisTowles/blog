@@ -10,6 +10,7 @@ import type {
 } from '~~/shared/chat-types';
 import type { AnthropicBetaClient, BetaStreamEvent } from '~~/server/utils/ai/anthropic-beta-types';
 import { getSkillsForAPI, getSkillsSystemPrompt } from '~~/server/utils/ai/skills-loader';
+import { getMcpTools } from '~~/server/utils/mcp/client-pool';
 
 defineRouteMeta({
   openAPI: {
@@ -156,6 +157,22 @@ export default defineEventHandler(async (event) => {
   const skillsPrompt = getSkillsSystemPrompt();
   const fullSystemPrompt = `${SYSTEM_PROMPT}\n\n${skillsPrompt}`;
 
+  // Discover MCP tools from internal servers
+  const mcpRunnableTools = await getMcpTools('/mcp/echo', baseUrl);
+  const mcpToolNames = new Set(mcpRunnableTools.map((t) => t.name));
+  const mcpToolDefs = mcpRunnableTools.map((t) => {
+    const tool = t as unknown as {
+      name: string;
+      description?: string;
+      input_schema: Record<string, unknown>;
+    };
+    return {
+      name: tool.name,
+      description: tool.description ?? '',
+      input_schema: tool.input_schema,
+    };
+  });
+
   const stream = new ReadableStream({
     async start(controller) {
       try {
@@ -199,6 +216,7 @@ export default defineEventHandler(async (event) => {
             betas: ['code-execution-2025-08-25', 'files-api-2025-04-14', 'skills-2025-10-02'],
             tools: [
               ...chatTools,
+              ...mcpToolDefs,
               {
                 type: 'code_execution_20250825',
                 name: 'code_execution',
@@ -208,10 +226,9 @@ export default defineEventHandler(async (event) => {
               ...(containerId ? { id: containerId } : {}),
               skills,
             },
-            thinking: {
-              type: 'enabled',
-              budget_tokens: 4096,
-            },
+            thinking: model.includes('haiku')
+              ? { type: 'enabled' as const, budget_tokens: 4096 }
+              : { type: 'adaptive' as const },
           });
 
           let hasToolUse = false;
@@ -373,11 +390,21 @@ export default defineEventHandler(async (event) => {
                   args: toolArgs,
                 });
 
-                const toolResult = await executeTool(currentToolName, toolArgs, { baseUrl });
+                let toolResult: unknown;
+                const mcpTool = mcpToolNames.has(currentToolName)
+                  ? mcpRunnableTools.find((t) => t.name === currentToolName)
+                  : undefined;
+                if (mcpTool) {
+                  const mcpResult = await mcpTool.run(toolArgs);
+                  toolResult =
+                    typeof mcpResult === 'string' ? mcpResult : JSON.stringify(mcpResult);
+                } else {
+                  toolResult = await executeTool(currentToolName, toolArgs, { baseUrl });
+                }
                 toolResults.push({
                   type: 'tool_result',
                   tool_use_id: currentToolUseId,
-                  content: JSON.stringify(toolResult),
+                  content: typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult),
                 });
 
                 sendSSE(controller, {

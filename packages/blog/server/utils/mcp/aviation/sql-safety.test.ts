@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { validateSql, type SqlValidationResult } from './sql-safety';
-import { getAviationDuckDb } from './duckdb';
+import { getAviationDuckDb, AVIATION_BUCKET_URL_PREFIX } from './duckdb';
 
 describe('sql-safety validateSql', () => {
   // DuckDB's own parser is used via a singleton read-only instance for AST parsing.
@@ -17,7 +17,7 @@ describe('sql-safety validateSql', () => {
 
     it('accepts a SELECT against an allowlisted Parquet URL', async () => {
       const result = await validateSql(
-        `SELECT * FROM read_parquet('gs://blog-mcp-aviation-staging/dims/aircraft.parquet') LIMIT 10`,
+        `SELECT * FROM read_parquet('${AVIATION_BUCKET_URL_PREFIX}dims/aircraft.parquet') LIMIT 10`,
       );
       expectOk(result);
     });
@@ -86,7 +86,7 @@ describe('sql-safety validateSql', () => {
 
     it('accepts read_parquet against the aviation bucket prefix', async () => {
       const result = await validateSql(
-        `SELECT COUNT(*) FROM read_parquet('gs://blog-mcp-aviation-staging/facts/bts_t100_202501.parquet')`,
+        `SELECT COUNT(*) FROM read_parquet('${AVIATION_BUCKET_URL_PREFIX}facts/bts_t100_202501.parquet')`,
       );
       expectOk(result);
     });

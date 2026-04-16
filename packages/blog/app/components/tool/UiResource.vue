@@ -118,16 +118,18 @@ function waitForSandboxReady(iframe: HTMLIFrameElement, allowedOrigin: string): 
   });
 }
 
+function resolveResourceEndpoint(uri: string): string {
+  if (uri.startsWith('ui://echo-')) return `/mcp/echo/resource?uri=${encodeURIComponent(uri)}`;
+  return `/mcp/aviation/resource?uri=${encodeURIComponent(uri)}`;
+}
+
 async function resolveHtml(): Promise<string> {
   if (props.html) return props.html;
-  // Persisted-replay path: fetch bundle from the server. Cheap because the
-  // server sets long-lived HTTP cache headers on the immutable bundle.
-  const endpoint = `/mcp/aviation/resource?uri=${encodeURIComponent(props.part.uiResourceUri)}`;
+  const endpoint = resolveResourceEndpoint(props.part.uiResourceUri);
   try {
     const text = await $fetch<string>(endpoint, { responseType: 'text' });
     return typeof text === 'string' ? text : '';
   } catch {
-    // Best-effort: return empty HTML so the fallback card paints instead.
     return '';
   }
 }

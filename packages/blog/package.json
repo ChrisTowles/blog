@@ -9,9 +9,9 @@
   "type": "module",
   "scripts": {
     "build": "pnpm run build:ui-bundle && nuxt build",
-    "build:ui-bundle": "vite build --config mcp-ui/aviation-answer/vite.config.ts",
-    "dev": "docker compose up -d && nuxt dev",
-    "dev:debug": "DEBUG=*:*:*,vite:*:*  nuxt dev",
+    "build:ui-bundle": "vite build --config mcp-ui/aviation-answer/vite.config.ts && vite build --config mcp-ui/echo/vite.config.ts",
+    "dev": "docker compose up -d && nuxt dev --dotenv ../../.env",
+    "dev:debug": "DEBUG=*:*:*,vite:*:*  nuxt dev --dotenv ../../.env",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
@@ -34,8 +34,8 @@
     "etl:aviation": "tsx scripts/etl-aviation.ts"
   },
   "dependencies": {
-    "@anthropic-ai/claude-agent-sdk": "^0.1.76",
-    "@anthropic-ai/sdk": "^0.52.0",
+    "@anthropic-ai/claude-agent-sdk": "^0.2.110",
+    "@anthropic-ai/sdk": "^0.89.0",
     "@duckdb/node-api": "^1.5.2-r.1",
     "@google-cloud/storage": "^7.19.0",
     "@iconify-json/simple-icons": "^1.2.64",
