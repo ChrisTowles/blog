@@ -83,11 +83,31 @@ The bucket is not shared — set up your own:
    `access_id` and `secret`.
 4. Run the ETL into your bucket:
    `GCS_AVIATION_BUCKET=your-bucket pnpm etl:aviation` (from
-   `packages/blog/scripts/etl-aviation.ts`).
+   `packages/blog/scripts/etl-aviation.ts`). This auto-downloads FAA
+   Registry (one zip) and drives BTS's ASP.NET form via headless Playwright
+   to pull the latest 12 months of T-100 Market data (one download per
+   month, skipping unpublished periods). Override the month count with
+   `AVIATION_ETL_MONTHS=N`. Expect 5–10 min end-to-end on a healthy
+   network; BTS's form is the long pole.
 5. In `.env`, set `AVIATION_BUCKET`, `GCS_HMAC_KEY_ID`, `GCS_HMAC_SECRET`.
 
 `pnpm dev` hard-fails at startup if the HMAC vars are missing — the error
 message points back here.
+
+## BTS T-100 download
+
+BTS only exposes T-100 Market data through the ASP.NET form at
+`https://www.transtats.bts.gov/DL_SelectFields.asp?gnoyr_VQ=FMF`. There is
+no direct-download API and no per-month PREZIP file. The ETL drives the
+form with headless Chromium (Playwright) — selects year + month, fires the
+`__doPostBack` for `chkAllVars` and `chkDownloadZip`, clicks the download
+button, waits on the download event, then extracts the inner
+`T_T100_MARKET_ALL_CARRIER.csv` into `bts-t100-<yyyymm>.csv`. Months with
+no published data return a header-only CSV (<50 KB); those are skipped and
+the loop walks one month further back.
+
+If BTS renames the table (re-check `Tables.asp?QO_VQ=EEE`), the
+`gnoyr_VQ=FMF` slug in `etl-aviation.ts:BTS_T100_FORM_URL` needs to change.
 
 ## Replay-fetch endpoint
 

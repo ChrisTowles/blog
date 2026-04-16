@@ -5,12 +5,16 @@
  * (docs/plans/2026-04-14-001-feat-mcp-ui-in-chat-plan.md).
  *
  * Downloads three public-domain sources, transforms CSVs to Parquet via DuckDB
- * in-process, then uploads to a public-read GCS bucket so the MCP server can
- * read them anonymously via httpfs.
+ * in-process, then uploads to a private GCS bucket that the MCP server reads
+ * via HMAC-authenticated httpfs.
  *
  *   - FAA Aircraft Registry (US public domain)   → dims/aircraft.parquet
  *                                                 → dims/aircraft_types.parquet
+ *     (auto-downloaded from registry.faa.gov; requires `unzip` on PATH)
  *   - BTS T-100 Market (US public domain)        → facts/bts_t100_<yyyymm>.parquet
+ *     (BTS only serves T-100 via an ASP.NET form — the script drives it
+ *     headlessly via Playwright, one download per month, skipping periods
+ *     with no published data)
  *   - OpenFlights (ODbL w/ attribution)          → dims/airports.parquet
  *                                                 → dims/airlines.parquet
  *                                                 → dims/routes.parquet
@@ -34,18 +38,32 @@
  *   - AVIATION_ETL_SKIP_UPLOAD  truthy → transform locally only, skip GCS upload
  *   - AVIATION_ETL_FIXTURE_DIR  if set, use fixture CSVs instead of network downloads
  *   - AVIATION_ETL_WORK_DIR    local scratch dir (defaults to os.tmpdir()/aviation-etl)
- *   - AVIATION_ETL_MONTHS      number of recent months of BTS T-100 to pull (default 12)
+ *   - AVIATION_ETL_YEARS      number of recent years of BTS T-100 to pull (default 12)
  */
 
-import { createWriteStream, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { createWriteStream, existsSync, mkdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { Readable } from 'node:stream';
+import { spawnSync } from 'node:child_process';
 import { DuckDBInstance } from '@duckdb/node-api';
 import type { DuckDBConnection } from '@duckdb/node-api';
 import { Storage } from '@google-cloud/storage';
+import { chromium, type Page } from 'playwright-chromium';
+import { consola } from 'consola';
+
+const etlStart = Date.now();
+
+function elapsed(sinceMs?: number): string {
+  const ms = Date.now() - (sinceMs ?? etlStart);
+  if (ms < 1000) return `${ms}ms`;
+  if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`;
+  const m = Math.floor(ms / 60_000);
+  const s = Math.round((ms % 60_000) / 1000);
+  return `${m}m ${s}s`;
+}
 
 /* --------------------------------------------------------------------------
  * Pure transform functions (testable without network / GCS)
@@ -78,13 +96,16 @@ export async function transformFaaMaster(
       all_varchar = true
     )`);
 
+  // ACFTREF.txt has rogue quotes in data values (e.g. "B"-BALLOON where "
+  // means inches). ignore_errors skips the handful of malformed rows.
   await conn.run(`CREATE OR REPLACE TEMP VIEW faa_acftref_raw AS
     SELECT * FROM read_csv(
       '${acftrefCsvPath}',
       delim = ',',
       header = true,
       quote = '"',
-      all_varchar = true
+      all_varchar = true,
+      ignore_errors = true
     )`);
 
   // Latest-wins dedup: pick the row with max LAST_ACTION_DATE per N-NUMBER.
@@ -157,7 +178,8 @@ export async function transformFaaAcftref(
       delim = ',',
       header = true,
       quote = '"',
-      all_varchar = true
+      all_varchar = true,
+      ignore_errors = true
     )
   ) TO '${outputParquetPath}' (FORMAT PARQUET, COMPRESSION ZSTD)`);
 }
@@ -190,7 +212,6 @@ export async function transformBtsT100(
       "DEST_STATE_ABR"                        AS dest_state,
       TRY_CAST("YEAR" AS INTEGER)             AS year,
       TRY_CAST("MONTH" AS INTEGER)            AS month,
-      TRY_CAST("AIRCRAFT_TYPE" AS INTEGER)    AS aircraft_type_code,
       "CLASS"                                 AS service_class
     FROM read_csv(
       '${inputCsvPath}',
@@ -299,24 +320,51 @@ export async function transformOpenFlightsRoutes(
 /**
  * Curated carrier → FAA operator lookup CSV → ref/carrier_to_operator.parquet.
  */
-export async function transformCarrierToOperator(
+/**
+ * Auto-generate the carrier-to-operator lookup by joining distinct BTS
+ * carrier codes against FAA registrant names. Replaces the old hand-curated
+ * CSV — no manual curation needed.
+ */
+export async function generateCarrierToOperator(
   conn: DuckDBConnection,
-  inputCsvPath: string,
+  btsT100Csvs: Array<{ csvPath: string }>,
+  faaMasterPath: string,
   outputParquetPath: string,
 ): Promise<void> {
+  const btsCsvGlob = btsT100Csvs.map((b) => b.csvPath).join("', '");
   await conn.run(`COPY (
-    SELECT
-      bts_carrier_code,
-      faa_registrant_name,
-      display_name,
-      notes
-    FROM read_csv(
-      '${inputCsvPath}',
-      delim = ',',
-      header = true,
-      quote = '"',
-      all_varchar = true
+    WITH bts_carriers AS (
+      SELECT DISTINCT
+        trim("UNIQUE_CARRIER") AS bts_carrier_code,
+        trim("UNIQUE_CARRIER_NAME") AS carrier_name
+      FROM read_csv(
+        ['${btsCsvGlob}'],
+        delim = ',', header = true, quote = '"', all_varchar = true
+      )
+      WHERE trim("UNIQUE_CARRIER") != ''
+    ),
+    faa_names AS (
+      SELECT DISTINCT
+        upper(regexp_replace(trim("NAME"), '[,\\.\\s]+$', '')) AS norm_name,
+        trim("NAME") AS raw_name
+      FROM read_csv(
+        '${faaMasterPath}',
+        delim = ',', header = true, quote = '"',
+        null_padding = true, ignore_errors = false, all_varchar = true
+      )
+      WHERE trim("NAME") != ''
     )
+    SELECT
+      b.bts_carrier_code,
+      f.raw_name AS faa_registrant_name,
+      b.carrier_name AS display_name,
+      CASE
+        WHEN f.raw_name IS NOT NULL THEN 'Auto-matched'
+        ELSE 'No FAA match'
+      END AS notes
+    FROM bts_carriers b
+    LEFT JOIN faa_names f
+      ON upper(regexp_replace(trim(b.carrier_name), '[,\\.\\s]+$', '')) = f.norm_name
   ) TO '${outputParquetPath}' (FORMAT PARQUET, COMPRESSION ZSTD)`);
 }
 
@@ -396,6 +444,231 @@ async function downloadToFile(url: string, destPath: string): Promise<void> {
   await pipeline(Readable.fromWeb(res.body as never), createWriteStream(destPath));
 }
 
+/**
+ * Download the FAA ReleasableAircraft zip and extract MASTER.txt + ACFTREF.txt
+ * into `destDir`. Relies on the `unzip` binary (pre-installed on Linux/macOS).
+ * The zip is ~100MB, extracts to ~400MB — stream the download to disk first.
+ */
+async function downloadAndExtractFaaRegistry(destDir: string): Promise<void> {
+  const zipPath = join(destDir, 'ReleasableAircraft.zip');
+  await downloadToFile(SOURCE_URLS.faaRegistryZip, zipPath);
+  const unzip = spawnSync(
+    'unzip',
+    ['-o', '-j', zipPath, 'MASTER.txt', 'ACFTREF.txt', '-d', destDir],
+    {
+      stdio: 'inherit',
+    },
+  );
+  if (unzip.status !== 0) {
+    throw new Error(
+      `unzip failed (exit ${unzip.status}). Ensure the 'unzip' binary is on PATH, ` +
+        `or manually stage MASTER.txt + ACFTREF.txt in ${destDir}.`,
+    );
+  }
+  rmSync(zipPath, { force: true });
+}
+
+/**
+ * BTS T-100 Market (All Carriers) download via headless Playwright.
+ *
+ * BTS exposes T-100 only through an ASP.NET form (DL_SelectFields.asp) — no
+ * direct-download API, no PREZIP per-month files. The form uses __doPostBack
+ * for both chkAllVars (select all fields) and chkDownloadZip (return a zip).
+ * Each postback navigates, so we must re-select year + period afterward.
+ *
+ * The `FMF` table ID corresponds to "T-100 Market (All Carriers)"; see the
+ * output of Tables.asp?QO_VQ=EEE if BTS ever renames it.
+ */
+const BTS_T100_FORM_URL =
+  'https://www.transtats.bts.gov/DL_SelectFields.asp?gnoyr_VQ=FMF&QO_fu146_anzr=Nv4%20Pn44vr45';
+
+// Months with no published data return a zip where the inner CSV is a header
+// row only. 50 KB is comfortably below real months (~7 MB) and above empty.
+const BTS_MIN_VALID_CSV_BYTES = 50_000;
+
+async function postBackCheckbox(page: Page, id: string): Promise<void> {
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 60_000 }),
+    page.evaluate((elId) => {
+      const cb = document.getElementById(elId) as HTMLInputElement | null;
+      if (!cb) throw new Error(`missing #${elId}`);
+      cb.checked = true;
+      (window as unknown as { __doPostBack: (t: string, a: string) => void }).__doPostBack(
+        elId,
+        '',
+      );
+    }, id),
+  ]);
+  const checked = await page.evaluate(
+    (elId) => (document.getElementById(elId) as HTMLInputElement | null)?.checked ?? false,
+    id,
+  );
+  if (!checked) throw new Error(`postback did not stick for #${id}`);
+}
+
+/**
+ * Download one full year of T-100 Market data (cboPeriod="All") and split
+ * the resulting CSV by MONTH column into per-month `bts-t100-YYYYMM.csv`
+ * files — preserves the downstream per-month Parquet partitioning while
+ * cutting BTS round-trips from 12 to 1 per year. Returns the yyyymm
+ * stamps for every month actually present in the year's data (e.g. the
+ * current year returns only published months).
+ */
+async function downloadOneBtsYear(
+  page: Page,
+  year: number,
+  destDir: string,
+): Promise<Array<{ yyyymm: string; csvPath: string }>> {
+  // Resumability: if per-month CSVs for this year already exist on disk
+  // (from a prior interrupted run), reuse them instead of re-downloading.
+  const { readdirSync } = await import('node:fs');
+  const existing = readdirSync(destDir)
+    .filter((name) => new RegExp(`^bts-t100-${year}\\d{2}\\.csv$`).test(name))
+    .filter((name) => statSync(join(destDir, name)).size > 0)
+    .sort()
+    .map((name) => {
+      const m = name.match(/(\d{6})/)!;
+      return { yyyymm: m[1]!, csvPath: join(destDir, name) };
+    });
+  if (existing.length > 0) {
+    consola.info(`${year} cached — ${existing.length} months on disk`);
+    return existing;
+  }
+
+  // Refresh the session cookie before each year — BTS's session can expire
+  // between downloads, causing the form to redirect to the homepage.
+  await page.goto('https://www.transtats.bts.gov/Homepage.asp', {
+    waitUntil: 'domcontentloaded',
+    timeout: 60_000,
+  });
+  await page.goto(BTS_T100_FORM_URL, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+  await page.selectOption('#cboYear', String(year));
+  // cboPeriod defaults to "All"; we explicitly set it in case a postback
+  // flipped the default.
+  await page.selectOption('#cboPeriod', 'All');
+  await postBackCheckbox(page, 'chkAllVars');
+  await postBackCheckbox(page, 'chkDownloadZip');
+  await page.selectOption('#cboYear', String(year));
+  await page.selectOption('#cboPeriod', 'All');
+
+  // Clicking Download triggers a form POST. BTS generates the zip server-side
+  // before responding — for a full year (~86MB CSV) this takes 30-90s. The
+  // click timeout must be long enough for the server to finish, and we use
+  // waitForEvent('download') to catch the file when it arrives.
+  const zipPath = join(destDir, `bts-t100-${year}.zip`);
+  let download;
+  try {
+    [download] = await Promise.all([
+      page.waitForEvent('download', { timeout: 120_000 }),
+      page.click('#btnDownload', { timeout: 120_000 }),
+    ]);
+  } catch (e) {
+    if (e instanceof Error && /Timeout/i.test(e.message)) {
+      return [];
+    }
+    throw e;
+  }
+  await download.saveAs(zipPath);
+
+  const tmpExtract = join(destDir, `_bts_${year}`);
+  mkdirSync(tmpExtract, { recursive: true });
+  const unzip = spawnSync('unzip', ['-o', '-j', zipPath, '-d', tmpExtract], { stdio: 'pipe' });
+  if (unzip.status !== 0) throw new Error(`unzip failed for ${zipPath}`);
+
+  const csvInside = join(tmpExtract, 'T_T100_MARKET_ALL_CARRIER.csv');
+  if (!existsSync(csvInside) || statSync(csvInside).size < BTS_MIN_VALID_CSV_BYTES) {
+    rmSync(tmpExtract, { recursive: true, force: true });
+    rmSync(zipPath, { force: true });
+    return [];
+  }
+
+  // Split the year CSV into one CSV per month. DuckDB's COPY with an
+  // expression filter is orders of magnitude faster than Node string
+  // parsing; the MONTH column is an integer per BTS spec.
+  const db = await DuckDBInstance.create(':memory:');
+  const conn = await db.connect();
+  const produced: Array<{ yyyymm: string; csvPath: string }> = [];
+  try {
+    const monthsRows = await conn.runAndReadAll(
+      `SELECT DISTINCT CAST(MONTH AS INTEGER) AS m FROM read_csv('${csvInside}', all_varchar = true) ORDER BY m`,
+    );
+    for (const row of monthsRows.getRowObjectsJson()) {
+      const monthNum = Number((row as { m: number | string }).m);
+      if (!Number.isInteger(monthNum) || monthNum < 1 || monthNum > 12) continue;
+      const yyyymm = `${year}${String(monthNum).padStart(2, '0')}`;
+      const outPath = join(destDir, `bts-t100-${yyyymm}.csv`);
+      await conn.run(
+        `COPY (SELECT * FROM read_csv('${csvInside}', all_varchar = true) WHERE CAST(MONTH AS INTEGER) = ${monthNum}) ` +
+          `TO '${outPath}' (HEADER, DELIMITER ',', QUOTE '"')`,
+      );
+      produced.push({ yyyymm, csvPath: outPath });
+    }
+  } finally {
+    conn.closeSync();
+  }
+
+  rmSync(tmpExtract, { recursive: true, force: true });
+  rmSync(zipPath, { force: true });
+  return produced;
+}
+
+export async function downloadBtsT100ViaPlaywright(
+  destDir: string,
+  yearsWanted: number,
+): Promise<Array<{ yyyymm: string; csvPath: string }>> {
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const ctx = await browser.newContext({ acceptDownloads: true });
+    const page = await ctx.newPage();
+
+    // BTS requires a session cookie before serving the download form.
+    // Without this, direct navigation to DL_SelectFields.asp redirects to
+    // Homepage.asp. Hitting the homepage first establishes the session.
+    await page.goto('https://www.transtats.bts.gov/Homepage.asp', {
+      waitUntil: 'domcontentloaded',
+      timeout: 60_000,
+    });
+
+    // One download per year (period="All"), newest year first. Each year
+    // yields up to 12 per-month CSVs after the split step. The current year
+    // returns only published months.
+    let year = new Date().getUTCFullYear();
+    const stopYear = 1989;
+    let yearsCollected = 0;
+    const collected: Array<{ yyyymm: string; csvPath: string }> = [];
+
+    while (year > stopYear && yearsCollected < yearsWanted) {
+      consola.start(`Fetching ${year}…`);
+      const yearStart = Date.now();
+      try {
+        const monthsInYear = await downloadOneBtsYear(page, year, destDir);
+        if (monthsInYear.length === 0) {
+          consola.warn(`${year} — no data available`);
+        } else {
+          collected.push(...monthsInYear);
+          yearsCollected++;
+          consola.success(
+            `${year}  ${monthsInYear.length} months  (${yearsCollected}/${yearsWanted} years)  ${elapsed(yearStart)}`,
+          );
+        }
+      } catch (e) {
+        consola.error(`${year} failed:`, e instanceof Error ? e.message : String(e));
+      }
+      year -= 1;
+    }
+
+    if (yearsCollected < yearsWanted) {
+      throw new Error(
+        `Collected only ${yearsCollected}/${yearsWanted} years of BTS T-100 data — ` +
+          `BTS may be throttling or the date range is exhausted.`,
+      );
+    }
+    return collected;
+  } finally {
+    await browser.close();
+  }
+}
+
 async function uploadFileToGcs(
   storage: Storage,
   bucketName: string,
@@ -431,14 +704,21 @@ interface EtlConfig {
   skipUpload: boolean;
   fixtureDir: string | undefined;
   workDir: string;
+  btsYears: number;
 }
 
 function readConfig(): EtlConfig {
+  const yearsRaw = process.env.AVIATION_ETL_YEARS;
+  const parsed = yearsRaw ? Number.parseInt(yearsRaw, 10) : 12;
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error(`AVIATION_ETL_YEARS must be a positive integer, got: ${yearsRaw}`);
+  }
   return {
     bucketName: process.env.GCS_AVIATION_BUCKET,
     skipUpload: Boolean(process.env.AVIATION_ETL_SKIP_UPLOAD),
     fixtureDir: process.env.AVIATION_ETL_FIXTURE_DIR,
     workDir: process.env.AVIATION_ETL_WORK_DIR ?? join(tmpdir(), 'aviation-etl'),
+    btsYears: parsed,
   };
 }
 
@@ -456,7 +736,6 @@ export async function runAllTransforms(
     ofAirports: string;
     ofAirlines: string;
     ofRoutes: string;
-    carrierToOperator: string;
   },
   outDir: string,
 ): Promise<Array<{ localPath: string; remoteName: string; contentType: string }>> {
@@ -514,7 +793,7 @@ export async function runAllTransforms(
   });
 
   const carrierParquet = join(outDir, 'carrier_to_operator.parquet');
-  await transformCarrierToOperator(conn, inputs.carrierToOperator, carrierParquet);
+  await generateCarrierToOperator(conn, inputs.btsT100, inputs.faaMaster, carrierParquet);
   produced.push({
     localPath: carrierParquet,
     remoteName: 'ref/carrier_to_operator.parquet',
@@ -535,10 +814,22 @@ export async function runAllTransforms(
 async function runEtl(): Promise<void> {
   const config = readConfig();
 
-  // Clean work dir so partial state from an earlier failed run doesn't leak.
-  if (existsSync(config.workDir)) {
-    rmSync(config.workDir, { recursive: true, force: true });
-  }
+  consola.box({
+    title: 'Aviation ETL',
+    message: [
+      `Bucket:   ${config.bucketName || '(local only)'}`,
+      `Years:    ${config.btsYears}`,
+      `Work dir: ${config.workDir}`,
+      config.skipUpload ? 'Upload:   skipped' : '',
+    ]
+      .filter(Boolean)
+      .join('\n'),
+    style: { borderColor: 'cyan' },
+  });
+
+  // Reuse work dir for resumability — BTS downloads are slow, so we keep
+  // already-downloaded CSVs from prior runs. The transform + upload steps
+  // are idempotent and will overwrite stale Parquet / GCS objects.
   mkdirSync(config.workDir, { recursive: true });
 
   // Resolve inputs. Fixture mode is for CI / smoke tests; network mode is
@@ -547,14 +838,28 @@ async function runEtl(): Promise<void> {
   const sourceDir = useFixtures ? resolve(config.fixtureDir!) : join(config.workDir, 'downloads');
   if (!useFixtures) {
     mkdirSync(sourceDir, { recursive: true });
-    console.log('Downloading OpenFlights dimensional data…');
+
+    let phaseStart = Date.now();
+    consola.start('Downloading OpenFlights dimensional data…');
     await downloadToFile(SOURCE_URLS.openFlightsAirports, join(sourceDir, 'airports.dat'));
     await downloadToFile(SOURCE_URLS.openFlightsAirlines, join(sourceDir, 'airlines.dat'));
     await downloadToFile(SOURCE_URLS.openFlightsRoutes, join(sourceDir, 'routes.dat'));
-    console.warn(
-      `NOTE: FAA Registry + BTS T-100 require manual staging. See SOURCE_URLS in this file.\n` +
-        `      Place MASTER.txt, ACFTREF.txt, and bts-t100-<yyyymm>.csv under ${sourceDir}`,
-    );
+    consola.success(`OpenFlights done  ${elapsed(phaseStart)}`);
+
+    phaseStart = Date.now();
+    consola.start('Downloading FAA Aircraft Registry…');
+    await downloadAndExtractFaaRegistry(sourceDir);
+    consola.success(`FAA Registry done  ${elapsed(phaseStart)}`);
+
+    phaseStart = Date.now();
+    consola.box({
+      title: 'BTS T-100 Market (All Carriers)',
+      message: [`Years:   ${config.btsYears}`, `Form:    ${BTS_T100_FORM_URL}`].join('\n'),
+      style: { borderColor: 'cyan' },
+    });
+    await downloadBtsT100ViaPlaywright(sourceDir, config.btsYears);
+    consola.success(`BTS T-100 download done  ${elapsed(phaseStart)}`);
+
     // The script intentionally fails fast if the required files aren't present,
     // rather than quietly shipping a partial bucket.
     const requiredLarge = ['MASTER.txt', 'ACFTREF.txt'];
@@ -579,7 +884,6 @@ async function runEtl(): Promise<void> {
   const ofAirports = pathFor('openflights-airports.dat', 'airports.dat');
   const ofAirlines = pathFor('openflights-airlines.dat', 'airlines.dat');
   const ofRoutes = pathFor('openflights-routes.dat', 'routes.dat');
-  const carrierToOperator = pathFor('carrier-to-operator.csv', 'carrier-to-operator.csv');
 
   // Find every bts-t100-<yyyymm>.csv the user staged.
   const { readdirSync } = await import('node:fs');
@@ -598,28 +902,29 @@ async function runEtl(): Promise<void> {
   const conn = await db.connect();
 
   try {
+    const transformStart = Date.now();
+    consola.start(`Transforming ${btsT100.length} month files → Parquet…`);
     const outDir = join(config.workDir, 'parquet');
     const produced = await runAllTransforms(
       conn,
-      { faaMaster, faaAcftref, btsT100, ofAirports, ofAirlines, ofRoutes, carrierToOperator },
+      { faaMaster, faaAcftref, btsT100, ofAirports, ofAirlines, ofRoutes },
       outDir,
     );
+    consola.success(`Transform done — ${produced.length} files  ${elapsed(transformStart)}`);
 
     // Drop a LICENSE.txt in the work dir so the upload step can push it too.
     const licensePath = join(outDir, 'LICENSE.txt');
     writeFileSync(licensePath, LICENSE_TEXT, 'utf8');
 
     if (config.skipUpload || !config.bucketName) {
-      console.log(
-        `Skipped GCS upload (SKIP=${config.skipUpload}, bucket=${config.bucketName ?? 'unset'}). ` +
-          `Parquet written to ${outDir}.`,
-      );
+      consola.info(`Upload skipped (bucket=${config.bucketName ?? 'unset'}). Parquet at ${outDir}`);
     } else {
+      const uploadStart = Date.now();
       const storage = new Storage();
-      console.log(`Uploading to gs://${config.bucketName}/ …`);
+      consola.start(`Uploading to gs://${config.bucketName}/…`);
       for (const { localPath, remoteName, contentType } of produced) {
         await uploadFileToGcs(storage, config.bucketName, localPath, remoteName, contentType);
-        console.log(`  ↑ gs://${config.bucketName}/${remoteName}`);
+        consola.log(`  ↑ ${remoteName}`);
       }
       await uploadTextToGcs(
         storage,
@@ -628,25 +933,61 @@ async function runEtl(): Promise<void> {
         'LICENSE.txt',
         'text/plain; charset=utf-8',
       );
-      console.log(`  ↑ gs://${config.bucketName}/LICENSE.txt`);
+      consola.log(`  ↑ LICENSE.txt`);
+      consola.success(`Upload done — ${produced.length + 1} files  ${elapsed(uploadStart)}`);
     }
   } finally {
     conn.closeSync();
     db.closeSync();
   }
 
-  console.log('Aviation ETL complete.');
-}
-
-// Allow both "run as a script" and "import as a module for tests".
-const isMain =
-  typeof process !== 'undefined' &&
-  process.argv[1] !== undefined &&
-  import.meta.url === `file://${resolve(process.argv[1])}`;
-
-if (isMain) {
-  runEtl().catch((err) => {
-    console.error('Aviation ETL failed:', err);
-    process.exit(1);
+  consola.box({
+    title: 'Aviation ETL complete',
+    message: `Total time: ${elapsed()}`,
+    style: { borderColor: 'green' },
   });
 }
+
+// CLI entrypoint via citty
+import { defineCommand, runMain } from 'citty';
+
+const main = defineCommand({
+  meta: {
+    name: 'etl-aviation',
+    description:
+      'Download aviation datasets (FAA, BTS T-100, OpenFlights), transform to Parquet, upload to GCS',
+  },
+  args: {
+    years: {
+      type: 'string',
+      description: 'Number of recent years of BTS T-100 data to download',
+      default: process.env.AVIATION_ETL_YEARS || '12',
+    },
+    bucket: {
+      type: 'string',
+      description: 'GCS bucket for upload (overrides GCS_AVIATION_BUCKET env)',
+      default: process.env.GCS_AVIATION_BUCKET || '',
+    },
+    'skip-upload': {
+      type: 'boolean',
+      description: 'Transform only — skip GCS upload',
+      default: false,
+    },
+    'work-dir': {
+      type: 'string',
+      description: 'Scratch directory (reused for resumability)',
+      default: process.env.AVIATION_ETL_WORK_DIR || join(tmpdir(), 'aviation-etl'),
+    },
+  },
+  async run({ args }) {
+    // Override env-based config with CLI args so both paths work
+    if (args.years) process.env.AVIATION_ETL_YEARS = args.years;
+    if (args.bucket) process.env.GCS_AVIATION_BUCKET = args.bucket;
+    if (args['skip-upload']) process.env.AVIATION_ETL_SKIP_UPLOAD = '1';
+    if (args['work-dir']) process.env.AVIATION_ETL_WORK_DIR = args['work-dir'];
+
+    await runEtl();
+  },
+});
+
+runMain(main);
