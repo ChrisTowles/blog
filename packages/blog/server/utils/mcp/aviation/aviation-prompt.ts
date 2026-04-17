@@ -10,9 +10,10 @@
  * path often.
  */
 
-import { AVIATION_BUCKET } from './duckdb';
+import { AVIATION_BUCKET_URL_PREFIX } from './duckdb';
 
-const BUCKET = `gs://${AVIATION_BUCKET}`;
+// Trim trailing slash so callers can write `${BUCKET}/dims/...` consistently.
+const BUCKET = AVIATION_BUCKET_URL_PREFIX.replace(/\/$/, '');
 
 /**
  * Dataset schema surface — one block the LLM reads. Keep it short and denormalized;
@@ -65,6 +66,73 @@ SEMANTIC NOTES
 - BTS and FAA do not align by name; always LEFT JOIN carrier_to_operator.
 - The only permitted table function is read_parquet against ${BUCKET}/*.
 - SELECT-only. No ATTACH / INSTALL / LOAD / PRAGMA / SET / COPY / DDL / DML.
+
+CHART DATA BINDING (CRITICAL — charts are empty without this)
+You cannot know actual SQL row values at emit time. The server runs your SQL
+and then substitutes placeholders in chart_option. You MUST use placeholders,
+NOT empty arrays, anywhere chart data would appear.
+
+Placeholder forms — pick the one that matches your chart type:
+
+  1) Array of values from ONE column (bar data, line data, category axis):
+       "data": "$rows.COLUMN_NAME"
+
+  2) Array of objects from TWO columns (pie slices, bar with named labels):
+       "data": { "$rows": { "name": "NAME_COLUMN", "value": "VALUE_COLUMN" } }
+
+  3) Array of [x, y] pairs (scatter, heatmap):
+       "data": { "$rows": ["X_COLUMN", "Y_COLUMN"] }
+
+Examples — copy these patterns:
+
+  // Horizontal bar: operator on yAxis, value on xAxis
+  {
+    "xAxis": { "type": "value" },
+    "yAxis": { "type": "category", "data": "$rows.operator_name" },
+    "series": [{ "type": "bar", "data": "$rows.avg_age_years" }]
+  }
+
+  // Line chart over years
+  {
+    "xAxis": { "type": "category", "data": "$rows.year" },
+    "yAxis": { "type": "value" },
+    "series": [{ "type": "line", "data": "$rows.total_passengers" }]
+  }
+
+  // Pie chart
+  {
+    "series": [{
+      "type": "pie",
+      "data": { "$rows": { "name": "manufacturer", "value": "share_pct" } }
+    }]
+  }
+
+  // Scatter
+  {
+    "xAxis": { "type": "value", "name": "distance_miles" },
+    "yAxis": { "type": "value", "name": "passengers" },
+    "series": [{ "type": "scatter", "data": { "$rows": ["distance_miles", "passengers"] } }]
+  }
+
+NEVER emit empty "data": [] arrays — use a placeholder. NEVER hardcode values.
+Your SQL's SELECT columns ARE the only legal column names in placeholders.
+
+ALIAS RULES (CRITICAL — parser-sensitive)
+- ALWAYS introduce table and subquery aliases with the keyword AS, e.g.
+    FROM read_parquet('${BUCKET}/dims/aircraft.parquet') AS aircraft
+  NEVER use bare aliases like \`... AS a\` dropped to \`... a\`. DuckDB will
+  misparse certain bare aliases as clause keywords and fail.
+- ALWAYS use descriptive alias names (aircraft, types, airports, airlines,
+  routes, bts, carrier_map, fleet, stats, ranked). Avoid short 1-2 letter
+  aliases.
+- NEVER use any of these as an alias — they are DuckDB reserved keywords and
+  will cause a parse error: at, as, from, select, where, group, order, by,
+  having, join, on, using, limit, offset, with, union, intersect, except,
+  case, when, then, else, end, and, or, not, in, is, null, true, false,
+  between, like, ilike, similar, asc, desc, collate, cast, default, of, to,
+  for, all, any, some, distinct, values, window, range, rows, natural, full,
+  inner, outer, left, right, cross, lateral.
+- Same rule for column aliases: use AS and avoid reserved words.
 `.trim();
 
 /**
@@ -142,7 +210,18 @@ FAIL-CLOSED: If you can't answer with the given schema, still emit the JSON:
   - followups: three related questions the dataset can answer.
 
 Never emit prose outside the JSON. Never reference tables not in the schema block.
-Never use INSERT/UPDATE/DELETE/CREATE/DROP/ATTACH/INSTALL/LOAD/PRAGMA/SET/COPY.`;
+Never use INSERT/UPDATE/DELETE/CREATE/DROP/ATTACH/INSTALL/LOAD/PRAGMA/SET/COPY.
+
+ALIAS EXAMPLES (follow exactly; bare aliases will break the parser)
+  -- CORRECT
+  FROM read_parquet('${BUCKET}/dims/aircraft.parquet') AS aircraft
+  FROM read_parquet('${BUCKET}/dims/aircraft_types.parquet') AS types
+  FROM read_parquet('${BUCKET}/facts/bts_t100_*.parquet') AS bts
+  FROM read_parquet('${BUCKET}/ref/carrier_to_operator.parquet') AS carrier_map
+  -- WRONG (will fail parse)
+  FROM read_parquet('${BUCKET}/dims/aircraft.parquet') a
+  FROM read_parquet('${BUCKET}/dims/aircraft_types.parquet') at
+  FROM read_parquet('${BUCKET}/facts/bts_t100_*.parquet') t`;
 }
 
 /**
@@ -161,10 +240,10 @@ Never use INSERT/UPDATE/DELETE/CREATE/DROP/ATTACH/INSTALL/LOAD/PRAGMA/SET/COPY.`
  */
 export const AVIATION_STARTER_QUESTIONS: readonly string[] = [
   'Which operators have the oldest Boeing 737 fleets?',
-  'How many A321neo aircraft vs 737 MAX are in the US fleet, by operator?',
+  'How are US-registered aircraft distributed by number of engines?',
   'What were the 10 busiest US routes by passenger count in 2025?',
   'Which US carrier flew the most total passenger miles in 2025?',
-  'What is the longest scheduled US route by great-circle distance?',
+  'Which countries have the most airports in the OpenFlights dataset?',
   'Which aircraft models have the highest average seat count in the US fleet?',
   'How has the share of Airbus vs Boeing in the US fleet changed over time?',
   'Which airports see the most distinct airline carriers?',

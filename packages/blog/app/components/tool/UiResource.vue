@@ -40,9 +40,19 @@ import {
   type McpUiResourcePermissions,
   type McpUiMessageRequest,
 } from '@modelcontextprotocol/ext-apps/app-bridge';
-import type { AviationToolResult } from '~~/shared/mcp-aviation-types';
 import type { UiResourcePart, HostContextStatus } from '~~/shared/chat-types';
 import { TEST_IDS } from '~~/shared/test-ids';
+
+type StructuredRecord = Record<string, unknown>;
+
+/** Pick a human-readable fallback string from the structuredContent payload. */
+function fallbackDisplayText(sc: StructuredRecord): string {
+  for (const key of ['answer', 'message', 'title', 'text']) {
+    const value = sc[key];
+    if (typeof value === 'string' && value.length > 0) return value;
+  }
+  return '';
+}
 
 const props = defineProps<{
   part: UiResourcePart;
@@ -80,9 +90,10 @@ defineExpose({ isOriginAllowed });
 let appBridge: AppBridge | null = null;
 let cleanupFns: Array<() => void> = [];
 
-const structured = computed<AviationToolResult>(() => {
-  return props.part.structuredContent as AviationToolResult;
+const structured = computed<StructuredRecord>(() => {
+  return (props.part.structuredContent ?? {}) as StructuredRecord;
 });
+const fallbackText = computed(() => fallbackDisplayText(structured.value));
 
 /**
  * Wait for the sandbox-proxy-ready notification from the iframe, enforcing
@@ -228,11 +239,12 @@ async function boot(iframe: HTMLIFrameElement): Promise<void> {
   }
 
   // Replay is inert (plan line 567): persisted structuredContent drives both
-  // fresh and reload renders.
+  // fresh and reload renders. toRaw strips Vue's Proxy so postMessage's
+  // structured-clone algorithm doesn't choke.
   appBridge.sendToolInput({ arguments: {} });
   appBridge.sendToolResult({
-    content: [{ type: 'text', text: structured.value.answer ?? '' }],
-    structuredContent: structured.value as unknown as Record<string, unknown>,
+    content: [{ type: 'text', text: fallbackText.value }],
+    structuredContent: toRaw(structured.value),
     isError: props.part.error ?? false,
   });
 
@@ -299,7 +311,7 @@ onBeforeUnmount(() => {
       :data-testid="TEST_IDS.AVIATION.UI_RESOURCE_FALLBACK"
     >
       <div class="font-medium text-highlighted mb-2">
-        {{ structured.answer || 'Interactive visualization unavailable' }}
+        {{ fallbackText || 'Interactive visualization unavailable' }}
       </div>
       <div class="text-xs text-muted">
         Interactive visualization unavailable

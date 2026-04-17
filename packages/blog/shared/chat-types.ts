@@ -111,6 +111,17 @@ export interface UiResourcePart {
   error?: boolean;
 }
 
+/**
+ * SSE event carrying a UI resource produced by an MCP tool invoked through
+ * the agent loop. `html` is the inline bundle; the client may use it directly
+ * instead of re-fetching from `/mcp/<server>/resource?uri=...`.
+ */
+export interface SSEUiResourceEvent {
+  type: 'ui_resource';
+  part: UiResourcePart;
+  html: string;
+}
+
 export type MessagePart =
   | TextPart
   | ReasoningPart
@@ -206,4 +217,5 @@ export type SSEEvent =
   | SSEToolEndEvent
   | SSECodeStartEvent
   | SSECodeResultEvent
-  | SSEContainerEvent;
+  | SSEContainerEvent
+  | SSEUiResourceEvent;

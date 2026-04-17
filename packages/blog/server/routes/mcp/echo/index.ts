@@ -6,8 +6,18 @@ import { log } from 'evlog';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { registerAppTool } from '@modelcontextprotocol/ext-apps/server';
+import type {
+  CallToolResult,
+  EmbeddedResource,
+  TextContent,
+} from '@modelcontextprotocol/sdk/types.js';
+import { pickDadJoke } from '../../../../shared/dad-jokes';
 import { ECHO_TOOL_NAMES, ECHO_UI_RESOURCE_URI } from '../../../../shared/mcp-echo-types';
-import { registerEchoUiResource } from '../../../utils/mcp/echo/ui-resource';
+import {
+  ECHO_UI_META,
+  readEchoBundle,
+  registerEchoUiResource,
+} from '../../../utils/mcp/echo/ui-resource';
 
 type SessionRecord = {
   server: McpServer;
@@ -26,7 +36,8 @@ function createMcpServer(): McpServer {
     server,
     ECHO_TOOL_NAMES.ECHO,
     {
-      description: 'Echoes a message back with a timestamp. Minimal MCP UI test tool.',
+      description:
+        'Returns a random bad dad joke with a timestamp. Minimal MCP UI test tool — groans guaranteed.',
       inputSchema: {
         message: z.string().min(1).max(500),
       },
@@ -35,15 +46,23 @@ function createMcpServer(): McpServer {
       },
     },
     async (args: Record<string, unknown>) => {
-      const parsed = z.object({ message: z.string().min(1).max(500) }).parse(args);
-      const message = parsed.message;
-      return {
-        content: [{ type: 'text' as const, text: message }],
-        structuredContent: {
-          message,
-          timestamp: new Date().toISOString(),
+      z.object({ message: z.string().min(1).max(500) }).parse(args);
+      const message = pickDadJoke();
+      const structured = { message, timestamp: new Date().toISOString() };
+      const textContent: TextContent = { type: 'text', text: message };
+      const uiContent: EmbeddedResource = {
+        type: 'resource',
+        resource: {
+          uri: ECHO_UI_RESOURCE_URI,
+          mimeType: 'text/html;profile=mcp-app',
+          text: readEchoBundle(),
+          _meta: ECHO_UI_META,
         },
       };
+      return {
+        content: [textContent, uiContent],
+        structuredContent: structured,
+      } as CallToolResult & { structuredContent: typeof structured };
     },
   );
 
@@ -55,6 +74,7 @@ async function getOrCreateSession(sessionId: string | undefined): Promise<Sessio
   if (sessionId && sessions.has(sessionId)) {
     return sessions.get(sessionId)!;
   }
+  const server = createMcpServer();
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: () => randomUUID(),
     onsessioninitialized: (id: string) => {
@@ -64,7 +84,6 @@ async function getOrCreateSession(sessionId: string | undefined): Promise<Sessio
   transport.onclose = () => {
     if (transport.sessionId) sessions.delete(transport.sessionId);
   };
-  const server = createMcpServer();
   await server.connect(transport);
   return { server, transport };
 }

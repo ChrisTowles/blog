@@ -7,10 +7,13 @@ import type {
   FilePart,
   MessagePart,
   SSEEvent,
+  UiResourcePart,
 } from '~~/shared/chat-types';
 import type { AnthropicBetaClient, BetaStreamEvent } from '~~/server/utils/ai/anthropic-beta-types';
 import { getSkillsForAPI, getSkillsSystemPrompt } from '~~/server/utils/ai/skills-loader';
-import { getMcpTools } from '~~/server/utils/mcp/client-pool';
+import { callMcpTool, getMcpTools } from '~~/server/utils/mcp/client-pool';
+
+const MCP_ENDPOINT = '/mcp/echo';
 
 defineRouteMeta({
   openAPI: {
@@ -158,7 +161,7 @@ export default defineEventHandler(async (event) => {
   const fullSystemPrompt = `${SYSTEM_PROMPT}\n\n${skillsPrompt}`;
 
   // Discover MCP tools from internal servers
-  const mcpRunnableTools = await getMcpTools('/mcp/echo', baseUrl);
+  const mcpRunnableTools = await getMcpTools(MCP_ENDPOINT, baseUrl);
   const mcpToolNames = new Set(mcpRunnableTools.map((t) => t.name));
   const mcpToolDefs = mcpRunnableTools.map((t) => {
     const tool = t as unknown as {
@@ -196,6 +199,7 @@ export default defineEventHandler(async (event) => {
 
         const codeExecutions: CodeExecutionPart[] = [];
         const fileParts: FilePart[] = [];
+        const uiResourceParts: UiResourcePart[] = [];
         const seenFileIds = new Set<string>();
 
         let turnCount = 0;
@@ -391,13 +395,31 @@ export default defineEventHandler(async (event) => {
                 });
 
                 let toolResult: unknown;
-                const mcpTool = mcpToolNames.has(currentToolName)
-                  ? mcpRunnableTools.find((t) => t.name === currentToolName)
-                  : undefined;
-                if (mcpTool) {
-                  const mcpResult = await mcpTool.run(toolArgs);
-                  toolResult =
-                    typeof mcpResult === 'string' ? mcpResult : JSON.stringify(mcpResult);
+                if (mcpToolNames.has(currentToolName)) {
+                  const outcome = await callMcpTool(
+                    MCP_ENDPOINT,
+                    currentToolName,
+                    toolArgs,
+                    baseUrl,
+                  );
+                  toolResult = outcome.text;
+                  if (outcome.uiResource) {
+                    const uiPart: UiResourcePart = {
+                      type: 'ui-resource',
+                      toolCallId: currentToolUseId,
+                      uiResourceUri: outcome.uiResource.uri,
+                      structuredContent: outcome.structuredContent,
+                      csp: outcome.uiResource.csp,
+                      permissions: outcome.uiResource.permissions,
+                      error: outcome.isError,
+                    };
+                    uiResourceParts.push(uiPart);
+                    sendSSE(controller, {
+                      type: 'ui_resource',
+                      part: uiPart,
+                      html: outcome.uiResource.html,
+                    });
+                  }
                 } else {
                   toolResult = await executeTool(currentToolName, toolArgs, { baseUrl });
                 }
@@ -484,6 +506,7 @@ export default defineEventHandler(async (event) => {
             : []),
           ...codeExecutions,
           ...fileParts,
+          ...uiResourceParts,
           ...(fullText ? [{ type: 'text' as const, text: fullText }] : []),
         ];
 

@@ -9,10 +9,10 @@
 
 export const AVIATION_STARTER_QUESTIONS: readonly string[] = [
   'Which operators have the oldest Boeing 737 fleets?',
-  'How many A321neo aircraft vs 737 MAX are in the US fleet, by operator?',
+  'How are US-registered aircraft distributed by number of engines?',
   'What were the 10 busiest US routes by passenger count in 2025?',
   'Which US carrier flew the most total passenger miles in 2025?',
-  'What is the longest scheduled US route by great-circle distance?',
+  'Which countries have the most airports in the OpenFlights dataset?',
   'Which aircraft models have the highest average seat count in the US fleet?',
   'How has the share of Airbus vs Boeing in the US fleet changed over time?',
   'Which airports see the most distinct airline carriers?',

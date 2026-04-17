@@ -1,17 +1,19 @@
 /**
- * Server-side MCP client pool — maintains connections to internal MCP servers.
+ * Server-side MCP client pool — maintains connections to internal MCP servers
+ * and exposes a high-level `callMcpTool` that extracts any `ui://` resource +
+ * text content from a tool call.
  *
- * Used by the chat streaming handler to discover and execute MCP tools.
- * Connections are lazily initialized and cached per endpoint path.
- * The `mcpTools()` helper from `@anthropic-ai/sdk/helpers/beta/mcp` converts
- * MCP tools to `BetaRunnableTool` objects with auto-wired execution.
+ * The Anthropic SDK's `mcpTools()` helper drops `EmbeddedResource` blocks, so
+ * the chat streaming handler can't use it directly when a UI resource matters.
  */
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { mcpTools, type MCPClientLike } from '@anthropic-ai/sdk/helpers/beta/mcp';
 import type { BetaRunnableTool } from '@anthropic-ai/sdk/lib/tools/BetaRunnableTool';
+import type { CallToolResult, EmbeddedResource } from '@modelcontextprotocol/sdk/types.js';
 import { log } from 'evlog';
+import type { McpUiResourceCsp, McpUiResourcePermissions } from '../../../shared/chat-types';
 
 interface CachedMcpClient {
   client: Client;
@@ -20,48 +22,130 @@ interface CachedMcpClient {
 
 const pool = new Map<string, CachedMcpClient>();
 
-/**
- * Get MCP tools for a given internal endpoint path (e.g., '/mcp/echo').
- * Lazily creates the MCP client connection and caches it.
- * Returns an empty array if the connection fails (graceful degradation).
- */
-export async function getMcpTools(
-  endpointPath: string,
-  baseUrl?: string,
-): Promise<BetaRunnableTool<Record<string, unknown>>[]> {
+async function connect(endpointPath: string, baseUrl?: string): Promise<CachedMcpClient | null> {
   const cached = pool.get(endpointPath);
-  if (cached) return cached.tools;
+  if (cached) return cached;
 
   const origin = baseUrl || `http://localhost:${process.env.PORT || 3000}`;
   const url = new URL(endpointPath, origin);
 
   try {
     const client = new Client({ name: 'blog-chat-mcp-pool', version: '0.1.0' });
-    const transport = new StreamableHTTPClientTransport(url);
-    await client.connect(transport);
-
+    await client.connect(new StreamableHTTPClientTransport(url));
     const { tools: mcpToolList } = await client.listTools();
-    const runnableTools = mcpTools(mcpToolList, client as unknown as MCPClientLike);
-
-    pool.set(endpointPath, { client, tools: runnableTools });
+    const tools = mcpTools(mcpToolList, client as unknown as MCPClientLike);
+    const entry: CachedMcpClient = { client, tools };
+    pool.set(endpointPath, entry);
     log.info({
       tag: 'mcp-pool',
-      message: `Connected to ${endpointPath}, discovered ${runnableTools.length} tool(s)`,
+      message: `Connected to ${endpointPath}, discovered ${tools.length} tool(s)`,
     });
-    return runnableTools;
+    return entry;
   } catch (err) {
     log.warn({
       tag: 'mcp-pool',
       message: `Failed to connect to MCP server at ${endpointPath}`,
       error: err instanceof Error ? err.message : String(err),
     });
-    return [];
+    return null;
   }
 }
 
+export async function getMcpTools(
+  endpointPath: string,
+  baseUrl?: string,
+): Promise<BetaRunnableTool<Record<string, unknown>>[]> {
+  const entry = await connect(endpointPath, baseUrl);
+  return entry?.tools ?? [];
+}
+
+export interface ExtractedUiResource {
+  uri: string;
+  html: string;
+  csp?: McpUiResourceCsp;
+  permissions?: McpUiResourcePermissions;
+}
+
+export interface McpToolCallOutcome {
+  /** Concatenated text content suitable for feeding back to the model. */
+  text: string;
+  structuredContent: Record<string, unknown>;
+  uiResource?: ExtractedUiResource;
+  isError: boolean;
+}
+
+function extractUiResource(result: CallToolResult): ExtractedUiResource | undefined {
+  for (const block of result.content ?? []) {
+    if (block.type !== 'resource') continue;
+    const resource = (block as EmbeddedResource).resource;
+    if (!resource || typeof resource !== 'object') continue;
+    const uri = (resource as { uri?: unknown }).uri;
+    if (typeof uri !== 'string' || !uri.startsWith('ui://')) continue;
+    const text = (resource as { text?: unknown }).text;
+    const meta =
+      (resource as { _meta?: unknown; meta?: unknown })._meta ??
+      (resource as { meta?: unknown }).meta;
+    const uiMeta =
+      meta && typeof meta === 'object' && 'ui' in meta
+        ? (meta as { ui?: { csp?: McpUiResourceCsp; permissions?: McpUiResourcePermissions } }).ui
+        : undefined;
+    return {
+      uri,
+      html: typeof text === 'string' ? text : '',
+      csp: uiMeta?.csp,
+      permissions: uiMeta?.permissions,
+    };
+  }
+  return undefined;
+}
+
+function extractText(result: CallToolResult): string {
+  const parts: string[] = [];
+  for (const block of result.content ?? []) {
+    if (block.type === 'text' && typeof (block as { text?: unknown }).text === 'string') {
+      parts.push((block as { text: string }).text);
+    }
+  }
+  if (parts.length > 0) return parts.join('\n');
+  const sc = (result as { structuredContent?: unknown }).structuredContent;
+  return sc && typeof sc === 'object' ? JSON.stringify(sc) : '';
+}
+
 /**
- * Close all cached MCP clients. Call during hot-reload or shutdown.
+ * Invoke an MCP tool and extract text + any embedded UI resource. Returns an
+ * error-shaped outcome (never null / never throws) so callers always have a
+ * tool_result string to feed back to the model without tearing down SSE.
  */
+export async function callMcpTool(
+  endpointPath: string,
+  name: string,
+  args: Record<string, unknown>,
+  baseUrl?: string,
+): Promise<McpToolCallOutcome> {
+  const entry = await connect(endpointPath, baseUrl);
+  if (!entry) {
+    return errorOutcome(`MCP endpoint ${endpointPath} is unavailable`);
+  }
+  try {
+    const result = (await entry.client.callTool({ name, arguments: args })) as CallToolResult;
+    return {
+      text: extractText(result),
+      structuredContent:
+        (result as { structuredContent?: Record<string, unknown> }).structuredContent ?? {},
+      uiResource: extractUiResource(result),
+      isError: Boolean((result as { isError?: boolean }).isError),
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    log.warn({ tag: 'mcp-pool', message: `MCP tool ${name} threw: ${message}` });
+    return errorOutcome(`MCP tool ${name} failed: ${message}`);
+  }
+}
+
+function errorOutcome(text: string): McpToolCallOutcome {
+  return { text, structuredContent: {}, isError: true };
+}
+
 export async function disposeMcpClients(): Promise<void> {
   for (const [path, { client }] of pool.entries()) {
     try {
@@ -73,9 +157,6 @@ export async function disposeMcpClients(): Promise<void> {
   }
 }
 
-/**
- * Invalidate a single cached client (e.g., on connection failure).
- */
 export function invalidateMcpClient(endpointPath: string): void {
   const cached = pool.get(endpointPath);
   if (cached) {

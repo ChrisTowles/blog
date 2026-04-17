@@ -37,11 +37,12 @@ import {
   buildAviationSystemPrompt,
 } from './aviation-prompt';
 import {
-  AVIATION_BUCKET,
+  AVIATION_BUCKET_URL_PREFIX,
   openAviationConnection,
   runWithTimeout,
   DEFAULT_QUERY_TIMEOUT_MS,
 } from './duckdb';
+import { resolveChartOption } from './chart-bindings';
 import { validateSql } from './sql-safety';
 import { readAviationBundle } from './ui-resource';
 
@@ -104,11 +105,17 @@ export async function executeAskAviation(
   onProgress?.('done');
 
   const truncated = validation.limitInjected && rows.length >= LIMIT_ROW_CAP;
+  // Resolve $rows.* placeholders the LLM left in chart_option so the iframe
+  // receives real values (the LLM can't know rows at emit time).
+  const resolvedChartOption = resolveChartOption(llmOutput.chart_option, rows) as Record<
+    string,
+    unknown
+  >;
   const structured: AviationToolResult = {
     sql: sqlToRun,
     answer: llmOutput.answer,
     hero_number: llmOutput.hero_number,
-    chart_option: llmOutput.chart_option,
+    chart_option: resolvedChartOption,
     followups: llmOutput.followups,
     rows,
     truncated,
@@ -231,7 +238,7 @@ export function executeSchemaTool(): CallToolResult {
   return {
     content: [{ type: 'text', text: AVIATION_SCHEMA_BLOCK }],
     structuredContent: {
-      bucket: `gs://${AVIATION_BUCKET}`,
+      bucket: AVIATION_BUCKET_URL_PREFIX.replace(/\/$/, ''),
       schema_markdown: AVIATION_SCHEMA_BLOCK,
     },
   };

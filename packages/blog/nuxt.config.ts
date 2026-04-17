@@ -88,7 +88,7 @@ export default defineNuxtConfig({
       // subdomain. Playwright e2e + local dev override via
       // NUXT_PUBLIC_MCP_SANDBOX_URL to point at a hermetic test server.
       mcpSandboxUrl:
-        process.env.NUXT_PUBLIC_MCP_SANDBOX_URL || 'https://sandbox.towles.dev/sandbox.html',
+        process.env.NUXT_PUBLIC_MCP_SANDBOX_URL || 'http://sandbox.localhost:8081/sandbox.html',
     },
   },
   ignore: [

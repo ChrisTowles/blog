@@ -35,11 +35,12 @@ describe('ToolUiResource — origin validation (plan line 569)', () => {
     const wrapper = await mountSuspended(UiResource, {
       props: { part: STUB_PART, html: '<!doctype html><html></html>' },
     });
-    // runtimeConfig.public.mcpSandboxUrl defaults to https://sandbox.towles.dev/...
-    // in dev; resolve its origin once here to match the component's computation.
+    // runtimeConfig.public.mcpSandboxUrl defaults to the local dev sandbox
+    // proxy (sandbox.localhost:8081); resolve its origin once here to match
+    // the component's computation.
     const sandboxOrigin = new URL(
       (useRuntimeConfig().public.mcpSandboxUrl as string) ??
-        'https://sandbox.towles.dev/sandbox.html',
+        'http://sandbox.localhost:8081/sandbox.html',
       window.location.href,
     ).origin;
 

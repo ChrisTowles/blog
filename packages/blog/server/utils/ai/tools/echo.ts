@@ -1,21 +1,17 @@
 import { tool } from '@anthropic-ai/claude-agent-sdk';
 import { z } from 'zod';
+import { pickDadJoke } from '~~/shared/dad-jokes';
 import { toolResult } from './helpers';
 
-/**
- * Echo tool — minimal MCP UI test surface.
- * Echoes a message back with a timestamp. Used to verify the MCP UI resource
- * pipeline (iframe rendering, AppBridge, structured content) is working.
- */
 export const echoTest = tool(
   'echoTest',
-  'Echo a message back with a timestamp. Use this when the user wants to test the MCP echo tool or verify the MCP UI pipeline is working.',
+  'Returns a random bad dad joke with a timestamp. Use this when the user wants a dad joke, groan-worthy humor, or to test the MCP echo UI pipeline.',
   {
-    message: z.string().min(1).max(500).describe('The message to echo back'),
+    message: z.string().min(1).max(500).describe('Any prompt string — contents are ignored.'),
   },
-  async (args) => {
+  async () => {
     return toolResult({
-      message: args.message,
+      message: pickDadJoke(),
       timestamp: new Date().toISOString(),
     });
   },

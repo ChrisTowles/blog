@@ -72,7 +72,8 @@ function handleSubmit(e: Event) {
 // clicks + follow-up chips reuse it.
 const aviation = useAviationMcp();
 const aviationPending = ref<Record<string, AviationAskPayload>>({});
-const aviationInFlight = ref(false);
+const aviationStatus = ref<'planning' | 'querying' | null>(null);
+const aviationInFlight = computed(() => aviationStatus.value !== null);
 
 /** Hide starter questions once the chat has any turn. */
 const showAviationStarters = computed(
@@ -81,11 +82,13 @@ const showAviationStarters = computed(
 
 async function handleAviationAsk(question: string, options: { skipUserAppend?: boolean } = {}) {
   if (aviationInFlight.value) return;
-  aviationInFlight.value = true;
+  aviationStatus.value = 'planning';
+  // Skip when the caller already has the user-turn persisted (e.g. chat
+  // created from the homepage starter-click path).
+  const flipTimer = setTimeout(() => {
+    if (aviationStatus.value === 'planning') aviationStatus.value = 'querying';
+  }, 3000);
   try {
-    // Append the user's question (as a text part) so the thread reads naturally.
-    // Skip when the caller already has the user-turn persisted (e.g. chat
-    // was created from the homepage starter-click path).
     if (!options.skipUserAppend) {
       await chat.appendMessage({
         role: 'user',
@@ -108,7 +111,8 @@ async function handleAviationAsk(question: string, options: { skipUserAppend?: b
       parts: [uiPart],
     });
   } finally {
-    aviationInFlight.value = false;
+    clearTimeout(flipTimer);
+    aviationStatus.value = null;
   }
 }
 
@@ -236,8 +240,11 @@ onMounted(() => {
                 <ToolUiResource
                   v-else-if="part.type === 'ui-resource'"
                   :part="part as UiResourcePart"
-                  :html="aviationPending[(part as UiResourcePart).toolCallId]?.html"
-                  :streaming="aviationInFlight"
+                  :html="
+                    aviationPending[(part as UiResourcePart).toolCallId]?.html ||
+                    chat.streamedUiResourceHtml.value[(part as UiResourcePart).toolCallId]
+                  "
+                  :streaming="aviationInFlight || chat.status.value === 'streaming'"
                   @followup="handleAviationAsk"
                 />
                 <MDCCached
@@ -252,6 +259,18 @@ onMounted(() => {
             </div>
           </template>
         </UChatMessages>
+
+        <div
+          v-if="aviationStatus"
+          class="mx-2 mb-3 flex items-center gap-3 rounded-lg bg-elevated/40 px-4 py-3 text-sm text-muted"
+          data-testid="aviation-status"
+        >
+          <UIcon name="i-lucide-loader-2" class="size-4 animate-spin text-primary" />
+          <span v-if="aviationStatus === 'planning'"
+            >Planning SQL against the aviation dataset…</span
+          >
+          <span v-else>Running query against DuckDB — usually 5–15s…</span>
+        </div>
 
         <AviationStarterQuestions
           v-if="showAviationStarters"
