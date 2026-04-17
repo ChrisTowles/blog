@@ -73,17 +73,17 @@ output "media_bucket_name" {
   value       = google_storage_bucket.media.name
 }
 
-output "aviation_parquet_bucket_name" {
-  description = "GCS bucket name for MCP aviation-demo Parquet dataset (private, HMAC-auth)"
-  value       = google_storage_bucket.aviation_parquet.name
+output "mcp_data_bucket_name" {
+  description = "GCS bucket name for MCP datasets (aviation and future tools, private, HMAC-auth)"
+  value       = google_storage_bucket.mcp_data.name
 }
 
 output "gcs_hmac_key_id_secret_id" {
-  description = "Secret Manager secret ID for the aviation bucket GCS HMAC access key"
+  description = "Secret Manager secret ID for the MCP data bucket GCS HMAC access key"
   value       = google_secret_manager_secret.gcs_hmac_key_id.secret_id
 }
 
 output "gcs_hmac_secret_secret_id" {
-  description = "Secret Manager secret ID for the aviation bucket GCS HMAC secret"
+  description = "Secret Manager secret ID for the MCP data bucket GCS HMAC secret"
   value       = google_secret_manager_secret.gcs_hmac_secret.secret_id
 }

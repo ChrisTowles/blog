@@ -15,7 +15,7 @@ export interface AviationToolResultFixture {
 }
 
 export const BAR_FIXTURE: AviationToolResultFixture = {
-  sql: "SELECT manufacturer_name, COUNT(*) FROM read_parquet('gs://blog-mcp-aviation-prod/dims/aircraft.parquet') GROUP BY 1 ORDER BY 2 DESC LIMIT 5",
+  sql: "SELECT manufacturer_name, COUNT(*) FROM read_parquet('gs://blog-mcp-data-prod/aviation/dims/aircraft.parquet') GROUP BY 1 ORDER BY 2 DESC LIMIT 5",
   answer: 'Cessna leads the US FAA registry by aircraft count, followed by Piper and Beech.',
   hero_number: '218,421',
   chart_option: {

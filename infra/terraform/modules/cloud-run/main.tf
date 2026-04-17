@@ -229,12 +229,12 @@ resource "google_cloud_run_v2_service" "main" {
         }
       }
 
-      # MCP aviation demo env vars (plan Unit 7 line 620, 634-637).
+      # MCP tools env vars — shared data bucket (aviation Parquet lives under aviation/).
       dynamic "env" {
-        for_each = var.aviation_bucket != "" ? [1] : []
+        for_each = var.mcp_data_bucket != "" ? [1] : []
         content {
-          name  = "AVIATION_BUCKET"
-          value = var.aviation_bucket
+          name  = "MCP_DATA_BUCKET"
+          value = var.mcp_data_bucket
         }
       }
 

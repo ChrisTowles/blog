@@ -37,7 +37,7 @@
     "db:generate": "pnpm --filter @chris-towles/blog db:generate",
     "db:migrate": "pnpm --filter @chris-towles/blog db:migrate",
     "db:studio": "pnpm --filter @chris-towles/blog db:studio",
-    "etl:aviation": "bash -c 'set -a; . ./.env; set +a; pnpm --filter @chris-towles/blog etl:aviation'",
+    "etl:aviation": "pnpm --filter @chris-towles/blog etl:aviation",
     "docker:up": "docker compose up -d --wait",
     "docker:down": "docker compose down",
     "docker:reset": "docker compose down --volumes --remove-orphans && pnpm clean",

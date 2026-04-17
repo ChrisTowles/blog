@@ -34,7 +34,9 @@
  *   pnpm --filter @chris-towles/blog etl:aviation
  *
  * Env vars:
- *   - GCS_AVIATION_BUCKET     (required when uploading; e.g. blog-mcp-aviation-staging)
+ *   - MCP_DATA_BUCKET         (required when uploading; e.g. blog-mcp-data-staging).
+ *                             Aviation data is uploaded under the `aviation/` prefix
+ *                             inside this shared MCP dataset bucket.
  *   - AVIATION_ETL_SKIP_UPLOAD  truthy → transform locally only, skip GCS upload
  *   - AVIATION_ETL_FIXTURE_DIR  if set, use fixture CSVs instead of network downloads
  *   - AVIATION_ETL_WORK_DIR    local scratch dir (defaults to os.tmpdir()/aviation-etl)
@@ -44,7 +46,8 @@
 import { createWriteStream, existsSync, mkdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { pipeline } from 'node:stream/promises';
 import { Readable } from 'node:stream';
 import { spawnSync } from 'node:child_process';
@@ -53,6 +56,16 @@ import type { DuckDBConnection } from '@duckdb/node-api';
 import { Storage } from '@google-cloud/storage';
 import { chromium, type Page } from 'playwright-chromium';
 import { consola } from 'consola';
+import { config as loadDotenv } from 'dotenv';
+
+// Load repo-root .env, but do NOT clobber vars already set in the shell.
+// This lets `MCP_DATA_BUCKET=blog-mcp-data-prod pnpm etl:aviation` point at
+// prod even when the dev bucket is pinned in .env. dotenv defaults to
+// override=false, which is exactly the precedence we want.
+loadDotenv({
+  path: join(dirname(fileURLToPath(import.meta.url)), '../../../.env'),
+  quiet: true,
+});
 
 const etlStart = Date.now();
 
@@ -714,7 +727,7 @@ function readConfig(): EtlConfig {
     throw new Error(`AVIATION_ETL_YEARS must be a positive integer, got: ${yearsRaw}`);
   }
   return {
-    bucketName: process.env.GCS_AVIATION_BUCKET,
+    bucketName: process.env.MCP_DATA_BUCKET,
     skipUpload: Boolean(process.env.AVIATION_ETL_SKIP_UPLOAD),
     fixtureDir: process.env.AVIATION_ETL_FIXTURE_DIR,
     workDir: process.env.AVIATION_ETL_WORK_DIR ?? join(tmpdir(), 'aviation-etl'),
@@ -742,11 +755,13 @@ export async function runAllTransforms(
   mkdirSync(outDir, { recursive: true });
   const produced: Array<{ localPath: string; remoteName: string; contentType: string }> = [];
 
+  // All aviation assets live under `aviation/` inside the shared MCP data
+  // bucket so other future MCP tools can co-host their own prefixes.
   const aircraftParquet = join(outDir, 'aircraft.parquet');
   await transformFaaMaster(conn, inputs.faaMaster, aircraftParquet, inputs.faaAcftref);
   produced.push({
     localPath: aircraftParquet,
-    remoteName: 'dims/aircraft.parquet',
+    remoteName: 'aviation/dims/aircraft.parquet',
     contentType: 'application/x-parquet',
   });
 
@@ -754,7 +769,7 @@ export async function runAllTransforms(
   await transformFaaAcftref(conn, inputs.faaAcftref, aircraftTypesParquet);
   produced.push({
     localPath: aircraftTypesParquet,
-    remoteName: 'dims/aircraft_types.parquet',
+    remoteName: 'aviation/dims/aircraft_types.parquet',
     contentType: 'application/x-parquet',
   });
 
@@ -763,7 +778,7 @@ export async function runAllTransforms(
     await transformBtsT100(conn, csvPath, parquetPath);
     produced.push({
       localPath: parquetPath,
-      remoteName: `facts/bts_t100_${yyyymm}.parquet`,
+      remoteName: `aviation/facts/bts_t100_${yyyymm}.parquet`,
       contentType: 'application/x-parquet',
     });
   }
@@ -772,7 +787,7 @@ export async function runAllTransforms(
   await transformOpenFlightsAirports(conn, inputs.ofAirports, airportsParquet);
   produced.push({
     localPath: airportsParquet,
-    remoteName: 'dims/airports.parquet',
+    remoteName: 'aviation/dims/airports.parquet',
     contentType: 'application/x-parquet',
   });
 
@@ -780,7 +795,7 @@ export async function runAllTransforms(
   await transformOpenFlightsAirlines(conn, inputs.ofAirlines, airlinesParquet);
   produced.push({
     localPath: airlinesParquet,
-    remoteName: 'dims/airlines.parquet',
+    remoteName: 'aviation/dims/airlines.parquet',
     contentType: 'application/x-parquet',
   });
 
@@ -788,7 +803,7 @@ export async function runAllTransforms(
   await transformOpenFlightsRoutes(conn, inputs.ofRoutes, routesParquet);
   produced.push({
     localPath: routesParquet,
-    remoteName: 'dims/routes.parquet',
+    remoteName: 'aviation/dims/routes.parquet',
     contentType: 'application/x-parquet',
   });
 
@@ -796,7 +811,7 @@ export async function runAllTransforms(
   await generateCarrierToOperator(conn, inputs.btsT100, inputs.faaMaster, carrierParquet);
   produced.push({
     localPath: carrierParquet,
-    remoteName: 'ref/carrier_to_operator.parquet',
+    remoteName: 'aviation/ref/carrier_to_operator.parquet',
     contentType: 'application/x-parquet',
   });
 
@@ -804,7 +819,7 @@ export async function runAllTransforms(
   await writePreWarmParquet(conn, preWarmParquet);
   produced.push({
     localPath: preWarmParquet,
-    remoteName: 'pre-warm.parquet',
+    remoteName: 'aviation/pre-warm.parquet',
     contentType: 'application/x-parquet',
   });
 
@@ -930,10 +945,10 @@ async function runEtl(): Promise<void> {
         storage,
         config.bucketName,
         LICENSE_TEXT,
-        'LICENSE.txt',
+        'aviation/LICENSE.txt',
         'text/plain; charset=utf-8',
       );
-      consola.log(`  ↑ LICENSE.txt`);
+      consola.log(`  ↑ aviation/LICENSE.txt`);
       consola.success(`Upload done — ${produced.length + 1} files  ${elapsed(uploadStart)}`);
     }
   } finally {
@@ -965,8 +980,9 @@ const main = defineCommand({
     },
     bucket: {
       type: 'string',
-      description: 'GCS bucket for upload (overrides GCS_AVIATION_BUCKET env)',
-      default: process.env.GCS_AVIATION_BUCKET || '',
+      description:
+        'GCS bucket for upload (overrides MCP_DATA_BUCKET env). Aviation data is written under the aviation/ prefix.',
+      default: process.env.MCP_DATA_BUCKET || '',
     },
     'skip-upload': {
       type: 'boolean',
@@ -982,7 +998,7 @@ const main = defineCommand({
   async run({ args }) {
     // Override env-based config with CLI args so both paths work
     if (args.years) process.env.AVIATION_ETL_YEARS = args.years;
-    if (args.bucket) process.env.GCS_AVIATION_BUCKET = args.bucket;
+    if (args.bucket) process.env.MCP_DATA_BUCKET = args.bucket;
     if (args['skip-upload']) process.env.AVIATION_ETL_SKIP_UPLOAD = '1';
     if (args['work-dir']) process.env.AVIATION_ETL_WORK_DIR = args['work-dir'];
 

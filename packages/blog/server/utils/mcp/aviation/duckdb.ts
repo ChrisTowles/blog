@@ -43,13 +43,14 @@ let _prewarmed = false;
 let _prewarmMs = 0;
 
 /**
- * GCS bucket name for the aviation Parquet dataset. Reads `AVIATION_BUCKET` at
- * module import time — Cloud Run injects this from terraform (see
- * `infra/terraform/modules/cloud-run/main.tf`). Falls back to the staging bucket
- * so local/test runs work without explicit env wiring.
+ * GCS bucket hosting MCP datasets. Reads `MCP_DATA_BUCKET` at module import
+ * time — Cloud Run injects this from terraform (see
+ * `infra/terraform/modules/cloud-run/main.tf`). Falls back to the staging
+ * bucket so local/test runs work without explicit env wiring. Aviation data
+ * lives under the `aviation/` prefix inside this bucket.
  */
-export const AVIATION_BUCKET = process.env.AVIATION_BUCKET || 'blog-mcp-aviation-staging';
-export const AVIATION_BUCKET_URL_PREFIX = `gs://${AVIATION_BUCKET}/`;
+export const MCP_DATA_BUCKET = process.env.MCP_DATA_BUCKET || 'blog-mcp-data-staging';
+export const AVIATION_BUCKET_URL_PREFIX = `gs://${MCP_DATA_BUCKET}/aviation/`;
 export const PREWARM_PARQUET_URL = `${AVIATION_BUCKET_URL_PREFIX}pre-warm.parquet`;
 
 export const DEFAULT_QUERY_TIMEOUT_MS = 5_000;
@@ -68,7 +69,7 @@ export function requireAviationGcsCredentials(): { keyId: string; secret: string
       .filter(Boolean)
       .join(', ');
     throw new Error(
-      `aviation MCP: missing ${missing}. The aviation Parquet bucket is private; ` +
+      `aviation MCP: missing ${missing}. The MCP data bucket is private; ` +
         `DuckDB httpfs needs HMAC creds to read it. See .env.example and ` +
         `docs/mcp-aviation-ops.md "Local dev setup" for how to create an HMAC key ` +
         `for your own dev GCP project.`,

@@ -54,8 +54,8 @@ variable "session_affinity" {
   default     = true
 }
 
-variable "aviation_bucket" {
-  description = "GCS bucket for the MCP aviation Parquet dataset. Injected as AVIATION_BUCKET env var."
+variable "mcp_data_bucket" {
+  description = "GCS bucket for MCP tool datasets (aviation Parquet and any future tools). Injected as MCP_DATA_BUCKET env var."
   type        = string
   default     = ""
 }
@@ -166,13 +166,13 @@ variable "nuxt_og_image_secret_secret_id" {
 }
 
 variable "gcs_hmac_key_id_secret_id" {
-  description = "Secret Manager secret ID for GCS HMAC access key ID (aviation bucket)"
+  description = "Secret Manager secret ID for GCS HMAC access key ID (MCP data bucket)"
   type        = string
   default     = ""
 }
 
 variable "gcs_hmac_secret_secret_id" {
-  description = "Secret Manager secret ID for GCS HMAC secret (aviation bucket)"
+  description = "Secret Manager secret ID for GCS HMAC secret (MCP data bucket)"
   type        = string
   default     = ""
 }

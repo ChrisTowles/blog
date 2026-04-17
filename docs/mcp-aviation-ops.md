@@ -81,15 +81,15 @@ The bucket is not shared — set up your own:
    bucket (and `objectCreator` if you'll re-run the ETL).
 3. Generate HMAC keys: `gcloud storage hmac create <SA_EMAIL>`. Note the
    `access_id` and `secret`.
-4. Run the ETL into your bucket:
-   `GCS_AVIATION_BUCKET=your-bucket pnpm etl:aviation` (from
+4. Run the ETL into your bucket (writes under the `aviation/` prefix):
+   `MCP_DATA_BUCKET=your-bucket pnpm etl:aviation` (from
    `packages/blog/scripts/etl-aviation.ts`). This auto-downloads FAA
    Registry (one zip) and drives BTS's ASP.NET form via headless Playwright
    to pull the latest 12 months of T-100 Market data (one download per
    month, skipping unpublished periods). Override the month count with
    `AVIATION_ETL_MONTHS=N`. Expect 5–10 min end-to-end on a healthy
    network; BTS's form is the long pole.
-5. In `.env`, set `AVIATION_BUCKET`, `GCS_HMAC_KEY_ID`, `GCS_HMAC_SECRET`.
+5. In `.env`, set `MCP_DATA_BUCKET`, `GCS_HMAC_KEY_ID`, `GCS_HMAC_SECRET`.
 
 `pnpm dev` hard-fails at startup if the HMAC vars are missing — the error
 message points back here.

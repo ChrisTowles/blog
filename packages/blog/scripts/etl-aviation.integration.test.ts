@@ -278,18 +278,18 @@ describe('aviation ETL — pure transforms', () => {
     const remoteNames = produced.map((p) => p.remoteName).sort();
     expect(remoteNames).toEqual(
       [
-        'dims/aircraft.parquet',
-        'dims/aircraft_types.parquet',
-        'dims/airlines.parquet',
-        'dims/airports.parquet',
-        'dims/routes.parquet',
-        'facts/bts_t100_202501.parquet',
-        'pre-warm.parquet',
-        'ref/carrier_to_operator.parquet',
+        'aviation/dims/aircraft.parquet',
+        'aviation/dims/aircraft_types.parquet',
+        'aviation/dims/airlines.parquet',
+        'aviation/dims/airports.parquet',
+        'aviation/dims/routes.parquet',
+        'aviation/facts/bts_t100_202501.parquet',
+        'aviation/pre-warm.parquet',
+        'aviation/ref/carrier_to_operator.parquet',
       ].sort(),
     );
 
-    const preWarm = produced.find((p) => p.remoteName === 'pre-warm.parquet')!;
+    const preWarm = produced.find((p) => p.remoteName === 'aviation/pre-warm.parquet')!;
     const bytes = readFileSync(preWarm.localPath);
     expect(bytes.byteLength).toBeLessThan(10_000);
 
