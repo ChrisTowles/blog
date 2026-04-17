@@ -1,0 +1,25 @@
+{
+  "name": "@chris-towles/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cloud Run service that hosts MCP Apps (SEP-1865) UI iframes on a separate origin",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx server.ts",
+    "start": "tsx server.ts",
+    "build": "rolldown -c rolldown.config.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "h3": "^1.15.11"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@types/node": "^22.10.0",
+    "rolldown": "^1.0.0-beta.31",
+    "tsx": "^4.21.0",
+    "vitest": "^4.0.16"
+  }
+}

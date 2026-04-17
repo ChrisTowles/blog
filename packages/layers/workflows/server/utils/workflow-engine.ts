@@ -1,4 +1,6 @@
 import { eq } from 'drizzle-orm';
+import { getAnthropicClient } from '~~/server/utils/ai/anthropic';
+import { tables, useDrizzle } from '~~/server/utils/drizzle';
 
 export interface WorkflowNode {
   id: string;

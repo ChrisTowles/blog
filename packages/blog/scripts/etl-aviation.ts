@@ -331,8 +331,25 @@ export async function transformOpenFlightsRoutes(
 }
 
 /**
- * Curated carrier → FAA operator lookup CSV → ref/carrier_to_operator.parquet.
+ * Convert a curated carrier → operator lookup CSV into Parquet as-is.
+ * Used by the integration test suite to exercise join logic against a
+ * fixture CSV. Production uses generateCarrierToOperator below.
  */
+export async function transformCarrierToOperator(
+  conn: DuckDBConnection,
+  csvPath: string,
+  outputParquetPath: string,
+): Promise<void> {
+  await conn.run(
+    `COPY (
+      SELECT * FROM read_csv(
+        '${csvPath}',
+        delim = ',', header = true, quote = '"', all_varchar = true
+      )
+    ) TO '${outputParquetPath}' (FORMAT PARQUET, COMPRESSION ZSTD)`,
+  );
+}
+
 /**
  * Auto-generate the carrier-to-operator lookup by joining distinct BTS
  * carrier codes against FAA registrant names. Replaces the old hand-curated

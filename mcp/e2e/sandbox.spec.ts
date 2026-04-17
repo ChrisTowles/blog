@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 const HOST_URL = `http://127.0.0.1:${process.env.HOST_PORT || 8080}`;
 const SANDBOX_URL = `http://localhost:${process.env.SANDBOX_PORT || 8081}`;
 
-test.describe('sandbox-proxy e2e', () => {
+test.describe('mcp sandbox e2e', () => {
   test('fires sandbox-proxy-ready quickly and inner iframe renders', async ({ page }) => {
     // Record timestamps in the host page before navigation completes so the
     // measured interval is (iframe-embed → proxy-ready) and does not include

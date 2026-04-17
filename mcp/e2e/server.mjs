@@ -1,16 +1,16 @@
-// Tiny test HTTP server for Playwright sandbox-proxy e2e.
+// Tiny test HTTP server for Playwright mcp e2e.
 //
 // Serves two origins on two ports:
 //   - SANDBOX_PORT (default 8081) serves this directory's static files +
-//     emulates the Cloudflare Pages Function at /sandbox.html by applying a
+//     emulates ../server.ts /sandbox.html by applying a
 //     Content-Security-Policy header computed from ?csp=.
 //   - HOST_PORT (default 8080) serves a minimal "host" page that iframes the
 //     sandbox — this gives Playwright two distinct origins (127.0.0.1:HOST vs
 //     localhost:SANDBOX) so origin-isolation is testable.
 //
 // This is intentionally NOT the production code path; it mirrors the semantics
-// of functions/sandbox.html.ts so that Playwright exercises the same CSP
-// parsing + relay logic without needing wrangler installed.
+// of ../server.ts so Playwright exercises the same CSP parsing + relay logic
+// without spinning up the real h3 app.
 
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
@@ -119,6 +119,6 @@ await new Promise((r) => sandbox.listen(SANDBOX_PORT, r));
 await new Promise((r) => host.listen(HOST_PORT, '127.0.0.1', r));
 
 // eslint-disable-next-line no-console
-console.log(`[sandbox-proxy-test] sandbox: http://localhost:${SANDBOX_PORT}`);
+console.log(`[mcp-e2e] sandbox: http://localhost:${SANDBOX_PORT}`);
 // eslint-disable-next-line no-console
-console.log(`[sandbox-proxy-test] host:    http://127.0.0.1:${HOST_PORT}`);
+console.log(`[mcp-e2e] host:    http://127.0.0.1:${HOST_PORT}`);

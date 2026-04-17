@@ -11,10 +11,11 @@ packages/
 │   ├── server/     # Server-side: API routes, utils, database
 │   └── shared/     # Types shared between client and server
 ├── slides/         # Slidev presentations
+mcp/                # MCP Apps (SEP-1865) iframe host — separate Cloud Run service at sandbox.towles.dev
 infra/              # infrastructure
-    container/       # block docker files
+    container/       # block docker files (blog.Dockerfile, mcp.Dockerfile)
     aws_cloudformation/ # AWS Bedrock and IAM
-    terraform/          # GCP Cloud Run and Cloud SQL
+    terraform/          # GCP Cloud Run, Cloud SQL, and Cloudflare DNS
 ```
 
 ## Hosting

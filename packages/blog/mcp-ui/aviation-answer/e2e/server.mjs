@@ -8,9 +8,9 @@
  * arrives. This tests the rendering pipeline (answer-first layout, ECharts,
  * chips, SQL toggle, truncation) against the actual production bundle.
  *
- * What we intentionally DO NOT test here (Unit 6's job, gated on live sandbox
- * proxy): the full SEP-1865 handshake (sandbox-proxy-ready → resource-ready →
- * initialize → tool-input → tool-result). The sandbox-proxy/e2e/ harness in
+ * What we intentionally DO NOT test here (Unit 6's job, gated on the live
+ * mcp service): the full SEP-1865 handshake (sandbox-proxy-ready → resource-
+ * ready → initialize → tool-input → tool-result). The mcp/e2e/ harness in
  * this repo exercises that contract separately.
  */
 

@@ -67,7 +67,7 @@ variable "mcp_rate_limit_rpm" {
 }
 
 variable "mcp_sandbox_url" {
-  description = "Public sandbox-proxy URL used by MCP UI iframes. Injected as NUXT_PUBLIC_MCP_SANDBOX_URL."
+  description = "Public MCP host URL used by UI iframes. Injected as NUXT_PUBLIC_MCP_SANDBOX_URL."
   type        = string
   default     = ""
 }

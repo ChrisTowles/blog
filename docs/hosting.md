@@ -4,10 +4,12 @@ GCP via Terraform. Migrated from Cloudflare Workers/NuxtHub.
 
 ## Architecture
 
-- **Cloud Run**: Container hosting (scales to zero)
+- **Cloud Run `blog`**: Main app container (scales to zero in staging, `min_instances=1` in prod)
+- **Cloud Run `mcp`**: MCP Apps iframe host on `sandbox.towles.dev` / `stage-sandbox.towles.dev` — isolated origin required by SEP-1865, separate service so a bug in the blog cannot reach the iframe surface
 - **Cloud SQL**: PostgreSQL (public IP + Auth Proxy)
-- **Artifact Registry**: Docker images
+- **Artifact Registry**: Docker images (`blog`, `mcp`)
 - **Secret Manager**: API keys, DB credentials, session passwords
+- **Cloudflare DNS**: `towles.dev` zone — managed via the `cloudflare_record` resources in `infra/terraform/environments/main.tf`. Cloudflare hosts DNS only (no Workers/Pages)
 
 ## GCP Projects
 
@@ -36,7 +38,8 @@ nr gcp:prod:logs         # tail logs
 ```
 infra/terraform/
 ├── modules/
-│   ├── cloud-run/       # Container hosting
+│   ├── cloud-run/       # Blog container hosting
+│   ├── mcp-run/         # MCP Apps iframe host (sandbox.towles.dev)
 │   ├── cloud-sql/       # PostgreSQL database
 │   ├── shared/          # IAM, service accounts, registry
 │   ├── github-oidc/     # Workload Identity Federation (prod only)

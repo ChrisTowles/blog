@@ -1,12 +1,11 @@
-// Sandbox proxy entry point.
+// MCP host iframe entry point.
 // Runs inside sandbox.towles.dev, embedded as an iframe from the host (blog).
 // See ./relay.js for the testable core. This file contains only the DOM wiring
 // that is awkward to unit-test.
 //
-// IMPORTANT: this file is served as static JS from Cloudflare Pages. No bundler
-// runs; the browser parses it as an ES module. Keep it self-contained — any
-// imports MUST be from other files in this directory that the browser can load
-// directly.
+// IMPORTANT: the browser loads this as a static ES module from the mcp Cloud
+// Run service. No bundler runs; keep it self-contained — any imports MUST be
+// from other files in this directory that the browser can load directly.
 
 import { createSandboxRelay, validateReferrer } from '/relay.js';
 

@@ -65,8 +65,19 @@ variable "mcp_rate_limit_rpm" {
 }
 
 variable "mcp_sandbox_url" {
-  description = "Public sandbox-proxy URL for MCP UI iframes (e.g. https://sandbox.towles.dev/sandbox.html)"
+  description = "Public MCP host URL for UI iframes (e.g. https://sandbox.towles.dev/sandbox.html)"
   type        = string
   default     = ""
+}
+
+variable "mcp_container_image" {
+  description = "Container image URL for the mcp Cloud Run service"
+  type        = string
+}
+
+variable "cloudflare_api_token" {
+  description = "Cloudflare API token with Zone:Read + Zone:DNS:Edit scope for the towles.dev zone. Supply via TF_VAR_cloudflare_api_token."
+  type        = string
+  sensitive   = true
 }
 

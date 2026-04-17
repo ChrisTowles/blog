@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 5.0"
     }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.0"
+    }
   }
 
   backend "gcs" {
@@ -17,6 +21,10 @@ terraform {
 provider "google" {
   project = var.project_id
   region  = var.region
+}
+
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token
 }
 
 module "shared" {
@@ -88,6 +96,42 @@ module "github_oidc" {
   artifact_registry_repository    = module.shared.artifact_registry_repository
 
   depends_on = [module.shared]
+}
+
+locals {
+  mcp_host_subdomain = var.environment == "prod" ? "sandbox" : "stage-sandbox"
+  mcp_host_fqdn      = "${local.mcp_host_subdomain}.towles.dev"
+}
+
+module "mcp_run" {
+  source = "../modules/mcp-run"
+
+  project_id            = var.project_id
+  region                = var.region
+  container_image       = var.mcp_container_image
+  service_account_email = module.shared.service_account_email
+  custom_domain         = local.mcp_host_fqdn
+
+  depends_on = [module.shared]
+}
+
+data "cloudflare_zone" "towles" {
+  name = "towles.dev"
+}
+
+resource "cloudflare_record" "mcp_host" {
+  zone_id = data.cloudflare_zone.towles.id
+  name    = local.mcp_host_subdomain
+  type    = "CNAME"
+  # `ghs.googlehosted.com` is the Cloud Run custom-domain CNAME target in
+  # us-central1; the module exposes the exact records Cloud Run returned in
+  # `domain_mapping_records`, but those can be unavailable on first apply,
+  # so the static target is safer and matches what `chris.towles.dev` uses.
+  content = "ghs.googlehosted.com"
+  proxied = false # DNS-only so Cloud Run can issue its managed TLS cert
+  ttl     = 300
+
+  depends_on = [module.mcp_run]
 }
 
 module "cost_scheduler" {
