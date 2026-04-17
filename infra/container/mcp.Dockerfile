@@ -10,7 +10,12 @@ WORKDIR /build
 COPY mcp/package.json ./
 RUN --mount=type=cache,id=npm-mcp,target=/root/.npm npm install
 
-COPY mcp ./
+# Copy sources explicitly so local mcp/node_modules / mcp/dist / mcp/e2e do not
+# stomp on the container's installed node_modules (no .dockerignore path that
+# works reliably with the build context at the repo root).
+COPY mcp/server.ts mcp/csp.ts mcp/rolldown.config.ts ./
+COPY mcp/sandbox.html mcp/sandbox.js mcp/relay.js mcp/index.html ./
+
 RUN npm run build
 
 FROM node:24-slim

@@ -13,16 +13,16 @@ process) so a bug in the blog cannot reach the sandbox surface.
 
 ## Files
 
-| File                            | Purpose                                                                                      |
-| ------------------------------- | -------------------------------------------------------------------------------------------- |
-| `server.ts`                     | h3 HTTP server. Routes `/`, `/sandbox.html`, `/sandbox.js`, `/relay.js` + baseline headers.  |
-| `sandbox.html`                  | Page loaded inside the blog's iframe. Imports `sandbox.js` as an ES module.                  |
-| `sandbox.js`                    | Browser entry: wires window events → `relay.js` and runs the post-load sandbox self-test.    |
-| `relay.js`                      | Testable core: origin validation + message relay state machine. Plain JS with JSDoc types.   |
-| `csp.ts`                        | Strict CSP param parser. Directive-key allowlist + injection-character strip + length cap.   |
-| `index.html`                    | Landing page served at `/`. Informational only.                                              |
-| `csp.test.ts`, `origin.test.ts` | Vitest unit tests for the security-critical parsing and relay logic.                         |
-| `e2e/`                          | Playwright fixture: boots two origins locally to exercise the full handshake.                |
+| File                            | Purpose                                                                                     |
+| ------------------------------- | ------------------------------------------------------------------------------------------- |
+| `server.ts`                     | h3 HTTP server. Routes `/`, `/sandbox.html`, `/sandbox.js`, `/relay.js` + baseline headers. |
+| `sandbox.html`                  | Page loaded inside the blog's iframe. Imports `sandbox.js` as an ES module.                 |
+| `sandbox.js`                    | Browser entry: wires window events → `relay.js` and runs the post-load sandbox self-test.   |
+| `relay.js`                      | Testable core: origin validation + message relay state machine. Plain JS with JSDoc types.  |
+| `csp.ts`                        | Strict CSP param parser. Directive-key allowlist + injection-character strip + length cap.  |
+| `index.html`                    | Landing page served at `/`. Informational only.                                             |
+| `csp.test.ts`, `origin.test.ts` | Vitest unit tests for the security-critical parsing and relay logic.                        |
+| `e2e/`                          | Playwright fixture: boots two origins locally to exercise the full handshake.               |
 
 ## Security model
 
