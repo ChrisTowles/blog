@@ -43,6 +43,12 @@ ENV NITRO_PRESET=node-server
 ARG NUXT_PUBLIC_GTAG_ID=""
 ENV NUXT_PUBLIC_GTAG_ID=$NUXT_PUBLIC_GTAG_ID
 
+# MCP sandbox iframe URL — baked into prerendered SPA shell (/chat is ssr:false
+# but Nitro still freezes runtimeConfig.public values at build time). Without
+# this, chat falls back to the localhost dev default at runtime.
+ARG NUXT_PUBLIC_MCP_SANDBOX_URL=""
+ENV NUXT_PUBLIC_MCP_SANDBOX_URL=$NUXT_PUBLIC_MCP_SANDBOX_URL
+
 # Build the Nuxt application
 ENV NODE_OPTIONS="--max-old-space-size=8192"
 RUN cd /app && pnpm --filter @chris-towles/blog exec nuxt build
@@ -59,6 +65,14 @@ ARG BUILD_TAG=unknown
 
 
 WORKDIR /app
+
+# DuckDB's httpfs extension uses bundled libcurl which consults the system
+# CA store; node:24-slim ships without ca-certificates, so gs:// reads fail
+# with "Problem with the SSL CA cert (path? access rights?)". Installing the
+# package lands the bundle at /etc/ssl/certs/ca-certificates.crt where libcurl
+# finds it automatically.
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install runtime deps with cached npm store
 # Cache mount persists ~/.npm between builds - sharp/pg only download once

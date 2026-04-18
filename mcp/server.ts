@@ -75,7 +75,10 @@ router.get(
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       Pragma: 'no-cache',
       Expires: '0',
-      'X-Frame-Options': 'SAMEORIGIN',
+      // No X-Frame-Options here: SEP-1865 requires the sandbox to be framed
+      // cross-origin from the blog, so SAMEORIGIN would break the entire host.
+      // Framing restrictions come from the per-request CSP (frame-ancestors
+      // can be added via the ?csp= channel when we want to whitelist origins).
     });
     return ASSETS.sandbox;
   }),

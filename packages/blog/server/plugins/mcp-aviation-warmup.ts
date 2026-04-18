@@ -20,6 +20,11 @@ import { prewarmAviationDuckDb, requireAviationGcsCredentials } from '../utils/m
 import { extractErrorMessage } from '../../shared/error-util';
 
 export default defineNitroPlugin(() => {
+  // Nitro boots this plugin during `nuxt build` prerender too, where runtime
+  // secrets like GCS_HMAC_* aren't available. Skip there — the check fires
+  // again at real container boot.
+  if (import.meta.prerender) return;
+
   // Hard-fail startup if HMAC creds are missing. The aviation bucket is private
   // and the MCP tool will never work without them, so surface the misconfig
   // immediately instead of later as an opaque 403 from the first user request.

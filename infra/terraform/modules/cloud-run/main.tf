@@ -25,6 +25,10 @@ resource "google_cloud_run_v2_service" "main" {
           cpu    = var.cpu_limit
           memory = var.memory_limit
         }
+        # Request-based billing: CPU throttled between requests. Cuts idle-instance
+        # spend on min_instances=1 prod; startup_cpu_boost still covers the first
+        # request after idle so latency stays bounded.
+        cpu_idle          = true
         startup_cpu_boost = true
       }
 
