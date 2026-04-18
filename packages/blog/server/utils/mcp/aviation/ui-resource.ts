@@ -1,6 +1,11 @@
 /**
  * UI resource — `ui://aviation-answer`. Serves the pre-built iframe bundle;
  * structuredContent is delivered at runtime via the AppBridge, not embedded.
+ *
+ * CSP: the iframe POSTs to `/mcp/aviation/query` on the MCP server origin to
+ * stream the answer. `connectDomains` must include that origin so the host's
+ * sandbox allows the fetch. The origin is injected at registration time from
+ * the Nuxt runtime config (`NUXT_PUBLIC_SITE_URL`).
  */
 
 import { AVIATION_UI_RESOURCE_URI } from '../../../../shared/mcp-aviation-types';
@@ -23,7 +28,23 @@ export function __resetAviationBundleCache(): void {
   loader.reset();
 }
 
-export function registerAviationUiResource(server: McpServer): void {
+/**
+ * Normalize a URL to a bare origin (`https://host[:port]`), stripping any path.
+ * Returns an empty string on invalid input so the caller can skip the entry.
+ */
+function toOrigin(raw: string | undefined | null): string {
+  if (!raw) return '';
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return '';
+  }
+}
+
+export function registerAviationUiResource(server: McpServer, serverOrigin: string): void {
+  const origin = toOrigin(serverOrigin);
+  const connectDomains = origin ? [origin] : [];
+
   registerAppResource(
     server,
     'Aviation answer',
@@ -34,7 +55,7 @@ export function registerAviationUiResource(server: McpServer): void {
       _meta: {
         ui: {
           csp: {
-            connectDomains: [],
+            connectDomains,
             resourceDomains: ['self'],
             frameDomains: [],
           },
@@ -47,6 +68,15 @@ export function registerAviationUiResource(server: McpServer): void {
           uri: AVIATION_UI_RESOURCE_URI,
           mimeType: 'text/html;profile=mcp-app',
           text: readAviationBundle(),
+          _meta: {
+            ui: {
+              csp: {
+                connectDomains,
+                resourceDomains: ['self'],
+                frameDomains: [],
+              },
+            },
+          },
         },
       ],
     }),

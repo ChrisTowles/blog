@@ -7,17 +7,19 @@
  * when a pod rotates.
  *
  * Tools registered:
- *   - ask_aviation     — NL question → SQL → chart
+ *   - ask_aviation     — returns an iframe + pending pointer; the iframe
+ *                        streams the answer from /mcp/aviation/query
  *   - list_questions   — curated starter questions
  *   - schema           — dataset schema surface for LLMs
  *
  * UI resources:
- *   - ui://aviation-answer  — the iframe bundle (stub until Unit 4)
+ *   - ui://aviation-answer  — the iframe bundle
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { defineEventHandler, readBody, getHeader, setResponseStatus } from 'h3';
+import { useRuntimeConfig } from '#imports';
 import { z } from 'zod';
 import { log } from 'evlog';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -44,7 +46,7 @@ type SessionRecord = {
 // Per-pod session map. Lives in-process; acceptable per plan Key Decisions (session-ID-per-instance).
 const sessions = new Map<string, SessionRecord>();
 
-function createMcpServer(): McpServer {
+function createMcpServer(serverOrigin: string): McpServer {
   const server = new McpServer(
     {
       name: 'aviation-mcp',
@@ -58,6 +60,8 @@ function createMcpServer(): McpServer {
       },
     },
   );
+
+  const queryUrl = `${serverOrigin.replace(/\/$/, '')}/mcp/aviation/query`;
 
   // list_questions
   server.registerTool(
@@ -79,7 +83,7 @@ function createMcpServer(): McpServer {
     async () => executeSchemaTool(),
   );
 
-  // ask_aviation — the MCP Apps tool
+  // ask_aviation — returns fast with a pending pointer; iframe drives the work.
   registerAppTool(
     server,
     AVIATION_TOOL_NAMES.ASK,
@@ -92,41 +96,20 @@ function createMcpServer(): McpServer {
         },
       },
     },
-    async (args, extra) => {
+    async (args) => {
       const parsed = z.object(askAviationInputSchema).parse(args);
-      const progressSteps: Record<string, number> = {
-        planning: 0.1,
-        validating: 0.4,
-        querying: 0.6,
-        done: 1.0,
-      };
-      const result = await executeAskAviation(parsed, (step) => {
-        // Emit progress notifications when the SDK gives us a channel.
-        const token = extra?.requestId;
-        if (extra?.sendNotification && token !== undefined) {
-          void extra
-            .sendNotification({
-              method: 'notifications/progress',
-              params: {
-                progressToken: token,
-                progress: progressSteps[step] ?? 0,
-                message: step,
-              },
-            })
-            .catch(() => {
-              // best-effort
-            });
-        }
-      });
-      return result;
+      return executeAskAviation(parsed, queryUrl);
     },
   );
 
-  registerAviationUiResource(server);
+  registerAviationUiResource(server, serverOrigin);
   return server;
 }
 
-async function getOrCreateSession(sessionId: string | undefined): Promise<SessionRecord> {
+async function getOrCreateSession(
+  sessionId: string | undefined,
+  serverOrigin: string,
+): Promise<SessionRecord> {
   if (sessionId && sessions.has(sessionId)) {
     return sessions.get(sessionId)!;
   }
@@ -139,7 +122,7 @@ async function getOrCreateSession(sessionId: string | undefined): Promise<Sessio
   transport.onclose = () => {
     if (transport.sessionId) sessions.delete(transport.sessionId);
   };
-  const server = createMcpServer();
+  const server = createMcpServer(serverOrigin);
   await server.connect(transport);
   return { server, transport };
 }
@@ -150,9 +133,10 @@ export default defineEventHandler(async (event) => {
 
   try {
     const sessionId = getHeader(event, 'mcp-session-id');
+    const serverOrigin = (useRuntimeConfig(event).public.siteUrl as string) ?? '';
     // h3's readBody handles JSON, x-www-form-urlencoded, etc.
     const body = req.method === 'POST' ? await readBody(event) : undefined;
-    const record = await getOrCreateSession(sessionId);
+    const record = await getOrCreateSession(sessionId, serverOrigin);
     await record.transport.handleRequest(req, res, body);
   } catch (e) {
     log.error({

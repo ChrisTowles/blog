@@ -61,7 +61,7 @@ async function createLinkedPair(): Promise<{ client: Client; close: () => Promis
       content: [{ type: 'text', text: 'stub' }],
     }),
   );
-  registerAviationUiResource(server);
+  registerAviationUiResource(server, 'https://test.example');
 
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   const client = new Client({ name: 'test-client', version: '0.0.1' }, {});

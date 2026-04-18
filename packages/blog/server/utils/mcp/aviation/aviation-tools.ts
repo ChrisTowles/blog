@@ -1,18 +1,16 @@
 /**
  * ask_aviation / list_questions / schema — the three aviation MCP tools.
  *
- * ask_aviation flow:
- *   1. Validate input (Zod, <500 chars).
- *   2. Call Anthropic with a schema-scoped system prompt using tool_use "structured
- *      output" — i.e. a single `emit_answer` tool whose input_schema is
- *      AVIATION_STRUCTURED_OUTPUT_SCHEMA, which the model must call.
- *   3. Run sql-safety.validateSql on the emitted SQL.
- *   4. Execute under a hard 5s timeout. Count rows; set truncated if the cap hit.
- *   5. Return CallToolResult with text answer + EmbeddedResource(ui://aviation-answer)
- *      and structuredContent = AviationToolResult.
+ * ask_aviation shape (split architecture, SEP-1865 iframe loading):
+ *   - `executeAskAviation` returns FAST with `{ question, pending: true, queryUrl }`
+ *     so Claude Desktop / Claude.ai / any compliant host can mount the iframe
+ *     immediately. The embedded resource carries the iframe bundle.
+ *   - The actual pipeline (Anthropic SQL emit → validate → DuckDB) lives in
+ *     `runAviationPipeline`. The iframe POSTs the question to the streaming
+ *     `/mcp/aviation/query` endpoint and receives progress + result over SSE.
  *
- * Progress notifications: planning → validating → querying → done, emitted via the
- * SDK's `sendNotification` from RequestHandlerExtra when available.
+ * Progress steps emitted by `runAviationPipeline`:
+ *   planning → validating → querying → rendering
  */
 
 import { z } from 'zod';
@@ -28,6 +26,8 @@ import { extractErrorMessage } from '../../../../shared/error-util';
 import {
   AVIATION_TOOL_NAMES,
   AVIATION_UI_RESOURCE_URI,
+  type AviationPendingResult,
+  type AviationProgressStep,
   type AviationToolResult,
 } from '../../../../shared/mcp-aviation-types';
 import {
@@ -65,20 +65,94 @@ interface LlmStructuredOutput {
   followups: [string, string, string];
 }
 
-// ---------------- ask_aviation ----------------
+// ---------------- ask_aviation (fast return) ----------------
 
-export async function executeAskAviation(
+/**
+ * Returns the iframe bundle + a pending structuredContent pointer.
+ *
+ * @param args - parsed tool arguments ({ question })
+ * @param queryUrl - absolute URL of the /mcp/aviation/query SSE endpoint the
+ *        iframe will POST to. The server resolves this from runtime config at
+ *        tool-call time (different per deploy).
+ */
+export function executeAskAviation(
   args: AskAviationArgs,
-  onProgress?: (step: string) => void,
-): Promise<CallToolResult & { structuredContent: AviationToolResult }> {
+  queryUrl: string,
+): CallToolResult & { structuredContent: AviationPendingResult } {
+  const html = readAviationBundle();
+
+  // Text fallback for hosts without MCP Apps support. They can't render the
+  // iframe or call our SSE endpoint, so we give them the user's own question
+  // echoed back with a note — better than an empty string, honest about what
+  // just happened.
+  const fallbackText =
+    `Aviation query pending: "${args.question}". ` +
+    `This response includes an interactive MCP App iframe; ` +
+    `hosts without UI support won't see the chart or answer.`;
+
+  // The iframe POSTs to `queryUrl` from inside its sandbox origin, so the
+  // host's CSP must allow that origin under `connect-src`. Attach the CSP meta
+  // here on the EmbeddedResource (not just the registered resource) so hosts
+  // like the blog chat harness — which reads _meta.ui off the tool result —
+  // pass it through to the sandbox. Compliant hosts (Claude Desktop / .ai)
+  // pick it up the same way.
+  let connectOrigin = '';
+  try {
+    connectOrigin = new URL(queryUrl).origin;
+  } catch {
+    // Fall through with empty origin; host defaults to self-only.
+  }
+  const csp = {
+    connectDomains: connectOrigin ? [connectOrigin] : [],
+    resourceDomains: ['self'],
+    frameDomains: [],
+  };
+
+  const textContent: TextContent = { type: 'text', text: fallbackText };
+  const uiContent: EmbeddedResource = {
+    type: 'resource',
+    resource: {
+      uri: AVIATION_UI_RESOURCE_URI,
+      mimeType: 'text/html;profile=mcp-app',
+      text: html,
+      _meta: { ui: { csp } },
+    },
+  };
+
+  const pending: AviationPendingResult = {
+    pending: true,
+    question: args.question,
+    queryUrl,
+  };
+
+  return {
+    content: [textContent, uiContent],
+    structuredContent: pending as unknown as Record<string, unknown>,
+  } as CallToolResult & { structuredContent: AviationPendingResult };
+}
+
+// ---------------- aviation pipeline (slow, runs in SSE endpoint) ----------------
+
+/**
+ * Runs the full aviation pipeline — Anthropic SQL emit → validate → DuckDB
+ * execute → chart_option bind. Emits progress at each step via `onProgress`.
+ *
+ * Thrown errors are the caller's responsibility to surface to the SSE stream
+ * as a user-visible message. Known-safe errors (bad SQL, timeout) are returned
+ * as a resolved `AviationToolResult` with an error-shaped answer, matching the
+ * previous tool-level error behavior.
+ */
+export async function runAviationPipeline(
+  args: AskAviationArgs,
+  onProgress?: (step: AviationProgressStep) => void,
+): Promise<AviationToolResult> {
   onProgress?.('planning');
-
   const llmOutput = await callAnthropicForStructuredOutput(args.question);
-  onProgress?.('validating');
 
+  onProgress?.('validating');
   const validation = await validateSql(llmOutput.sql);
   if (!validation.ok) {
-    return toolErrorResult(
+    return emptyAnswer(
       `I wasn't able to produce a safe query for that question: ${validation.error}. ` +
         `Try rephrasing, e.g. "which US operators fly the most Boeing aircraft?"`,
     );
@@ -97,21 +171,19 @@ export async function executeAskAviation(
       error: errorMessage,
       sql: sqlToRun,
     });
-    return toolErrorResult(
+    return emptyAnswer(
       `The query failed to execute: ${errorMessage}. Try rephrasing or narrowing the question.`,
     );
   }
 
-  onProgress?.('done');
-
+  onProgress?.('rendering');
   const truncated = validation.limitInjected && rows.length >= LIMIT_ROW_CAP;
-  // Resolve $rows.* placeholders the LLM left in chart_option so the iframe
-  // receives real values (the LLM can't know rows at emit time).
   const resolvedChartOption = resolveChartOption(llmOutput.chart_option, rows) as Record<
     string,
     unknown
   >;
-  const structured: AviationToolResult = {
+
+  return {
     sql: sqlToRun,
     answer: llmOutput.answer,
     hero_number: llmOutput.hero_number,
@@ -120,27 +192,6 @@ export async function executeAskAviation(
     rows,
     truncated,
   };
-
-  // EmbeddedResource carries the same immutable iframe bundle that
-  // `resources/read` returns. structuredContent is what the iframe renders —
-  // delivered to the App via `sendToolResult` at runtime, never templated into
-  // the HTML. Hosts without ui-resource support still get the text answer.
-  const html = readAviationBundle();
-
-  const textContent: TextContent = { type: 'text', text: llmOutput.answer };
-  const uiContent: EmbeddedResource = {
-    type: 'resource',
-    resource: {
-      uri: AVIATION_UI_RESOURCE_URI,
-      mimeType: 'text/html;profile=mcp-app',
-      text: html,
-    },
-  };
-
-  return {
-    content: [textContent, uiContent],
-    structuredContent: structured as unknown as Record<string, unknown>,
-  } as CallToolResult & { structuredContent: AviationToolResult };
 }
 
 async function callAnthropicForStructuredOutput(question: string): Promise<LlmStructuredOutput> {
@@ -200,10 +251,8 @@ async function runSelect(sql: string): Promise<Array<Record<string, unknown>>> {
   }
 }
 
-function toolErrorResult(message: string): CallToolResult & {
-  structuredContent: AviationToolResult;
-} {
-  const empty: AviationToolResult = {
+function emptyAnswer(message: string): AviationToolResult {
+  return {
     sql: '',
     answer: message,
     chart_option: { title: { text: 'No data' } },
@@ -215,11 +264,6 @@ function toolErrorResult(message: string): CallToolResult & {
     rows: [],
     truncated: false,
   };
-  return {
-    isError: true,
-    content: [{ type: 'text', text: message }],
-    structuredContent: empty as unknown as Record<string, unknown>,
-  } as CallToolResult & { structuredContent: AviationToolResult };
 }
 
 // ---------------- list_questions ----------------
@@ -248,7 +292,7 @@ export function executeSchemaTool(): CallToolResult {
 
 export const AVIATION_TOOL_DESCRIPTIONS = {
   [AVIATION_TOOL_NAMES.ASK]:
-    'Answer a natural-language question about US commercial aviation (FAA fleet registry + BTS T-100 + OpenFlights). Returns a text answer plus an interactive ECharts visualization as a ui:// resource.',
+    'Answer a natural-language question about US commercial aviation (FAA fleet registry + BTS T-100 + OpenFlights). Returns an interactive ECharts visualization as a ui:// resource; the iframe streams the answer + chart in-place so hosts can show progress while the query runs.',
   [AVIATION_TOOL_NAMES.LIST_QUESTIONS]:
     'Return the curated starter questions suited to the dataset. Use when a client wants to surface example prompts.',
   [AVIATION_TOOL_NAMES.SCHEMA]:

@@ -228,7 +228,20 @@ async function boot(iframe: HTMLIFrameElement): Promise<void> {
   await appBridge.connect(new PostMessageTransport(win, win));
 
   const html = await resolveHtml();
-  await appBridge.sendSandboxResourceReady({ html, csp, permissions });
+  // `csp` / `permissions` come off `props.part`, which Vue wraps in a
+  // reactive Proxy. postMessage's structured-clone algorithm can't handle
+  // Proxies, so we deep-clone to plain JSON first. (Previously `csp` was
+  // always undefined for fresh tool calls, so this never surfaced; now that
+  // ask_aviation ships a real CSP per SEP-1865, we must scrub it.)
+  const plainCsp = csp ? (JSON.parse(JSON.stringify(csp)) as typeof csp) : undefined;
+  const plainPermissions = permissions
+    ? (JSON.parse(JSON.stringify(permissions)) as typeof permissions)
+    : undefined;
+  await appBridge.sendSandboxResourceReady({
+    html,
+    csp: plainCsp,
+    permissions: plainPermissions,
+  });
 
   try {
     await withTimeout(oninitialized, 5_000, 'initialize-timeout');

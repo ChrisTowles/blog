@@ -35,6 +35,42 @@ import {
   applyHostStyleVariables,
   type McpUiHostContext,
 } from '@modelcontextprotocol/ext-apps';
+
+/* --------------------------------------------------------------------------
+ * Progress labels — duplicated from shared/mcp-aviation-types.ts. The iframe
+ * bundle is a separate build and can't import from the Nuxt module graph.
+ * -------------------------------------------------------------------------- */
+type AviationProgressStep = 'planning' | 'validating' | 'querying' | 'rendering';
+
+const AVIATION_PROGRESS_LABELS: Record<AviationProgressStep, string> = {
+  planning: 'Planning query…',
+  validating: 'Validating SQL…',
+  querying: 'Running query against DuckDB…',
+  rendering: 'Rendering chart…',
+};
+
+interface AviationPendingResult {
+  pending: true;
+  question: string;
+  queryUrl: string;
+}
+
+interface AviationQueryProgressEvent {
+  type: 'progress';
+  step: AviationProgressStep;
+}
+interface AviationQueryResultEvent {
+  type: 'result';
+  result: AviationToolResult;
+}
+interface AviationQueryErrorEvent {
+  type: 'error';
+  message: string;
+}
+type AviationQueryEvent =
+  | AviationQueryProgressEvent
+  | AviationQueryResultEvent
+  | AviationQueryErrorEvent;
 import * as echarts from 'echarts/core';
 import { BarChart, LineChart, ScatterChart, PieChart, TreemapChart } from 'echarts/charts';
 import {
@@ -184,7 +220,24 @@ table.aviation-table th { background: var(--aa-chip-bg); color: var(--aa-chip-fg
   border: 1px dashed var(--aa-border);
   border-radius: 6px;
 }
-.loading { padding: 1.25rem; text-align: center; color: var(--aa-muted); }
+.loading {
+  padding: 1.25rem;
+  text-align: center;
+  color: var(--aa-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
+}
+.loading-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: aa-spin .8s linear infinite;
+}
+@keyframes aa-spin { to { transform: rotate(360deg); } }
 `;
 
 /* --------------------------------------------------------------------------
@@ -359,16 +412,106 @@ function renderChips(
   return wrap;
 }
 
-function renderLoading(mount: HTMLElement): void {
+function renderLoading(mount: HTMLElement, text?: string): void {
+  // If the inline HTML skeleton from index.html is still mounted, reuse it —
+  // just update the label text instead of tearing down + rebuilding. This
+  // keeps the transition crisp when SSE progress events arrive.
+  const existing = mount.querySelector<HTMLElement>('[data-testid="aviation-loading"]');
+  if (existing) {
+    const existingLabel = existing.querySelector<HTMLElement>('span:last-child');
+    if (existingLabel) existingLabel.textContent = text ?? AVIATION_PROGRESS_LABELS.querying;
+    return;
+  }
   mount.replaceChildren();
   const wrap = document.createElement('div');
   wrap.className = 'wrap';
   const loading = document.createElement('div');
   loading.className = 'loading';
   loading.setAttribute('data-testid', 'aviation-loading');
-  loading.textContent = 'Loading answer…';
+  const spinner = document.createElement('span');
+  spinner.className = 'loading-spinner';
+  spinner.setAttribute('aria-hidden', 'true');
+  const label = document.createElement('span');
+  label.textContent = text ?? AVIATION_PROGRESS_LABELS.querying;
+  loading.appendChild(spinner);
+  loading.appendChild(label);
   wrap.appendChild(loading);
   mount.appendChild(wrap);
+}
+
+function isPendingResult(sc: object): sc is AviationPendingResult {
+  return (
+    (sc as { pending?: unknown }).pending === true &&
+    typeof (sc as { question?: unknown }).question === 'string' &&
+    typeof (sc as { queryUrl?: unknown }).queryUrl === 'string'
+  );
+}
+
+/**
+ * Stream an aviation query from the MCP server. Updates the loading label on
+ * each progress event and resolves to the final `AviationToolResult`. Rejects
+ * on transport / protocol errors with a user-facing message.
+ */
+async function streamAviationQuery(
+  mount: HTMLElement,
+  pending: AviationPendingResult,
+  signal: AbortSignal,
+): Promise<AviationToolResult> {
+  renderLoading(mount, AVIATION_PROGRESS_LABELS.planning);
+
+  const response = await fetch(pending.queryUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+    body: JSON.stringify({ question: pending.question }),
+    signal,
+  });
+  if (!response.ok || !response.body) {
+    throw new Error(`Query endpoint returned ${response.status}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let finalResult: AviationToolResult | null = null;
+  let errorMessage: string | null = null;
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    let sep: number;
+    while ((sep = buffer.indexOf('\n\n')) !== -1) {
+      const frame = buffer.slice(0, sep);
+      buffer = buffer.slice(sep + 2);
+      const dataLine = frame
+        .split('\n')
+        .map((l) => l.trim())
+        .find((l) => l.startsWith('data:'));
+      if (!dataLine) continue;
+      const payload = dataLine.slice('data:'.length).trim();
+      if (!payload) continue;
+
+      let parsed: AviationQueryEvent;
+      try {
+        parsed = JSON.parse(payload) as AviationQueryEvent;
+      } catch {
+        continue;
+      }
+
+      if (parsed.type === 'progress') {
+        renderLoading(mount, AVIATION_PROGRESS_LABELS[parsed.step] ?? 'Working…');
+      } else if (parsed.type === 'result') {
+        finalResult = parsed.result;
+      } else if (parsed.type === 'error') {
+        errorMessage = parsed.message;
+      }
+    }
+  }
+
+  if (errorMessage) throw new Error(errorMessage);
+  if (!finalResult) throw new Error('query stream ended without a result');
+  return finalResult;
 }
 
 function renderResult(
@@ -500,7 +643,14 @@ export function createBootstrap(deps: BootstrapDeps = {}): {
   const app = deps.app ?? new App({ name: 'aviation-answer', version: '0.1.0' });
 
   mountStyle();
-  renderLoading(mount);
+  // Note: the inline HTML skeleton in index.html already shows the loading
+  // state before this bundle parses — no need to re-render it on boot. We
+  // only re-render loading on subsequent tool inputs (ontoolinput below).
+
+  // In-flight SSE fetch for the current pending question, if any. Cancelled
+  // on teardown / new tool result so a stale stream can't overwrite a newer
+  // render.
+  let pendingAbort: AbortController | null = null;
 
   function onFollowup(text: string): void {
     // Optimistic: chip click already disabled the grid; the streaming signal
@@ -509,6 +659,13 @@ export function createBootstrap(deps: BootstrapDeps = {}): {
       role: 'user',
       content: [{ type: 'text', text }],
     });
+  }
+
+  function abortPending(): void {
+    if (pendingAbort) {
+      pendingAbort.abort();
+      pendingAbort = null;
+    }
   }
 
   function handleToolResult(raw: unknown): void {
@@ -523,13 +680,39 @@ export function createBootstrap(deps: BootstrapDeps = {}): {
       renderFallbackShell(mount, 'Tool result missing structuredContent');
       return;
     }
+
+    abortPending();
+
+    // Fresh tool calls: the server returns a pending pointer and the iframe
+    // drives the slow work via SSE. Persisted replays bypass this — their
+    // structuredContent is already the final AviationToolResult.
+    if (isPendingResult(sc)) {
+      const controller = new AbortController();
+      pendingAbort = controller;
+      void streamAviationQuery(mount, sc, controller.signal)
+        .then((result) => {
+          if (controller.signal.aborted) return;
+          renderResult(mount, result, onFollowup);
+        })
+        .catch((err: unknown) => {
+          if (controller.signal.aborted) return;
+          const message = err instanceof Error ? err.message : String(err);
+          renderFallbackShell(mount, `Query failed: ${message}`);
+        })
+        .finally(() => {
+          if (pendingAbort === controller) pendingAbort = null;
+        });
+      return;
+    }
+
     renderResult(mount, sc as AviationToolResult, onFollowup);
   }
 
   app.ontoolinput = () => {
-    /* Tool input arrived; we don't need it for rendering yet (the server
-     * computes everything server-side and we render from the result). Still,
-     * make sure we're in the loading state so re-renders feel responsive. */
+    /* A new tool call is starting. Any previous in-flight SSE stream is now
+     * stale — abort it and return to the neutral loading state. The subsequent
+     * `ontoolresult` will either drive a new stream or render directly. */
+    abortPending();
     renderLoading(mount);
   };
 

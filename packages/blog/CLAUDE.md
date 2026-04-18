@@ -137,6 +137,12 @@ The blog hosts MCP servers at sibling route paths under `/mcp/*`. Currently:
   tools in `server/utils/mcp/aviation/*.ts` (mirrors the existing "tools in two places"
   pattern below — MCP tools live alongside `server/utils/ai/tools/` but are registered via
   the MCP SDK, not the chat tool registry).
+- `/mcp/aviation/query` — POST SSE endpoint the iframe calls to stream the answer.
+  `ask_aviation` returns fast with `{ question, pending: true, queryUrl }`; the iframe
+  POSTs `{ question }` here and reads progress + final `AviationToolResult` over SSE.
+  This split is what lets the loading state render in Claude Desktop / Claude.ai
+  (MCP tool calls are synchronous — the iframe can't exist until the tool returns,
+  so the slow pipeline has to live outside the tool).
 - `/mcp/aviation/resource?uri=ui://aviation-answer` — HTTP-cached UI-bundle fetcher used
   by the chat iframe on persisted-replay hydration.
 
