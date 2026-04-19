@@ -10,7 +10,7 @@
 
 import { AVIATION_UI_RESOURCE_URI } from '../../../../shared/mcp-aviation-types';
 import { createBundleLoader } from '../ui-bundle-loader';
-import { registerAppResource } from '@modelcontextprotocol/ext-apps/server';
+import { registerAppResource, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 const loader = createBundleLoader({
@@ -66,7 +66,7 @@ export function registerAviationUiResource(server: McpServer, serverOrigin: stri
       contents: [
         {
           uri: AVIATION_UI_RESOURCE_URI,
-          mimeType: 'text/html;profile=mcp-app',
+          mimeType: RESOURCE_MIME_TYPE,
           text: readAviationBundle(),
           _meta: {
             ui: {

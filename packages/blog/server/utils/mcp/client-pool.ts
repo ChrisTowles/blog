@@ -11,13 +11,20 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { mcpTools, type MCPClientLike } from '@anthropic-ai/sdk/helpers/beta/mcp';
 import type { BetaRunnableTool } from '@anthropic-ai/sdk/lib/tools/BetaRunnableTool';
-import type { CallToolResult, EmbeddedResource } from '@modelcontextprotocol/sdk/types.js';
+import type {
+  CallToolResult,
+  EmbeddedResource,
+  ReadResourceResult,
+  Tool,
+} from '@modelcontextprotocol/sdk/types.js';
 import { log } from 'evlog';
 import type { McpUiResourceCsp, McpUiResourcePermissions } from '../../../shared/chat-types';
 
 interface CachedMcpClient {
   client: Client;
   tools: BetaRunnableTool<Record<string, unknown>>[];
+  rawTools: Tool[];
+  resources: Map<string, ExtractedUiResource>;
 }
 
 const pool = new Map<string, CachedMcpClient>();
@@ -34,7 +41,12 @@ async function connect(endpointPath: string, baseUrl?: string): Promise<CachedMc
     await client.connect(new StreamableHTTPClientTransport(url));
     const { tools: mcpToolList } = await client.listTools();
     const tools = mcpTools(mcpToolList, client as unknown as MCPClientLike);
-    const entry: CachedMcpClient = { client, tools };
+    const entry: CachedMcpClient = {
+      client,
+      tools,
+      rawTools: mcpToolList,
+      resources: new Map(),
+    };
     pool.set(endpointPath, entry);
     log.info({
       tag: 'mcp-pool',
@@ -74,7 +86,8 @@ export interface McpToolCallOutcome {
   isError: boolean;
 }
 
-function extractUiResource(result: CallToolResult): ExtractedUiResource | undefined {
+/** @internal exported for unit tests */
+export function extractUiResource(result: CallToolResult): ExtractedUiResource | undefined {
   for (const block of result.content ?? []) {
     if (block.type !== 'resource') continue;
     const resource = (block as EmbeddedResource).resource;
@@ -97,6 +110,65 @@ function extractUiResource(result: CallToolResult): ExtractedUiResource | undefi
     };
   }
   return undefined;
+}
+
+/** @internal exported for unit tests */
+export function toolUiResourceUri(tool: Tool | undefined): string | undefined {
+  const meta = tool?._meta;
+  if (!meta || typeof meta !== 'object') return undefined;
+  const ui = (meta as { ui?: unknown }).ui;
+  if (!ui || typeof ui !== 'object') return undefined;
+  const uri = (ui as { resourceUri?: unknown }).resourceUri;
+  return typeof uri === 'string' && uri.startsWith('ui://') ? uri : undefined;
+}
+
+/** @internal exported for unit tests */
+export function extractUiResourceFromRead(
+  uri: string,
+  read: ReadResourceResult,
+): ExtractedUiResource | undefined {
+  for (const content of read.contents ?? []) {
+    const cUri = (content as { uri?: unknown }).uri;
+    if (typeof cUri !== 'string' || cUri !== uri) continue;
+    const text = (content as { text?: unknown }).text;
+    const meta = (content as { _meta?: unknown })._meta;
+    const uiMeta =
+      meta && typeof meta === 'object' && 'ui' in meta
+        ? (meta as { ui?: { csp?: McpUiResourceCsp; permissions?: McpUiResourcePermissions } }).ui
+        : undefined;
+    return {
+      uri,
+      html: typeof text === 'string' ? text : '',
+      csp: uiMeta?.csp,
+      permissions: uiMeta?.permissions,
+    };
+  }
+  return undefined;
+}
+
+async function resolveUiResource(
+  entry: CachedMcpClient,
+  toolName: string,
+  inline: ExtractedUiResource | undefined,
+): Promise<ExtractedUiResource | undefined> {
+  if (inline) return inline;
+  const tool = entry.rawTools.find((t) => t.name === toolName);
+  const uri = toolUiResourceUri(tool);
+  if (!uri) return undefined;
+  const cached = entry.resources.get(uri);
+  if (cached) return cached;
+  try {
+    const read = (await entry.client.readResource({ uri })) as ReadResourceResult;
+    const resolved = extractUiResourceFromRead(uri, read);
+    if (resolved) entry.resources.set(uri, resolved);
+    return resolved;
+  } catch (err) {
+    log.warn({
+      tag: 'mcp-pool',
+      message: `readResource ${uri} failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+    return undefined;
+  }
 }
 
 function extractText(result: CallToolResult): string {
@@ -128,11 +200,12 @@ export async function callMcpTool(
   }
   try {
     const result = (await entry.client.callTool({ name, arguments: args })) as CallToolResult;
+    const uiResource = await resolveUiResource(entry, name, extractUiResource(result));
     return {
       text: extractText(result),
       structuredContent:
         (result as { structuredContent?: Record<string, unknown> }).structuredContent ?? {},
-      uiResource: extractUiResource(result),
+      uiResource,
       isError: Boolean((result as { isError?: boolean }).isError),
     };
   } catch (err) {
