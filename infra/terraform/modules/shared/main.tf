@@ -123,6 +123,104 @@ resource "google_storage_bucket_iam_member" "media_cloud_run_writer" {
   member = "serviceAccount:${google_service_account.cloud_run.email}"
 }
 
+# GCS bucket for MCP datasets (aviation Parquet, plus any future MCP tool
+# datasets). Private bucket — DuckDB httpfs reads go through HMAC credentials
+# scoped to the Cloud Run service account (see mcp_data_hmac_key below).
+# Data is organized by tool under top-level prefixes (e.g. aviation/).
+resource "google_storage_bucket" "mcp_data" {
+  name                        = "blog-mcp-data-${var.environment_suffix}"
+  location                    = var.region
+  project                     = var.project_id
+  uniform_bucket_level_access = true
+  # The bucket rename (aviation_parquet → mcp_data) replaces the underlying
+  # bucket. force_destroy lets terraform empty + delete the old bucket during
+  # the replace cycle; the ETL is re-run afterward to repopulate.
+  force_destroy = true
+
+  depends_on = [google_project_service.required_apis]
+}
+
+# Move state from the previous aviation-specific resource to the renamed
+# generic bucket. Bucket rename is ForceNew at the provider level, so apply
+# will still replace the underlying GCS bucket.
+moved {
+  from = google_storage_bucket.aviation_parquet
+  to   = google_storage_bucket.mcp_data
+}
+
+# Grant Cloud Run service account write access so the ETL script (when run
+# locally with user ADC) and any future server-side refresh can upload files.
+resource "google_storage_bucket_iam_member" "mcp_data_cloud_run_writer" {
+  bucket = google_storage_bucket.mcp_data.name
+  role   = "roles/storage.objectCreator"
+  member = "serviceAccount:${google_service_account.cloud_run.email}"
+}
+
+moved {
+  from = google_storage_bucket_iam_member.aviation_parquet_cloud_run_writer
+  to   = google_storage_bucket_iam_member.mcp_data_cloud_run_writer
+}
+
+# Read-side grant for Cloud Run SA. Required because the bucket is private:
+# DuckDB httpfs authenticates via HMAC keys derived from this SA (see
+# mcp_data_hmac_key) and the HMAC identity inherits the SA's IAM.
+resource "google_storage_bucket_iam_member" "mcp_data_cloud_run_reader" {
+  bucket = google_storage_bucket.mcp_data.name
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:${google_service_account.cloud_run.email}"
+}
+
+moved {
+  from = google_storage_bucket_iam_member.aviation_parquet_cloud_run_reader
+  to   = google_storage_bucket_iam_member.mcp_data_cloud_run_reader
+}
+
+# HMAC key for the Cloud Run SA. DuckDB httpfs talks to GCS via the S3-compat
+# interoperability API, which only accepts HMAC credentials (not ADC / OAuth).
+# Rotate by `terraform taint module.shared.google_storage_hmac_key.mcp_data` +
+# apply, which regenerates the key and pushes a new Secret Manager version.
+resource "google_storage_hmac_key" "mcp_data" {
+  project               = var.project_id
+  service_account_email = google_service_account.cloud_run.email
+}
+
+moved {
+  from = google_storage_hmac_key.aviation
+  to   = google_storage_hmac_key.mcp_data
+}
+
+resource "google_secret_manager_secret" "gcs_hmac_key_id" {
+  secret_id = "gcs-hmac-key-id-${var.environment_suffix}"
+  project   = var.project_id
+
+  replication {
+    auto {}
+  }
+
+  depends_on = [google_project_service.required_apis]
+}
+
+resource "google_secret_manager_secret_version" "gcs_hmac_key_id" {
+  secret      = google_secret_manager_secret.gcs_hmac_key_id.id
+  secret_data = google_storage_hmac_key.mcp_data.access_id
+}
+
+resource "google_secret_manager_secret" "gcs_hmac_secret" {
+  secret_id = "gcs-hmac-secret-${var.environment_suffix}"
+  project   = var.project_id
+
+  replication {
+    auto {}
+  }
+
+  depends_on = [google_project_service.required_apis]
+}
+
+resource "google_secret_manager_secret_version" "gcs_hmac_secret" {
+  secret      = google_secret_manager_secret.gcs_hmac_secret.id
+  secret_data = google_storage_hmac_key.mcp_data.secret
+}
+
 # Removed blocks to safely remove resources from state without deleting them
 removed {
   from = google_secret_manager_secret.anthropic_api_key

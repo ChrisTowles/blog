@@ -30,8 +30,10 @@ test.describe('Workflow Builder', () => {
   test('workflow list page renders with header and new button', async ({ page }) => {
     await page.goto('/workflows', { waitUntil: 'networkidle' });
 
-    // Should show the page header
-    await expect(page.getByRole('heading', { name: 'Workflows' })).toBeVisible({ timeout: 10000 });
+    // Should show the page header (exact match — "My Workflows" heading on same page)
+    await expect(page.getByRole('heading', { name: 'Workflows', exact: true })).toBeVisible({
+      timeout: 10000,
+    });
     await expect(page.getByText('Visual AI prompt chains')).toBeVisible();
 
     // Create button should be present

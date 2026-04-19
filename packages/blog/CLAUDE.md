@@ -128,6 +128,33 @@ Database: `documents` + `document_chunks` tables with pgvector HNSW index and GI
 - `/api/admin/rag/search-test` (POST, auth) — Debug endpoint with pipeline details and timings
 - `/search` page — Public search UI with URL query params (`?q=`)
 
+## MCP Servers (co-hosted)
+
+The blog hosts MCP servers at sibling route paths under `/mcp/*`. Currently:
+
+- `/mcp/aviation` — Streamable HTTP endpoint for the aviation demo (Unit 3). Tools:
+  `ask_aviation`, `list_questions`, `schema`. Implementation: `server/routes/mcp/aviation/index.ts` +
+  tools in `server/utils/mcp/aviation/*.ts` (mirrors the existing "tools in two places"
+  pattern below — MCP tools live alongside `server/utils/ai/tools/` but are registered via
+  the MCP SDK, not the chat tool registry).
+- `/mcp/aviation/query` — POST SSE endpoint the iframe calls to stream the answer.
+  `ask_aviation` returns fast with `{ question, pending: true, queryUrl }`; the iframe
+  POSTs `{ question }` here and reads progress + final `AviationToolResult` over SSE.
+  This split is what lets the loading state render in Claude Desktop / Claude.ai
+  (MCP tool calls are synchronous — the iframe can't exist until the tool returns,
+  so the slow pipeline has to live outside the tool).
+- `/mcp/aviation/resource?uri=ui://aviation-answer` — HTTP-cached UI-bundle fetcher used
+  by the chat iframe on persisted-replay hydration.
+
+All `/mcp/*` requests are rate-limited via `server/middleware/mcp-rate-limit.ts`
+(per-IP token bucket, default 60/5min, tunable via `MCP_RATE_LIMIT_RPM`).
+`Mcp-Session-Id` lives in-process; Cloud Run `min_instances=1` + session-affinity keep it
+mostly-sticky. The chat agent calls aviation tools through the shared `client-pool.ts`
+(see `MCP_ENDPOINTS` in `server/api/chats/[id].post.ts`); there is no aviation-specific
+client composable.
+
+Operational notes: `docs/mcp-aviation-ops.md`.
+
 ## Chat System
 
 ### Tool Pattern

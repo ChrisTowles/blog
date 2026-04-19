@@ -39,6 +39,7 @@ jobs:
           CONTAINER_IMAGE=$(get container_image)
           echo "project_id=$(get project_id)" >> "$GITHUB_OUTPUT"
           echo "gtag_id=$(get gtag_id)" >> "$GITHUB_OUTPUT"
+          echo "mcp_sandbox_url=$(get mcp_sandbox_url)" >> "$GITHUB_OUTPUT"
           echo "region=$(echo "$CONTAINER_IMAGE" | sed 's/-docker\.pkg\.dev.*//')" >> "$GITHUB_OUTPUT"
           echo "image_base=$(echo "$CONTAINER_IMAGE" | sed 's/:[^/]*$//')" >> "$GITHUB_OUTPUT"
 
@@ -92,6 +93,7 @@ jobs:
             GIT_SHA=${{ steps.tags.outputs.sha_tag }}
             BUILD_TAG=${{ steps.tags.outputs.date_tag }}
             NUXT_PUBLIC_GTAG_ID=${{ steps.prod.outputs.gtag_id }}
+            NUXT_PUBLIC_MCP_SANDBOX_URL=${{ steps.prod.outputs.mcp_sandbox_url }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

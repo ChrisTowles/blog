@@ -9,3 +9,8 @@ variable "region" {
   default     = "us-central1"
 }
 
+variable "environment_suffix" {
+  description = "Environment suffix for MCP aviation bucket (staging or prod)"
+  type        = string
+}
+

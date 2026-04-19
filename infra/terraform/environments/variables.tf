@@ -57,3 +57,27 @@ variable "max_instances" {
   type        = number
   default     = 2
 }
+
+variable "mcp_rate_limit_rpm" {
+  description = "Per-IP rate limit for /mcp/* paths (requests per 5-minute window)"
+  type        = number
+  default     = 60
+}
+
+variable "mcp_sandbox_url" {
+  description = "Public MCP host URL for UI iframes (e.g. https://sandbox.towles.dev/sandbox.html)"
+  type        = string
+  default     = ""
+}
+
+variable "mcp_container_image" {
+  description = "Container image URL for the mcp Cloud Run service"
+  type        = string
+}
+
+variable "cloudflare_api_token" {
+  description = "Cloudflare API token with Zone:Read + Zone:DNS:Edit scope for the towles.dev zone. Supply via TF_VAR_cloudflare_api_token."
+  type        = string
+  sensitive   = true
+}
+

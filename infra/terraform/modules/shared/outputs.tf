@@ -72,3 +72,18 @@ output "media_bucket_name" {
   description = "GCS media bucket name"
   value       = google_storage_bucket.media.name
 }
+
+output "mcp_data_bucket_name" {
+  description = "GCS bucket name for MCP datasets (aviation and future tools, private, HMAC-auth)"
+  value       = google_storage_bucket.mcp_data.name
+}
+
+output "gcs_hmac_key_id_secret_id" {
+  description = "Secret Manager secret ID for the MCP data bucket GCS HMAC access key"
+  value       = google_secret_manager_secret.gcs_hmac_key_id.secret_id
+}
+
+output "gcs_hmac_secret_secret_id" {
+  description = "Secret Manager secret ID for the MCP data bucket GCS HMAC secret"
+  value       = google_secret_manager_secret.gcs_hmac_secret.secret_id
+}

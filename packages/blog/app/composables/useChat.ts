@@ -8,6 +8,7 @@ import type {
   SSEEvent,
   ToolUsePart,
   ToolResultPart,
+  UiResourcePart,
 } from '~~/shared/chat-types';
 
 interface UseChatOptions {
@@ -41,6 +42,12 @@ export function useChat(options: UseChatOptions) {
   const status = ref<ChatStatus>('ready');
   const error = ref<Error | null>(null);
   const abortController = ref<AbortController | null>(null);
+  /**
+   * Inline UI-resource HTML bundles keyed by toolCallId. Populated from the
+   * server's `ui_resource` SSE event and consumed once by `<ToolUiResource>`;
+   * cleared each time a new send starts so old bundles aren't retained.
+   */
+  const streamedUiResourceHtml = ref<Record<string, string>>({});
 
   async function sendMessage(text: string): Promise<void> {
     if (status.value === 'streaming') return;
@@ -57,6 +64,7 @@ export function useChat(options: UseChatOptions) {
 
     status.value = 'streaming';
     error.value = null;
+    streamedUiResourceHtml.value = {};
     abortController.value = new AbortController();
 
     try {
@@ -89,6 +97,7 @@ export function useChat(options: UseChatOptions) {
       } | null = null;
       const toolInvocations: ToolInvocation[] = [];
       const codeExecutions: CodeExecution[] = [];
+      const uiResourceParts: UiResourcePart[] = [];
 
       while (true) {
         const { done, value } = await reader.read();
@@ -157,6 +166,12 @@ export function useChat(options: UseChatOptions) {
               shouldUpdateMessage = false;
             } else if (event.type === 'container') {
               shouldUpdateMessage = false;
+            } else if (event.type === 'ui_resource') {
+              streamedUiResourceHtml.value = {
+                ...streamedUiResourceHtml.value,
+                [event.part.toolCallId]: event.html,
+              };
+              uiResourceParts.push(event.part);
             } else if (event.type === 'error') {
               throw new Error(event.error);
             }
@@ -168,6 +183,7 @@ export function useChat(options: UseChatOptions) {
                 currentTextPart,
                 toolInvocations,
                 codeExecutions,
+                uiResourceParts,
               );
             }
           } catch {
@@ -197,6 +213,7 @@ export function useChat(options: UseChatOptions) {
     text: { type: 'text'; text: string } | null,
     tools: ToolInvocation[],
     executions: CodeExecution[],
+    uiResources: UiResourcePart[],
   ): void {
     const parts: MessagePart[] = [];
     if (reasoning) parts.push(reasoning);
@@ -231,6 +248,8 @@ export function useChat(options: UseChatOptions) {
       parts.push(...exec.files);
     }
 
+    for (const ui of uiResources) parts.push(ui);
+
     if (text) parts.push(text);
 
     messages.value = messages.value.map((msg) => (msg.id === messageId ? { ...msg, parts } : msg));
@@ -258,12 +277,44 @@ export function useChat(options: UseChatOptions) {
     }
   }
 
+  /**
+   * Append an externally-sourced message (e.g. from the aviation MCP surface)
+   * to the chat list and persist it via the agent-loop-bypass endpoint.
+   *
+   * This is the seam that starter-question clicks + iframe follow-up chips
+   * use: the Anthropic agent loop is NOT invoked (plan line 114).
+   */
+  async function appendMessage(
+    message: Omit<ChatMessage, 'id' | 'createdAt'> & { id?: string },
+  ): Promise<ChatMessage> {
+    const full: ChatMessage = {
+      id: message.id ?? crypto.randomUUID(),
+      role: message.role,
+      parts: message.parts,
+    };
+    messages.value = [...messages.value, full];
+
+    try {
+      await $fetch(`/api/chats/${options.id}/messages`, {
+        method: 'POST',
+        body: { role: full.role, parts: full.parts },
+      });
+    } catch (err) {
+      log.error('chat', 'Failed to persist externally-inserted message');
+      error.value = err instanceof Error ? err : new Error(String(err));
+    }
+
+    return full;
+  }
+
   return {
     messages: computed(() => messages.value),
     status: computed(() => status.value),
     error: computed(() => error.value ?? undefined),
+    streamedUiResourceHtml: computed(() => streamedUiResourceHtml.value),
     sendMessage,
     stop,
     regenerate,
+    appendMessage,
   };
 }

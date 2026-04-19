@@ -5,6 +5,13 @@ resource "google_cloud_run_v2_service" "main" {
 
   template {
     service_account = var.service_account_email
+    # MCP aviation demo: 300s lets the LLM → DuckDB → iframe handshake finish
+    # even on cold-start (plan Key Decisions line 123). Attribute previously
+    # absent; added explicitly per plan line 620.
+    timeout = var.request_timeout
+    # Route same-client requests to the same instance to reduce the
+    # Mcp-Session-Id-across-instances risk (plan Key Decisions line 124).
+    session_affinity = var.session_affinity
 
     containers {
       image = var.container_image
@@ -18,6 +25,10 @@ resource "google_cloud_run_v2_service" "main" {
           cpu    = var.cpu_limit
           memory = var.memory_limit
         }
+        # Request-based billing: CPU throttled between requests. Cuts idle-instance
+        # spend on min_instances=1 prod; startup_cpu_boost still covers the first
+        # request after idle so latency stays bounded.
+        cpu_idle          = true
         startup_cpu_boost = true
       }
 
@@ -179,6 +190,33 @@ resource "google_cloud_run_v2_service" "main" {
         }
       }
 
+      # GCS HMAC credentials for DuckDB httpfs → aviation bucket (private).
+      dynamic "env" {
+        for_each = var.gcs_hmac_key_id_secret_id != "" ? [1] : []
+        content {
+          name = "GCS_HMAC_KEY_ID"
+          value_source {
+            secret_key_ref {
+              secret  = var.gcs_hmac_key_id_secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
+
+      dynamic "env" {
+        for_each = var.gcs_hmac_secret_secret_id != "" ? [1] : []
+        content {
+          name = "GCS_HMAC_SECRET"
+          value_source {
+            secret_key_ref {
+              secret  = var.gcs_hmac_secret_secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
+
       dynamic "env" {
         for_each = var.additional_env_vars
         content {
@@ -193,6 +231,38 @@ resource "google_cloud_run_v2_service" "main" {
           name  = "GCS_BUCKET_NAME"
           value = var.gcs_bucket_name
         }
+      }
+
+      # MCP tools env vars — shared data bucket (aviation Parquet lives under aviation/).
+      dynamic "env" {
+        for_each = var.mcp_data_bucket != "" ? [1] : []
+        content {
+          name  = "MCP_DATA_BUCKET"
+          value = var.mcp_data_bucket
+        }
+      }
+
+      env {
+        name  = "MCP_RATE_LIMIT_RPM"
+        value = tostring(var.mcp_rate_limit_rpm)
+      }
+
+      dynamic "env" {
+        for_each = var.mcp_sandbox_url != "" ? [1] : []
+        content {
+          name  = "NUXT_PUBLIC_MCP_SANDBOX_URL"
+          value = var.mcp_sandbox_url
+        }
+      }
+
+      env {
+        name  = "AVIATION_DUCKDB_MEMORY_LIMIT"
+        value = var.aviation_duckdb_memory_limit
+      }
+
+      env {
+        name  = "AVIATION_DUCKDB_THREADS"
+        value = var.aviation_duckdb_threads
       }
 
       dynamic "volume_mounts" {

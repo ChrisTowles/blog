@@ -11,10 +11,11 @@ packages/
 │   ├── server/     # Server-side: API routes, utils, database
 │   └── shared/     # Types shared between client and server
 ├── slides/         # Slidev presentations
+mcp/                # MCP Apps (SEP-1865) iframe host — separate Cloud Run service at sandbox.towles.dev
 infra/              # infrastructure
-    container/       # block docker files
+    container/       # block docker files (blog.Dockerfile, mcp.Dockerfile)
     aws_cloudformation/ # AWS Bedrock and IAM
-    terraform/          # GCP Cloud Run and Cloud SQL
+    terraform/          # GCP Cloud Run, Cloud SQL, and Cloudflare DNS
 ```
 
 ## Hosting
@@ -35,7 +36,16 @@ pnpm lint         # oxlint
 pnpm typecheck    # TypeScript checks
 pnpm gcp:prod:deploy   # Build container + deploy to GCP prod (needs terraform & gcloud)
 pnpm gcp:staging:deploy # Build container + deploy to GCP staging
+pnpm etl:aviation      # Download aviation datasets → Parquet → GCS (loads .env)
 ```
+
+## CLI Scripts
+
+Scripts in `packages/blog/scripts/` use **citty** for CLI structure (args, help, subcommands) and **consola** for formatted output (icons, colors, boxes). When adding new scripts:
+
+- Wrap the entrypoint with `defineCommand` + `runMain` from `citty`
+- Use `consola.start()`, `consola.success()`, `consola.warn()`, `consola.error()`, `consola.info()`, `consola.box()` instead of raw `console.log`
+- Both are unjs ecosystem packages — citty for structure, consola for output
 
 ## AI Features
 

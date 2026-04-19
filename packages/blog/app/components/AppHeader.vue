@@ -3,6 +3,7 @@ import { TEST_IDS } from '~~/shared/test-ids';
 
 const route = useRoute();
 const { loggedIn } = useUserSession();
+
 const items = computed(() => [
   {
     label: 'Home',
@@ -45,6 +46,13 @@ const items = computed(() => [
     icon: 'i-heroicons-chat-bubble-left-right',
     active: route.path.startsWith('/chat'),
     'data-testid': TEST_IDS.NAVIGATION.CHAT_LINK,
+  },
+  {
+    label: 'Aviation MCP',
+    to: '/aviation',
+    icon: 'i-heroicons-paper-airplane',
+    active: route.path.startsWith('/aviation'),
+    'data-testid': TEST_IDS.NAVIGATION.AVIATION_LINK,
   },
   ...(loggedIn.value
     ? [

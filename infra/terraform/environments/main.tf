@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 5.0"
     }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.0"
+    }
   }
 
   backend "gcs" {
@@ -19,11 +23,16 @@ provider "google" {
   region  = var.region
 }
 
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token
+}
+
 module "shared" {
   source = "../modules/shared"
 
-  project_id = var.project_id
-  region     = var.region
+  project_id         = var.project_id
+  region             = var.region
+  environment_suffix = var.environment
 }
 
 module "cloud_sql" {
@@ -59,12 +68,19 @@ module "cloud_run" {
   google_oauth_client_secret_secret_id = module.shared.google_oauth_client_secret_secret_id
   braintrust_api_key_secret_id         = module.shared.braintrust_api_key_secret_id
   nuxt_og_image_secret_secret_id       = module.shared.nuxt_og_image_secret_secret_id
+  gcs_hmac_key_id_secret_id            = module.shared.gcs_hmac_key_id_secret_id
+  gcs_hmac_secret_secret_id            = module.shared.gcs_hmac_secret_secret_id
   braintrust_project_name              = var.braintrust_project_name
   site_url                             = var.site_url
   min_instances                        = var.min_instances
   max_instances                        = var.max_instances
   additional_env_vars                  = { NUXT_PUBLIC_GTAG_ID = var.gtag_id }
   gcs_bucket_name                      = module.shared.media_bucket_name
+
+  # MCP tools wiring — shared data bucket + rate limit + sandbox URL.
+  mcp_data_bucket    = module.shared.mcp_data_bucket_name
+  mcp_rate_limit_rpm = var.mcp_rate_limit_rpm
+  mcp_sandbox_url    = var.mcp_sandbox_url
 
   depends_on = [module.cloud_sql]
 }
@@ -80,6 +96,42 @@ module "github_oidc" {
   artifact_registry_repository    = module.shared.artifact_registry_repository
 
   depends_on = [module.shared]
+}
+
+locals {
+  mcp_host_subdomain = var.environment == "prod" ? "sandbox" : "stage-sandbox"
+  mcp_host_fqdn      = "${local.mcp_host_subdomain}.towles.dev"
+}
+
+module "mcp_run" {
+  source = "../modules/mcp-run"
+
+  project_id            = var.project_id
+  region                = var.region
+  container_image       = var.mcp_container_image
+  service_account_email = module.shared.service_account_email
+  custom_domain         = local.mcp_host_fqdn
+
+  depends_on = [module.shared]
+}
+
+data "cloudflare_zone" "towles" {
+  name = "towles.dev"
+}
+
+resource "cloudflare_record" "mcp_host" {
+  zone_id = data.cloudflare_zone.towles.id
+  name    = local.mcp_host_subdomain
+  type    = "CNAME"
+  # `ghs.googlehosted.com` is the Cloud Run custom-domain CNAME target in
+  # us-central1; the module exposes the exact records Cloud Run returned in
+  # `domain_mapping_records`, but those can be unavailable on first apply,
+  # so the static target is safer and matches what `chris.towles.dev` uses.
+  content = "ghs.googlehosted.com"
+  proxied = false # DNS-only so Cloud Run can issue its managed TLS cert
+  ttl     = 300
+
+  depends_on = [module.mcp_run]
 }
 
 module "cost_scheduler" {

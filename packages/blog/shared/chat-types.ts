@@ -3,7 +3,42 @@
  * Used by both client and server
  */
 
+import type { AviationToolResult } from './mcp-aviation-types';
+
 export type MessageRole = 'user' | 'assistant';
+
+/**
+ * CSP shape mirrored from SEP-1865 (`@modelcontextprotocol/ext-apps`'s
+ * `McpUiResourceCsp`). Re-declared shallowly here so the chat wire type does
+ * not depend on the ext-apps package at the shared layer.
+ */
+export interface McpUiResourceCsp {
+  connectDomains?: string[];
+  resourceDomains?: string[];
+  frameDomains?: string[];
+}
+
+/**
+ * Permissions shape mirrored from SEP-1865.
+ */
+export interface McpUiResourcePermissions {
+  [key: string]: unknown;
+}
+
+/**
+ * Local extension to MCP UI HostContext: signals to the iframe whether a new
+ * tool call is in-flight so it can disable follow-up chips.
+ *
+ * FROZEN IN UNIT 6. Values:
+ *   - 'streaming': a tool call is in-flight; iframes should disable chips.
+ *   - 'idle':      no tool call in-flight; iframes should enable chips.
+ *   - undefined:   host has not declared a status; iframe treats as idle.
+ *
+ * Iframe code ignores any other value (see
+ * `packages/blog/mcp-ui/aviation-answer/aviation-answer.ts` around the
+ * `ctx.status === 'streaming'` check).
+ */
+export type HostContextStatus = 'streaming' | 'idle' | undefined;
 
 export interface TextPart {
   type: 'text';
@@ -47,13 +82,54 @@ export interface FilePart {
   url: string;
 }
 
+/**
+ * A persisted iframe-rendered MCP UI resource (e.g. the aviation-answer
+ * iframe). Stored alongside regular chat parts; replay is inert — the iframe
+ * re-renders from `structuredContent` without re-firing the tool call.
+ *
+ * IMPORTANT: the HTML bundle is NOT stored here. The iframe fetches the
+ * `ui://` bundle from the MCP server (HTTP-cached) on every render.
+ */
+export interface UiResourcePart {
+  type: 'ui-resource';
+  /** Correlation id with the original tool call (for potential retries / refreshes). */
+  toolCallId: string;
+  /** `ui://`-scheme URI of the resource on the MCP server. */
+  uiResourceUri: string;
+  /**
+   * The structured payload the iframe renders. For aviation, this matches
+   * `AviationToolResult`. Typed as `Record<string, unknown>` at the wire
+   * boundary so tolerating additional `ui-resource` surfaces later (e.g. a
+   * future non-aviation tool) does not require a breaking change.
+   */
+  structuredContent: AviationToolResult | Record<string, unknown>;
+  /** Optional CSP metadata mirroring SEP-1865's `_meta.ui.csp`. */
+  csp?: McpUiResourceCsp;
+  /** Optional permissions metadata mirroring SEP-1865's `_meta.ui.permissions`. */
+  permissions?: McpUiResourcePermissions;
+  /** True if the MCP tool returned `isError`. */
+  error?: boolean;
+}
+
+/**
+ * SSE event carrying a UI resource produced by an MCP tool invoked through
+ * the agent loop. `html` is the inline bundle; the client may use it directly
+ * instead of re-fetching from `/mcp/<server>/resource?uri=...`.
+ */
+export interface SSEUiResourceEvent {
+  type: 'ui_resource';
+  part: UiResourcePart;
+  html: string;
+}
+
 export type MessagePart =
   | TextPart
   | ReasoningPart
   | ToolUsePart
   | ToolResultPart
   | CodeExecutionPart
-  | FilePart;
+  | FilePart
+  | UiResourcePart;
 
 export interface ChatMessage {
   id: string;
@@ -141,4 +217,5 @@ export type SSEEvent =
   | SSEToolEndEvent
   | SSECodeStartEvent
   | SSECodeResultEvent
-  | SSEContainerEvent;
+  | SSEContainerEvent
+  | SSEUiResourceEvent;

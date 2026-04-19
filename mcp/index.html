@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>sandbox.towles.dev</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+        background: #0b0e14;
+        color: #d7dbe2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      main {
+        max-width: 44rem;
+        padding: 2rem;
+        line-height: 1.6;
+      }
+      h1 {
+        font-size: 1.4rem;
+        color: #fff;
+        margin: 0 0 1rem;
+      }
+      code,
+      kbd {
+        font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+        background: #1a1f2b;
+        padding: 0 0.3rem;
+        border-radius: 0.25rem;
+        color: #e6c07b;
+      }
+      a {
+        color: #8ab4f8;
+      }
+      p {
+        margin: 0.75rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>sandbox.towles.dev</h1>
+      <p>
+        This origin hosts the <a href="https://modelcontextprotocol.io/">MCP Apps</a> (<a
+          href="https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2026-01-26/apps.mdx"
+          >SEP-1865</a
+        >) sandbox proxy used by <a href="https://towles.dev/">towles.dev</a> to isolate untrusted
+        HTML UI resources in a cross-origin iframe.
+      </p>
+      <p>
+        The useful endpoint here is <code>/sandbox.html</code>; it is intended to be loaded inside
+        an iframe from the blog, not visited directly.
+      </p>
+      <p>
+        Source:
+        <a href="https://github.com/towles/chris-towles-blog"
+          >github.com/towles/chris-towles-blog</a
+        >
+        (<code>mcp/</code>).
+      </p>
+    </main>
+  </body>
+</html>

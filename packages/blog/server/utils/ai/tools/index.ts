@@ -11,6 +11,7 @@ import { getAuthorInfo } from './get-author';
 import { getBlogTopics } from './get-topics';
 import { getWeather } from './get-weather';
 import { rollDice } from './roll-dice';
+import { echoTest } from './echo';
 
 const MCP_SERVER_NAME = 'blog-tools';
 
@@ -24,6 +25,7 @@ const blogTools = [
   getBlogTopics,
   getWeather,
   rollDice,
+  echoTest,
 ];
 
 /**

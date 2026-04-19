@@ -84,6 +84,11 @@ export default defineNuxtConfig({
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://chris.towles.dev',
       model_fast: MODEL_HAIKU,
       model: MODEL_SONNET,
+      // Sandbox proxy URL for MCP Apps iframes. Defaults to the production
+      // subdomain. Playwright e2e + local dev override via
+      // NUXT_PUBLIC_MCP_SANDBOX_URL to point at a hermetic test server.
+      mcpSandboxUrl:
+        process.env.NUXT_PUBLIC_MCP_SANDBOX_URL || 'http://sandbox.localhost:8081/sandbox.html',
     },
   },
   ignore: [

@@ -43,6 +43,12 @@ ENV NITRO_PRESET=node-server
 ARG NUXT_PUBLIC_GTAG_ID=""
 ENV NUXT_PUBLIC_GTAG_ID=$NUXT_PUBLIC_GTAG_ID
 
+# MCP sandbox iframe URL — baked into prerendered SPA shell (/chat is ssr:false
+# but Nitro still freezes runtimeConfig.public values at build time). Without
+# this, chat falls back to the localhost dev default at runtime.
+ARG NUXT_PUBLIC_MCP_SANDBOX_URL=""
+ENV NUXT_PUBLIC_MCP_SANDBOX_URL=$NUXT_PUBLIC_MCP_SANDBOX_URL
+
 # Build the Nuxt application
 ENV NODE_OPTIONS="--max-old-space-size=8192"
 RUN cd /app && pnpm --filter @chris-towles/blog exec nuxt build
@@ -60,6 +66,14 @@ ARG BUILD_TAG=unknown
 
 WORKDIR /app
 
+# DuckDB's httpfs extension uses bundled libcurl which consults the system
+# CA store; node:24-slim ships without ca-certificates, so gs:// reads fail
+# with "Problem with the SSL CA cert (path? access rights?)". Installing the
+# package lands the bundle at /etc/ssl/certs/ca-certificates.crt where libcurl
+# finds it automatically.
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
 # Install runtime deps with cached npm store
 # Cache mount persists ~/.npm between builds - sharp/pg only download once
 RUN --mount=type=cache,id=npm,target=/root/.npm npm install sharp pg
@@ -69,6 +83,17 @@ COPY --from=builder /app/packages/blog/.output /app/.output
 
 # Copy content directory for Nuxt Content (raw markdown files needed at runtime)
 COPY --from=builder /app/packages/blog/content /app/content
+
+# Copy MCP aviation iframe bundle (read at runtime by server/utils/mcp/aviation/ui-resource.ts).
+# Nuxt's bundled output stamps `import.meta.url` from the entry module
+# `.output/server/index.mjs`, so the chunk's `__dirname` resolves to
+# `/app/.output/server` regardless of which chunk file the symbol lives in.
+# Walking `../../../../mcp-ui/aviation-answer/dist/index.html` from there lands at
+# `/mcp-ui/aviation-answer/dist/index.html` (root-relative — four hops past `/app`).
+# Place the bundle there so the existing relative path resolves; ALSO mirror it under
+# `/app/mcp-ui/...` for any tooling that walks from a different module.
+COPY --from=builder /app/packages/blog/mcp-ui/aviation-answer/dist /mcp-ui/aviation-answer/dist
+COPY --from=builder /app/packages/blog/mcp-ui/aviation-answer/dist /app/mcp-ui/aviation-answer/dist
 
 # Copy loan reviewer skill files (system prompts for AI review agents)
 COPY .claude/skills/loan-the-bank/SKILL.md /app/.claude/skills/loan-the-bank/SKILL.md

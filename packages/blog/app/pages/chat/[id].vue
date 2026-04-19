@@ -7,6 +7,7 @@ import type {
   FilePart,
   ToolUsePart,
   ToolResultPart,
+  UiResourcePart,
 } from '~~/shared/chat-types';
 import ProsePre from '../../components/prose/ProsePre.vue';
 
@@ -63,6 +64,9 @@ function handleSubmit(e: Event) {
     input.value = '';
   }
 }
+
+/** Hide starter questions once the chat has any turn. */
+const showStarterQuestions = computed(() => (chat.messages.value?.length ?? 0) === 0);
 
 const copied = ref(false);
 
@@ -173,6 +177,13 @@ onMounted(() => {
                   :execution="part as CodeExecutionPart"
                 />
                 <ChatFile v-else-if="part.type === 'file'" :file="part as FilePart" />
+                <ToolUiResource
+                  v-else-if="part.type === 'ui-resource'"
+                  :part="part as UiResourcePart"
+                  :html="chat.streamedUiResourceHtml.value[(part as UiResourcePart).toolCallId]"
+                  :streaming="chat.status.value === 'streaming'"
+                  @followup="(question: string) => chat.sendMessage(question)"
+                />
                 <MDCCached
                   v-else-if="part.type === 'text'"
                   :value="part.text"
@@ -185,6 +196,12 @@ onMounted(() => {
             </div>
           </template>
         </UChatMessages>
+
+        <AviationStarterQuestions
+          v-if="showStarterQuestions"
+          class="mb-3 px-2"
+          @click="(question: string) => chat.sendMessage(question)"
+        />
 
         <UChatPrompt
           v-model="input"
