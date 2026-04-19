@@ -15,17 +15,12 @@
 
 import { z } from 'zod';
 import { log } from 'evlog';
-import type {
-  CallToolResult,
-  EmbeddedResource,
-  TextContent,
-} from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { getAnthropicClient } from '../../ai/anthropic';
 import { MODEL_SONNET } from '../../../../shared/models';
 import { extractErrorMessage } from '../../../../shared/error-util';
 import {
   AVIATION_TOOL_NAMES,
-  AVIATION_UI_RESOURCE_URI,
   type AviationPendingResult,
   type AviationProgressStep,
   type AviationToolResult,
@@ -44,7 +39,6 @@ import {
 } from './duckdb';
 import { resolveChartOption } from './chart-bindings';
 import { validateSql } from './sql-safety';
-import { readAviationBundle } from './ui-resource';
 
 const LIMIT_ROW_CAP = 10_000;
 
@@ -68,7 +62,12 @@ interface LlmStructuredOutput {
 // ---------------- ask_aviation (fast return) ----------------
 
 /**
- * Returns the iframe bundle + a pending structuredContent pointer.
+ * Returns a small pending pointer. Compliant MCP hosts (Claude Desktop,
+ * Claude.ai, the blog chat harness) fetch `ui://aviation-answer` via
+ * `resources/read` using the `_meta.ui.resourceUri` declared on the tool;
+ * the iframe bundle and its CSP live on the registered resource itself
+ * (see `registerAviationUiResource` in `./ui-resource.ts`). Inlining the
+ * ~726 KB bundle here caused Claude.ai to truncate results mid-JSON.
  *
  * @param args - parsed tool arguments ({ question })
  * @param queryUrl - absolute URL of the /mcp/aviation/query SSE endpoint the
@@ -79,45 +78,10 @@ export function executeAskAviation(
   args: AskAviationArgs,
   queryUrl: string,
 ): CallToolResult & { structuredContent: AviationPendingResult } {
-  const html = readAviationBundle();
-
-  // Text fallback for hosts without MCP Apps support. They can't render the
-  // iframe or call our SSE endpoint, so we give them the user's own question
-  // echoed back with a note — better than an empty string, honest about what
-  // just happened.
   const fallbackText =
     `Aviation query pending: "${args.question}". ` +
     `This response includes an interactive MCP App iframe; ` +
     `hosts without UI support won't see the chart or answer.`;
-
-  // The iframe POSTs to `queryUrl` from inside its sandbox origin, so the
-  // host's CSP must allow that origin under `connect-src`. Attach the CSP meta
-  // here on the EmbeddedResource (not just the registered resource) so hosts
-  // like the blog chat harness — which reads _meta.ui off the tool result —
-  // pass it through to the sandbox. Compliant hosts (Claude Desktop / .ai)
-  // pick it up the same way.
-  let connectOrigin = '';
-  try {
-    connectOrigin = new URL(queryUrl).origin;
-  } catch {
-    // Fall through with empty origin; host defaults to self-only.
-  }
-  const csp = {
-    connectDomains: connectOrigin ? [connectOrigin] : [],
-    resourceDomains: ['self'],
-    frameDomains: [],
-  };
-
-  const textContent: TextContent = { type: 'text', text: fallbackText };
-  const uiContent: EmbeddedResource = {
-    type: 'resource',
-    resource: {
-      uri: AVIATION_UI_RESOURCE_URI,
-      mimeType: 'text/html;profile=mcp-app',
-      text: html,
-      _meta: { ui: { csp } },
-    },
-  };
 
   const pending: AviationPendingResult = {
     pending: true,
@@ -126,7 +90,7 @@ export function executeAskAviation(
   };
 
   return {
-    content: [textContent, uiContent],
+    content: [{ type: 'text', text: fallbackText }],
     structuredContent: pending as unknown as Record<string, unknown>,
   } as CallToolResult & { structuredContent: AviationPendingResult };
 }
