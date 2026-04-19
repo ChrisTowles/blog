@@ -1,18 +1,7 @@
 <script setup lang="ts">
 /**
- * Pill grid of curated aviation starter questions. Rendered above the chat
- * input on zero-turn chats (plan line 563).
- *
- * Click flow:
- *   1. Emit `click` with the question text.
- *   2. Parent (chat page) creates a new chat (if on /chat index) or reuses
- *      the current chat (if on /chat/[id]) and fires a direct MCP tool-call
- *      via `useAviationMcp().callAsk(question)`.
- *   3. The resulting UiResourcePart is appended via `useChat().appendMessage`
- *      — NOT through the Anthropic agent loop (plan line 114).
- *
- * The list comes from the compile-time mirror at `./starter-questions.ts` —
- * avoids an extra round-trip at page load (plan line 563, product-lens).
+ * Pill grid of curated aviation starter questions; emits `click` with the
+ * selected question text.
  */
 
 import { AVIATION_STARTER_QUESTIONS } from '~/utils/aviation-starter-questions';

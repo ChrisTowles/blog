@@ -9,7 +9,6 @@ import type {
   ToolResultPart,
   UiResourcePart,
 } from '~~/shared/chat-types';
-import { useAviationMcp, type AviationAskPayload } from '~/composables/useAviationMcp';
 import ProsePre from '../../components/prose/ProsePre.vue';
 
 definePageMeta({
@@ -66,55 +65,8 @@ function handleSubmit(e: Event) {
   }
 }
 
-// ---- Aviation MCP integration (plan Unit 6) ----
-// Aviation queries bypass the Anthropic agent loop entirely. `useAviationMcp`
-// opens one Streamable-HTTP connection per page lifetime; starter-question
-// clicks + follow-up chips reuse it.
-const aviation = useAviationMcp();
-const aviationPending = ref<Record<string, AviationAskPayload>>({});
-const aviationStatus = ref<'planning' | 'querying' | null>(null);
-const aviationInFlight = computed(() => aviationStatus.value !== null);
-
 /** Hide starter questions once the chat has any turn. */
-const showAviationStarters = computed(
-  () => (chat.messages.value?.length ?? 0) === 0 && !aviationInFlight.value,
-);
-
-async function handleAviationAsk(question: string, options: { skipUserAppend?: boolean } = {}) {
-  if (aviationInFlight.value) return;
-  aviationStatus.value = 'planning';
-  // Skip when the caller already has the user-turn persisted (e.g. chat
-  // created from the homepage starter-click path).
-  const flipTimer = setTimeout(() => {
-    if (aviationStatus.value === 'planning') aviationStatus.value = 'querying';
-  }, 3000);
-  try {
-    if (!options.skipUserAppend) {
-      await chat.appendMessage({
-        role: 'user',
-        parts: [{ type: 'text', text: question }],
-      });
-    }
-    const payload = await aviation.callAsk(question);
-    const uiPart: UiResourcePart = {
-      type: 'ui-resource',
-      toolCallId: payload.toolCallId,
-      uiResourceUri: payload.uiResourceUri,
-      structuredContent: payload.structuredContent,
-      csp: payload.csp,
-      permissions: payload.permissions,
-      error: payload.error,
-    };
-    aviationPending.value = { ...aviationPending.value, [payload.toolCallId]: payload };
-    await chat.appendMessage({
-      role: 'assistant',
-      parts: [uiPart],
-    });
-  } finally {
-    clearTimeout(flipTimer);
-    aviationStatus.value = null;
-  }
-}
+const showStarterQuestions = computed(() => (chat.messages.value?.length ?? 0) === 0);
 
 const copied = ref(false);
 
@@ -153,18 +105,6 @@ function getToolResult(message: ChatMessage, toolUse: ToolUsePart): ToolResultPa
 
 onMounted(() => {
   if (data.value?.messages?.length === 1) {
-    // Aviation path: chat was created from a starter-question click on /chat.
-    // Fire the MCP tool call directly — do NOT invoke the agent loop.
-    if (route.query.aviation === '1') {
-      const firstMsg = data.value.messages[0];
-      const parts = (firstMsg?.parts ?? []) as Array<{ type?: string; text?: string }>;
-      const textPart = parts.find((p) => p?.type === 'text');
-      if (textPart?.text) {
-        // User message was already persisted by /api/chats — skip re-append.
-        void handleAviationAsk(textPart.text, { skipUserAppend: true });
-      }
-      return;
-    }
     chat.regenerate();
   }
 });
@@ -240,12 +180,9 @@ onMounted(() => {
                 <ToolUiResource
                   v-else-if="part.type === 'ui-resource'"
                   :part="part as UiResourcePart"
-                  :html="
-                    aviationPending[(part as UiResourcePart).toolCallId]?.html ||
-                    chat.streamedUiResourceHtml.value[(part as UiResourcePart).toolCallId]
-                  "
-                  :streaming="aviationInFlight || chat.status.value === 'streaming'"
-                  @followup="handleAviationAsk"
+                  :html="chat.streamedUiResourceHtml.value[(part as UiResourcePart).toolCallId]"
+                  :streaming="chat.status.value === 'streaming'"
+                  @followup="(question: string) => chat.sendMessage(question)"
                 />
                 <MDCCached
                   v-else-if="part.type === 'text'"
@@ -260,23 +197,10 @@ onMounted(() => {
           </template>
         </UChatMessages>
 
-        <div
-          v-if="aviationStatus"
-          class="mx-2 mb-3 flex items-center gap-3 rounded-lg bg-elevated/40 px-4 py-3 text-sm text-muted"
-          data-testid="aviation-status"
-        >
-          <UIcon name="i-lucide-loader-2" class="size-4 animate-spin text-primary" />
-          <span v-if="aviationStatus === 'planning'"
-            >Planning SQL against the aviation dataset…</span
-          >
-          <span v-else>Running query against DuckDB — usually 5–15s…</span>
-        </div>
-
         <AviationStarterQuestions
-          v-if="showAviationStarters"
-          :disabled="aviationInFlight"
+          v-if="showStarterQuestions"
           class="mb-3 px-2"
-          @click="handleAviationAsk"
+          @click="(question: string) => chat.sendMessage(question)"
         />
 
         <UChatPrompt

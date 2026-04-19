@@ -8,13 +8,25 @@
     <style>
       :root {
         color-scheme: light dark;
+        --aa-bg: var(--mcp-ui-background, #fff);
+        --aa-fg: var(--mcp-ui-foreground, #111);
+        --aa-muted: var(--mcp-ui-muted, #6b7280);
+        --aa-border: var(--mcp-ui-border, #e5e7eb);
+        --aa-chip-fg: var(--mcp-ui-chip-fg, #3730a3);
+      }
+      [data-theme='dark'] {
+        --aa-bg: #0b0d10;
+        --aa-fg: #e5e7eb;
+        --aa-muted: #9ca3af;
+        --aa-border: #1f2937;
+        --aa-chip-fg: #c7d2fe;
       }
       html,
       body {
         margin: 0;
         padding: 0;
-        background: var(--mcp-ui-background, #fff);
-        color: var(--mcp-ui-foreground, #111);
+        background: var(--aa-bg);
+        color: var(--aa-fg);
       }
       body {
         font-family: var(--mcp-ui-font-family, system-ui, -apple-system, sans-serif);
@@ -24,36 +36,77 @@
       .wrap {
         padding: 1rem 1.25rem 1.5rem;
       }
-      .loading {
-        padding: 1.25rem;
-        text-align: center;
-        color: var(--mcp-ui-muted, #6b7280);
-        display: flex;
+      /* Skeleton matches the TS bundle's av-loader so first paint matches final paint. */
+      .av-loader-skeleton {
+        position: relative;
+        margin: 0.5rem 0 1rem;
+        padding: 1.5rem 1.25rem 1.1rem;
+        border: 1px solid var(--aa-border);
+        border-radius: 10px;
+        background: var(--aa-bg);
+      }
+      .av-loader-skeleton .rail {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
         align-items: center;
-        justify-content: center;
-        gap: 0.6rem;
+        gap: 0;
+        margin: 0.25rem 0.25rem 1.1rem;
+        position: relative;
       }
-      .loading-spinner {
-        width: 14px;
-        height: 14px;
+      .av-loader-skeleton .rail .track {
+        position: absolute;
+        left: calc(12.5% + 9px);
+        right: calc(12.5% + 9px);
+        top: 8px;
+        height: 2px;
+        background: var(--aa-border);
+        border-radius: 2px;
+      }
+      .av-loader-skeleton .rail .dot {
+        width: 18px;
+        height: 18px;
         border-radius: 50%;
-        border: 2px solid currentColor;
-        border-top-color: transparent;
-        animation: aa-spin 0.8s linear infinite;
+        border: 2px solid var(--aa-border);
+        background: var(--aa-bg);
+        margin: 0 auto;
       }
-      @keyframes aa-spin {
-        to {
-          transform: rotate(360deg);
-        }
+      .av-loader-skeleton .rail .dot.active {
+        border-color: var(--aa-chip-fg);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--aa-chip-fg) 22%, transparent);
+      }
+      .av-loader-skeleton .status {
+        display: flex;
+        gap: 0.7rem;
+        align-items: center;
+        padding: 0.6rem 0.75rem 0;
+        border-top: 1px dashed var(--aa-border);
+        color: var(--aa-fg);
+        font-size: 0.9rem;
+        margin: 0 -0.25rem;
+      }
+      .av-loader-skeleton .status .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--aa-chip-fg);
       }
     </style>
   </head>
   <body>
     <div id="app" data-testid="aviation-answer-app">
       <div class="wrap">
-        <div class="loading" data-testid="aviation-loading">
-          <span class="loading-spinner" aria-hidden="true"></span>
-          <span>Running query against DuckDB…</span>
+        <div class="av-loader-skeleton" data-testid="aviation-loading-skeleton">
+          <div class="rail">
+            <div class="track"></div>
+            <div class="dot active"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+          <div class="status">
+            <div class="dot"></div>
+            <div>Planning query…</div>
+          </div>
         </div>
       </div>
     </div>

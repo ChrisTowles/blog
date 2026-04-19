@@ -13,7 +13,7 @@ import type { AnthropicBetaClient, BetaStreamEvent } from '~~/server/utils/ai/an
 import { getSkillsForAPI, getSkillsSystemPrompt } from '~~/server/utils/ai/skills-loader';
 import { callMcpTool, getMcpTools } from '~~/server/utils/mcp/client-pool';
 
-const MCP_ENDPOINT = '/mcp/echo';
+const MCP_ENDPOINTS = ['/mcp/echo', '/mcp/aviation'] as const;
 
 defineRouteMeta({
   openAPI: {
@@ -25,6 +25,8 @@ defineRouteMeta({
 const SYSTEM_PROMPT = `You are a helpful AI assistant on Chris Towles's blog. You can help with questions about the blog content, programming, AI/ML, Vue/Nuxt, DevOps, and general topics.
 
 You have access to tools that let you search the blog for relevant content. Use these when the user asks about topics that might be covered in blog posts.
+
+You also have access to \`ask_aviation\`, which answers questions about US commercial aviation (FAA aircraft registry, BTS T-100 passenger flows, OpenFlights airports/airlines/routes) by writing DuckDB SQL and rendering the answer as an interactive ECharts visualization in an iframe. Use it for any question about US-registered aircraft, fleets, operators, routes, passengers, or airports — including playful filters like "states with an 'a' in the name." The iframe renders the full answer, hero number, chart, and three follow-up chips. **Do NOT paraphrase the chart's contents in your reply** — a one-line intro like "Here's the breakdown:" is plenty. If \`ask_aviation\` returns "pending", the iframe is already mounted and streaming; finish your turn promptly without further tool calls.
 
 **FORMATTING RULES (CRITICAL):**
 - ABSOLUTELY NO MARKDOWN HEADINGS: Never use #, ##, ###, ####, #####, or ######
@@ -160,21 +162,47 @@ export default defineEventHandler(async (event) => {
   const skillsPrompt = getSkillsSystemPrompt();
   const fullSystemPrompt = `${SYSTEM_PROMPT}\n\n${skillsPrompt}`;
 
-  // Discover MCP tools from internal servers
-  const mcpRunnableTools = await getMcpTools(MCP_ENDPOINT, baseUrl);
-  const mcpToolNames = new Set(mcpRunnableTools.map((t) => t.name));
-  const mcpToolDefs = mcpRunnableTools.map((t) => {
-    const tool = t as unknown as {
+  // First-discovered wins on name collisions across MCP_ENDPOINTS.
+  // Use allSettled so one endpoint failing doesn't tear down tool discovery.
+  const settled = await Promise.allSettled(
+    MCP_ENDPOINTS.map((path) => getMcpTools(path, baseUrl).then((tools) => ({ path, tools }))),
+  );
+  const discovered: Array<{ path: string; tools: unknown[] }> = [];
+  settled.forEach((result, idx) => {
+    if (result.status === 'fulfilled') {
+      discovered.push(result.value);
+    } else {
+      const reason = result.reason instanceof Error ? result.reason.message : String(result.reason);
+      log.warn('chat', `MCP discovery failed for ${MCP_ENDPOINTS[idx]}: ${reason}`);
+    }
+  });
+  const mcpToolRoute = new Map<string, string>();
+  const mcpToolDefs: Array<{
+    name: string;
+    description: string;
+    input_schema: Record<string, unknown>;
+  }> = [];
+  for (const { path, tools } of discovered) {
+    for (const tool of tools as unknown as Array<{
       name: string;
       description?: string;
       input_schema: Record<string, unknown>;
-    };
-    return {
-      name: tool.name,
-      description: tool.description ?? '',
-      input_schema: tool.input_schema,
-    };
-  });
+    }>) {
+      if (mcpToolRoute.has(tool.name)) {
+        log.warn(
+          'chat',
+          `MCP tool name collision: ${tool.name} already routed to ${mcpToolRoute.get(tool.name)}, ignoring on ${path}`,
+        );
+        continue;
+      }
+      mcpToolRoute.set(tool.name, path);
+      mcpToolDefs.push({
+        name: tool.name,
+        description: tool.description ?? '',
+        input_schema: tool.input_schema,
+      });
+    }
+  }
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -395,9 +423,10 @@ export default defineEventHandler(async (event) => {
                 });
 
                 let toolResult: unknown;
-                if (mcpToolNames.has(currentToolName)) {
+                const endpointPath = mcpToolRoute.get(currentToolName);
+                if (endpointPath) {
                   const outcome = await callMcpTool(
-                    MCP_ENDPOINT,
+                    endpointPath,
                     currentToolName,
                     toolArgs,
                     baseUrl,

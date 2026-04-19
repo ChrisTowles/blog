@@ -1,35 +1,14 @@
 <script setup lang="ts">
 /**
  * <ToolUiResource> — renders a persisted or freshly-arrived MCP UI resource
- * (aviation-answer iframe) inside the chat thread.
+ * (aviation-answer iframe) inside the chat thread via the SEP-1865 sandbox
+ * pattern (AppBridge over PostMessageTransport).
  *
- * Lifecycle (adapted from ~/code/f/ext-apps/examples/basic-host/src/implementation.ts):
- *   1. Mount: compute sandbox URL from runtimeConfig.public.mcpSandboxUrl
- *      + iframe's CSP query-string (SEP-1865 sandbox pattern).
- *   2. Wait for `ui/notifications/sandbox-proxy-ready` postMessage from the
- *      sandbox iframe. **Origin validation (security-critical, plan line 569):**
- *      drop any message whose `event.origin` does not equal the sandbox
- *      origin we computed. Silent drop.
- *   3. Connect AppBridge via PostMessageTransport.
- *   4. Fetch the inner HTML bundle. When this component is created from a
- *      persisted UiResourcePart the bundle is re-fetched from the MCP
- *      server (HTTP-cached). When created from a fresh ask_aviation result
- *      the HTML is passed inline via the `html` prop.
- *   5. sendSandboxResourceReady + wait oninitialized.
- *   6. sendToolInput + sendToolResult(structuredContent) — REPLAY IS INERT.
- *   7. appBridge.onmessage = followup click → emit `followup` → parent calls
- *      useAviationMcp().callAsk() and appends a new UiResourcePart.
+ * Security: postMessage handlers must drop any event whose `event.origin`
+ * does not equal the computed sandbox origin — silent drop, no logging.
  *
- * Error handling:
- *   - Sandbox-proxy-unreachable fallback (plan line 568): 5s timeout on
- *     `sandbox-proxy-ready` → replace iframe with a bordered card showing
- *     structuredContent.answer + link.
- *   - Origin mismatch: silent drop (no toast, no log at info level).
- *   - Initialize handshake > 5s: logged warn; fallback card shown.
- *
- * Fullscreen (plan line 565): TODO — not in this slice. The button is wired
- * to emit `display-mode-change` but the modal overlay is punted to a
- * follow-up commit.
+ * Fallback: if `sandbox-proxy-ready` doesn't arrive within 5s, swap the
+ * iframe for a bordered card showing structuredContent.answer + link.
  */
 
 import {

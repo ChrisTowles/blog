@@ -42,12 +42,30 @@ import {
  * -------------------------------------------------------------------------- */
 type AviationProgressStep = 'planning' | 'validating' | 'querying' | 'rendering';
 
-const AVIATION_PROGRESS_LABELS: Record<AviationProgressStep, string> = {
-  planning: 'Planning query…',
-  validating: 'Validating SQL…',
-  querying: 'Running query against DuckDB…',
-  rendering: 'Rendering chart…',
+const AVIATION_PROGRESS_MESSAGES: Record<AviationProgressStep, readonly string[]> = {
+  planning: [
+    'Planning query…',
+    'Consulting the flight plan…',
+    'Asking the LLM to think in SQL…',
+    'Pre-flight checks in progress…',
+    'Taxiing to the runway…',
+  ],
+  validating: [
+    'Validating SQL…',
+    'Running the safety checklist…',
+    'Making sure nobody typed DROP TABLE…',
+  ],
+  querying: [
+    'Running query against DuckDB…',
+    'Scanning Parquet at cruising altitude…',
+    'Crunching rows from the FAA registry…',
+    'Joining BTS with OpenFlights…',
+    'Counting tail numbers…',
+  ],
+  rendering: ['Rendering chart…', 'Painting bars…', 'Laying out axes…'],
 };
+
+const LOADING_TICK_MS = 1500;
 
 interface AviationPendingResult {
   pending: true;
@@ -220,24 +238,200 @@ table.aviation-table th { background: var(--aa-chip-bg); color: var(--aa-chip-fg
   border: 1px dashed var(--aa-border);
   border-radius: 6px;
 }
-.loading {
-  padding: 1.25rem;
-  text-align: center;
+/* ───── flight-progress radar loader ───── */
+.av-loader {
+  position: relative;
+  margin: .5rem 0 1rem;
+  padding: 1.5rem 1.25rem 1.1rem;
+  border: 1px solid var(--aa-border);
+  border-radius: 10px;
+  background:
+    radial-gradient(ellipse 90% 120% at 50% -20%,
+      color-mix(in srgb, var(--aa-chip-fg) 10%, transparent) 0%,
+      transparent 60%),
+    var(--aa-bg);
+  overflow: hidden;
+  isolation: isolate;
+}
+.av-loader-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: .45;
+  background-image:
+    linear-gradient(to right, var(--aa-border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--aa-border) 1px, transparent 1px);
+  background-size: 28px 28px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 90% at 50% 60%, black 20%, transparent 85%);
+          mask-image: radial-gradient(ellipse 80% 90% at 50% 60%, black 20%, transparent 85%);
+}
+.av-loader-sweep {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--aa-chip-fg) 15%, transparent) 45%,
+    color-mix(in srgb, var(--aa-chip-fg) 22%, transparent) 50%,
+    color-mix(in srgb, var(--aa-chip-fg) 15%, transparent) 55%,
+    transparent 100%
+  );
+  mix-blend-mode: screen;
+  animation: av-sweep 3.2s linear infinite;
+  opacity: .5;
+}
+@keyframes av-sweep {
+  0% { transform: translateX(-60%); }
+  100% { transform: translateX(60%); }
+}
+.av-rail {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin: .25rem .25rem 1.1rem;
+}
+.av-rail-track {
+  position: absolute;
+  left: calc(12.5% + 9px);
+  right: calc(12.5% + 9px);
+  top: 8px;
+  height: 2px;
+  background: var(--aa-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.av-rail-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0%;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--aa-chip-fg) 40%, transparent),
+    var(--aa-chip-fg));
+  border-radius: 2px;
+  transition: width .55s cubic-bezier(.2,.7,.2,1);
+}
+.av-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .5rem;
+  z-index: 2;
+}
+.av-step-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--aa-border);
+  background: var(--aa-bg);
+  transition: border-color .25s ease, background .25s ease, box-shadow .25s ease, transform .25s ease;
+}
+.av-step[data-state='done'] .av-step-dot {
+  background: var(--aa-chip-fg);
+  border-color: var(--aa-chip-fg);
+}
+.av-step[data-state='active'] .av-step-dot {
+  border-color: var(--aa-chip-fg);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--aa-chip-fg) 22%, transparent);
+  animation: av-dot-pulse 1.8s ease-in-out infinite;
+}
+@keyframes av-dot-pulse {
+  0%, 100% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--aa-chip-fg) 22%, transparent); }
+  50%      { box-shadow: 0 0 0 8px color-mix(in srgb, var(--aa-chip-fg) 6%, transparent); }
+}
+.av-step-label {
+  font-size: .68rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
   color: var(--aa-muted);
+  font-weight: 600;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+.av-step[data-state='done'] .av-step-label,
+.av-step[data-state='active'] .av-step-label {
+  color: var(--aa-fg);
+}
+.av-plane {
+  position: absolute;
+  top: -7px;
+  left: 0%;
+  width: 22px;
+  height: 22px;
+  color: var(--aa-chip-fg);
+  transform: translateX(-50%);
+  transition: left .55s cubic-bezier(.2,.7,.2,1);
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--aa-chip-fg) 45%, transparent));
+  z-index: 3;
+  animation: av-plane-bob 2.4s ease-in-out infinite;
+}
+@keyframes av-plane-bob {
+  0%, 100% { translate: 0 0; }
+  50%      { translate: 0 -2px; }
+}
+.av-status {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: .6rem;
+  gap: .7rem;
+  padding: .6rem .75rem;
+  border-top: 1px dashed var(--aa-border);
+  margin: 0 -.25rem;
+  font-size: .9rem;
 }
-.loading-spinner {
-  width: 14px;
-  height: 14px;
+.av-status-dot {
+  position: relative;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  border: 2px solid currentColor;
-  border-top-color: transparent;
-  animation: aa-spin .8s linear infinite;
+  background: var(--aa-chip-fg);
+  flex: none;
 }
-@keyframes aa-spin { to { transform: rotate(360deg); } }
+.av-status-dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--aa-chip-fg);
+  animation: av-ping 1.6s cubic-bezier(0,0,.2,1) infinite;
+}
+@keyframes av-ping {
+  0%   { transform: scale(.6); opacity: .9; }
+  80%  { transform: scale(1.7); opacity: 0; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+.av-status-text {
+  color: var(--aa-fg);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition: opacity .25s ease;
+}
+.av-status-timer {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: .78rem;
+  color: var(--aa-muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .04em;
+  padding: .15rem .45rem;
+  border: 1px solid var(--aa-border);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--aa-chip-fg) 5%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .av-loader-sweep,
+  .av-plane,
+  .av-step[data-state='active'] .av-step-dot,
+  .av-status-dot::after {
+    animation: none;
+  }
+}
 `;
 
 /* --------------------------------------------------------------------------
@@ -250,12 +444,149 @@ interface IframeState {
   theme: 'light' | 'dark';
   streaming: boolean;
   result?: AviationToolResult;
+  loadingMessageTicker?: ReturnType<typeof setInterval>;
+  loadingTimerTicker?: ReturnType<typeof setInterval>;
+  loadingStep?: AviationProgressStep;
+  loadingStartedAt?: number;
 }
 
 const state: IframeState = {
   theme: 'light',
   streaming: false,
 };
+
+function stopLoadingTicker(): void {
+  if (state.loadingMessageTicker) {
+    clearInterval(state.loadingMessageTicker);
+    state.loadingMessageTicker = undefined;
+  }
+  if (state.loadingTimerTicker) {
+    clearInterval(state.loadingTimerTicker);
+    state.loadingTimerTicker = undefined;
+  }
+  state.loadingStep = undefined;
+  state.loadingStartedAt = undefined;
+}
+
+const STEP_ORDER: readonly AviationProgressStep[] = [
+  'planning',
+  'validating',
+  'querying',
+  'rendering',
+];
+const STEP_SHORT_LABELS: Record<AviationProgressStep, string> = {
+  planning: 'Plan',
+  validating: 'Validate',
+  querying: 'Query',
+  rendering: 'Render',
+};
+
+function buildLoaderDom(): HTMLElement {
+  const loader = document.createElement('div');
+  loader.className = 'av-loader';
+  loader.setAttribute('data-testid', 'aviation-loading');
+  loader.setAttribute('role', 'status');
+  loader.setAttribute('aria-live', 'polite');
+
+  const grid = document.createElement('div');
+  grid.className = 'av-loader-grid';
+  loader.appendChild(grid);
+
+  const sweep = document.createElement('div');
+  sweep.className = 'av-loader-sweep';
+  loader.appendChild(sweep);
+
+  const rail = document.createElement('div');
+  rail.className = 'av-rail';
+
+  const track = document.createElement('div');
+  track.className = 'av-rail-track';
+  const fill = document.createElement('div');
+  fill.className = 'av-rail-fill';
+  fill.setAttribute('data-role', 'fill');
+  track.appendChild(fill);
+  rail.appendChild(track);
+
+  const plane = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  plane.setAttribute('class', 'av-plane');
+  plane.setAttribute('viewBox', '0 0 24 24');
+  plane.setAttribute('data-role', 'plane');
+  plane.setAttribute('aria-hidden', 'true');
+  const planePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  planePath.setAttribute('fill', 'currentColor');
+  // Right-pointing paper-plane/airliner silhouette.
+  planePath.setAttribute(
+    'd',
+    'M2 12l20-7-4.5 17-6.5-7-8.5 2.5L2 12zm7.5 2.6l2.9 3.1 2.6-9.8-5.5 6.7z',
+  );
+  plane.appendChild(planePath);
+  rail.appendChild(plane);
+
+  for (const step of STEP_ORDER) {
+    const stepEl = document.createElement('div');
+    stepEl.className = 'av-step';
+    stepEl.setAttribute('data-step', step);
+    stepEl.setAttribute('data-state', 'pending');
+    const dot = document.createElement('div');
+    dot.className = 'av-step-dot';
+    const label = document.createElement('div');
+    label.className = 'av-step-label';
+    label.textContent = STEP_SHORT_LABELS[step];
+    stepEl.appendChild(dot);
+    stepEl.appendChild(label);
+    rail.appendChild(stepEl);
+  }
+
+  loader.appendChild(rail);
+
+  const status = document.createElement('div');
+  status.className = 'av-status';
+  const statusDot = document.createElement('div');
+  statusDot.className = 'av-status-dot';
+  statusDot.setAttribute('aria-hidden', 'true');
+  const statusText = document.createElement('div');
+  statusText.className = 'av-status-text';
+  statusText.setAttribute('data-role', 'status-text');
+  const statusTimer = document.createElement('div');
+  statusTimer.className = 'av-status-timer';
+  statusTimer.setAttribute('data-role', 'timer');
+  statusTimer.textContent = '0:00';
+  status.appendChild(statusDot);
+  status.appendChild(statusText);
+  status.appendChild(statusTimer);
+  loader.appendChild(status);
+
+  return loader;
+}
+
+function applyStepToLoader(root: HTMLElement, step: AviationProgressStep): void {
+  const activeIndex = STEP_ORDER.indexOf(step);
+  // Center of each step column: 12.5%, 37.5%, 62.5%, 87.5%.
+  const planeLeftPct = 12.5 + activeIndex * 25;
+  // Track spans center-to-center (75% of rail). Fill grows 0 → 100% of track.
+  const fillPct = activeIndex === 0 ? 0 : (activeIndex / (STEP_ORDER.length - 1)) * 100;
+
+  const fill = root.querySelector<HTMLElement>('[data-role="fill"]');
+  if (fill) fill.style.width = `${fillPct}%`;
+
+  const plane = root.querySelector<SVGElement>('[data-role="plane"]');
+  if (plane) (plane as unknown as HTMLElement).style.left = `${planeLeftPct}%`;
+
+  for (const stepEl of Array.from(root.querySelectorAll<HTMLElement>('.av-step'))) {
+    const stepName = stepEl.getAttribute('data-step') as AviationProgressStep | null;
+    if (!stepName) continue;
+    const idx = STEP_ORDER.indexOf(stepName);
+    const state = idx < activeIndex ? 'done' : idx === activeIndex ? 'active' : 'pending';
+    stepEl.setAttribute('data-state', state);
+  }
+}
+
+function formatElapsed(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
 
 function mountStyle(): void {
   const style = document.createElement('style');
@@ -320,6 +651,59 @@ function renderTable(rows: Array<Record<string, unknown>>): HTMLElement {
   return wrap;
 }
 
+function applyChartDefaults(option: Record<string, unknown>): Record<string, unknown> {
+  // We OWN the outer layout — title position, grid box, pie/treemap framing.
+  // The LLM is unreliable at leaving room for the title, so our layout keys
+  // win. Caller-supplied style keys (text, textStyle, itemStyle, label, …)
+  // still bleed through because we spread the caller FIRST, then override
+  // only the position keys we care about.
+  const caller = option as {
+    grid?: Record<string, unknown>;
+    title?: Record<string, unknown>;
+    series?: unknown;
+  };
+  const merged: Record<string, unknown> = {
+    ...option,
+    grid: {
+      ...(caller.grid ?? {}),
+      top: 64,
+      left: 8,
+      right: 24,
+      bottom: 48,
+      containLabel: true,
+    },
+  };
+  if (caller.title) {
+    merged.title = {
+      ...caller.title,
+      top: 12,
+      left: 'center',
+      textStyle: {
+        fontSize: 14,
+        fontWeight: 600,
+        ...((caller.title as { textStyle?: Record<string, unknown> }).textStyle ?? {}),
+      },
+    };
+  }
+  // Pie/treemap ignore `grid`, so their bounding box must be pushed down at
+  // the series level. We force `top` (and null out `center` on pie so `top`
+  // actually applies — ECharts ignores `top` when `center` is set).
+  if (Array.isArray(caller.series)) {
+    merged.series = caller.series.map((s) => {
+      if (!s || typeof s !== 'object') return s;
+      const series = s as Record<string, unknown>;
+      if (series.type === 'pie') {
+        return { ...series, center: ['50%', '58%'] };
+      }
+      if (series.type === 'treemap') {
+        return { ...series, top: 56, bottom: 12, left: 8, right: 8 };
+      }
+      return s;
+    });
+  }
+  return merged;
+}
+
 function renderChart(container: HTMLElement, option: Record<string, unknown>): void {
   // Dispose prior instance + observer if re-rendering (theme change).
   if (state.chartResizeObserver) {
@@ -334,7 +718,7 @@ function renderChart(container: HTMLElement, option: Record<string, unknown>): v
     renderer: 'canvas',
   });
   state.chart = chart;
-  chart.setOption(option, true);
+  chart.setOption(applyChartDefaults(option), true);
 
   const ro = new ResizeObserver(() => chart.resize());
   ro.observe(container);
@@ -412,31 +796,56 @@ function renderChips(
   return wrap;
 }
 
-function renderLoading(mount: HTMLElement, text?: string): void {
-  // If the inline HTML skeleton from index.html is still mounted, reuse it —
-  // just update the label text instead of tearing down + rebuilding. This
-  // keeps the transition crisp when SSE progress events arrive.
-  const existing = mount.querySelector<HTMLElement>('[data-testid="aviation-loading"]');
-  if (existing) {
-    const existingLabel = existing.querySelector<HTMLElement>('span:last-child');
-    if (existingLabel) existingLabel.textContent = text ?? AVIATION_PROGRESS_LABELS.querying;
-    return;
+function renderLoading(mount: HTMLElement, step: AviationProgressStep = 'planning'): void {
+  const messages = AVIATION_PROGRESS_MESSAGES[step];
+
+  // Reuse the loader DOM if it's already mounted (from index.html or a prior
+  // renderLoading call); otherwise build fresh. This keeps the plane's CSS
+  // transition alive as the step advances.
+  let loader = mount.querySelector<HTMLElement>('[data-testid="aviation-loading"]');
+  if (!loader || !loader.classList.contains('av-loader')) {
+    mount.replaceChildren();
+    const wrap = document.createElement('div');
+    wrap.className = 'wrap';
+    loader = buildLoaderDom();
+    wrap.appendChild(loader);
+    mount.appendChild(wrap);
   }
-  mount.replaceChildren();
-  const wrap = document.createElement('div');
-  wrap.className = 'wrap';
-  const loading = document.createElement('div');
-  loading.className = 'loading';
-  loading.setAttribute('data-testid', 'aviation-loading');
-  const spinner = document.createElement('span');
-  spinner.className = 'loading-spinner';
-  spinner.setAttribute('aria-hidden', 'true');
-  const label = document.createElement('span');
-  label.textContent = text ?? AVIATION_PROGRESS_LABELS.querying;
-  loading.appendChild(spinner);
-  loading.appendChild(label);
-  wrap.appendChild(loading);
-  mount.appendChild(wrap);
+
+  const textEl = loader.querySelector<HTMLElement>('[data-role="status-text"]');
+  const timerEl = loader.querySelector<HTMLElement>('[data-role="timer"]');
+
+  applyStepToLoader(loader, step);
+
+  // Ensure elapsed timer is running (starts on first renderLoading call).
+  if (!state.loadingStartedAt) state.loadingStartedAt = Date.now();
+  if (!state.loadingTimerTicker && timerEl) {
+    const el = timerEl;
+    const start = state.loadingStartedAt;
+    el.textContent = formatElapsed(0);
+    state.loadingTimerTicker = setInterval(() => {
+      el.textContent = formatElapsed(Date.now() - start);
+    }, 500);
+  }
+
+  // If the step is unchanged and the message ticker is already running, let
+  // it keep cycling — no need to reset the phase.
+  if (state.loadingStep === step && state.loadingMessageTicker) return;
+
+  if (state.loadingMessageTicker) {
+    clearInterval(state.loadingMessageTicker);
+    state.loadingMessageTicker = undefined;
+  }
+  state.loadingStep = step;
+  if (textEl) textEl.textContent = messages[0] ?? '';
+  if (messages.length > 1 && textEl) {
+    let index = 0;
+    const el = textEl;
+    state.loadingMessageTicker = setInterval(() => {
+      index = (index + 1) % messages.length;
+      el.textContent = messages[index] ?? '';
+    }, LOADING_TICK_MS);
+  }
 }
 
 function isPendingResult(sc: object): sc is AviationPendingResult {
@@ -457,7 +866,7 @@ async function streamAviationQuery(
   pending: AviationPendingResult,
   signal: AbortSignal,
 ): Promise<AviationToolResult> {
-  renderLoading(mount, AVIATION_PROGRESS_LABELS.planning);
+  renderLoading(mount, 'planning');
 
   const response = await fetch(pending.queryUrl, {
     method: 'POST',
@@ -500,7 +909,7 @@ async function streamAviationQuery(
       }
 
       if (parsed.type === 'progress') {
-        renderLoading(mount, AVIATION_PROGRESS_LABELS[parsed.step] ?? 'Working…');
+        renderLoading(mount, parsed.step);
       } else if (parsed.type === 'result') {
         finalResult = parsed.result;
       } else if (parsed.type === 'error') {
@@ -519,6 +928,7 @@ function renderResult(
   result: AviationToolResult,
   onFollowup: (text: string) => void,
 ): void {
+  stopLoadingTicker();
   state.result = result;
   mount.replaceChildren();
   const wrap = document.createElement('div');
@@ -713,6 +1123,7 @@ export function createBootstrap(deps: BootstrapDeps = {}): {
      * stale — abort it and return to the neutral loading state. The subsequent
      * `ontoolresult` will either drive a new stream or render directly. */
     abortPending();
+    state.loadingStartedAt = undefined;
     renderLoading(mount);
   };
 
@@ -723,10 +1134,14 @@ export function createBootstrap(deps: BootstrapDeps = {}): {
   };
 
   app.ontoolcancelled = () => {
+    abortPending();
     renderFallbackShell(mount, 'Tool call cancelled.');
   };
 
   app.onerror = (err: Error) => {
+    abortPending();
+    const message = err instanceof Error ? err.message : String(err);
+    renderFallbackShell(mount, `Error: ${message}`);
     // eslint-disable-next-line no-console
     console.error('[aviation-answer] app error:', err);
   };
@@ -735,6 +1150,7 @@ export function createBootstrap(deps: BootstrapDeps = {}): {
 }
 
 function renderFallbackShell(mount: HTMLElement, message: string): void {
+  stopLoadingTicker();
   mount.replaceChildren();
   const wrap = document.createElement('div');
   wrap.className = 'wrap';

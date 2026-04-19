@@ -53,7 +53,7 @@ export const MCP_DATA_BUCKET = process.env.MCP_DATA_BUCKET || 'blog-mcp-data-sta
 export const AVIATION_BUCKET_URL_PREFIX = `gs://${MCP_DATA_BUCKET}/aviation/`;
 export const PREWARM_PARQUET_URL = `${AVIATION_BUCKET_URL_PREFIX}pre-warm.parquet`;
 
-export const DEFAULT_QUERY_TIMEOUT_MS = 5_000;
+export const DEFAULT_QUERY_TIMEOUT_MS = 30_000;
 
 /**
  * Validate that HMAC credentials for the private aviation bucket are present.

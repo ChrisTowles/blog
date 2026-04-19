@@ -149,7 +149,9 @@ The blog hosts MCP servers at sibling route paths under `/mcp/*`. Currently:
 All `/mcp/*` requests are rate-limited via `server/middleware/mcp-rate-limit.ts`
 (per-IP token bucket, default 60/5min, tunable via `MCP_RATE_LIMIT_RPM`).
 `Mcp-Session-Id` lives in-process; Cloud Run `min_instances=1` + session-affinity keep it
-mostly-sticky, and clients silently reconnect on 404 (see `useAviationMcp.ts`).
+mostly-sticky. The chat agent calls aviation tools through the shared `client-pool.ts`
+(see `MCP_ENDPOINTS` in `server/api/chats/[id].post.ts`); there is no aviation-specific
+client composable.
 
 Operational notes: `docs/mcp-aviation-ops.md`.
 

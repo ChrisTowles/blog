@@ -50,9 +50,6 @@ function onSubmit() {
 }
 
 async function onAviationStarter(question: string) {
-  // Create the chat with the question as the first user-turn message, then
-  // navigate to the chat page with ?aviation=1 — [id].vue's onMounted
-  // dispatches the MCP call directly instead of invoking the agent.
   loading.value = true;
   try {
     const chat = await $fetch('/api/chats', {
@@ -60,7 +57,7 @@ async function onAviationStarter(question: string) {
       body: { input: question },
     });
     refreshNuxtData('chats');
-    await navigateTo(`/chat/${chat.id}?aviation=1`);
+    await navigateTo(`/chat/${chat.id}`);
   } catch (error) {
     loading.value = false;
     console.error(error);
@@ -152,9 +149,6 @@ const quickChats = [
           />
         </div>
 
-        <!-- Aviation MCP starter questions: zero-turn homepage; click creates a
-             new chat with ?aviation=1 and runs the MCP call directly (bypasses
-             the Anthropic agent loop). -->
         <div class="mt-2">
           <div class="text-sm text-muted mb-2">Ask about US commercial aviation:</div>
           <AviationStarterQuestions :disabled="loading" @click="onAviationStarter" />

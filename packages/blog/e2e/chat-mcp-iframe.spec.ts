@@ -3,8 +3,8 @@
  *
  * Scope (narrow slice per Unit 6 prompt):
  *   - Starter-question pill grid renders on the /chat home page.
- *   - Clicking a starter pill kicks off the aviation flow (navigation +
- *     ?aviation=1 query param).
+ *   - Clicking a starter pill creates a chat and lets the agent loop pick
+ *     `ask_aviation` from the discovered MCP tools.
  *
  * Full starter → MCP → iframe happy path requires a deployed sandbox proxy
  * (sandbox.towles.dev) + a real Anthropic LLM call for ask_aviation, both
