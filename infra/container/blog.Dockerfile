@@ -49,9 +49,13 @@ ENV NUXT_PUBLIC_GTAG_ID=$NUXT_PUBLIC_GTAG_ID
 ARG NUXT_PUBLIC_MCP_SANDBOX_URL=""
 ENV NUXT_PUBLIC_MCP_SANDBOX_URL=$NUXT_PUBLIC_MCP_SANDBOX_URL
 
-# Build the Nuxt application
+# Build the Nuxt application plus the MCP-App iframe bundles.
+# The package.json "build" script runs `build:ui-bundle` (vite builds for
+# mcp-ui/*/dist) before `nuxt build`. Using `exec nuxt build` here skipped
+# that prelude, which left mcp-ui/aviation-answer/dist absent and broke the
+# COPY steps in the runner stage.
 ENV NODE_OPTIONS="--max-old-space-size=8192"
-RUN cd /app && pnpm --filter @chris-towles/blog exec nuxt build
+RUN cd /app && pnpm --filter @chris-towles/blog run build
 
 # Production stage - use Node for runtime stability
 FROM node:24-slim AS runner
@@ -94,6 +98,8 @@ COPY --from=builder /app/packages/blog/content /app/content
 # `/app/mcp-ui/...` for any tooling that walks from a different module.
 COPY --from=builder /app/packages/blog/mcp-ui/aviation-answer/dist /mcp-ui/aviation-answer/dist
 COPY --from=builder /app/packages/blog/mcp-ui/aviation-answer/dist /app/mcp-ui/aviation-answer/dist
+COPY --from=builder /app/packages/blog/mcp-ui/echo/dist /mcp-ui/echo/dist
+COPY --from=builder /app/packages/blog/mcp-ui/echo/dist /app/mcp-ui/echo/dist
 
 # Copy loan reviewer skill files (system prompts for AI review agents)
 COPY .claude/skills/loan-the-bank/SKILL.md /app/.claude/skills/loan-the-bank/SKILL.md
