@@ -106,13 +106,7 @@ function createMcpServer(serverOrigin: string): McpServer {
   return server;
 }
 
-async function getOrCreateSession(
-  sessionId: string | undefined,
-  serverOrigin: string,
-): Promise<SessionRecord> {
-  if (sessionId && sessions.has(sessionId)) {
-    return sessions.get(sessionId)!;
-  }
+async function createSession(serverOrigin: string): Promise<SessionRecord> {
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: () => randomUUID(),
     onsessioninitialized: (id: string) => {
@@ -136,7 +130,20 @@ export default defineEventHandler(async (event) => {
     const serverOrigin = (useRuntimeConfig(event).public.siteUrl as string) ?? '';
     // h3's readBody handles JSON, x-www-form-urlencoded, etc.
     const body = req.method === 'POST' ? await readBody(event) : undefined;
-    const record = await getOrCreateSession(sessionId, serverOrigin);
+
+    // Per the Streamable HTTP MCP spec: when a request carries an Mcp-Session-Id
+    // the server doesn't know (e.g. because Cloud Run rotated pods), return 404
+    // so the client re-initializes. Creating a new in-memory session here would
+    // mint a fresh ID that the client's next request won't carry, and the
+    // transport would reject every subsequent call with "Server not initialized".
+    // Claude Desktop / Claude.ai both surface that rejection as a generic tool
+    // execution error; 404 lets them transparently start a new session.
+    if (sessionId && !sessions.has(sessionId)) {
+      setResponseStatus(event, 404);
+      return { error: 'session_not_found' };
+    }
+
+    const record = sessions.get(sessionId ?? '') ?? (await createSession(serverOrigin));
     await record.transport.handleRequest(req, res, body);
   } catch (e) {
     log.error({
