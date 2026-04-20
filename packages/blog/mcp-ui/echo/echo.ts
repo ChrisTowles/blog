@@ -187,6 +187,36 @@ if (
   typeof document !== 'undefined' &&
   document.getElementById('app') !== null
 ) {
+  // See aviation-answer.ts for the rationale: send size-changed directly on
+  // load so hosts render the iframe even when the ui/initialize handshake
+  // doesn't complete (observed in Claude Desktop for pending results).
+  const notifySize = (): void => {
+    try {
+      const root = document.documentElement;
+      const prevHeight = root.style.height;
+      root.style.height = 'max-content';
+      const height = Math.ceil(root.getBoundingClientRect().height);
+      root.style.height = prevHeight;
+      const width = Math.ceil(window.innerWidth);
+      window.parent.postMessage(
+        {
+          jsonrpc: '2.0',
+          method: 'ui/notifications/size-changed',
+          params: { width, height },
+        },
+        '*',
+      );
+    } catch {
+      /* best-effort */
+    }
+  };
+  notifySize();
+  if (typeof ResizeObserver !== 'undefined') {
+    const ro = new ResizeObserver(() => notifySize());
+    ro.observe(document.documentElement);
+    ro.observe(document.body);
+  }
+
   const boot = createBootstrap();
   window.__ECHO__ = {
     handleToolResult: boot.handleToolResult,
