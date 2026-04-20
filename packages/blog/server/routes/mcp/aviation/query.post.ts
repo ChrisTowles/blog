@@ -9,7 +9,7 @@
  * Claude.ai (SEP-1865 hosts don't expose an iframe until tool completion).
  *
  * Protocol:
- *   Request: JSON body `{ question: string }` (≤500 chars).
+ *   Request: JSON body `{ question: string }` (≤2000 chars).
  *   Response: `text/event-stream` with `data: <json>\n\n` events, where each
  *             payload matches `AviationQueryEvent`:
  *               { type: 'progress', step: 'planning'|'validating'|'querying'|'rendering' }
