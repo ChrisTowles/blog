@@ -70,10 +70,7 @@ function createMcpServer(): McpServer {
   return server;
 }
 
-async function getOrCreateSession(sessionId: string | undefined): Promise<SessionRecord> {
-  if (sessionId && sessions.has(sessionId)) {
-    return sessions.get(sessionId)!;
-  }
+async function createSession(): Promise<SessionRecord> {
   const server = createMcpServer();
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: () => randomUUID(),
@@ -95,7 +92,16 @@ export default defineEventHandler(async (event) => {
   try {
     const sessionId = getHeader(event, 'mcp-session-id');
     const body = req.method === 'POST' ? await readBody(event) : undefined;
-    const record = await getOrCreateSession(sessionId);
+
+    // See /mcp/aviation route for the rationale: return 404 when the client
+    // carries an Mcp-Session-Id we don't know (pod rotation), so it re-inits
+    // instead of getting stuck on "Server not initialized".
+    if (sessionId && !sessions.has(sessionId)) {
+      setResponseStatus(event, 404);
+      return { error: 'session_not_found' };
+    }
+
+    const record = sessions.get(sessionId ?? '') ?? (await createSession());
     await record.transport.handleRequest(req, res, body);
   } catch (e) {
     log.error({
