@@ -1188,6 +1188,45 @@ if (
   typeof document !== 'undefined' &&
   document.getElementById('app') !== null
 ) {
+  // Bypass the ext-apps `autoResize` gate: the library only sends
+  // `ui/notifications/size-changed` AFTER the `ui/initialize` handshake
+  // resolves. Some hosts (observed in Claude Desktop for pending tool results)
+  // don't respond to `ui/initialize` in a timely way, leaving the iframe at 0
+  // height and invisible to the user. Post size-changed directly via
+  // `window.parent.postMessage` on load + on every resize so the host renders
+  // us regardless of whether the App handshake completes.
+  const notifySize = (): void => {
+    try {
+      const root = document.documentElement;
+      const prevHeight = root.style.height;
+      root.style.height = 'max-content';
+      const height = Math.ceil(root.getBoundingClientRect().height);
+      root.style.height = prevHeight;
+      const width = Math.ceil(window.innerWidth);
+      window.parent.postMessage(
+        {
+          jsonrpc: '2.0',
+          method: 'ui/notifications/size-changed',
+          params: { width, height },
+        },
+        '*',
+      );
+    } catch {
+      /* best-effort; postMessage rarely throws but a pinned parent origin could */
+    }
+  };
+  // Initial size ping before the App handshake fires.
+  notifySize();
+  // Observe both elements ext-apps observes, so when content arrives (loader
+  // -> chart) the host grows the iframe. The ext-apps autoResize path will
+  // additionally re-observe after connect; the duplicate notifications are
+  // harmless (host coalesces by value).
+  if (typeof ResizeObserver !== 'undefined') {
+    const ro = new ResizeObserver(() => notifySize());
+    ro.observe(document.documentElement);
+    ro.observe(document.body);
+  }
+
   const boot = createBootstrap();
   // Expose a tiny hook so the Playwright harness can deliver tool-results
   // directly when an App-level transport isn't present in the local test env.
