@@ -43,7 +43,7 @@ import { validateSql } from './sql-safety';
 const LIMIT_ROW_CAP = 10_000;
 
 export const askAviationInputSchema = {
-  question: z.string().min(1, 'question is required').max(500, 'question must be <= 500 chars'),
+  question: z.string().min(1, 'question is required').max(2000, 'question must be <= 2000 chars'),
 };
 
 export interface AskAviationArgs {
