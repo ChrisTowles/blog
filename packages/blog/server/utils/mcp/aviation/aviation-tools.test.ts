@@ -28,6 +28,14 @@ describe('ask_aviation fast return', () => {
     expect(hasEmbeddedResource).toBe(false);
   });
 
+  it('tells the LLM the answer is already delivered (no "pending" or "trouble" phrasing)', () => {
+    const result = executeAskAviation({ question: 'test' }, queryUrl);
+    const text = result.content[0]?.type === 'text' ? result.content[0].text : '';
+    expect(text.toLowerCase()).not.toContain('pending');
+    expect(text.toLowerCase()).not.toContain('trouble');
+    expect(text.toLowerCase()).toMatch(/visible to the user|rendered/);
+  });
+
   it('echoes the question and queryUrl into structuredContent', () => {
     const result = executeAskAviation({ question: 'how many aircraft in CA?' }, queryUrl);
     expect(result.structuredContent).toEqual({

@@ -78,10 +78,17 @@ export function executeAskAviation(
   args: AskAviationArgs,
   queryUrl: string,
 ): CallToolResult & { structuredContent: AviationPendingResult } {
-  const fallbackText =
-    `Aviation query pending: "${args.question}". ` +
-    `This response includes an interactive MCP App iframe; ` +
-    `hosts without UI support won't see the chart or answer.`;
+  // The LLM sees this text. It MUST NOT sound like an incomplete or failed
+  // call — otherwise hosts like Claude.ai's model layer read "pending" as
+  // "retry or apologize" and mark the tool call as an error. The user is
+  // already seeing the SQL, narrative, chart, and follow-ups streaming into
+  // the iframe; the model just needs to know the answer has been delivered
+  // out-of-band so it can move on.
+  const llmSummary =
+    `Rendered an interactive aviation answer for: "${args.question}". ` +
+    `The SQL, narrative explanation, ECharts visualization, and follow-up ` +
+    `suggestions are already visible to the user in the iframe — the model ` +
+    `does not need to repeat or summarize them. Proceed with the conversation.`;
 
   const pending: AviationPendingResult = {
     pending: true,
@@ -90,7 +97,7 @@ export function executeAskAviation(
   };
 
   return {
-    content: [{ type: 'text', text: fallbackText }],
+    content: [{ type: 'text', text: llmSummary }],
     structuredContent: pending as unknown as Record<string, unknown>,
   } as CallToolResult & { structuredContent: AviationPendingResult };
 }
