@@ -91,6 +91,8 @@ Don't claim a feature works without steps 4-6. Automated tests miss rendering is
 ## Pre-commit Hooks
 
 - Image compression requires `pngquant` (`sudo apt-get install pngquant`)
+- `oxfmt --write` + `nuxt typecheck` run pre-commit and can modify working-tree files after `git commit`
+- Shell quoting: paths with `[param]` (Nitro routes) need quotes or `--` in git/bash commands — `git add -- 'path/[id].ts'`
 
 ## References
 

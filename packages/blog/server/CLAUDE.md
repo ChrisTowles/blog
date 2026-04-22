@@ -59,6 +59,7 @@ Both chat and artifacts use Anthropic beta APIs. Chat uses `beta.messages.stream
 - Pre-built Anthropic skills: `pdf`, `pptx`, `xlsx`, `docx` (NOT `create-pdf` — see https://platform.claude.com/docs/en/build-with-claude/skills-guide)
 - Beta response types are unstable — typed interfaces in `utils/ai/anthropic-beta-types.ts` use `any` for `content` fields where union narrowing is impractical
 - Hoist `TextEncoder` to module scope (not per-function call) in SSE streaming handlers
+- `log` from `evlog` — `log.warn(scope, message)` takes 1-2 args only; interpolate extras inline
 
 ## Database
 
