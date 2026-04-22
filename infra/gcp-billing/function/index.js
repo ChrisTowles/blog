@@ -26,14 +26,23 @@ const ALLOWED_PROJECTS = new Set(
 //     "currencyCode": "USD"
 //   }
 functions.cloudEvent('killSwitch', async (cloudEvent) => {
-  const rawData = cloudEvent?.data?.message?.data;
-  if (!rawData) {
-    console.log('No Pub/Sub message payload; ignoring');
+  // Parsing and validation — non-retriable. Any failure here is either a malformed
+  // payload or a schema change; retrying won't help and with RETRY_POLICY_RETRY on
+  // the event trigger it would storm (~24h of retries per Google's default).
+  // We catch, log, and return cleanly so the event is acked.
+  let payload;
+  try {
+    const rawData = cloudEvent?.data?.message?.data;
+    if (!rawData) {
+      console.log('No Pub/Sub message payload; ignoring');
+      return;
+    }
+    payload = JSON.parse(Buffer.from(rawData, 'base64').toString('utf-8'));
+    console.log('Budget notification:', JSON.stringify(payload));
+  } catch (err) {
+    console.error(`Non-retriable: failed to parse Pub/Sub payload: ${err.message}`);
     return;
   }
-
-  const payload = JSON.parse(Buffer.from(rawData, 'base64').toString('utf-8'));
-  console.log('Budget notification:', JSON.stringify(payload));
 
   const { budgetDisplayName, costAmount, budgetAmount } = payload;
 
@@ -63,6 +72,10 @@ functions.cloudEvent('killSwitch', async (cloudEvent) => {
 
   const projectName = `${PROJECT_PREFIX}${projectId}`;
 
+  // API calls — transient errors (5xx, rate limit, auth token refresh) are
+  // legitimately retriable; rethrow to let RETRY_POLICY_RETRY do its job.
+  // The subsequent invocation will hit the idempotency check below if the
+  // first attempt actually landed the state change.
   const auth = new google.auth.GoogleAuth({
     scopes: ['https://www.googleapis.com/auth/cloud-billing'],
   });
