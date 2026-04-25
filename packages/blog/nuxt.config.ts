@@ -11,6 +11,16 @@ dotenv.config({
   quiet: true,
 });
 
+const evlogOptions = {
+  enabled: true,
+  env: { service: 'blog' },
+  exclude: ['/api/_nuxt_icon/**'],
+};
+// evlog/nuxt's Nitro plugin can't resolve `nitropack/runtime/internal/config`
+// from the dev bundle, so it silently drops `exclude`. __EVLOG_CONFIG is the
+// plugin's first resolution path and works in both dev and prod.
+process.env.__EVLOG_CONFIG = JSON.stringify(evlogOptions);
+
 export default defineNuxtConfig({
   extends: ['../layers/workflows', '../layers/reading'],
 
@@ -27,13 +37,7 @@ export default defineNuxtConfig({
     'evlog/nuxt',
   ],
 
-  evlog: {
-    enabled: true,
-    env: {
-      service: 'blog',
-    },
-    exclude: ['/api/_nuxt_icon/**'],
-  },
+  evlog: evlogOptions,
 
   gtag: {
     id: process.env.NUXT_PUBLIC_GTAG_ID,
