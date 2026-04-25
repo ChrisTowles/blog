@@ -22,6 +22,7 @@ resolution step (env var) and works in both dev and prod. See
 `packages/blog/nuxt.config.ts:14-23`.
 
 **Verification (already done in this session):**
+
 - Reproduced with a tiny Node OTLP sink on `:4318`, `OTEL_EXPORTER_OTLP_ENDPOINT`
   pointing at it, and `curl http://localhost:3001/`. Before fix: 5 `_nuxt_icon`
   records hit the sink. After fix: 0.
