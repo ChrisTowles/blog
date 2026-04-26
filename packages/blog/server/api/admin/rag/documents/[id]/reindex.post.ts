@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
 
   // Get existing document
   const existingDoc = await db.query.documents.findFirst({
-    where: (doc, { eq }) => eq(doc.id, id),
+    where: (doc) => eq(doc.id, id),
   });
 
   if (!existingDoc) {

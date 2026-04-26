@@ -6,9 +6,9 @@ const { model, models } = useModels();
 const modelIcon = 'anthropic';
 
 const items = computed(() =>
-  models.map((model) => ({
-    label: model,
-    value: model,
+  models.map((m) => ({
+    label: m,
+    value: m,
     icon: `i-simple-icons-${modelIcon}`,
   })),
 );

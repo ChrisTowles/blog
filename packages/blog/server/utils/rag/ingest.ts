@@ -114,7 +114,7 @@ export async function ingestBlogPosts(): Promise<IngestResult> {
 
       // Check if document exists and is unchanged
       const existingDoc = await db.query.documents.findFirst({
-        where: (doc, { eq }) => eq(doc.slug, parsed.slug),
+        where: (doc) => eq(doc.slug, parsed.slug),
       });
 
       if (existingDoc && existingDoc.contentHash === contentHash) {

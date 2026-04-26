@@ -6,8 +6,7 @@ export default defineOAuthGoogleEventHandler({
     const session = await getUserSession(event);
 
     let user = await db.query.users.findFirst({
-      where: (user, { eq }) =>
-        and(eq(user.provider, 'google'), eq(user.providerId, googleUser.sub)),
+      where: (u, { eq }) => and(eq(u.provider, 'google'), eq(u.providerId, googleUser.sub)),
     });
     if (!user) {
       [user] = await db

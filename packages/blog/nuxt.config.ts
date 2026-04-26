@@ -1,6 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
+// oxlint-disable-next-line no-shadow -- shadows global Promise.resolve, only used as path helper
 import { dirname, resolve } from 'path';
 import { MODEL_HAIKU, MODEL_SONNET } from './shared/models';
 
@@ -143,7 +144,7 @@ export default defineNuxtConfig({
       async compiled(nitro) {
         const { rollup } = await import('rollup');
         const { default: typescript } = await import('@rollup/plugin-typescript');
-        const { default: resolve } = await import('@rollup/plugin-node-resolve');
+        const { default: rollupResolve } = await import('@rollup/plugin-node-resolve');
         const { cp, mkdir } = await import('node:fs/promises');
         const { join } = await import('node:path');
 
@@ -156,7 +157,7 @@ export default defineNuxtConfig({
         // Bundle migrate script with rollup
         const bundle = await rollup({
           input: join(rootDir, 'scripts/migrate.ts'),
-          plugins: [resolve(), typescript({ tsconfig: join(rootDir, 'tsconfig.json') })],
+          plugins: [rollupResolve(), typescript({ tsconfig: join(rootDir, 'tsconfig.json') })],
           external: ['pg', /^node:/],
         });
         await bundle.write({

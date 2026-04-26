@@ -576,8 +576,8 @@ function applyStepToLoader(root: HTMLElement, step: AviationProgressStep): void 
     const stepName = stepEl.getAttribute('data-step') as AviationProgressStep | null;
     if (!stepName) continue;
     const idx = STEP_ORDER.indexOf(stepName);
-    const state = idx < activeIndex ? 'done' : idx === activeIndex ? 'active' : 'pending';
-    stepEl.setAttribute('data-state', state);
+    const stageState = idx < activeIndex ? 'done' : idx === activeIndex ? 'active' : 'pending';
+    stepEl.setAttribute('data-state', stageState);
   }
 }
 
