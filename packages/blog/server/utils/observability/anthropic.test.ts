@@ -255,4 +255,13 @@ describe('withAnthropicStreamSpan', () => {
     expect(fakeSpan.attrs['error.type']).toBe('BadRequestError');
     expect(fakeSpan.ended).toBe(true);
   });
+
+  it('throws StreamShapeError when stream lacks .on emitter', () => {
+    // Catches SDK shape regressions — silent close would mask the bug.
+    expect(() => withAnthropicStreamSpan('chat', 'claude-opus-4-7', () => ({}) as never)).toThrow(
+      /lacks \.on emitter/,
+    );
+    expect(fakeSpan.attrs['error.type']).toBe('StreamShapeError');
+    expect(fakeSpan.ended).toBe(true);
+  });
 });

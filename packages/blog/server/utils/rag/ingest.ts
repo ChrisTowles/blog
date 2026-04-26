@@ -43,7 +43,7 @@ export async function generateContextualDescription(
   const model = config.public.model_fast as string;
 
   const response = await withAnthropicSpan(
-    'embeddings',
+    'chat',
     model,
     () =>
       client.messages.create({
