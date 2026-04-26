@@ -81,3 +81,9 @@ variable "cloudflare_api_token" {
   sensitive   = true
 }
 
+variable "new_relic_enabled" {
+  description = "Wire New Relic OTLP headers secret into Cloud Run. Requires a populated `new-relic-otlp-headers` Secret Manager version (see shared/main.tf for the gcloud command)."
+  type        = bool
+  default     = false
+}
+

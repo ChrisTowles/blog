@@ -18,7 +18,10 @@ import type {
   Tool,
 } from '@modelcontextprotocol/sdk/types.js';
 import { log } from 'evlog';
+import { SpanKind, SpanStatusCode, trace } from '@opentelemetry/api';
 import type { McpUiResourceCsp, McpUiResourcePermissions } from '../../../shared/chat-types';
+
+const mcpTracer = trace.getTracer('blog.mcp');
 
 interface CachedMcpClient {
   client: Client;
@@ -194,25 +197,52 @@ export async function callMcpTool(
   args: Record<string, unknown>,
   baseUrl?: string,
 ): Promise<McpToolCallOutcome> {
-  const entry = await connect(endpointPath, baseUrl);
-  if (!entry) {
-    return errorOutcome(`MCP endpoint ${endpointPath} is unavailable`);
-  }
-  try {
-    const result = (await entry.client.callTool({ name, arguments: args })) as CallToolResult;
-    const uiResource = await resolveUiResource(entry, name, extractUiResource(result));
-    return {
-      text: extractText(result),
-      structuredContent:
-        (result as { structuredContent?: Record<string, unknown> }).structuredContent ?? {},
-      uiResource,
-      isError: Boolean((result as { isError?: boolean }).isError),
-    };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    log.warn({ tag: 'mcp-pool', message: `MCP tool ${name} threw: ${message}` });
-    return errorOutcome(`MCP tool ${name} failed: ${message}`);
-  }
+  return mcpTracer.startActiveSpan(
+    `mcp.tool ${name}`,
+    {
+      kind: SpanKind.CLIENT,
+      attributes: {
+        'mcp.endpoint': endpointPath,
+        'mcp.tool.name': name,
+      },
+    },
+    async (span) => {
+      try {
+        const entry = await connect(endpointPath, baseUrl);
+        if (!entry) {
+          span.setAttribute('error.type', 'McpEndpointUnavailable');
+          span.setStatus({ code: SpanStatusCode.ERROR, message: 'endpoint unavailable' });
+          return errorOutcome(`MCP endpoint ${endpointPath} is unavailable`);
+        }
+        try {
+          const result = (await entry.client.callTool({ name, arguments: args })) as CallToolResult;
+          const uiResource = await resolveUiResource(entry, name, extractUiResource(result));
+          const isError = Boolean((result as { isError?: boolean }).isError);
+          if (isError) {
+            span.setAttribute('error.type', 'McpToolError');
+            span.setStatus({ code: SpanStatusCode.ERROR });
+          }
+          if (uiResource) span.setAttribute('mcp.ui_resource.uri', uiResource.uri);
+          return {
+            text: extractText(result),
+            structuredContent:
+              (result as { structuredContent?: Record<string, unknown> }).structuredContent ?? {},
+            uiResource,
+            isError,
+          };
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          log.warn({ tag: 'mcp-pool', message: `MCP tool ${name} threw: ${message}` });
+          if (err instanceof Error) span.recordException(err);
+          span.setAttribute('error.type', err instanceof Error ? err.name || 'Error' : 'Error');
+          span.setStatus({ code: SpanStatusCode.ERROR, message });
+          return errorOutcome(`MCP tool ${name} failed: ${message}`);
+        }
+      } finally {
+        span.end();
+      }
+    },
+  );
 }
 
 function errorOutcome(text: string): McpToolCallOutcome {

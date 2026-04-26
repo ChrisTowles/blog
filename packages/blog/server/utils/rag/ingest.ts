@@ -5,6 +5,7 @@ import { log } from 'evlog';
 import { chunkText, parseBlogMarkdown, hashContent } from './chunker';
 import { embedTexts } from '../ai/bedrock';
 import { getAnthropicClient } from '../ai/anthropic';
+import { withAnthropicSpan } from '../observability/anthropic';
 
 const BLOG_CONTENT_PATH = 'content/2.blog';
 
@@ -39,30 +40,41 @@ export async function generateContextualDescription(
 ): Promise<string> {
   const client = getAnthropicClient();
   const config = useRuntimeConfig();
+  const model = config.public.model_fast as string;
 
-  const response = await client.messages.create({
-    model: config.public.model_fast as string, // claude-haiku-4-5
-    max_tokens: 200,
-    temperature: 0,
-    messages: [
-      {
-        role: 'user',
-        content: [
+  const response = await withAnthropicSpan(
+    'embeddings',
+    model,
+    () =>
+      client.messages.create({
+        model, // claude-haiku-4-5
+        max_tokens: 200,
+        temperature: 0,
+        messages: [
           {
-            type: 'text' as const,
-            text: DOCUMENT_CONTEXT_PROMPT.replace('{title}', docTitle)
-              .replace('{url}', docUrl)
-              .replace('{doc_content}', docContent),
-            cache_control: { type: 'ephemeral' as const }, // Enable prompt caching
-          },
-          {
-            type: 'text' as const,
-            text: CHUNK_CONTEXT_PROMPT.replace('{chunk_content}', chunkContent),
+            role: 'user',
+            content: [
+              {
+                type: 'text' as const,
+                text: DOCUMENT_CONTEXT_PROMPT.replace('{title}', docTitle)
+                  .replace('{url}', docUrl)
+                  .replace('{doc_content}', docContent),
+                cache_control: { type: 'ephemeral' as const }, // Enable prompt caching
+              },
+              {
+                type: 'text' as const,
+                text: CHUNK_CONTEXT_PROMPT.replace('{chunk_content}', chunkContent),
+              },
+            ],
           },
         ],
-      },
-    ],
-  });
+      }),
+    {
+      max_tokens: 200,
+      temperature: 0,
+      attributes: { 'rag.ingest.kind': 'contextual_description' },
+    },
+  );
 
   const textBlock = response.content.find((c) => c.type === 'text');
   return textBlock?.text ?? '';

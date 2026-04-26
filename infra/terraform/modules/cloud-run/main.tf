@@ -255,6 +255,37 @@ resource "google_cloud_run_v2_service" "main" {
         }
       }
 
+      # OpenTelemetry OTLP — New Relic free-tier ingest via evlog/otlp drain.
+      # Drain is a no-op when OTEL_EXPORTER_OTLP_ENDPOINT is unset.
+      dynamic "env" {
+        for_each = var.new_relic_otlp_headers_secret_id != "" && var.otlp_endpoint != "" ? [1] : []
+        content {
+          name  = "OTEL_EXPORTER_OTLP_ENDPOINT"
+          value = var.otlp_endpoint
+        }
+      }
+
+      dynamic "env" {
+        for_each = var.new_relic_otlp_headers_secret_id != "" ? [1] : []
+        content {
+          name = "OTEL_EXPORTER_OTLP_HEADERS"
+          value_source {
+            secret_key_ref {
+              secret  = var.new_relic_otlp_headers_secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
+
+      dynamic "env" {
+        for_each = var.otel_service_name != "" ? [1] : []
+        content {
+          name  = "OTEL_SERVICE_NAME"
+          value = var.otel_service_name
+        }
+      }
+
       env {
         name  = "AVIATION_DUCKDB_MEMORY_LIMIT"
         value = var.aviation_duckdb_memory_limit

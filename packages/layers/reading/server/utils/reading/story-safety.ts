@@ -1,4 +1,5 @@
 import { MODEL_HAIKU } from '~~/shared/models';
+import { withAnthropicSpan } from '~~/server/utils/observability/anthropic';
 
 export const BLOCKLIST = [
   'kill',
@@ -45,14 +46,27 @@ export async function reviewStorySafety(storyText: string): Promise<SafetyResult
 
   // Stage 2: AI review
   const client = getAnthropicClient();
-  const response = await client.messages.create({
-    model: MODEL_HAIKU,
-    max_tokens: 256,
-    temperature: 0,
-    system: `You are a children's content safety reviewer. Classify the following story as SAFE or UNSAFE for children ages 7-11. Check for: violence, scary themes, stereotypes, age-inappropriate content, bullying.
+  const response = await withAnthropicSpan(
+    'chat',
+    MODEL_HAIKU,
+    () =>
+      client.messages.create({
+        model: MODEL_HAIKU,
+        max_tokens: 256,
+        temperature: 0,
+        system: `You are a children's content safety reviewer. Classify the following story as SAFE or UNSAFE for children ages 7-11. Check for: violence, scary themes, stereotypes, age-inappropriate content, bullying.
 Reply with JSON: { "safe": true/false, "reason": "..." }`,
-    messages: [{ role: 'user', content: storyText }],
-  });
+        messages: [{ role: 'user', content: storyText }],
+      }),
+    {
+      max_tokens: 256,
+      temperature: 0,
+      attributes: {
+        'reading.kind': 'safety-review',
+        'reading.story.length': storyText.length,
+      },
+    },
+  );
 
   const textBlock = response.content.find((b) => b.type === 'text');
   if (!textBlock || textBlock.type !== 'text') {

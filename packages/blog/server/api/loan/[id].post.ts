@@ -5,6 +5,7 @@ import type { ChatMessage, SSEEvent } from '~~/shared/chat-types';
 import type { LoanApplicationData } from '~~/shared/loan-types';
 import { loanChatTools, executeLoanTool } from '~~/server/utils/ai/loan-tools';
 import { LOAN_INTAKE_SYSTEM_PROMPT } from '~~/server/utils/ai/loan-system-prompt';
+import { withAnthropicStreamSpan } from '~~/server/utils/observability/anthropic';
 
 defineRouteMeta({
   openAPI: {
@@ -97,13 +98,27 @@ export default defineEventHandler(async (event) => {
         while (turnCount < maxTurns) {
           turnCount++;
 
-          const streamResponse = client.messages.stream({
-            model: model || (config.public.model as string),
-            max_tokens: 4096,
-            system: LOAN_INTAKE_SYSTEM_PROMPT,
-            messages: currentMessages,
-            tools: loanChatTools,
-          });
+          const loanModel = model || (config.public.model as string);
+          const streamResponse = withAnthropicStreamSpan(
+            'chat',
+            loanModel,
+            () =>
+              client.messages.stream({
+                model: loanModel,
+                max_tokens: 4096,
+                system: LOAN_INTAKE_SYSTEM_PROMPT,
+                messages: currentMessages,
+                tools: loanChatTools,
+              }),
+            {
+              max_tokens: 4096,
+              attributes: {
+                'loan.application.id': id,
+                'chat.kind': 'loan-intake',
+                'chat.turn': turnCount,
+              },
+            },
+          );
 
           let hasToolUse = false;
           const toolResults: { type: 'tool_result'; tool_use_id: string; content: string }[] = [];

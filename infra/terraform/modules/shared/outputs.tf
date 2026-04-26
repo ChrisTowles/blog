@@ -68,6 +68,11 @@ output "nuxt_og_image_secret_secret_id" {
   value       = data.google_secret_manager_secret.nuxt_og_image_secret.secret_id
 }
 
+output "new_relic_otlp_headers_secret_id" {
+  description = "Secret Manager secret ID for the New Relic OTLP headers string (api-key=...)"
+  value       = data.google_secret_manager_secret.new_relic_otlp_headers.secret_id
+}
+
 output "media_bucket_name" {
   description = "GCS media bucket name"
   value       = google_storage_bucket.media.name

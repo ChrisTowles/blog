@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { log } from 'evlog';
 import type { ArtifactSSEEvent, ArtifactFile } from '~~/shared/artifact-types';
 import type { AnthropicBetaClient } from '~~/server/utils/ai/anthropic-beta-types';
+import { withAnthropicSpan } from '~~/server/utils/observability/anthropic';
 
 defineRouteMeta({
   openAPI: {
@@ -81,24 +82,38 @@ export default defineEventHandler(async (event) => {
 
         // Call Anthropic Messages API with code execution tool
         const betaClient = client as unknown as AnthropicBetaClient;
-        const response = await betaClient.beta.messages.create({
-          model: config.public.model as string,
-          max_tokens: 16000,
-          system: SYSTEM_PROMPT,
-          betas: [
-            'code-execution-2025-08-25',
-            'files-api-2025-04-14',
-            ...(skills?.length ? ['skills-2025-10-02'] : []),
-          ],
-          ...(containerConfig ? { container: containerConfig } : {}),
-          tools: [
-            {
-              type: 'code_execution_20250825',
-              name: 'code_execution',
+        const artifactModel = config.public.model as string;
+        const response = await withAnthropicSpan(
+          'chat',
+          artifactModel,
+          () =>
+            betaClient.beta.messages.create({
+              model: artifactModel,
+              max_tokens: 16000,
+              system: SYSTEM_PROMPT,
+              betas: [
+                'code-execution-2025-08-25',
+                'files-api-2025-04-14',
+                ...(skills?.length ? ['skills-2025-10-02'] : []),
+              ],
+              ...(containerConfig ? { container: containerConfig } : {}),
+              tools: [
+                {
+                  type: 'code_execution_20250825',
+                  name: 'code_execution',
+                },
+              ],
+              messages: [{ role: 'user', content: userContent }],
+            }),
+          {
+            max_tokens: 16000,
+            attributes: {
+              'artifact.kind': 'code_execution',
+              'artifact.has_container': Boolean(containerId),
+              'artifact.skills_count': skills?.length ?? 0,
             },
-          ],
-          messages: [{ role: 'user', content: userContent }],
-        });
+          },
+        );
 
         // Extract container ID from response for reuse
         const responseContainerId = response.container?.id;

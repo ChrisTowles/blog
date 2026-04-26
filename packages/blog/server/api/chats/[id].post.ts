@@ -1,6 +1,7 @@
 import type { MessageParam } from '@anthropic-ai/sdk/resources/messages';
 import { z } from 'zod';
 import { log } from 'evlog';
+import { SpanKind, SpanStatusCode, trace } from '@opentelemetry/api';
 import type {
   ChatMessage,
   CodeExecutionPart,
@@ -12,6 +13,12 @@ import type {
 import type { AnthropicBetaClient, BetaStreamEvent } from '~~/server/utils/ai/anthropic-beta-types';
 import { getSkillsForAPI, getSkillsSystemPrompt } from '~~/server/utils/ai/skills-loader';
 import { callMcpTool, getMcpTools } from '~~/server/utils/mcp/client-pool';
+import {
+  withAnthropicSpan,
+  withAnthropicStreamSpan,
+} from '~~/server/utils/observability/anthropic';
+
+const chatTracer = trace.getTracer('blog.chat');
 
 const MCP_ENDPOINTS = ['/mcp/echo', '/mcp/aviation'] as const;
 
@@ -118,21 +125,39 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Chat not found' });
   }
 
+  // Surface chat-context attrs on the request span (auto-instrumentation
+  // already opened it). Promotes the skinny HTTP span to a wide event.
+  const requestSpan = trace.getActiveSpan();
+  requestSpan?.setAttributes({
+    'chat.id': id as string,
+    'chat.model': model,
+  });
+
   // Generate title if needed
   let generatedTitle: string | null = null;
   if (!chat.title && messages.length > 0) {
+    const titleModel = config.public.model_fast as string;
     const client = getAnthropicClient();
-    const titleResponse = await client.messages.create({
-      model: config.public.model_fast as string,
-      max_tokens: 50,
-      system: `You are a title generator for a chat:
+    const titleResponse = await withAnthropicSpan(
+      'chat',
+      titleModel,
+      () =>
+        client.messages.create({
+          model: titleModel,
+          max_tokens: 50,
+          system: `You are a title generator for a chat:
 - Generate a short title based on the first user's message
 - The title should be less than 30 characters long
 - The title should be a summary of the user's message
 - Do not use quotes (' or ") or colons (:) or any other punctuation
 - Do not use markdown, just plain text`,
-      messages: [{ role: 'user', content: JSON.stringify(messages[0]?.parts ?? '') }],
-    });
+          messages: [{ role: 'user', content: JSON.stringify(messages[0]?.parts ?? '') }],
+        }),
+      {
+        max_tokens: 50,
+        attributes: { 'chat.id': id as string, 'chat.kind': 'title-gen' },
+      },
+    );
 
     const titleContent = titleResponse.content[0];
     if (titleContent?.type === 'text') {
@@ -236,32 +261,46 @@ export default defineEventHandler(async (event) => {
 
         // Container config — reuse from previous turns in this chat
         let containerId = chat.containerId || undefined;
+        let toolsInvoked = 0;
 
         while (turnCount < maxTurns) {
           turnCount++;
 
-          const streamResponse = betaClient.beta.messages.stream({
+          const streamResponse = withAnthropicStreamSpan(
+            'chat',
             model,
-            max_tokens: 16000,
-            system: fullSystemPrompt,
-            messages: currentMessages,
-            betas: ['code-execution-2025-08-25', 'files-api-2025-04-14', 'skills-2025-10-02'],
-            tools: [
-              ...chatTools,
-              ...mcpToolDefs,
-              {
-                type: 'code_execution_20250825',
-                name: 'code_execution',
+            () =>
+              betaClient.beta.messages.stream({
+                model,
+                max_tokens: 16000,
+                system: fullSystemPrompt,
+                messages: currentMessages,
+                betas: ['code-execution-2025-08-25', 'files-api-2025-04-14', 'skills-2025-10-02'],
+                tools: [
+                  ...chatTools,
+                  ...mcpToolDefs,
+                  {
+                    type: 'code_execution_20250825',
+                    name: 'code_execution',
+                  },
+                ],
+                container: {
+                  ...(containerId ? { id: containerId } : {}),
+                  skills,
+                },
+                thinking: model.includes('haiku')
+                  ? { type: 'enabled' as const, budget_tokens: 4096 }
+                  : { type: 'adaptive' as const },
+              }),
+            {
+              max_tokens: 16000,
+              attributes: {
+                'chat.id': id as string,
+                'chat.turn': turnCount,
+                'chat.kind': 'stream',
               },
-            ],
-            container: {
-              ...(containerId ? { id: containerId } : {}),
-              skills,
             },
-            thinking: model.includes('haiku')
-              ? { type: 'enabled' as const, budget_tokens: 4096 }
-              : { type: 'adaptive' as const },
-          });
+          );
 
           let hasToolUse = false;
           let turnThinking = '';
@@ -424,33 +463,59 @@ export default defineEventHandler(async (event) => {
 
                 let toolResult: unknown;
                 const endpointPath = mcpToolRoute.get(currentToolName);
-                if (endpointPath) {
-                  const outcome = await callMcpTool(
-                    endpointPath,
-                    currentToolName,
-                    toolArgs,
-                    baseUrl,
-                  );
-                  toolResult = outcome.text;
-                  if (outcome.uiResource) {
-                    const uiPart: UiResourcePart = {
-                      type: 'ui-resource',
-                      toolCallId: currentToolUseId,
-                      uiResourceUri: outcome.uiResource.uri,
-                      structuredContent: outcome.structuredContent,
-                      csp: outcome.uiResource.csp,
-                      permissions: outcome.uiResource.permissions,
-                      error: outcome.isError,
-                    };
-                    uiResourceParts.push(uiPart);
-                    sendSSE(controller, {
-                      type: 'ui_resource',
-                      part: uiPart,
-                      html: outcome.uiResource.html,
-                    });
+                const toolKind = endpointPath ? 'mcp' : 'local';
+                const toolSpan = chatTracer.startSpan(`tool ${currentToolName}`, {
+                  kind: SpanKind.CLIENT,
+                  attributes: {
+                    'tool.name': currentToolName,
+                    'tool.call.id': currentToolUseId,
+                    'tool.kind': toolKind,
+                    'chat.id': id as string,
+                    ...(endpointPath ? { 'mcp.endpoint': endpointPath } : {}),
+                  },
+                });
+                toolsInvoked++;
+                try {
+                  if (endpointPath) {
+                    const outcome = await callMcpTool(
+                      endpointPath,
+                      currentToolName,
+                      toolArgs,
+                      baseUrl,
+                    );
+                    toolResult = outcome.text;
+                    if (outcome.uiResource) {
+                      const uiPart: UiResourcePart = {
+                        type: 'ui-resource',
+                        toolCallId: currentToolUseId,
+                        uiResourceUri: outcome.uiResource.uri,
+                        structuredContent: outcome.structuredContent,
+                        csp: outcome.uiResource.csp,
+                        permissions: outcome.uiResource.permissions,
+                        error: outcome.isError,
+                      };
+                      uiResourceParts.push(uiPart);
+                      sendSSE(controller, {
+                        type: 'ui_resource',
+                        part: uiPart,
+                        html: outcome.uiResource.html,
+                      });
+                    }
+                    if (outcome.isError) {
+                      toolSpan.setAttribute('error.type', 'McpToolError');
+                      toolSpan.setStatus({ code: SpanStatusCode.ERROR });
+                    }
+                  } else {
+                    toolResult = await executeTool(currentToolName, toolArgs, { baseUrl });
                   }
-                } else {
-                  toolResult = await executeTool(currentToolName, toolArgs, { baseUrl });
+                } catch (toolErr) {
+                  const e = toolErr instanceof Error ? toolErr : new Error(String(toolErr));
+                  toolSpan.recordException(e);
+                  toolSpan.setAttribute('error.type', e.name || 'Error');
+                  toolSpan.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
+                  throw toolErr;
+                } finally {
+                  toolSpan.end();
                 }
                 toolResults.push({
                   type: 'tool_result',
@@ -529,6 +594,13 @@ export default defineEventHandler(async (event) => {
           await db.update(tables.chats).set({ containerId }).where(eq(tables.chats.id, chat.id));
         }
 
+        // Final tally on the request span — `chat.tools.invoked` lets you
+        // ask "how many tool-using chats" without joining the child spans.
+        requestSpan?.setAttributes({
+          'chat.tools.invoked': toolsInvoked,
+          ...(containerId ? { 'chat.container.id': containerId } : {}),
+        });
+
         const messageParts: MessagePart[] = [
           ...(reasoningText
             ? [{ type: 'reasoning' as const, text: reasoningText, state: 'done' as const }]
@@ -550,6 +622,12 @@ export default defineEventHandler(async (event) => {
       } catch (error) {
         log.error('chat', 'Stream error');
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        if (requestSpan) {
+          const e = error instanceof Error ? error : new Error(errorMessage);
+          requestSpan.recordException(e);
+          requestSpan.setAttribute('error.type', e.name || 'Error');
+          requestSpan.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
+        }
         sendSSE(controller, { type: 'error', error: errorMessage });
         controller.close();
       }

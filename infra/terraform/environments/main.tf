@@ -68,6 +68,8 @@ module "cloud_run" {
   google_oauth_client_secret_secret_id = module.shared.google_oauth_client_secret_secret_id
   braintrust_api_key_secret_id         = module.shared.braintrust_api_key_secret_id
   nuxt_og_image_secret_secret_id       = module.shared.nuxt_og_image_secret_secret_id
+  new_relic_otlp_headers_secret_id     = var.new_relic_enabled ? module.shared.new_relic_otlp_headers_secret_id : ""
+  otel_service_name                    = "blog-${var.environment}"
   gcs_hmac_key_id_secret_id            = module.shared.gcs_hmac_key_id_secret_id
   gcs_hmac_secret_secret_id            = module.shared.gcs_hmac_secret_secret_id
   braintrust_project_name              = var.braintrust_project_name

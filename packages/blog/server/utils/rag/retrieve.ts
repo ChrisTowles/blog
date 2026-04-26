@@ -1,7 +1,15 @@
 import { sql } from 'drizzle-orm';
 import { log } from 'evlog';
+import { SpanKind, SpanStatusCode, trace } from '@opentelemetry/api';
+import { createHash } from 'node:crypto';
 import { useDrizzle } from '../drizzle';
 import { embedText, rerankDocuments } from '../ai/bedrock';
+
+const ragTracer = trace.getTracer('blog.rag');
+
+function hashQuery(query: string): string {
+  return createHash('sha256').update(query).digest('hex').slice(0, 16);
+}
 
 export interface RAGResult {
   content: string;
@@ -75,7 +83,7 @@ async function semanticSearch(
       return [];
     }
 
-    return results.rows as Array<ChunkCandidate & { distance: number }>;
+    return results.rows as unknown as Array<ChunkCandidate & { distance: number }>;
   } catch {
     log.error('rag', 'Semantic search failed');
     return [];
@@ -114,7 +122,7 @@ async function bm25Search(
       return [];
     }
 
-    return results.rows as Array<ChunkCandidate & { rank: number }>;
+    return results.rows as unknown as Array<ChunkCandidate & { rank: number }>;
   } catch {
     log.error('rag', 'BM25 search failed');
     return [];
@@ -178,68 +186,110 @@ export async function retrieveRAG(
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const candidateCount = opts.topK * opts.candidateMultiplier;
 
-  // Step 1: Generate query embedding
-  let queryEmbedding: number[];
-  try {
-    queryEmbedding = await embedText(query);
-  } catch {
-    log.error('rag', 'Failed to generate embedding');
-    return [];
-  }
+  return ragTracer.startActiveSpan(
+    'rag.retrieve',
+    {
+      kind: SpanKind.INTERNAL,
+      attributes: {
+        'rag.query.hash': hashQuery(query),
+        'rag.query.length': query.length,
+        'rag.k': opts.topK,
+        'rag.candidate_count': candidateCount,
+        'rag.semantic.weight': opts.semanticWeight,
+        'rag.bm25.weight': opts.bm25Weight,
+        'rag.rerank.enabled': !opts.skipRerank,
+        'rag.embedding.model': 'amazon.titan-embed-text-v2:0',
+      },
+    },
+    async (span) => {
+      try {
+        // Step 1: Generate query embedding
+        let queryEmbedding: number[];
+        try {
+          queryEmbedding = await embedText(query);
+        } catch {
+          log.error('rag', 'Failed to generate embedding');
+          span.setAttribute('error.type', 'EmbeddingError');
+          span.setStatus({ code: SpanStatusCode.ERROR, message: 'embedding failed' });
+          return [];
+        }
 
-  // Step 2: Parallel semantic and BM25 search
-  const [semanticResults, bm25Results] = await Promise.all([
-    semanticSearch(queryEmbedding, candidateCount),
-    bm25Search(query, candidateCount),
-  ]);
+        // Step 2: Parallel semantic and BM25 search
+        const [semanticResults, bm25Results] = await Promise.all([
+          semanticSearch(queryEmbedding, candidateCount),
+          bm25Search(query, candidateCount),
+        ]);
+        span.setAttributes({
+          'rag.semantic.candidates': semanticResults.length,
+          'rag.bm25.candidates': bm25Results.length,
+        });
 
-  // Step 3: Reciprocal Rank Fusion
-  const fusedResults = reciprocalRankFusion(
-    semanticResults,
-    bm25Results,
-    opts.semanticWeight,
-    opts.bm25Weight,
+        // Step 3: Reciprocal Rank Fusion
+        const fusedResults = reciprocalRankFusion(
+          semanticResults,
+          bm25Results,
+          opts.semanticWeight,
+          opts.bm25Weight,
+        );
+        span.setAttribute('rag.fused.count', fusedResults.length);
+
+        // If no results, return empty
+        if (fusedResults.length === 0) {
+          span.setAttribute('rag.results.count', 0);
+          return [];
+        }
+
+        // Step 4: Reranking (optional)
+        let finalResults: Array<ChunkCandidate & { score: number }>;
+
+        if (opts.skipRerank) {
+          finalResults = fusedResults.slice(0, opts.topK);
+        } else {
+          // Prepare documents for reranking
+          const topCandidates = fusedResults.slice(0, Math.min(20, fusedResults.length));
+          const documentsForRerank = topCandidates.map(
+            (c) => `${c.content}\n\nContext: ${c.contextualContent}`,
+          );
+
+          // Rerank with Cohere
+          const rerankResults = await rerankDocuments(query, documentsForRerank, opts.topK);
+          span.setAttribute('rag.reranker.model', 'cohere.rerank-v3.5:0');
+
+          // Map rerank results back to candidates
+          finalResults = rerankResults
+            .filter((r) => topCandidates[r.index] !== undefined)
+            .map((r) => ({
+              ...topCandidates[r.index]!,
+              score: r.relevanceScore,
+            }));
+        }
+
+        span.setAttributes({
+          'rag.results.count': finalResults.length,
+          'rag.top_score': finalResults[0]?.score ?? 0,
+        });
+
+        // Format final results
+        return finalResults.map((r) => ({
+          content: r.content,
+          contextualContent: r.contextualContent,
+          documentTitle: r.documentTitle,
+          documentUrl: r.documentUrl,
+          documentSlug: r.documentSlug,
+          chunkIndex: r.chunkIndex,
+          score: r.score,
+        }));
+      } catch (err) {
+        const e = err instanceof Error ? err : new Error(String(err));
+        span.recordException(e);
+        span.setAttribute('error.type', e.name || 'Error');
+        span.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
+        throw err;
+      } finally {
+        span.end();
+      }
+    },
   );
-
-  // If no results, return empty
-  if (fusedResults.length === 0) {
-    return [];
-  }
-
-  // Step 4: Reranking (optional)
-  let finalResults: Array<ChunkCandidate & { score: number }>;
-
-  if (opts.skipRerank) {
-    finalResults = fusedResults.slice(0, opts.topK);
-  } else {
-    // Prepare documents for reranking
-    const topCandidates = fusedResults.slice(0, Math.min(20, fusedResults.length));
-    const documentsForRerank = topCandidates.map(
-      (c) => `${c.content}\n\nContext: ${c.contextualContent}`,
-    );
-
-    // Rerank with Cohere
-    const rerankResults = await rerankDocuments(query, documentsForRerank, opts.topK);
-
-    // Map rerank results back to candidates
-    finalResults = rerankResults
-      .filter((r) => topCandidates[r.index] !== undefined)
-      .map((r) => ({
-        ...topCandidates[r.index]!,
-        score: r.relevanceScore,
-      }));
-  }
-
-  // Format final results
-  return finalResults.map((r) => ({
-    content: r.content,
-    contextualContent: r.contextualContent,
-    documentTitle: r.documentTitle,
-    documentUrl: r.documentUrl,
-    documentSlug: r.documentSlug,
-    chunkIndex: r.chunkIndex,
-    score: r.score,
-  }));
 }
 
 /**

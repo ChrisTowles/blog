@@ -17,6 +17,7 @@ import { z } from 'zod';
 import { log } from 'evlog';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { getAnthropicClient } from '../../ai/anthropic';
+import { withAnthropicSpan } from '../../observability/anthropic';
 import { MODEL_SONNET } from '../../../../shared/models';
 import { extractErrorMessage } from '../../../../shared/error-util';
 import {
@@ -167,23 +168,35 @@ export async function runAviationPipeline(
 
 async function callAnthropicForStructuredOutput(question: string): Promise<LlmStructuredOutput> {
   const client = getAnthropicClient();
-  const response = await client.messages.create({
-    model: MODEL_SONNET,
-    max_tokens: 4096,
-    system: buildAviationSystemPrompt(),
-    tools: [
-      {
-        name: 'emit_answer',
-        description: 'Emit the final structured answer for the aviation question.',
-        input_schema: AVIATION_STRUCTURED_OUTPUT_SCHEMA as unknown as {
-          type: 'object';
-          properties?: Record<string, unknown>;
-        },
+  const response = await withAnthropicSpan(
+    'chat',
+    MODEL_SONNET,
+    () =>
+      client.messages.create({
+        model: MODEL_SONNET,
+        max_tokens: 4096,
+        system: buildAviationSystemPrompt(),
+        tools: [
+          {
+            name: 'emit_answer',
+            description: 'Emit the final structured answer for the aviation question.',
+            input_schema: AVIATION_STRUCTURED_OUTPUT_SCHEMA as unknown as {
+              type: 'object';
+              properties?: Record<string, unknown>;
+            },
+          },
+        ],
+        tool_choice: { type: 'tool', name: 'emit_answer' },
+        messages: [{ role: 'user', content: question }],
+      }),
+    {
+      max_tokens: 4096,
+      attributes: {
+        'aviation.question.length': question.length,
+        'chat.kind': 'aviation-sql-gen',
       },
-    ],
-    tool_choice: { type: 'tool', name: 'emit_answer' },
-    messages: [{ role: 'user', content: question }],
-  });
+    },
+  );
 
   const block = response.content.find((b) => b.type === 'tool_use');
   if (!block || block.type !== 'tool_use' || block.name !== 'emit_answer') {

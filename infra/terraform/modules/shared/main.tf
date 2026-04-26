@@ -98,6 +98,19 @@ data "google_secret_manager_secret" "nuxt_og_image_secret" {
   project   = var.project_id
 }
 
+# New Relic OTLP headers (free-tier observability via evlog/otlp drain).
+# Stored as the full OTEL_EXPORTER_OTLP_HEADERS string (e.g. `api-key=NRAK-...`)
+# so Cloud Run can wire it directly into the env var without app-side parsing.
+# Created manually (matches the pattern of other secrets in this module):
+#   gcloud secrets create new-relic-otlp-headers --replication-policy=automatic \
+#     --project=PROJECT_ID
+#   echo -n "api-key=$NEW_RELIC_LICENSE_KEY" | gcloud secrets versions add \
+#     new-relic-otlp-headers --data-file=- --project=PROJECT_ID
+data "google_secret_manager_secret" "new_relic_otlp_headers" {
+  secret_id = "new-relic-otlp-headers"
+  project   = var.project_id
+}
+
 # GCS bucket for media (story illustrations, etc.)
 resource "google_storage_bucket" "media" {
   name                        = "${var.project_id}-media"
