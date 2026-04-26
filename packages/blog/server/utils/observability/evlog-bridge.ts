@@ -1,14 +1,10 @@
 /**
- * evlog → OTel span event bridge.
+ * evlog → OTel span event bridge. Routes drain entries into
+ * `span.addEvent(...)` when a span is active; stdout fallback for CLI
+ * scripts and startup logs.
  *
- * Boris-Tané pattern, paraphrased: "a log line is a wide event with no parent;
- * if there's a parent (an active span), it's an event on that span." So we
- * route every evlog drain entry into `span.addEvent(...)` when a span is
- * active, and fall back to stdout otherwise (so CLI scripts and startup logs
- * still get something visible).
- *
- * Truncation: New Relic caps OTLP attribute string values at 4095 chars.
- * We truncate to 2000 to leave headroom for combined attribute payloads.
+ * NR caps OTLP attribute strings at 4095 chars; we truncate to 2000 to
+ * leave headroom for combined attribute payloads.
  */
 
 import { trace, type Attributes } from '@opentelemetry/api';

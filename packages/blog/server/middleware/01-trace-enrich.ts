@@ -1,18 +1,9 @@
 /**
- * Request enrichment middleware — promote the auto-generated HTTP server span
- * from "skinny" to "wide" by attaching business attributes onto it.
- *
- * Boris-Tané pattern: the active span IS the wide event. Don't create a new
- * one — auto-instrumentation already gave us a parent. Just decorate it.
- *
+ * Decorate the auto-generated HTTP server span with business attributes.
  * Numbered `01-` so it runs ahead of `mcp-rate-limit.ts` (alphabetical).
  *
- * `request.id` resolution order:
- *   1. inbound `x-cloud-trace-context: TRACE_ID/SPAN_ID;o=1` (Cloud Run/GCP)
- *   2. inbound `x-request-id` (caller-provided)
- *   3. fresh `crypto.randomUUID()`
- *
- * Echoed back in the `x-request-id` response header so callers can correlate.
+ * `request.id` resolution: x-cloud-trace-context (Cloud Run/GCP) → inbound
+ * x-request-id → fresh uuid. Echoed in the x-request-id response header.
  */
 
 import { defineEventHandler, getRequestHeader, setResponseHeader } from 'h3';

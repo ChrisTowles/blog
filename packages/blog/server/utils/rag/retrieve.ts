@@ -4,10 +4,11 @@ import { SpanKind, SpanStatusCode, trace } from '@opentelemetry/api';
 import { createHash } from 'node:crypto';
 import { useDrizzle } from '../drizzle';
 import { embedText, rerankDocuments } from '../ai/bedrock';
+import { recordSpanError } from '../observability/span-helpers';
 
 const ragTracer = trace.getTracer('blog.rag');
 
-function hashQuery(query: string): string {
+export function hashQuery(query: string): string {
   return createHash('sha256').update(query).digest('hex').slice(0, 16);
 }
 
@@ -280,10 +281,7 @@ export async function retrieveRAG(
           score: r.score,
         }));
       } catch (err) {
-        const e = err instanceof Error ? err : new Error(String(err));
-        span.recordException(e);
-        span.setAttribute('error.type', e.name || 'Error');
-        span.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
+        recordSpanError(span, err);
         throw err;
       } finally {
         span.end();

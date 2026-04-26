@@ -7,7 +7,7 @@ type: pattern
 
 # Spans-as-wide-events for the Nuxt + Anthropic blog
 
-The blog's OTel layer is built around one thesis: **spans are the primary observability primitive**. Logs are events on spans; metrics are derived from spans by New Relic NRDB. Borrowed from Boris Tané (Baselime, now Cloudflare) — paraphrased: *"OpenTelemetry is just a wide-event factory. If you look at it that way, you're winning."*
+The blog's OTel layer is built around one thesis: **spans are the primary observability primitive**. Logs are events on spans; metrics are derived from spans by New Relic NRDB. Borrowed from Boris Tané (Baselime, now Cloudflare) — paraphrased: _"OpenTelemetry is just a wide-event factory. If you look at it that way, you're winning."_
 
 ## The decision
 
@@ -26,7 +26,7 @@ Anthropic returns `input_tokens`, `cache_read_input_tokens`, and `cache_creation
 
 ### 2. Stream-span lifetime ≠ HTTP request lifetime
 
-For SSE streams, the span must end when the *stream* emits `finalMessage` / `error` / `end`, not when the synchronous `client.messages.stream(...)` call returns. Otherwise streaming chats look like 50ms requests in NR.
+For SSE streams, the span must end when the _stream_ emits `finalMessage` / `error` / `end`, not when the synchronous `client.messages.stream(...)` call returns. Otherwise streaming chats look like 50ms requests in NR.
 
 `withAnthropicStreamSpan` attaches all three listeners and uses an `ended` guard so duplicate-firing is idempotent.
 
@@ -62,8 +62,8 @@ New Relic and the broader ecosystem render GenAI traces using `gen_ai.provider.n
 
 ## References
 
-- Boris Tané — *Observability wide events 101* (2024-09-07)
-- Baselime — *Logging at scale with canonical log lines*
+- Boris Tané — _Observability wide events 101_ (2024-09-07)
+- Baselime — _Logging at scale with canonical log lines_
 - OTel — GenAI semantic conventions: `https://opentelemetry.io/docs/specs/semconv/gen-ai/`
 - New Relic OTLP best practices: `https://docs.newrelic.com/docs/opentelemetry/best-practices/opentelemetry-otlp/`
 - Repo: `packages/blog/server/plugins/00-otel-sdk.ts`, `packages/blog/server/utils/observability/`

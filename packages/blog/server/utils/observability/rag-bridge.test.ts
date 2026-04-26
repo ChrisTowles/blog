@@ -5,11 +5,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { createHash } from 'node:crypto';
-
-function hashQuery(query: string): string {
-  return createHash('sha256').update(query).digest('hex').slice(0, 16);
-}
+import { hashQuery } from '../rag/retrieve';
 
 describe('rag query hash', () => {
   it('returns a 16-character hex string', () => {

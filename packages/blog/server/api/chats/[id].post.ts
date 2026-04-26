@@ -1,7 +1,8 @@
 import type { MessageParam } from '@anthropic-ai/sdk/resources/messages';
 import { z } from 'zod';
 import { log } from 'evlog';
-import { SpanKind, SpanStatusCode, trace } from '@opentelemetry/api';
+import { SpanKind, trace } from '@opentelemetry/api';
+import { recordSpanError } from '~~/server/utils/observability/span-helpers';
 import type {
   ChatMessage,
   CodeExecutionPart,
@@ -485,6 +486,7 @@ export default defineEventHandler(async (event) => {
                     );
                     toolResult = outcome.text;
                     if (outcome.uiResource) {
+                      toolSpan.setAttribute('mcp.ui_resource.uri', outcome.uiResource.uri);
                       const uiPart: UiResourcePart = {
                         type: 'ui-resource',
                         toolCallId: currentToolUseId,
@@ -502,17 +504,16 @@ export default defineEventHandler(async (event) => {
                       });
                     }
                     if (outcome.isError) {
-                      toolSpan.setAttribute('error.type', 'McpToolError');
-                      toolSpan.setStatus({ code: SpanStatusCode.ERROR });
+                      recordSpanError(
+                        toolSpan,
+                        new Error(`MCP tool ${currentToolName} returned isError`),
+                      );
                     }
                   } else {
                     toolResult = await executeTool(currentToolName, toolArgs, { baseUrl });
                   }
                 } catch (toolErr) {
-                  const e = toolErr instanceof Error ? toolErr : new Error(String(toolErr));
-                  toolSpan.recordException(e);
-                  toolSpan.setAttribute('error.type', e.name || 'Error');
-                  toolSpan.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
+                  recordSpanError(toolSpan, toolErr);
                   throw toolErr;
                 } finally {
                   toolSpan.end();
@@ -622,12 +623,7 @@ export default defineEventHandler(async (event) => {
       } catch (error) {
         log.error('chat', 'Stream error');
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        if (requestSpan) {
-          const e = error instanceof Error ? error : new Error(errorMessage);
-          requestSpan.recordException(e);
-          requestSpan.setAttribute('error.type', e.name || 'Error');
-          requestSpan.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
-        }
+        if (requestSpan) recordSpanError(requestSpan, error);
         sendSSE(controller, { type: 'error', error: errorMessage });
         controller.close();
       }

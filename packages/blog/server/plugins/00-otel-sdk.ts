@@ -1,17 +1,10 @@
 /**
- * Nitro startup plugin — initialize OpenTelemetry NodeSDK once at server boot.
+ * Initialize OpenTelemetry NodeSDK once at server boot.
  *
- * Replaces the prior log-only OTLP drain with a full SDK pipeline: traces from
- * auto-instrumentations (HTTP, pg, undici, dns…) plus manual spans wrapped at
- * the Anthropic/RAG/tool seams in later units.
- *
- * Wide-events philosophy: every span IS the wide event. Logs become span
- * events on the active span via the evlog bridge (see
- * `server/utils/observability/evlog-bridge.ts`).
- *
- * Cloud Run lifecycle: SIGTERM gives ~10s before SIGKILL. We hook
- * `sdk.shutdown()` (not `forceFlush()`) so the BatchSpanProcessor's last
- * batch lands in New Relic before the instance dies.
+ * Cloud Run lifecycle: SIGTERM gives ~10s before SIGKILL. Nitro's `close`
+ * hook fires from its own SIGTERM handler and awaits, so we hook there
+ * (not directly on SIGTERM) — `sdk.shutdown()` (not `forceFlush()`) flushes
+ * the BatchSpanProcessor's last batch.
  *
  * Hard requirement: throws on missing OTEL_EXPORTER_OTLP_ENDPOINT — silent
  * skip masks misconfig (memory: feedback_otlp_required.md).
@@ -122,7 +115,7 @@ export default defineNitroPlugin((nitroApp) => {
   // prior log-only OTLP drain — see U3 in the plan.
   nitroApp.hooks.hook('evlog:drain', bridgeDrainHandler);
 
-  const shutdown = async () => {
+  nitroApp.hooks.hookOnce('close', async () => {
     if (!sdk) return;
     const current = sdk;
     sdk = null;
@@ -131,10 +124,5 @@ export default defineNitroPlugin((nitroApp) => {
     } catch (err) {
       console.error('[otel] shutdown failed', err);
     }
-  };
-
-  nitroApp.hooks.hookOnce('close', shutdown);
-  process.once('SIGTERM', () => {
-    void shutdown();
   });
 });

@@ -1,27 +1,19 @@
 /**
  * OpenTelemetry span wrappers for Anthropic SDK calls.
  *
- * Implements the OTel GenAI semantic conventions for Anthropic
- * (`gen_ai.provider.name = "anthropic"`, span name `${op} ${model}`,
- * input-token sum across cache fields per the Anthropic spec note).
- *
- * Two helpers:
- *   - `withAnthropicSpan`        — non-streaming `.messages.create()` etc.
- *   - `withAnthropicStreamSpan`  — `.beta.messages.stream()` and friends;
- *                                  span lifetime ties to stream's
- *                                  `finalMessage` / `error` / `end` events.
- *
- * Why two wrappers: the non-streaming case can use `try/finally` in an async
- * function, but a stream's lifetime extends beyond the synchronous return
- * (the caller iterates events; `finalMessage()` resolves later). Trying to
- * unify them in one helper turns the call sites into a state machine.
+ * Two wrappers exist because a stream's lifetime extends past its factory's
+ * synchronous return (the caller iterates events; `finalMessage()` resolves
+ * later) — the non-streaming case can use try/finally, the streaming case
+ * must hook into stream events. Unifying them turns call sites into a state
+ * machine.
  *
  * Content capture (prompts/completions on spans) is opt-in via
  * `OTEL_GENAI_CAPTURE_CONTENT=1`. Off by default to avoid PII drift and the
- * 4095-char attribute cap on the New Relic side.
+ * 4095-char NR attribute cap.
  */
 
-import { SpanKind, SpanStatusCode, trace, type Span, type Tracer } from '@opentelemetry/api';
+import { SpanKind, trace, type Span, type Tracer } from '@opentelemetry/api';
+import { recordSpanError } from './span-helpers';
 
 const TRACER_NAME = 'blog.observability.anthropic';
 
@@ -40,7 +32,6 @@ const ATTR_GEN_AI_USAGE_INPUT_TOKENS = 'gen_ai.usage.input_tokens';
 const ATTR_GEN_AI_USAGE_OUTPUT_TOKENS = 'gen_ai.usage.output_tokens';
 const ATTR_GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS = 'gen_ai.usage.cache_read.input_tokens';
 const ATTR_GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS = 'gen_ai.usage.cache_creation.input_tokens';
-const ATTR_ERROR_TYPE = 'error.type';
 
 const MAX_CONTENT_LEN = 3500;
 
@@ -76,8 +67,7 @@ interface AnthropicMessageLike {
  * without narrowing.
  */
 interface StreamEmitterLike {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  on?: (event: string, listener: (arg?: any) => void) => unknown;
+  on?: (event: string, listener: (arg?: unknown) => void) => unknown;
 }
 
 function shouldCaptureContent(): boolean {
@@ -151,21 +141,6 @@ function applyResponseAttrs(span: Span, message: AnthropicMessageLike): void {
   applyUsageAttrs(span, message.usage);
 }
 
-function recordError(span: Span, err: unknown): void {
-  const error = err instanceof Error ? err : new Error(String(err));
-  span.recordException(error);
-  span.setAttribute(ATTR_ERROR_TYPE, error.name || 'Error');
-  span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
-}
-
-/**
- * Wrap a non-streaming Anthropic SDK call (e.g. `.messages.create()`).
- *
- * @example
- * const response = await withAnthropicSpan('chat', model, () =>
- *   client.messages.create({ model, max_tokens: 50, ... }),
- *   { max_tokens: 50, attributes: { 'chat.id': chatId } });
- */
 export async function withAnthropicSpan<T extends AnthropicMessageLike | unknown>(
   operation: string,
   model: string,
@@ -185,7 +160,7 @@ export async function withAnthropicSpan<T extends AnthropicMessageLike | unknown
         }
         return result;
       } catch (err) {
-        recordError(span, err);
+        recordSpanError(span, err);
         throw err;
       } finally {
         span.end();
@@ -194,19 +169,8 @@ export async function withAnthropicSpan<T extends AnthropicMessageLike | unknown
   );
 }
 
-/**
- * Wrap a streaming Anthropic SDK call (e.g. `.beta.messages.stream()`).
- *
- * Returns the original stream unchanged. The wrapper attaches listeners so
- * the span ends when:
- *   - the stream emits `finalMessage` (success — usage extracted from final),
- *   - the stream emits `error` (span marked ERROR with `error.type`), or
- *   - the stream emits `end` without either of the above (e.g. client abort —
- *     span closes OK with no `finish_reasons`).
- *
- * Span lifetime therefore matches the stream lifetime, not the synchronous
- * return — critical for SSE chats where the response is open for many seconds.
- */
+/** Span lifetime ties to the stream's `finalMessage`/`error`/`end` events
+ * — critical for SSE chats where the response is open for many seconds. */
 export function withAnthropicStreamSpan<T>(
   operation: string,
   model: string,
@@ -221,7 +185,7 @@ export function withAnthropicStreamSpan<T>(
   try {
     stream = factory();
   } catch (err) {
-    recordError(span, err);
+    recordSpanError(span, err);
     span.end();
     throw err;
   }
@@ -233,28 +197,25 @@ export function withAnthropicStreamSpan<T>(
     span.end();
   };
 
-  // Duck-type listener attachment. Both Anthropic's hand-rolled
-  // `BetaStreamResponse` and the SDK's real `MessageStream<T>` expose `.on`
-  // at runtime; only the type declarations differ.
+  // Duck-type listener attachment. Both BetaStreamResponse (hand-rolled) and
+  // MessageStream<T> (SDK) expose `.on` at runtime; only type declarations
+  // differ. Loud failure on missing `.on` mirrors the OTLP-endpoint rule —
+  // silent close would mask SDK shape regressions.
   const emitter = stream as unknown as StreamEmitterLike;
-  if (typeof emitter.on === 'function') {
-    emitter.on('finalMessage', (msg) => {
-      applyResponseAttrs(span, msg as AnthropicMessageLike);
-      finish();
-    });
-    emitter.on('error', (err) => {
-      recordError(span, err);
-      finish();
-    });
-    emitter.on('end', () => {
-      // Fires after finalMessage/error in the happy paths — finish() is a no-op
-      // then. If the stream ended without either (e.g. abort), close OK.
-      finish();
-    });
-  } else {
-    // No listener API → close span eagerly so it doesn't leak.
-    finish();
+  if (typeof emitter.on !== 'function') {
+    span.setAttribute('error.type', 'StreamShapeError');
+    span.end();
+    throw new Error('withAnthropicStreamSpan: stream lacks .on emitter');
   }
+  emitter.on('finalMessage', (msg) => {
+    applyResponseAttrs(span, msg as AnthropicMessageLike);
+    finish();
+  });
+  emitter.on('error', (err) => {
+    recordSpanError(span, err);
+    finish();
+  });
+  emitter.on('end', finish);
 
   return stream;
 }
