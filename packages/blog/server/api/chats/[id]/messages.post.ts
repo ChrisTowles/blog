@@ -45,8 +45,7 @@ export default defineEventHandler(async (event) => {
 
   // Ownership check.
   const chat = await db.query.chats.findFirst({
-    where: (chat, { eq, and }) =>
-      and(eq(chat.id, chatId), eq(chat.userId, session.user?.id || session.id)),
+    where: (c, { eq, and }) => and(eq(c.id, chatId), eq(c.userId, session.user?.id || session.id)),
   });
   if (!chat) {
     throw createError({ statusCode: 404, statusMessage: 'Chat not found' });

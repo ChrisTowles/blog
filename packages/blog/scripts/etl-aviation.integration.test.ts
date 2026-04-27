@@ -52,19 +52,16 @@ afterAll(() => {
   if (tmpDir) rmSync(tmpDir, { recursive: true, force: true });
 });
 
-async function countRows(conn: DuckDBConnection, parquet: string): Promise<number> {
-  const reader = await conn.runAndReadAll(
+async function countRows(c: DuckDBConnection, parquet: string): Promise<number> {
+  const reader = await c.runAndReadAll(
     `SELECT COUNT(*)::BIGINT AS n FROM read_parquet('${parquet}')`,
   );
   const rows = reader.getRowObjectsJson();
   return Number(rows[0]!.n);
 }
 
-async function allRows(
-  conn: DuckDBConnection,
-  sql: string,
-): Promise<Array<Record<string, unknown>>> {
-  const reader = await conn.runAndReadAll(sql);
+async function allRows(c: DuckDBConnection, sql: string): Promise<Array<Record<string, unknown>>> {
+  const reader = await c.runAndReadAll(sql);
   return reader.getRowObjectsJson() as Array<Record<string, unknown>>;
 }
 

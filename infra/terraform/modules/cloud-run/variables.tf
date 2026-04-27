@@ -187,3 +187,21 @@ variable "gcs_bucket_name" {
   type        = string
   default     = ""
 }
+
+variable "otlp_endpoint" {
+  description = "OpenTelemetry OTLP HTTP endpoint. Defaults to New Relic US datacenter; set to https://otlp.eu01.nr-data.net for EU. Empty disables OTLP drain."
+  type        = string
+  default     = "https://otlp.nr-data.net"
+}
+
+variable "new_relic_otlp_headers_secret_id" {
+  description = "Secret Manager secret ID for the OTEL_EXPORTER_OTLP_HEADERS string (e.g. `api-key=NRAK-...`). Empty disables OTLP drain."
+  type        = string
+  default     = ""
+}
+
+variable "otel_service_name" {
+  description = "OTEL service.name resource attribute. Falls back to evlog `service` config when unset."
+  type        = string
+  default     = ""
+}

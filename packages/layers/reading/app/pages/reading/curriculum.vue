@@ -61,8 +61,8 @@ function togglePhase(phase: PhonicsPhase) {
   expandedPhases.value = s;
 }
 
-watch(expandedPhases, (phases) => {
-  const sorted = Array.from(phases).sort();
+watch(expandedPhases, (next) => {
+  const sorted = Array.from(next).sort();
   const isDefault = sorted.length === 1 && sorted[0] === 1;
   router.replace({ query: { ...route.query, open: isDefault ? undefined : sorted.join(',') } });
 });

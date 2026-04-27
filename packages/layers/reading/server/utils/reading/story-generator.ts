@@ -1,6 +1,7 @@
 import { annotateWords, calculateDecodability } from './phonics-validator';
 import type { StoryContent, StoryPreview } from '../../../shared/reading-types';
 import { MODEL_HAIKU } from '~~/shared/models';
+import { withAnthropicSpan } from '~~/server/utils/observability/anthropic';
 
 interface GenerateOptions {
   allowedPatterns: string[];
@@ -60,18 +61,31 @@ export async function generateStoryPreviews(options: PreviewOptions): Promise<St
     contextParts.push(`CHILD'S INTERESTS: ${options.childInterests.join(', ')}`);
   }
 
-  const response = await client.messages.create({
-    model: MODEL_HAIKU,
-    max_tokens: 512,
-    temperature: 0.7,
-    system: `You generate story previews for children ages 7-11. Create exactly 4 unique story concepts.
+  const response = await withAnthropicSpan(
+    'chat',
+    MODEL_HAIKU,
+    () =>
+      client.messages.create({
+        model: MODEL_HAIKU,
+        max_tokens: 512,
+        temperature: 0.7,
+        system: `You generate story previews for children ages 7-11. Create exactly 4 unique story concepts.
 ${contextParts.join('\n')}
 
 Output as JSON array: [{ "title": "...", "summary": "..." }, ...]
 Each summary should be exactly one sentence describing the story plot.
 Make titles fun and engaging for children. Vary the story arcs (adventure, mystery, friendship, humor).`,
-    messages: [{ role: 'user', content: `Generate 4 story previews about ${options.theme}.` }],
-  });
+        messages: [{ role: 'user', content: `Generate 4 story previews about ${options.theme}.` }],
+      }),
+    {
+      max_tokens: 512,
+      temperature: 0.7,
+      attributes: {
+        'reading.kind': 'story-previews',
+        'reading.theme': options.theme,
+      },
+    },
+  );
 
   const textBlock = response.content.find((b) => b.type === 'text');
   if (!textBlock || textBlock.type !== 'text') {
@@ -103,11 +117,15 @@ export async function generateStory(options: GenerateOptions): Promise<Generated
   const extras = buildStoryPromptExtras({ who, idea, selectedPreview });
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    const response = await client.messages.create({
-      model: MODEL_HAIKU,
-      max_tokens: 1024,
-      temperature: 0.3,
-      system: `You are a decodable story writer for children ages 7-11. Follow these constraints EXACTLY:
+    const response = await withAnthropicSpan(
+      'chat',
+      MODEL_HAIKU,
+      () =>
+        client.messages.create({
+          model: MODEL_HAIKU,
+          max_tokens: 1024,
+          temperature: 0.3,
+          system: `You are a decodable story writer for children ages 7-11. Follow these constraints EXACTLY:
 ALLOWED PATTERNS: ${allowedPatterns.join(', ')}
 SIGHT WORDS: ${sightWords.join(', ')}
 TARGET NEW WORDS (use each 2+ times): ${targetWords.join(', ')}
@@ -118,8 +136,20 @@ ${extras}
 Generate a story with a simple problem -> attempt -> resolution arc.
 Use ONLY words that match the allowed patterns, sight words, or target words.
 Output as JSON: { "title": "...", "text": "..." }`,
-      messages: [{ role: 'user', content: `Write a decodable story about ${theme}.` }],
-    });
+          messages: [{ role: 'user', content: `Write a decodable story about ${theme}.` }],
+        }),
+      {
+        max_tokens: 1024,
+        temperature: 0.3,
+        attributes: {
+          'reading.kind': 'full-story',
+          'reading.theme': theme,
+          'reading.target_word_count': wordCount,
+          'reading.attempt': attempt,
+          'reading.allowed_pattern_count': allowedPatterns.length,
+        },
+      },
+    );
 
     const textBlock = response.content.find((b) => b.type === 'text');
     if (!textBlock || textBlock.type !== 'text') {

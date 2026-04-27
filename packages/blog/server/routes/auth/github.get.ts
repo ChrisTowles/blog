@@ -6,8 +6,7 @@ export default defineOAuthGitHubEventHandler({
     const session = await getUserSession(event);
 
     let user = await db.query.users.findFirst({
-      where: (user, { eq }) =>
-        and(eq(user.provider, 'github'), eq(user.providerId, ghUser.id.toString())),
+      where: (u, { eq }) => and(eq(u.provider, 'github'), eq(u.providerId, ghUser.id.toString())),
     });
     if (!user) {
       [user] = await db

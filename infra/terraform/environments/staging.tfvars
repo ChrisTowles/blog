@@ -11,3 +11,6 @@ deletion_protection     = false
 # here. Prod keeps min_instances=1 for the MCP aviation demo pre-warm path.
 min_instances   = 0
 mcp_sandbox_url = "https://stage-sandbox.towles.dev/sandbox.html"
+
+# New Relic OTLP drain — secret `new-relic-otlp-headers` must already exist.
+new_relic_enabled = true

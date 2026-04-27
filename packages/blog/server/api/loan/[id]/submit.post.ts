@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { log } from 'evlog';
 import type { LoanApplicationData, ReviewDecision, LoanReviewSSEEvent } from '~~/shared/loan-types';
 import { REVIEWERS, REVIEWER_DISPLAY_NAMES, isApplicationComplete } from '~~/shared/loan-types';
+import { withAnthropicStreamSpan } from '~~/server/utils/observability/anthropic';
 import {
   loadApproverPrompt,
   formatApplicationForReview,
@@ -71,12 +72,26 @@ export default defineEventHandler(async (event) => {
           const systemPrompt = loadApproverPrompt(reviewer);
           let fullText = '';
 
-          const streamResponse = client.messages.stream({
-            model: config.public.model as string,
-            max_tokens: 4096,
-            system: systemPrompt,
-            messages: [{ role: 'user', content: formattedApplication }],
-          });
+          const reviewModel = config.public.model as string;
+          const streamResponse = withAnthropicStreamSpan(
+            'chat',
+            reviewModel,
+            () =>
+              client.messages.stream({
+                model: reviewModel,
+                max_tokens: 4096,
+                system: systemPrompt,
+                messages: [{ role: 'user', content: formattedApplication }],
+              }),
+            {
+              max_tokens: 4096,
+              attributes: {
+                'loan.application.id': id,
+                'loan.reviewer': reviewer,
+                'chat.kind': 'loan-review',
+              },
+            },
+          );
 
           for await (const streamEvent of streamResponse) {
             if (

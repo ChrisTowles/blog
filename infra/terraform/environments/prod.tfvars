@@ -10,3 +10,7 @@ deletion_protection     = false
 # MCP aviation demo (plan Unit 7).
 min_instances   = 1
 mcp_sandbox_url = "https://sandbox.towles.dev/sandbox.html"
+
+# New Relic OTLP drain — secret `new-relic-otlp-headers` exists in
+# blog-towles-production Secret Manager (created 2026-04-27).
+new_relic_enabled = true

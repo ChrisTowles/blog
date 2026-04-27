@@ -194,6 +194,10 @@ export async function callMcpTool(
   args: Record<string, unknown>,
   baseUrl?: string,
 ): Promise<McpToolCallOutcome> {
+  // No dedicated span here — the chat handler wraps every tool dispatch in
+  // a `tool ${name}` span with `tool.kind=mcp`, `mcp.endpoint`, and `chat.id`,
+  // and the OTLP HTTP exporter's auto-instrumented undici span covers the
+  // actual hop. Adding a span here just double-counts in NRQL.
   const entry = await connect(endpointPath, baseUrl);
   if (!entry) {
     return errorOutcome(`MCP endpoint ${endpointPath} is unavailable`);

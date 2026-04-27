@@ -112,14 +112,14 @@ export default defineEventHandler(async (event) => {
       chunkIndex: r.chunkIndex,
     })),
     pipeline: {
-      semanticResults: (semanticRaw.rows as SemanticRow[]).map((r, i) => ({
+      semanticResults: (semanticRaw.rows as unknown as SemanticRow[]).map((r, i) => ({
         rank: i + 1,
         title: r.title,
         url: r.url,
         distance: parseFloat(r.distance).toFixed(4),
         preview: r.preview,
       })),
-      bm25Results: (bm25Raw.rows as BM25Row[]).map((r, i) => ({
+      bm25Results: (bm25Raw.rows as unknown as BM25Row[]).map((r, i) => ({
         rank: i + 1,
         title: r.title,
         url: r.url,

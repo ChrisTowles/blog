@@ -234,3 +234,15 @@ DB test helpers in `server/test-utils/db-helper.ts`: `cleanupDatabase()`, `creat
 - **Debugging beta APIs** — beta client methods cast via `AnthropicBetaClient` can silently fail in try/catch. Check `tail /tmp/nuxt-dev.log | grep -i warn` for swallowed errors.
 - **Dev server startup** — always use `pnpm dev` from repo root (runs `docker:up`, `db:migrate`, `kill-port`). Using `pnpm --filter @chris-towles/blog dev` skips those steps and can leave stale servers on other ports.
 - **Vitest 4 has no `--include` CLI flag** — use a separate config file with `-c` flag for different test subsets, not CLI include/exclude.
+
+## Observability
+
+OpenTelemetry-native, Boris-Tané-style. Spans are wide events; logs become span events; New Relic derives metrics from spans server-side.
+
+- **SDK init**: `server/plugins/00-otel-sdk.ts` — `NodeSDK` with `getNodeAutoInstrumentations` (`instrumentation-fs` disabled), OTLP/HTTP protobuf exporter, `BatchSpanProcessor`, `AlwaysOn` sampler, `K_REVISION` → `service.instance.id`. Throws on missing `OTEL_EXPORTER_OTLP_ENDPOINT`. `SIGTERM` → `sdk.shutdown()` to flush before Cloud Run kills the instance.
+- **Request enrichment**: `server/middleware/01-trace-enrich.ts` — derives `request.id` from `x-cloud-trace-context` (or `x-request-id`, then `crypto.randomUUID()`), attaches `request.id`/`user.id`/`session.id`/`route.name` to the active root HTTP span. Echoes `x-request-id` response header.
+- **evlog bridge**: `server/utils/observability/evlog-bridge.ts` routes every `evlog.{info,warn,error}` call site into `span.addEvent(name, attrs)` when an active span exists, stdout fallback otherwise. The 36 existing evlog call sites need no per-call refactor.
+- **Anthropic spans**: `server/utils/observability/anthropic.ts` exports `withAnthropicSpan` (non-streaming) and `withAnthropicStreamSpan` (streaming, span ends on `finalMessage`/`error`/`end`). Writes `gen_ai.*` semconv attrs including the Anthropic input-tokens sum (`input_tokens + cache_read_input_tokens + cache_creation_input_tokens`). The same helpers cover Gemini via `{ provider: 'google.gemini' }`.
+- **No application metrics in app code.** Let New Relic NRDB derive RED/USE from span data. The custom-metric pipeline is an explicit non-goal.
+- **Content capture is opt-in.** Set `OTEL_GENAI_CAPTURE_CONTENT=1` to attach truncated prompts/completions to spans for debugging. Off by default to avoid PII drift and the 4095-char attr cap.
+- **Wrapper rule**: every Anthropic SDK call site goes through one of the wrappers — never `client.messages.create(...)` directly. The Braintrust singleton inside `getAnthropicClient()` is unaffected (parallel observability layer).

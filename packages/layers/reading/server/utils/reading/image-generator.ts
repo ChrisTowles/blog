@@ -1,5 +1,8 @@
 import { GoogleGenAI, Modality } from '@google/genai';
 import { Storage } from '@google-cloud/storage';
+import { withAnthropicSpan } from '~~/server/utils/observability/anthropic';
+
+const GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-image';
 
 interface StoryIllustrations {
   cover: Buffer;
@@ -63,14 +66,30 @@ async function generateImage(
   const charPrompt = buildCharacterPrompt(characters);
   const fullPrompt = [ILLUSTRATION_STYLE, charPrompt, prompt].filter(Boolean).join(' ');
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-image',
-    contents: fullPrompt,
-    config: {
-      responseModalities: [Modality.TEXT, Modality.IMAGE],
-      imageConfig: { aspectRatio: '1:1' },
+  // Reuse withAnthropicSpan with `provider: 'google.gemini'` — the helper is
+  // provider-agnostic in everything except its default `gen_ai.provider.name`.
+  // This keeps `gen_ai.*` semconv consistent across LLM vendors.
+  const response = await withAnthropicSpan(
+    'image_generation',
+    GEMINI_IMAGE_MODEL,
+    () =>
+      ai.models.generateContent({
+        model: GEMINI_IMAGE_MODEL,
+        contents: fullPrompt,
+        config: {
+          responseModalities: [Modality.TEXT, Modality.IMAGE],
+          imageConfig: { aspectRatio: '1:1' },
+        },
+      }),
+    {
+      provider: 'google.gemini',
+      attributes: {
+        'reading.kind': 'image-gen',
+        'reading.character_count': characters.length,
+        'reading.prompt_length': fullPrompt.length,
+      },
     },
-  });
+  );
 
   const parts = response.candidates?.[0]?.content?.parts ?? [];
   const imagePart = parts.find((p: any) => p.inlineData?.mimeType?.startsWith('image/'));
