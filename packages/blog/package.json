@@ -32,7 +32,8 @@
     "docker:up": "docker compose up -d",
     "docker:stop": "docker compose stop",
     "docker:reset": "docker compose down -v",
-    "etl:aviation": "tsx scripts/etl-aviation.ts"
+    "etl:aviation": "tsx scripts/etl-aviation.ts",
+    "gen:cards": "tsx scripts/generate-card-decks.ts"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.110",
@@ -66,6 +67,7 @@
     "nuxt-auth-utils": "^0.5.29",
     "nuxt-og-image": "^6.3.2",
     "pg": "^8.16.3",
+    "pixi.js": "^8.18.1",
     "postgres": "^3.4.7",
     "shiki": "2.3.1",
     "shiki-stream": "^0.1.3",

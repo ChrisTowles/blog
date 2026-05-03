@@ -54,6 +54,13 @@ const items = computed(() => [
     active: route.path.startsWith('/aviation'),
     'data-testid': TEST_IDS.NAVIGATION.AVIATION_LINK,
   },
+  {
+    label: 'Poker',
+    to: '/poker',
+    icon: 'i-lucide-spade',
+    active: route.path.startsWith('/poker'),
+    'data-testid': TEST_IDS.NAVIGATION.POKER_LINK,
+  },
   ...(loggedIn.value
     ? [
         {

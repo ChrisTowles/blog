@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 350"><defs>
+    <symbol id="suit-h" viewBox="0 0 100 100"><path d="M50 88 C 18 65, 5 44, 5 28 C 5 14, 16 5, 28 5 C 38 5, 46 12, 50 22 C 54 12, 62 5, 72 5 C 84 5, 95 14, 95 28 C 95 44, 82 65, 50 88 Z" fill="#ef4444"/></symbol>
+    <symbol id="suit-d" viewBox="0 0 100 100"><path d="M50 4 L92 50 L50 96 L8 50 Z" fill="#ef4444"/></symbol>
+    <symbol id="suit-s" viewBox="0 0 100 100"><path d="M50 5 C 50 5, 95 38, 95 64 C 95 78, 84 86, 73 86 C 64 86, 56 81, 53 73 C 53 73, 53 80, 60 90 L 40 90 C 47 80, 47 73, 47 73 C 44 81, 36 86, 27 86 C 16 86, 5 78, 5 64 C 5 38, 50 5, 50 5 Z" fill="#0f172a"/></symbol>
+    <symbol id="suit-c" viewBox="0 0 100 100"><path d="M 50 2 a 20 20 0 1 0 0 40 a 20 20 0 1 0 0 -40 Z M 28 26 a 20 20 0 1 0 0 40 a 20 20 0 1 0 0 -40 Z M 72 26 a 20 20 0 1 0 0 40 a 20 20 0 1 0 0 -40 Z M 40 60 L 60 60 L 66 94 L 34 94 Z" fill="#0f172a"/></symbol>
+  </defs>
+    <rect x="0" y="0" width="250" height="350" rx="22" ry="22" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="30" y="100" font-family="'Inter', system-ui, sans-serif" font-size="84" font-weight="800" fill="#ef4444" letter-spacing="-3">K</text>
+    <use href="#suit-d" x="120" y="210" width="100" height="100"/>
+  </svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 350">
+    <defs>
+      <radialGradient id="back-bg" cx="50%" cy="50%" r="60%">
+        <stop offset="0%" stop-color="#1e293b"/>
+        <stop offset="100%" stop-color="#020617"/>
+      </radialGradient>
+      <filter id="back-glow">
+        <feGaussianBlur stdDeviation="2"/>
+      </filter>
+    </defs>
+    <rect x="0" y="0" width="250" height="350" rx="18" ry="18" fill="url(#back-bg)"/>
+    <rect x="6" y="6" width="238" height="338" rx="14" ry="14" fill="none" stroke="#22d3ee" stroke-width="2" filter="url(#back-glow)"/>
+    <circle cx="125" cy="175" r="80" fill="none" stroke="#22d3ee" stroke-width="1.5"/>
+    <circle cx="125" cy="175" r="60" fill="none" stroke="#ff3868" stroke-width="1.2" stroke-opacity="0.85"/>
+    <circle cx="125" cy="175" r="40" fill="none" stroke="#22d3ee" stroke-width="1"/>
+    <circle cx="125" cy="175" r="22" fill="#0b1228" stroke="#ff3868" stroke-width="1.5"/>
+    <text x="125" y="183" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="22" font-weight="800" fill="#22d3ee" filter="url(#back-glow)">★</text>
+  </svg>
