@@ -55,7 +55,8 @@ function evaluateFive(cards: Card[]): HandRank {
   const uniqRanks = Array.from(new Set(ranks));
   let straightHigh: Rank | null = null;
   if (uniqRanks.length === 5) {
-    if (uniqRanks[0]! - uniqRanks[4]! === 4) {
+    const span = uniqRanks[0]! - uniqRanks[4]!;
+    if (span === 4) {
       straightHigh = uniqRanks[0]!;
     } else if (
       uniqRanks[0] === 14 &&
