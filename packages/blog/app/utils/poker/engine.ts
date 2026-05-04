@@ -188,7 +188,6 @@ export function createEngine(deps: EngineDeps = {}): PokerEngine {
   }
 
   function settleByFold(winner: Actor) {
-    const loser: Actor = winner === 'player' ? 'ai' : 'player';
     state[winner].chips += state.pot;
     const won = state.pot;
     state.handOver = true;
@@ -200,7 +199,6 @@ export function createEngine(deps: EngineDeps = {}): PokerEngine {
       summary: `${winner === 'player' ? 'You' : 'AI'} won ${won} (opponent folded)`,
     };
     log('system', state.result.summary);
-    void loser;
   }
 
   function settleShowdown() {

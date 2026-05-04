@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Application } from 'pixi.js';
+import { Application, Container, Graphics, Text } from 'pixi.js';
 import type { Card, GameState } from '~/utils/poker/types';
 import {
   drawCardBack,
@@ -36,23 +36,22 @@ function computeCardLayout(canvasWidth: number) {
 }
 
 interface Scene {
-  felt: import('pixi.js').Graphics;
-  potText: import('pixi.js').Text;
-  stageText: import('pixi.js').Text;
-  playerStackText: import('pixi.js').Text;
-  aiStackText: import('pixi.js').Text;
-  playerCommittedText: import('pixi.js').Text;
-  aiCommittedText: import('pixi.js').Text;
-  toActText: import('pixi.js').Text;
-  cardLayer: import('pixi.js').Container;
+  felt: Graphics;
+  potText: Text;
+  stageText: Text;
+  playerStackText: Text;
+  aiStackText: Text;
+  playerCommittedText: Text;
+  aiCommittedText: Text;
+  toActText: Text;
+  cardLayer: Container;
 }
 
 let scene: Scene | null = null;
 
 async function buildScene() {
   if (!containerRef.value) return;
-  const PIXI = await import('pixi.js');
-  const application = new PIXI.Application();
+  const application = new Application();
   await application.init({
     background: 0x0b3d2e,
     antialias: true,
@@ -64,10 +63,10 @@ async function buildScene() {
   app = application;
 
   // Build static scene
-  const felt = new PIXI.Graphics();
+  const felt = new Graphics();
   application.stage.addChild(felt);
 
-  const stageText = new PIXI.Text({
+  const stageText = new Text({
     text: '',
     style: {
       fontFamily: 'system-ui, sans-serif',
@@ -80,7 +79,7 @@ async function buildScene() {
   stageText.anchor.set(0.5, 0);
   application.stage.addChild(stageText);
 
-  const potText = new PIXI.Text({
+  const potText = new Text({
     text: 'Pot: 0',
     style: {
       fontFamily: 'system-ui, sans-serif',
@@ -92,7 +91,7 @@ async function buildScene() {
   potText.anchor.set(0.5, 0.5);
   application.stage.addChild(potText);
 
-  const aiStackText = new PIXI.Text({
+  const aiStackText = new Text({
     text: '',
     style: {
       fontFamily: 'system-ui, sans-serif',
@@ -104,7 +103,7 @@ async function buildScene() {
   aiStackText.anchor.set(0.5, 0);
   application.stage.addChild(aiStackText);
 
-  const aiCommittedText = new PIXI.Text({
+  const aiCommittedText = new Text({
     text: '',
     style: {
       fontFamily: 'system-ui, sans-serif',
@@ -115,7 +114,7 @@ async function buildScene() {
   aiCommittedText.anchor.set(0.5, 0);
   application.stage.addChild(aiCommittedText);
 
-  const playerStackText = new PIXI.Text({
+  const playerStackText = new Text({
     text: '',
     style: {
       fontFamily: 'system-ui, sans-serif',
@@ -127,7 +126,7 @@ async function buildScene() {
   playerStackText.anchor.set(0.5, 1);
   application.stage.addChild(playerStackText);
 
-  const playerCommittedText = new PIXI.Text({
+  const playerCommittedText = new Text({
     text: '',
     style: {
       fontFamily: 'system-ui, sans-serif',
@@ -138,7 +137,7 @@ async function buildScene() {
   playerCommittedText.anchor.set(0.5, 1);
   application.stage.addChild(playerCommittedText);
 
-  const toActText = new PIXI.Text({
+  const toActText = new Text({
     text: '',
     style: {
       fontFamily: 'system-ui, sans-serif',
@@ -151,7 +150,7 @@ async function buildScene() {
   toActText.anchor.set(0.5, 0.5);
   application.stage.addChild(toActText);
 
-  const cardLayer = new PIXI.Container();
+  const cardLayer = new Container();
   application.stage.addChild(cardLayer);
 
   scene = {
@@ -174,8 +173,8 @@ async function buildScene() {
   drawScene();
 }
 
-async function drawCard(
-  parent: import('pixi.js').Container,
+function drawCard(
+  parent: Container,
   card: Card | null,
   x: number,
   y: number,
@@ -183,26 +182,24 @@ async function drawCard(
   cardH: number,
   faceDown = false,
 ) {
-  const PIXI = await import('pixi.js');
-  const container = new PIXI.Container();
+  const container = new Container();
   container.x = x;
   container.y = y;
 
-  await drawDropShadow(container, { w: cardW, h: cardH });
+  drawDropShadow(container, { w: cardW, h: cardH });
 
-  // Inner container offset matches the shadow drop so faces sit "above" it.
-  const cardLayer = new PIXI.Container();
+  const cardLayer = new Container();
   container.addChild(cardLayer);
   if (faceDown || !card) {
-    await drawCardBack(cardLayer, { w: cardW, h: cardH });
+    drawCardBack(cardLayer, { w: cardW, h: cardH });
   } else {
-    await drawCardFace(cardLayer, card, { w: cardW, h: cardH });
+    drawCardFace(cardLayer, card, { w: cardW, h: cardH });
   }
 
   parent.addChild(container);
 }
 
-async function drawScene() {
+function drawScene() {
   if (!app || !scene) return;
   const w = app.renderer.width / app.renderer.resolution;
   const h = app.renderer.height / app.renderer.resolution;
@@ -268,8 +265,10 @@ async function drawScene() {
   // Position between AI cards and community cards, regardless of card scale.
   scene.toActText.y = h / 2 - layout.h / 2 - 18;
 
-  // Redraw cards
-  scene.cardLayer.removeChildren();
+  // PIXI v8: removeChildren() does NOT free the underlying GPU/Geometry — destroy them.
+  for (const child of scene.cardLayer.removeChildren()) {
+    child.destroy({ children: true });
+  }
 
   const cw = layout.w;
   const ch = layout.h;
@@ -281,7 +280,7 @@ async function drawScene() {
   for (let i = 0; i < 2; i++) {
     const c = props.state.ai.hole[i] ?? null;
     const x = aiHoleX0 + i * (cw + gap);
-    await drawCard(scene.cardLayer, c, x, aiHoleY, cw, ch, !props.revealAi);
+    drawCard(scene.cardLayer, c, x, aiHoleY, cw, ch, !props.revealAi);
   }
 
   // Community cards (center)
@@ -291,13 +290,12 @@ async function drawScene() {
     const c = props.state.community[i] ?? null;
     const x = communityX0 + i * (cw + gap);
     if (c) {
-      await drawCard(scene.cardLayer, c, x, communityY, cw, ch, false);
+      drawCard(scene.cardLayer, c, x, communityY, cw, ch, false);
     } else {
-      const PIXI = await import('pixi.js');
-      const slot = new PIXI.Container();
+      const slot = new Container();
       slot.x = x;
       slot.y = communityY;
-      await drawCardSlot(slot, { w: cw, h: ch });
+      drawCardSlot(slot, { w: cw, h: ch });
       scene.cardLayer.addChild(slot);
     }
   }
@@ -308,7 +306,7 @@ async function drawScene() {
   for (let i = 0; i < 2; i++) {
     const c = props.state.player.hole[i] ?? null;
     const x = playerHoleX0 + i * (cw + gap);
-    await drawCard(scene.cardLayer, c, x, playerHoleY, cw, ch, false);
+    drawCard(scene.cardLayer, c, x, playerHoleY, cw, ch, false);
   }
 }
 
@@ -336,10 +334,12 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   resizeObserver?.disconnect();
+  resizeObserver = null;
   if (app) {
     app.destroy(true, { children: true });
     app = null;
   }
+  scene = null;
 });
 </script>
 

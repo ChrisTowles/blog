@@ -20,17 +20,19 @@ import 'dotenv/config';
 import { GoogleGenAI, Modality } from '@google/genai';
 import { defineCommand, runMain } from 'citty';
 import { consola } from 'consola';
-import { mkdir, writeFile, access } from 'node:fs/promises';
+import { mkdir, writeFile, stat } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SUITS, type Card, type Suit } from '../packages/blog/app/utils/poker/types';
+import { cardCode } from '../packages/blog/shared/poker/decks/types';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const REPO_ROOT = resolve(__dirname, '..');
 const PORTRAITS_ROOT = resolve(REPO_ROOT, 'packages/blog/public/poker/decks');
 
-type Suit = 'h' | 'd' | 'c' | 's';
 type FaceRank = 'J' | 'Q' | 'K';
+const FACE_RANKS_NUMERIC: Record<FaceRank, 11 | 12 | 13> = { J: 11, Q: 12, K: 13 };
 
 interface DeckStyle {
   id: string;
@@ -122,8 +124,7 @@ function buildPrompt(deck: DeckStyle, suit: Suit, rank: FaceRank): string {
 }
 
 function buildJobs(deckIds: string[], cards: string[] | null): PortraitJob[] {
-  const SUITS: Suit[] = ['h', 'd', 'c', 's'];
-  const RANKS: FaceRank[] = ['J', 'Q', 'K'];
+  const FACE_RANKS: FaceRank[] = ['J', 'Q', 'K'];
   const jobs: PortraitJob[] = [];
   for (const deckId of deckIds) {
     const deck = DECK_STYLES[deckId];
@@ -132,30 +133,22 @@ function buildJobs(deckIds: string[], cards: string[] | null): PortraitJob[] {
       continue;
     }
     for (const suit of SUITS) {
-      for (const rank of RANKS) {
-        const cardCode = `${suit}${rank}`;
-        if (cards && !cards.includes(cardCode)) continue;
+      for (const rank of FACE_RANKS) {
+        const card: Card = { rank: FACE_RANKS_NUMERIC[rank], suit };
+        const code = cardCode(card);
+        if (cards && !cards.includes(code)) continue;
         jobs.push({
           deckId,
-          cardCode,
+          cardCode: code,
           suit,
           rank,
           prompt: buildPrompt(deck, suit, rank),
-          outputPath: join(PORTRAITS_ROOT, deckId, 'portraits', `${cardCode}.png`),
+          outputPath: join(PORTRAITS_ROOT, deckId, 'portraits', `${code}.png`),
         });
       }
     }
   }
   return jobs;
-}
-
-async function fileExists(path: string): Promise<boolean> {
-  try {
-    await access(path);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 async function generatePortrait(ai: GoogleGenAI, job: PortraitJob, model: string) {
@@ -242,11 +235,15 @@ const cmd = defineCommand({
     let skipped = 0;
     let failed = 0;
     for (const job of jobs) {
-      const exists = await fileExists(job.outputPath);
-      if (exists && !args.force) {
-        skipped++;
-        consola.info(`skip ${job.deckId}/${job.cardCode} (already exists)`);
-        continue;
+      if (!args.force) {
+        try {
+          await stat(job.outputPath);
+          skipped++;
+          consola.info(`skip ${job.deckId}/${job.cardCode} (already exists)`);
+          continue;
+        } catch {
+          // not present — fall through to generate
+        }
       }
       try {
         await generatePortrait(ai, job, args.model);

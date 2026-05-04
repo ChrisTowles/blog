@@ -12,27 +12,16 @@ definePageMeta({
   layout: 'default',
 });
 
-interface CardSlot {
-  code: string;
-  url: string;
-  label: string;
-}
-
-const decks = DECKS.map((deck) => {
-  const back = { code: 'back', url: `/poker/decks/${deck.id}/back.svg`, label: 'Back' };
-  const cards: CardSlot[] = [];
-  for (const suit of SUITS) {
-    for (const rank of RANKS) {
+const decks = DECKS.map((deck) => ({
+  ...deck,
+  back: { code: 'back', url: `/poker/decks/${deck.id}/back.svg`, label: 'Back' },
+  cards: SUITS.flatMap((suit) =>
+    RANKS.map((rank) => {
       const code = cardCode({ rank, suit });
-      cards.push({
-        code,
-        url: `/poker/decks/${deck.id}/${code}.svg`,
-        label: code,
-      });
-    }
-  }
-  return { ...deck, back, cards };
-});
+      return { code, url: `/poker/decks/${deck.id}/${code}.svg`, label: code };
+    }),
+  ),
+}));
 </script>
 
 <template>

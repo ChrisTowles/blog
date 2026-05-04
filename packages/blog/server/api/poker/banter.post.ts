@@ -3,24 +3,7 @@ import { log } from 'evlog';
 import { getAnthropicClient } from '~~/server/utils/ai/anthropic';
 import { withAnthropicSpan } from '~~/server/utils/observability/anthropic';
 import { MODEL_HAIKU } from '~~/shared/models';
-import { getPersona, type BanterEvent } from '~~/shared/poker/personas';
-
-const BANTER_EVENTS: BanterEvent[] = [
-  'hand-start',
-  'ai-bet',
-  'ai-raise',
-  'ai-call',
-  'ai-check',
-  'ai-fold',
-  'player-bet',
-  'player-raise',
-  'player-fold',
-  'player-all-in',
-  'win-showdown',
-  'win-fold',
-  'lose-showdown',
-  'split',
-];
+import { BANTER_EVENTS, getPersona } from '~~/shared/poker/personas';
 
 const bodySchema = z.object({
   personaId: z.string(),

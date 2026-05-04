@@ -49,8 +49,8 @@ function preflopStrength(hole: Card[]): number {
 
   if (pair) {
     pts = Math.max(5, pts * 2);
-    if (high === (5 as Rank)) pts = 6;
-    if (high <= (4 as Rank)) pts = 5;
+    if (high === 5) pts = 6;
+    if (high <= 4) pts = 5;
   }
   if (suited) pts += 2;
 
@@ -133,7 +133,7 @@ export function decideAi(input: AiDecisionInput): PlayerAction {
   if (adjEquity > 0.78 && rng() < 0.85) {
     const raiseSize = Math.max(bigBlind * 2, Math.round(state.pot * 0.9));
     const toAmount = Math.min(ai.committed + toCall + raiseSize, ai.committed + stack);
-    if (toAmount > state.currentBet + 0) {
+    if (toAmount > state.currentBet) {
       return { kind: 'raise', toAmount };
     }
   }
@@ -142,7 +142,7 @@ export function decideAi(input: AiDecisionInput): PlayerAction {
   if (adjEquity > 0.62 && rng() < 0.35) {
     const raiseSize = Math.max(bigBlind * 2, Math.round(state.pot * 0.6));
     const toAmount = Math.min(ai.committed + toCall + raiseSize, ai.committed + stack);
-    if (toAmount > state.currentBet + 0) {
+    if (toAmount > state.currentBet) {
       return { kind: 'raise', toAmount };
     }
   }
