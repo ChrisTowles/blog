@@ -108,6 +108,10 @@ export default defineNuxtConfig({
     // Loan pages don't need SSR (authenticated feature)
     '/loan': { ssr: false },
     '/loan/**': { ssr: false },
+    // Poker is interactive-only; PixiJS is bundled statically, so skip SSR
+    // to keep the route's initial chunk slim and avoid running PIXI on the server.
+    '/poker': { ssr: false },
+    '/poker/**': { ssr: false },
   },
 
   future: {
