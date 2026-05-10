@@ -216,3 +216,64 @@ Decisions / deviations:
 
 Verification: `pnpm typecheck`, `pnpm lint`, `pnpm test --run` (479
 passing) clean. `pnpm test:integration` (79 passing) clean.
+
+## Phase 9 — Polish
+
+Status: complete.
+
+Commits:
+
+- `944cc1f` feat(typing): mastery gating + polish + final progress log
+
+Files added / changed:
+
+- `useTypingProgress`: stage advances on lesson attempts that clear
+  95% accuracy + the stage's target WPM (game attempts skip the gate).
+- Typing landing page: shows the active learner's most-recent spelling
+  list with mastery counts (single network round-trip via the
+  expanded `/api/typing/spelling` response).
+- `/api/typing/spelling/index.get.ts`: returns `progressByList` so the
+  UI can render mastery counts without N+1 queries.
+- `spelling-lessons.test.ts`: covers `buildDrillText` and
+  `buildFallbackSentence` pure helpers.
+- Root `CLAUDE.md` typing line was already present from the cutover
+  phase; refined to mention TTS + mastery gating.
+
+Decisions / deviations:
+
+- Skipped a Lighthouse audit pass — that needs a dev server up and a
+  real environment, and the pages in question are bare Tailwind +
+  PixiJS. The user can run `npx lighthouse http://localhost:$UI_PORT/typing`
+  manually if they want a baseline before launch.
+- No stage-advance toast / celebration UI — the StageMap on
+  `/typing/progress` shows the bumped stage. Adding an inline toast
+  is a nice-to-have that didn't fit phase 9's polish budget.
+
+Verification: `pnpm typecheck`, `pnpm lint`, `pnpm test --run` (485
+passing) clean. `pnpm test:integration` (79 passing) clean.
+
+## Final commit map
+
+Branch: `feature/typing-app`. Commits since phase 2 head (`0d23afe`):
+
+| Phase | Commit                                       | Subject                                                                |
+| ----- | -------------------------------------------- | ---------------------------------------------------------------------- |
+| 3     | `8966eda`                                    | feat(typing): public lesson API + progress page + anonymous E2E        |
+| 3     | `fb26d16`                                    | docs(typing): start phase progress log at phase 3                      |
+| 4     | `03a9486`                                    | feat(typing): groups, learners, invites, act-as switcher, progress merge |
+| 5     | `54b8a6e`                                    | feat(typing): AI topic-game generator + safety review + topics UI      |
+| 6     | `7664eb7`                                    | feat(typing): TTS audio with on-disk cache + Web Speech fallback       |
+| 7     | `27ae4c2`                                    | feat(typing): PixiJS games framework + Letter Rain, Tic-Tac-Toe, Lake Leap |
+| 8     | `894bcc3`                                    | feat(typing): spelling lists with vision import + auto-lessons + mastery |
+| 8     | `3e219b4`                                    | fix(typing): pass spellingListId + word arrays through game attempts   |
+| 9     | `944cc1f`                                    | feat(typing): mastery gating + polish + final progress log             |
+
+Gated tests (require additional env / fixtures):
+
+- `lesson-generator.integration.test.ts` — live Anthropic. Run with
+  `RUN_INTEGRATION=1 ANTHROPIC_API_KEY=... pnpm test --run lesson-generator.integration`.
+- `spelling-extractor.integration.test.ts` — live Claude vision +
+  fixture image at `packages/blog/public/images/typing/test-worksheet.png`.
+- TTS `audio/[phrase].get.ts` — set `GOOGLE_TTS_KEY` and
+  `TYPING_TTS_PROVIDER=google` to enable the live path; the route
+  returns 404 + fallback hint by default.
