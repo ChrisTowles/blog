@@ -28,6 +28,12 @@ const sourceWords = computed(() => {
   }
   return [];
 });
+const spellingListId = computed(() => {
+  const raw = route.query.list;
+  if (typeof raw !== 'string') return null;
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : null;
+});
 
 useHead(() => ({
   title: `Typing — ${slug.value}`,

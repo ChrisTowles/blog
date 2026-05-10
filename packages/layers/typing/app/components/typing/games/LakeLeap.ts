@@ -44,6 +44,11 @@ export function createLakeLeap(config: LakeLeapConfig): GameScene {
   let startedAt = 0;
   let unsubKey: (() => void) | null = null;
   const errorsByKey: Record<string, number> = {};
+  /** Words the learner cleared without erroring on this round. */
+  const wordsCleared: string[] = [];
+  /** Words where the learner hit a wrong key (any wrong key on the word). */
+  const wordsErrored = new Set<string>();
+  let currentWordHadError = false;
 
   function endRound(ctx: GameSceneContext) {
     if (!app) return;
@@ -69,6 +74,8 @@ export function createLakeLeap(config: LakeLeapConfig): GameScene {
       accuracy,
       durationMs: summary.durationMs,
       errorsByKey,
+      wordsCleared,
+      wordsErrored: Array.from(wordsErrored),
     });
   }
 
@@ -191,14 +198,22 @@ export function createLakeLeap(config: LakeLeapConfig): GameScene {
           if (typed === target) {
             // Jump.
             moveCharacterTo(currentIndex);
+            if (currentWordHadError) {
+              wordsErrored.add(target);
+            } else {
+              wordsCleared.push(target);
+            }
             currentIndex++;
             typed = '';
+            currentWordHadError = false;
             if (inputText) inputText.text = '';
             if (currentIndex >= count) endRound(ctx);
           }
         } else {
           wrongs++;
           errorsByKey[expected ?? key] = (errorsByKey[expected ?? key] ?? 0) + 1;
+          currentWordHadError = true;
+          wordsErrored.add(target);
           // Reset the current word on a wrong key.
           typed = '';
           if (inputText) inputText.text = '';
@@ -212,6 +227,9 @@ export function createLakeLeap(config: LakeLeapConfig): GameScene {
       currentIndex = 0;
       typed = '';
       wrongs = 0;
+      wordsCleared.length = 0;
+      wordsErrored.clear();
+      currentWordHadError = false;
     },
   };
 }

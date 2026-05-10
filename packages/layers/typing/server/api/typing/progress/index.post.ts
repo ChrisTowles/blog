@@ -13,6 +13,9 @@ const bodySchema = z.object({
   learnerId: z.number().int().positive(),
   lessonId: z.number().int().nullable().optional(),
   gameSlug: z.string().max(40).nullable().optional(),
+  spellingListId: z.number().int().positive().nullable().optional(),
+  wordsCleared: z.array(z.string()).optional(),
+  wordsErrored: z.array(z.string()).optional(),
   wpm: z.number().min(0),
   netWpm: z.number().min(0),
   accuracy: z.number().min(0).max(1),
@@ -86,6 +89,68 @@ export default defineEventHandler(async (event) => {
         errors: stat.errors,
         avgMs: stat.avgMs,
       });
+    }
+  }
+
+  // Spelling mastery hook: if this attempt references a spelling list
+  // (either via lessonId on a spelling-* lesson or via spellingListId on
+  // a Lake Leap round), bump consecutive-correct counts.
+  let resolvedSpellingListId = body.spellingListId ?? null;
+  if (!resolvedSpellingListId && body.lessonId) {
+    const lessonRows = await db
+      .select({ spellingListId: tables.typingLessons.spellingListId })
+      .from(tables.typingLessons)
+      .where(eq(tables.typingLessons.id, body.lessonId))
+      .limit(1);
+    resolvedSpellingListId = lessonRows[0]?.spellingListId ?? null;
+  }
+
+  if (resolvedSpellingListId) {
+    const cleared = body.wordsCleared ?? [];
+    const errored = new Set((body.wordsErrored ?? []).map((w) => w.toLowerCase()));
+    for (const wordRaw of cleared) {
+      const word = wordRaw.toLowerCase();
+      const existing = await db
+        .select()
+        .from(tables.typingSpellingProgress)
+        .where(
+          and(
+            eq(tables.typingSpellingProgress.spellingListId, resolvedSpellingListId),
+            eq(tables.typingSpellingProgress.word, word),
+          ),
+        )
+        .limit(1);
+      const prev = existing[0];
+      if (errored.has(word)) {
+        // Streak reset.
+        if (prev) {
+          await db
+            .update(tables.typingSpellingProgress)
+            .set({ consecutiveCorrect: 0 })
+            .where(eq(tables.typingSpellingProgress.id, prev.id));
+        }
+        continue;
+      }
+      const nextStreak = (prev?.consecutiveCorrect ?? 0) + 1;
+      const mastered = nextStreak >= 3;
+      if (prev) {
+        await db
+          .update(tables.typingSpellingProgress)
+          .set({
+            consecutiveCorrect: nextStreak,
+            mastered,
+            masteredAt: mastered && !prev.mastered ? new Date() : prev.masteredAt,
+          })
+          .where(eq(tables.typingSpellingProgress.id, prev.id));
+      } else {
+        await db.insert(tables.typingSpellingProgress).values({
+          spellingListId: resolvedSpellingListId,
+          word,
+          consecutiveCorrect: nextStreak,
+          mastered,
+          masteredAt: mastered ? new Date() : null,
+        });
+      }
     }
   }
 
