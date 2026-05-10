@@ -34,11 +34,11 @@ const items = computed(() => [
     'data-testid': TEST_IDS.SEARCH.PAGE,
   },
   {
-    label: 'Reading',
-    to: '/reading',
-    icon: 'i-heroicons-book-open',
-    active: route.path.startsWith('/reading'),
-    'data-testid': TEST_IDS.NAVIGATION.READING_LINK,
+    label: 'Typing',
+    to: '/typing',
+    icon: 'i-heroicons-keyboard',
+    active: route.path.startsWith('/typing'),
+    'data-testid': TEST_IDS.NAVIGATION.TYPING_LINK,
   },
   {
     label: 'AI Chat',

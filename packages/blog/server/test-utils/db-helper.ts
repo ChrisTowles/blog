@@ -25,13 +25,16 @@ export async function cleanupDatabase() {
   await db.delete(tables.chats);
   await db.delete(tables.documentChunks);
   await db.delete(tables.documents);
-  // Reading tables (order matters for FK constraints)
-  await db.delete(tables.readingSessions);
-  await db.delete(tables.srsCards);
-  await db.delete(tables.childPhonicsProgress);
-  await db.delete(tables.stories);
-  await db.delete(tables.childProfiles);
-  await db.delete(tables.phonicsUnits);
+  // Typing tables (order matters for FK constraints)
+  await db.delete(tables.typingSpellingProgress);
+  await db.delete(tables.typingSpellingLists);
+  await db.delete(tables.typingKeyStats);
+  await db.delete(tables.typingAttempts);
+  await db.delete(tables.typingLessons);
+  await db.delete(tables.typingLearners);
+  await db.delete(tables.typingGroupInvites);
+  await db.delete(tables.typingGroupMembers);
+  await db.delete(tables.typingGroups);
   await db.delete(tables.workflows);
   await db.delete(tables.users);
 }
@@ -139,70 +142,54 @@ export async function createTestLoanMessage(
   return message!;
 }
 
-export async function createTestChild(
+export async function createTestTypingGroup(
+  overrides?: Partial<typeof tables.typingGroups.$inferInsert>,
+) {
+  const db = useDrizzle();
+  const [group] = await db
+    .insert(tables.typingGroups)
+    .values({
+      name: 'Test Family',
+      kind: 'family',
+      ...overrides,
+    })
+    .returning();
+  return group!;
+}
+
+export async function addTestGuardian(
+  groupId: number,
   userId: string,
-  overrides?: Partial<typeof tables.childProfiles.$inferInsert>,
+  overrides?: Partial<typeof tables.typingGroupMembers.$inferInsert>,
 ) {
   const db = useDrizzle();
-  const [child] = await db
-    .insert(tables.childProfiles)
+  const [member] = await db
+    .insert(tables.typingGroupMembers)
     .values({
+      groupId,
       userId,
-      name: 'Test Child',
-      birthYear: 2018,
-      currentPhase: 1,
-      interests: ['dinosaurs'],
+      role: 'guardian',
       ...overrides,
     })
     .returning();
-  return child!;
+  return member!;
 }
 
-export async function createTestStory(overrides?: Partial<typeof tables.stories.$inferInsert>) {
-  const db = useDrizzle();
-  const [story] = await db
-    .insert(tables.stories)
-    .values({
-      title: 'Test Story',
-      content: {
-        pages: [
-          {
-            words: [
-              { text: 'The', decodable: false, pattern: null, sightWord: true },
-              { text: 'cat', decodable: true, pattern: 'CVC-short-a', sightWord: false },
-              { text: 'sat', decodable: true, pattern: 'CVC-short-a', sightWord: false },
-            ],
-          },
-        ],
-      },
-      theme: 'animals',
-      targetPatterns: ['CVC-short-a'],
-      targetWords: ['cat', 'sat'],
-      decodabilityScore: 0.67,
-      fleschKincaid: 1.0,
-      aiGenerated: false,
-      ...overrides,
-    })
-    .returning();
-  return story!;
-}
-
-export async function createTestSrsCard(
-  childId: number,
-  overrides?: Partial<typeof tables.srsCards.$inferInsert>,
+export async function createTestLearner(
+  groupId: number,
+  overrides?: Partial<typeof tables.typingLearners.$inferInsert>,
 ) {
   const db = useDrizzle();
-  const [card] = await db
-    .insert(tables.srsCards)
+  const [learner] = await db
+    .insert(tables.typingLearners)
     .values({
-      childId,
-      cardType: 'phoneme',
-      front: 'What sound does "sh" make?',
-      back: '/ʃ/ as in "ship"',
+      groupId,
+      displayName: 'Test Learner',
+      currentStage: 1,
       ...overrides,
     })
     .returning();
-  return card!;
+  return learner!;
 }
 
 export async function createTestWorkflow(

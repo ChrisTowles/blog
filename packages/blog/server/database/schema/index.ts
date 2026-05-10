@@ -1,3 +1,3 @@
 export * from './blog';
-export * from './reading';
+export * from './typing';
 export * from './workflow';

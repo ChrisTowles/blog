@@ -48,13 +48,13 @@ Schema-level neutral term. Alternatives we considered: Household, Family, Crew, 
 
 Lessons stop being "type these words and watch a cursor". They're games. Three starter games — picked to cover different learning modes — with a shared `GameRunner` framework so we can add more.
 
-| Game                  | Skill mode             | Stage range | Input granularity   |
-| --------------------- | ---------------------- | ----------- | ------------------- |
-| Letter Rain           | Speed key-press        | 1-18        | Single key          |
-| Letter Tic-Tac-Toe    | Strategic key-press    | 1-15        | Single key          |
-| Lake Leap             | Word/sentence fluency  | 4-20        | Whole word/sentence |
+| Game               | Skill mode            | Stage range | Input granularity   |
+| ------------------ | --------------------- | ----------- | ------------------- |
+| Letter Rain        | Speed key-press       | 1-18        | Single key          |
+| Letter Tic-Tac-Toe | Strategic key-press   | 1-15        | Single key          |
+| Lake Leap          | Word/sentence fluency | 4-20        | Whole word/sentence |
 
-All three reuse the PixiJS `Application`/`Container`/`Graphics`/`Text`/`Sprite` pattern from `components/poker/PokerTable.vue`. The keyboard inside lesson runs is still HTML/SVG (better a11y, crisp at any DPI, simpler input). PixiJS is for the *game* viewport.
+All three reuse the PixiJS `Application`/`Container`/`Graphics`/`Text`/`Sprite` pattern from `components/poker/PokerTable.vue`. The keyboard inside lesson runs is still HTML/SVG (better a11y, crisp at any DPI, simpler input). PixiJS is for the _game_ viewport.
 
 ### 1. Letter Rain
 
@@ -90,10 +90,10 @@ All three reuse the PixiJS `Application`/`Container`/`Graphics`/`Text`/`Sprite` 
 
 ```ts
 type GameRunnerOptions<TConfig, TResult> = {
-  config: TConfig
-  onComplete: (result: TResult) => void
-  containerRef: Ref<HTMLDivElement | null>
-}
+  config: TConfig;
+  onComplete: (result: TResult) => void;
+  containerRef: Ref<HTMLDivElement | null>;
+};
 ```
 
 Each game implements `defineGame(config) -> { mount(app), unmount() }`. The runner handles PixiJS app lifecycle, resize observation, audio bus, and recording the typing-engine input stream. Games subscribe to keypress events from `useTypingEngine`; they don't reimplement input handling.
@@ -130,28 +130,28 @@ Validate output: 1-30 words, each 2-15 chars, all `[a-z]`. If invalid, return a 
 
 A fixed progression starting at home row and expanding outward — same as before:
 
-| Stage | Keys introduced                                   |
-| ----- | ------------------------------------------------- |
-| 1     | `f j` (index fingers, home row)                   |
-| 2     | `d k` (middle fingers)                            |
-| 3     | `s l` (ring fingers)                              |
-| 4     | `a ;` (pinkies) — full home row                   |
-| 5     | `g h` (index reach inward)                        |
-| 6     | Top row: `r u`                                    |
-| 7     | Top row: `e i`                                    |
-| 8     | Top row: `w o`                                    |
-| 9     | Top row: `q p`                                    |
-| 10    | Top row: `t y`                                    |
-| 11    | Bottom row: `v m`                                 |
-| 12    | Bottom row: `c ,`                                 |
-| 13    | Bottom row: `x .`                                 |
-| 14    | Bottom row: `z /`                                 |
-| 15    | Bottom row: `b n`                                 |
-| 16    | Shift + capitals                                  |
-| 17    | Numbers row                                       |
-| 18    | Common punctuation: `' " ! ?`                     |
-| 19    | Symbols: `@ # $ % & * ( )`                        |
-| 20    | Mixed prose at speed (WPM/accuracy targets)       |
+| Stage | Keys introduced                             |
+| ----- | ------------------------------------------- |
+| 1     | `f j` (index fingers, home row)             |
+| 2     | `d k` (middle fingers)                      |
+| 3     | `s l` (ring fingers)                        |
+| 4     | `a ;` (pinkies) — full home row             |
+| 5     | `g h` (index reach inward)                  |
+| 6     | Top row: `r u`                              |
+| 7     | Top row: `e i`                              |
+| 8     | Top row: `w o`                              |
+| 9     | Top row: `q p`                              |
+| 10    | Top row: `t y`                              |
+| 11    | Bottom row: `v m`                           |
+| 12    | Bottom row: `c ,`                           |
+| 13    | Bottom row: `x .`                           |
+| 14    | Bottom row: `z /`                           |
+| 15    | Bottom row: `b n`                           |
+| 16    | Shift + capitals                            |
+| 17    | Numbers row                                 |
+| 18    | Common punctuation: `' " ! ?`               |
+| 19    | Symbols: `@ # $ % & * ( )`                  |
+| 20    | Mixed prose at speed (WPM/accuracy targets) |
 
 Each stage has 3-5 lessons (drill / bigram / word / sentence). Stage gating: >= 95% accuracy AND >= target WPM.
 

@@ -21,15 +21,16 @@ server/
 ├── api/                # Nitro API routes
 │   ├── artifacts/          # Code execution + file download
 │   ├── chats/              # Chat CRUD + AI streaming
-│   ├── reading/            # Reading app (children, stories, srs, sessions, achievements, phonics)
 │   └── admin/              # Admin endpoints (RAG management)
 ├── database/           # Drizzle ORM schema + migrations
 └── utils/
     ├── ai/                 # Anthropic client, tools, streaming
     │   ├── tools.ts            # Tool registry + executeTool()
     │   └── tools/              # Individual tool definitions (Agent SDK format)
-    ├── rag/                # Chunking, ingestion, retrieval
-    └── reading/            # Phonics validator, story generator, safety review, image generator
+    └── rag/                # Chunking, ingestion, retrieval
+
+# Typing app lives in packages/layers/typing — see that layer's files for /typing routes,
+# composables, components, and AI utilities (lesson-generator, spelling-extractor, tts).
 
 shared/                 # Types shared between client and server
 ├── chat-types.ts           # Chat messages, SSE events
@@ -101,9 +102,9 @@ Props: `language`, `title`, `prompt`, `code`, `readonly`
 
 ## Database
 
-PostgreSQL with Drizzle ORM. Schema directory at `server/database/schema/` (barrel `index.ts`, feature files: `blog.ts`, `reading.ts`). Migrations in `server/database/migrations/`.
+PostgreSQL with Drizzle ORM. Schema directory at `server/database/schema/` (barrel `index.ts`, feature files: `blog.ts`, `typing.ts`, `workflow.ts`). Migrations in `server/database/migrations/`.
 
-Key tables: `users`, `chats`, `messages`, `documents`, `document_chunks`, `child_profiles`, `phonics_units`, `child_phonics_progress`, `srs_cards`, `stories`, `reading_sessions`, `achievements`.
+Key tables: `users`, `chats`, `messages`, `documents`, `document_chunks`, `typing_groups`, `typing_group_members`, `typing_group_invites`, `typing_learners`, `typing_lessons`, `typing_attempts`, `typing_key_stats`, `typing_spelling_lists`, `typing_spelling_progress`.
 
 ```bash
 pnpm db:migrate   # Run migrations (from root)
@@ -216,11 +217,10 @@ DB test helpers in `server/test-utils/db-helper.ts`: `cleanupDatabase()`, `creat
 ## Gotchas
 
 - **Anthropic client** — always use `getAnthropicClient()` from `utils/ai/anthropic.ts`, never `new Anthropic()`. The singleton wraps with Braintrust observability.
-- **Reading API auth** — use `requireChildOwner(event, childId)` from `server/utils/reading/require-child-owner.ts` for any route that accesses child-scoped data.
-- **Reading layout** — `/reading` pages use `layout: 'reading'` (not `default`). Bluey theme via CSS custom properties in `assets/css/reading-theme.css`.
-- **Reading theme colors** — NEVER use raw palette vars (`--reading-sky-blue`, `--reading-orange`, etc.) in components. Always use semantic tokens: `--reading-primary`, `--reading-secondary`, `--reading-accent`, `--reading-success`, `--reading-highlight`, `--reading-bg`, `--reading-card-bg`, `--reading-text`. Raw palette vars are only defined in `reading-theme.css` and mapped by `useReadingTheme.applyTheme()`. Using raw vars breaks custom themes.
+- **Typing API auth** — guardian-only routes use `requireGuardian(event, { learnerId | groupId })` from `packages/layers/typing/server/utils/typing/require-guardian.ts`. Public routes (lessons, anonymous progress writes to localStorage) skip auth entirely.
+- **Typing active learner** — server routes that take a `learnerId` validate that the session user is a guardian of that learner's group. Anonymous users use `learnerId='anon'` and store progress in localStorage under `typing:progress:v1`.
 - **Composable cleanup** — composables using browser APIs (Speech, TTS) must call cleanup in `onUnmounted`. Don't rely on consumers to clean up.
-- **Mobile-first, no hover** — the reading app targets tablets and phones. Never rely on hover for essential interactions (edit, delete, reveal). Use tap/click, long-press, or always-visible controls. Test at 375px width.
+- **Mobile-first, no hover** — kid-facing UIs (typing, etc) target tablets and phones in addition to desktop. Never rely on hover for essential interactions (edit, delete, reveal). Use tap/click, long-press, or always-visible controls. Test at 375px width. The typing lesson runner itself is desktop-physical-keyboard only for MVP.
 - **MDC slots parse as markdown** — code in `::component` body loses indentation and `[x]` becomes links. Use `code` prop with `\n` escapes for code content.
 - **Nuxt auto-imports don't work in Vitest** — test files need explicit imports (`import { chatTools } from './tools'`).
 - **Vue ref unwrapping** — nested refs in objects returned from composables are NOT auto-unwrapped in templates. Destructure to top-level: `const { status, code } = useMyComposable()`.
