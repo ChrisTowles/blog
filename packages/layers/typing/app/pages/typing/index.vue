@@ -122,6 +122,16 @@ const KIND_META: Record<LessonKind, { label: string; icon: string; accent: strin
     icon: '✎',
     accent: 'from-teal-500/40 to-teal-500/10 border-teal-400/40',
   },
+  accumulation: {
+    label: 'Mixed practice',
+    icon: '✦◇',
+    accent: 'from-cyan-500/40 to-cyan-500/10 border-cyan-400/40',
+  },
+  consolidation: {
+    label: 'Row review',
+    icon: '★★',
+    accent: 'from-violet-500/40 to-violet-500/10 border-violet-400/40',
+  },
 };
 
 // --- Spelling card (kept from prior implementation) ----------------------

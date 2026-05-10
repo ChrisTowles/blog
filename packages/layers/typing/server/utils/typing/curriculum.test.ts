@@ -88,6 +88,8 @@ describe('typing curriculum', () => {
       'topic',
       'spelling-drill',
       'spelling-sentence',
+      'accumulation',
+      'consolidation',
     ]);
     for (const lesson of getBuiltInLessons()) {
       expect(allowedKinds.has(lesson.kind)).toBe(true);
