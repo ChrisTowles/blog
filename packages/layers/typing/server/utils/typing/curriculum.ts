@@ -327,10 +327,9 @@ const STAGE_PARAGRAPHS: Record<number, string> = {
     'a cat, a car, a cake, a cot, come here, come too, ' +
     'a cat came, a car came, a cake came too',
   // s13 add x . (no b yet)
-  13: 'fix six fox. exit, exit, exit. fixes the room. ' + 'six fox exits. fix six fox too.',
+  13: 'fix six fox. exit, exit, exit. fixes the room. six fox exits. fix six fox too.',
   // s14 add z / (no b/n yet)
-  14:
-    'zip the zoo. fizz, fizz, the zest is fixed. ' + 'a zip, a zoo, a fizz, a quiz, a zest. / / /',
+  14: 'zip the zoo. fizz, fizz, the zest is fixed. a zip, a zoo, a fizz, a quiz, a zest. / / /',
   // s15 add b n (full lowercase alpha)
   15:
     'a big bun, a big ben, a big nib. ben can run, nan can run. ' +

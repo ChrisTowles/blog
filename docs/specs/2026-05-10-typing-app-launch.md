@@ -4,10 +4,10 @@ How to resume the reading-to-typing-app refactor in a fresh Claude Code session.
 
 ## Current state (main, commit `9a77464`)
 
-- 5 typing-* agents and `/typing-team` slash command in `.claude/`
+- 5 typing-\* agents and `/typing-team` slash command in `.claude/`
 - Design spec: `docs/specs/2026-05-10-typing-app-design.md`
 - Implementation plan: `docs/specs/2026-05-10-typing-app-plan.md`
-- Reading-* agents and `/reading-team` slash command deleted
+- Reading-\* agents and `/reading-team` slash command deleted
 - Reading code (`packages/layers/reading/`, `server/database/schema/reading.ts`, `e2e/reading.spec.ts`, `public/images/reading/`) is still on main — Phase 0 of the plan removes it as a hard cutover
 
 ## Background agent already running (optional cleanup first)
