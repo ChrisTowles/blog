@@ -154,30 +154,6 @@ const HOME_FINGERS: ReadonlyArray<{ key: string; finger: Finger; tall?: boolean 
     class="space-y-1 rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-inner dark:border-slate-700 dark:bg-slate-900/60"
     aria-label="Virtual keyboard"
   >
-    <!-- Finger strip — translucent rounded bars positioned exactly above
-         their home-row keys. Lights up for the active finger so the kid
-         sees "this finger" pointing at "this key". -->
-    <div class="flex justify-center gap-1 pb-1" aria-label="Hand position" role="presentation">
-      <div
-        v-for="cell in HOME_FINGERS"
-        :key="`finger-${cell.key}`"
-        class="flex justify-end"
-        :style="{ width: '2.25rem' }"
-      >
-        <div
-          :class="[
-            'w-7 rounded-t-full transition-all duration-200',
-            FINGER_SOLID[cell.finger],
-            hint && hint.finger === cell.finger
-              ? 'h-12 opacity-100 ring-2 ring-amber-400 dark:ring-amber-300'
-              : cell.tall
-                ? 'h-9 opacity-25'
-                : 'h-7 opacity-25',
-          ]"
-        />
-      </div>
-    </div>
-
     <div v-for="(row, rIdx) in ROWS" :key="rIdx" class="flex justify-center gap-1">
       <button
         v-for="cell in row"
@@ -196,6 +172,30 @@ const HOME_FINGERS: ReadonlyArray<{ key: string; finger: Finger; tall?: boolean 
         {{ cell.label ?? cell.key }}
       </button>
     </div>
+    <!-- Finger strip — translucent rounded bars sit below the keys, each
+         column aligned to its home-row key so a kid can see which finger
+         reaches which key. The active finger lights up with an amber ring. -->
+    <div class="flex justify-center gap-1 pt-2" aria-label="Hand position" role="presentation">
+      <div
+        v-for="cell in HOME_FINGERS"
+        :key="`finger-${cell.key}`"
+        class="flex justify-start"
+        :style="{ width: '2.25rem' }"
+      >
+        <div
+          :class="[
+            'w-7 rounded-b-full transition-all duration-200',
+            FINGER_SOLID[cell.finger],
+            hint && hint.finger === cell.finger
+              ? 'h-12 opacity-100 ring-2 ring-amber-400 dark:ring-amber-300'
+              : cell.tall
+                ? 'h-9 opacity-25'
+                : 'h-7 opacity-25',
+          ]"
+        />
+      </div>
+    </div>
+
     <div
       v-if="hint?.shiftRequired"
       class="pt-1 text-center text-xs text-amber-700 dark:text-amber-300"
