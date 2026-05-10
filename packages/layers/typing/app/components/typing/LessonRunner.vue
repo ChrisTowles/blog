@@ -105,9 +105,18 @@ const rocketMood = computed<'idle' | 'happy' | 'oops' | 'launch'>(() => {
 <template>
   <div
     :data-testid="TEST_IDS.TYPING.LESSON_RUNNER"
-    class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800"
+    class="relative rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800"
     @click="focusInput"
   >
+    <!-- Streak banner — absolutely positioned in the empty background
+         space ABOVE the card so growing/shrinking with tier doesn't
+         push the lesson layout up and down. -->
+    <div
+      class="pointer-events-none absolute bottom-full left-1/2 z-20 mb-4 -translate-x-1/2 whitespace-nowrap"
+    >
+      <TypingStreakBadge :streak="streak" :tier-up="tierUp" />
+    </div>
+
     <header class="mb-4 flex flex-wrap items-baseline justify-between gap-3">
       <h2 v-if="title" class="text-xl font-semibold text-slate-900 dark:text-slate-100">
         {{ title }}
@@ -120,12 +129,6 @@ const rocketMood = computed<'idle' | 'happy' | 'oops' | 'launch'>(() => {
         <span v-if="targetAccuracy">Accuracy goal: {{ Math.round(targetAccuracy * 100) }}%</span>
       </div>
     </header>
-
-    <!-- Streak banner — full-width, room to grow. Hidden until 3 in a row;
-         escalates per tier with bigger text + denser emoji + richer gradient. -->
-    <div class="mb-4 min-h-[3rem]">
-      <TypingStreakBadge :streak="streak" :tier-up="tierUp" />
-    </div>
 
     <div class="grid gap-6 lg:grid-cols-5 lg:items-start">
       <!-- LEFT: what to press -->

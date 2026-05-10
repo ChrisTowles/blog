@@ -99,7 +99,10 @@ export function useTypingFeedback(
     },
   );
 
-  onUnmounted(clearFlash);
+  // onScopeDispose works in both component-setup and bare effectScope
+  // contexts (Vitest tests use the latter), unlike onUnmounted which is
+  // only triggered by component teardown.
+  onScopeDispose(clearFlash);
 
   return { wrongFlash, pressTick, streak, tierUp };
 }
