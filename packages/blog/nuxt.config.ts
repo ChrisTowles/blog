@@ -13,7 +13,7 @@ dotenv.config({
 });
 
 export default defineNuxtConfig({
-  extends: ['../layers/workflows', '../layers/reading'],
+  extends: ['../layers/workflows', '../layers/typing'],
 
   modules: [
     '@nuxt/image',

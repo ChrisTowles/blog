@@ -55,10 +55,18 @@ Do NOT touch schema, UI components/pages, AI generation, virtual-keyboard render
 - localStorage key: `typing:progress:v1`. Shape (defined in `shared/typing-types.ts` as `LocalProgress`):
   ```ts
   {
-    schemaVersion: 1
-    currentStage: number
-    attempts: Array<{ lessonId: number | null; gameSlug: string | null; wpm: number; accuracy: number; durationMs: number; errorsByKey: Record<string, number>; completedAt: string /* ISO */ }>
-    keyStats: Record<string, { attempts: number; errors: number; avgMs: number }>
+    schemaVersion: 1;
+    currentStage: number;
+    attempts: Array<{
+      lessonId: number | null;
+      gameSlug: string | null;
+      wpm: number;
+      accuracy: number;
+      durationMs: number;
+      errorsByKey: Record<string, number>;
+      completedAt: string; /* ISO */
+    }>;
+    keyStats: Record<string, { attempts: number; errors: number; avgMs: number }>;
   }
   ```
 - `useTypingProgress(activeLearnerRef)` exposes the same API regardless of backend:
@@ -86,6 +94,7 @@ Do NOT touch schema, UI components/pages, AI generation, virtual-keyboard render
 ## Spelling Mastery Hook
 
 When `progress/index.post.ts` records an attempt against a lesson with `kind` in `('spelling-drill', 'spelling-sentence')` — or a `gameSlug='lake-leap'` attempt with `spellingListId` in payload — scan the lesson text against the list's `words` and update `typing_spelling_progress`:
+
 - For each word that appeared and was typed correctly (no errors landed inside its character range): `consecutiveCorrect++`. If `consecutiveCorrect >= 3`, set `mastered=true`, `masteredAt=now`.
 - For each word that had errors: reset `consecutiveCorrect=0`.
 

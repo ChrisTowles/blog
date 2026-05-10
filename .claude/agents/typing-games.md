@@ -40,6 +40,7 @@ Do NOT touch the lesson runner, virtual keyboard, lesson/progress server routes,
 ## Game Specs (summary; full detail in design spec)
 
 ### Letter Rain
+
 - Letters drawn from active learner's unlocked key set, fall top -> bottom.
 - Type matching key -> particle burst, score++.
 - Letters that hit the bottom = miss; 5 misses end the round.
@@ -47,12 +48,14 @@ Do NOT touch the lesson runner, virtual keyboard, lesson/progress server routes,
 - Difficulty scaler: 1 letter slow -> 3 letters fast; controlled by stage and a per-game `difficulty` config.
 
 ### Letter Tic-Tac-Toe
+
 - 3x3 grid; each cell a single letter from the unlocked set.
 - Type a letter to claim that cell. AI plays at stage-appropriate level: random for stages 1-2, weighted for 3-4, minimax for 5+.
 - Standard Tic-Tac-Toe win conditions.
 - Mastery: win 3 of 5; tie counts as half a win.
 
 ### Lake Leap
+
 - Side-scrolling platformer. Character on a platform; next 1-2 platforms ahead show words.
 - Type the word on the next platform to jump there. Wrong key = wobble; too slow = platform sinks.
 - Word source modes:
