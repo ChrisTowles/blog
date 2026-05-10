@@ -38,6 +38,11 @@ export type UseTypingFeedback = {
   pressTick: Ref<number>;
   /** Consecutive correct keystroke count. Resets to 0 on a wrong press. */
   streak: Ref<number>;
+  /** Streak tier (every 3 correct presses bumps it). 0 below the badge threshold. */
+  streakTier: ComputedRef<number>;
+  /** Increments each time `streakTier` crosses a higher tier. Bind via `:key`
+   *  to a celebration burst so it replays on every milestone. */
+  tierUp: Ref<number>;
 };
 
 export function useTypingFeedback(
@@ -48,7 +53,14 @@ export function useTypingFeedback(
   const wrongFlash = ref(false);
   const pressTick = ref(0);
   const streak = ref(0);
+  const tierUp = ref(0);
+  // 0 below 3 in a row, then 1, 2, 3, ... per cohort of three correct presses.
+  const streakTier = computed(() => (streak.value < 3 ? 0 : Math.floor(streak.value / 3)));
   let flashTimer: ReturnType<typeof setTimeout> | null = null;
+
+  watch(streakTier, (next, prev) => {
+    if (next > prev && next > 0) tierUp.value++;
+  });
 
   function clearFlash() {
     if (flashTimer) {
@@ -90,5 +102,5 @@ export function useTypingFeedback(
 
   onUnmounted(clearFlash);
 
-  return { wrongFlash, pressTick, streak };
+  return { wrongFlash, pressTick, streak, streakTier, tierUp };
 }
