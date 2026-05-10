@@ -49,6 +49,34 @@ export function useTypingAudio() {
     window.speechSynthesis.speak(utter);
   }
 
+  /**
+   * Short low-pitched buzz to signal a wrong key. Synthesized with the
+   * Web Audio API so it works without any backend / asset cache and
+   * never blocks on a network round-trip.
+   */
+  function playWrong() {
+    if (!audioOn.value || !import.meta.client) return;
+    const AudioCtx =
+      window.AudioContext ??
+      (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    try {
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.value = 220;
+      gain.gain.setValueAtTime(0.06, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.13);
+      osc.onended = () => void ctx.close();
+    } catch {
+      // ignore — audio is best-effort
+    }
+  }
+
   async function play(phrase: string) {
     if (!audioOn.value) return;
     const entry = await ensure(phrase);
@@ -96,5 +124,6 @@ export function useTypingAudio() {
     play,
     playKey,
     playEncouragement,
+    playWrong,
   };
 }
