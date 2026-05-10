@@ -31,16 +31,16 @@ useHead(() => ({
   ],
 }));
 
-const { recordAttempt, recordLessonBest, getLessonBest } = useTypingProgress();
+const { recordAttempt, recordLessonBest } = useTypingProgress();
 const toast = useToast();
 const isNewBest = ref(false);
 const previousBest = ref<{ wpm: number; accuracy: number } | null>(null);
 
 const AUTO_ADVANCE_SECONDS = 5;
-const lessonDone = ref(false);
 const lastResult = ref<LessonCompleteResult | null>(null);
 const advanceCountdown = ref<number | null>(null);
 const runnerKey = ref(0);
+const lessonDone = computed(() => lastResult.value !== null);
 let advanceTimer: ReturnType<typeof setInterval> | null = null;
 
 function clearAdvance() {
@@ -58,7 +58,6 @@ function goToNextLesson() {
 
 function tryAgain() {
   clearAdvance();
-  lessonDone.value = false;
   lastResult.value = null;
   isNewBest.value = false;
   previousBest.value = null;
@@ -85,7 +84,6 @@ const passed = computed(() => {
 });
 
 watch(slug, () => {
-  lessonDone.value = false;
   lastResult.value = null;
   isNewBest.value = false;
   previousBest.value = null;
@@ -94,7 +92,6 @@ watch(slug, () => {
 
 function onComplete(result: LessonCompleteResult) {
   lastResult.value = result;
-  lessonDone.value = true;
   const outcome = recordAttempt({
     lessonId: null,
     gameSlug: null,

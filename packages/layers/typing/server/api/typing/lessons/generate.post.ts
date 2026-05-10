@@ -8,13 +8,8 @@
  * blunt abuse without a Redis/KV dependency.
  */
 import { z } from 'zod';
-import type { LessonRow } from '../../../../../../blog/shared/typing-types';
+import { MIN_TOPIC_STAGE, type LessonRow } from '../../../../../../blog/shared/typing-types';
 import { generateLesson } from '../../../utils/typing/lesson-generator';
-
-// Stages 1-9 don't unlock enough letters to spell most kid-friendly
-// topics (no t/y until stage 10, no n/m until stage 15). The model
-// either fails validation or burns retries, so we gate at the API.
-export const MIN_TOPIC_STAGE = 10;
 
 const bodySchema = z.object({
   stage: z.number().int().min(MIN_TOPIC_STAGE).max(20),

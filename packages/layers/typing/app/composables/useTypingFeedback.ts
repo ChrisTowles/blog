@@ -1,20 +1,7 @@
 /**
- * useTypingFeedback — central place for the right/wrong reactions every
- * typing surface should share.
- *
- * General rules (apply everywhere a learner is typing):
- *   - Correct keystroke: play the per-key sound (`playKey`).
- *   - Wrong keystroke: play a short low buzz (`playWrong`) and surface a
- *     visual flash via `wrongFlash`. Components decide what red looks
- *     like — the cursor cell, a screen shake, a game-specific blip — but
- *     they all read the same signal.
- *   - Lesson completion: handled by the engine's `onComplete` (the
- *     consumer plays an encouragement phrase).
- *
- * Pass `lessonText` whenever the engine is running over a known string
- * (lessons, drills, sentence games). Game scenes that drive the engine
- * key-by-key without a single source text can omit it — the wrong-key
- * cue still fires.
+ * useTypingFeedback — central audio + visual reactions every typing
+ * surface shares. Increments pressTick/streak/tierUp on correct keys,
+ * sets wrongFlash and runs an optional onWrong hook on mistakes.
  */
 import type { UseTypingEngine } from './useTypingEngine';
 import type { useTypingAudio } from './useTypingAudio';

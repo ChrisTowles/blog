@@ -10,7 +10,7 @@
  */
 import type { Finger, Hand } from '~~/shared/typing-types';
 
-const FINGER_MAP: Record<string, Finger> = {
+export const FINGER_MAP: Record<string, Finger> = {
   // Left hand
   q: 'lp',
   a: 'lp',

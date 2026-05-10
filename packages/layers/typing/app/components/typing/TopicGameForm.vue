@@ -1,15 +1,11 @@
 <script setup lang="ts">
 import { TEST_IDS } from '~~/shared/test-ids';
-import type { LessonRow } from '~~/shared/typing-types';
+import { MAX_STAGE, MIN_TOPIC_STAGE, type LessonRow } from '~~/shared/typing-types';
 
 const emit = defineEmits<{
   (e: 'generated', lesson: LessonRow): void;
 }>();
 
-// Topic games gate at stage 10 — earlier stages don't unlock enough
-// letters to spell most kid-friendly topics. Server enforces the same.
-const MIN_TOPIC_STAGE = 10;
-const MAX_STAGE = 20;
 const STAGE_OPTIONS = Array.from(
   { length: MAX_STAGE - MIN_TOPIC_STAGE + 1 },
   (_, i) => MIN_TOPIC_STAGE + i,

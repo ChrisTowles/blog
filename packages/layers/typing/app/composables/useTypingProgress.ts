@@ -12,6 +12,7 @@
 import {
   TYPING_PROGRESS_LOCAL_STORAGE_KEY,
   emptyLocalProgress,
+  stageTargetWpm,
   type LocalAttempt,
   type LocalKeyStat,
   type LocalProgress,
@@ -28,19 +29,23 @@ export type LessonBest = {
 
 type LessonBestMap = Record<string, LessonBest>;
 
+let bestsCache: LessonBestMap | null = null;
+
 function readBests(): LessonBestMap {
+  if (bestsCache) return bestsCache;
   if (typeof localStorage === 'undefined') return {};
   try {
     const raw = localStorage.getItem(TYPING_BESTS_LOCAL_STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as LessonBestMap;
-    return parsed && typeof parsed === 'object' ? parsed : {};
+    bestsCache = raw && typeof raw === 'string' ? (JSON.parse(raw) as LessonBestMap) : {};
+    if (!bestsCache || typeof bestsCache !== 'object') bestsCache = {};
   } catch {
-    return {};
+    bestsCache = {};
   }
+  return bestsCache;
 }
 
 function writeBests(b: LessonBestMap) {
+  bestsCache = b;
   if (typeof localStorage === 'undefined') return;
   try {
     localStorage.setItem(TYPING_BESTS_LOCAL_STORAGE_KEY, JSON.stringify(b));
@@ -277,21 +282,6 @@ export function useTypingProgress(): UseTypingProgress {
     setCurrentStage,
     reset,
   };
-}
-
-/**
- * Per-stage target WPM (mirrors `stageTargetWpm` in
- * `server/utils/typing/curriculum.ts`). Kept inline so the composable
- * has no server-side imports.
- */
-function stageTargetWpm(stage: number): number {
-  if (stage <= 3) return 5;
-  if (stage <= 6) return 8;
-  if (stage <= 9) return 12;
-  if (stage <= 12) return 16;
-  if (stage <= 15) return 20;
-  if (stage <= 18) return 25;
-  return 30;
 }
 
 function mergeKeyStats(

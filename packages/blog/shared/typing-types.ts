@@ -124,6 +124,29 @@ export type StageDefinition = {
 export const TYPING_PROGRESS_LOCAL_STORAGE_KEY = 'typing:progress:v1';
 export const TYPING_MERGED_LOCAL_STORAGE_KEY = 'typing:merged:v1';
 
+/**
+ * Stages 1-9 don't unlock enough letters to spell most kid-friendly
+ * topics (no t/y until stage 10). Both the topic-game form and the
+ * generate API gate on this minimum.
+ */
+export const MIN_TOPIC_STAGE = 10;
+export const MAX_STAGE = 20;
+
+/**
+ * Per-stage target WPM, mirrored on server (curriculum.ts) and client
+ * (useTypingProgress mastery gate). Kept as a single source of truth in
+ * shared so the two can't drift.
+ */
+export function stageTargetWpm(stage: number): number {
+  if (stage <= 3) return 5;
+  if (stage <= 6) return 8;
+  if (stage <= 9) return 12;
+  if (stage <= 12) return 16;
+  if (stage <= 15) return 20;
+  if (stage <= 18) return 25;
+  return 30;
+}
+
 export type LocalAttempt = {
   lessonId: number | null;
   gameSlug: string | null;
