@@ -78,6 +78,13 @@
       "when": 1775577600000,
       "tag": "0010_seed_workflow_templates",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1778803200000,
+      "tag": "0011_cutover_reading_to_typing",
+      "breakpoints": true
     }
   ]
 }
