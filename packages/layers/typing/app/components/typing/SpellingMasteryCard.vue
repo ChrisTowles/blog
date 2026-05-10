@@ -43,7 +43,7 @@ const masteredCount = computed(() => {
     </ul>
 
     <NuxtLink
-      :to="`/typing/game/lake-leap?mode=spelling&words=${props.list.words.join(',')}`"
+      :to="`/typing/game/lake-leap?mode=spelling&list=${props.list.id}&words=${props.list.words.join(',')}`"
       class="rounded-lg bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700"
     >
       Play Lake Leap with these words
