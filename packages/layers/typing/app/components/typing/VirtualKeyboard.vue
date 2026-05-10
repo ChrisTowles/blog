@@ -115,6 +115,38 @@ const FINGER_BG: Record<Finger, string> = {
   rr: 'bg-amber-200 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100',
   rp: 'bg-rose-200 dark:bg-rose-900/40 text-rose-900 dark:text-rose-100',
 };
+
+// Saturated tones used for the translucent finger column above the
+// keyboard. These need to read on top of darker keyboards while still
+// feeling soft, so they're a touch deeper than the key fills.
+const FINGER_SOLID: Record<Finger, string> = {
+  lp: 'bg-rose-400 dark:bg-rose-500',
+  lr: 'bg-amber-400 dark:bg-amber-500',
+  lm: 'bg-emerald-400 dark:bg-emerald-500',
+  li: 'bg-sky-400 dark:bg-sky-500',
+  thumb: 'bg-slate-300 dark:bg-slate-500',
+  ri: 'bg-sky-400 dark:bg-sky-500',
+  rm: 'bg-emerald-400 dark:bg-emerald-500',
+  rr: 'bg-amber-400 dark:bg-amber-500',
+  rp: 'bg-rose-400 dark:bg-rose-500',
+};
+
+// Each home-row column has a finger that lives above it. The index
+// fingers cover two columns each (F+G left, H+J right) and we honor
+// that — when the active finger is `li`, both F and G fingers light up
+// so the kid sees the reach.
+const HOME_FINGERS: ReadonlyArray<{ key: string; finger: Finger; tall?: boolean }> = [
+  { key: 'a', finger: 'lp' },
+  { key: 's', finger: 'lr' },
+  { key: 'd', finger: 'lm' },
+  { key: 'f', finger: 'li' },
+  { key: 'g', finger: 'li', tall: true },
+  { key: 'h', finger: 'ri', tall: true },
+  { key: 'j', finger: 'ri' },
+  { key: 'k', finger: 'rm' },
+  { key: 'l', finger: 'rr' },
+  { key: ';', finger: 'rp' },
+];
 </script>
 
 <template>
@@ -122,6 +154,30 @@ const FINGER_BG: Record<Finger, string> = {
     class="space-y-1 rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-inner dark:border-slate-700 dark:bg-slate-900/60"
     aria-label="Virtual keyboard"
   >
+    <!-- Finger strip — translucent rounded bars positioned exactly above
+         their home-row keys. Lights up for the active finger so the kid
+         sees "this finger" pointing at "this key". -->
+    <div class="flex justify-center gap-1 pb-1" aria-label="Hand position" role="presentation">
+      <div
+        v-for="cell in HOME_FINGERS"
+        :key="`finger-${cell.key}`"
+        class="flex justify-end"
+        :style="{ width: '2.25rem' }"
+      >
+        <div
+          :class="[
+            'w-7 rounded-t-full transition-all duration-200',
+            FINGER_SOLID[cell.finger],
+            hint && hint.finger === cell.finger
+              ? 'h-12 opacity-100 ring-2 ring-amber-400 dark:ring-amber-300'
+              : cell.tall
+                ? 'h-9 opacity-25'
+                : 'h-7 opacity-25',
+          ]"
+        />
+      </div>
+    </div>
+
     <div v-for="(row, rIdx) in ROWS" :key="rIdx" class="flex justify-center gap-1">
       <button
         v-for="cell in row"

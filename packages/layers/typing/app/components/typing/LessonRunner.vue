@@ -112,7 +112,7 @@ const progressPct = computed(() => {
 
     <div class="grid gap-6 lg:grid-cols-5 lg:items-start">
       <!-- LEFT: what to press -->
-      <div class="space-y-4 lg:col-span-2">
+      <div class="lg:col-span-2">
         <TypingNextLetterSpotlight
           v-if="hint && engine.state.value !== 'done'"
           :hint="hint"
@@ -121,7 +121,6 @@ const progressPct = computed(() => {
           :streak="streak"
           :tier-up="tierUp"
         />
-        <TypingHandHint v-if="hint" :hint="hint" />
       </div>
 
       <!-- RIGHT: where you are + how you're doing -->
