@@ -28,7 +28,7 @@ const { hint } = useVirtualKeyboard({ nextChar: engine.nextChar });
 // Centralized typing feedback: per-key audio on correct, buzz + red
 // flash on wrong. See useTypingFeedback for the rules — every typing
 // surface should reuse this composable.
-const { wrongFlash } = useTypingFeedback(engine, audio, {
+const { wrongFlash, pressTick, streak } = useTypingFeedback(engine, audio, {
   lessonText: props.text,
   onWrong: () => {
     // Speak the expected letter so a learner who can't read the cue
@@ -111,6 +111,8 @@ const accuracyPct = computed(() => Math.round(engine.accuracy.value * 100));
       v-if="hint && engine.state.value !== 'done'"
       :hint="hint"
       :wrong-flash="wrongFlash"
+      :press-tick="pressTick"
+      :streak="streak"
       class="mb-6"
     />
 
