@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { TEST_IDS } from '~~/shared/test-ids';
-import type { LessonRow, LessonCompleteResult } from '~~/shared/typing-types';
+import {
+  isCaseInsensitiveStage,
+  type LessonCompleteResult,
+  type LessonRow,
+} from '~~/shared/typing-types';
 
 definePageMeta({
   layout: 'typing',
@@ -70,6 +74,7 @@ function reset() {
         :title="lesson.title"
         :target-wpm="lesson.targetWpm"
         :target-accuracy="lesson.targetAccuracy"
+        :case-insensitive="isCaseInsensitiveStage(lesson.stage)"
         @complete="onComplete"
       />
     </div>

@@ -7,6 +7,13 @@ const props = defineProps<{
   title?: string;
   targetWpm?: number;
   targetAccuracy?: number;
+  /**
+   * Accept either case when comparing keystrokes. Stages 1-15 enable
+   * this — capitals aren't introduced until stage 16 and kids fumble
+   * shift / leave caps lock on. Stage 16+ pass false (the default) so
+   * capital practice actually requires capitals.
+   */
+  caseInsensitive?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -17,6 +24,7 @@ const audio = useTypingAudio();
 
 const engine = useTypingEngine({
   text: props.text,
+  caseInsensitive: props.caseInsensitive,
   onComplete: (result) => {
     if (!result.cancelled) {
       audio.playFanfare();

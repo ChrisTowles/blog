@@ -381,6 +381,25 @@ describe('useTypingEngine', () => {
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
+  it('caseInsensitive: typing uppercase counts as correct against lowercase text', () => {
+    const clock = makeClock();
+    const eng = useTypingEngine({ text: 'abc', clock: clock.fn, caseInsensitive: true });
+    eng.feed({ key: 'A', at: clock.fn() }); // shift+a
+    eng.feed({ key: 'b', at: clock.fn() }); // plain b
+    eng.feed({ key: 'C', at: clock.fn() }); // shift+c
+    expect(eng.state.value).toBe('done');
+    expect(eng.correctTyped.value).toBe(3);
+    expect(eng.errors.value).toBe(0);
+  });
+
+  it('caseInsensitive: false (default) rejects wrong case', () => {
+    const clock = makeClock();
+    const eng = useTypingEngine({ text: 'abc', clock: clock.fn });
+    eng.feed({ key: 'A', at: clock.fn() });
+    expect(eng.cursor.value).toBe(0);
+    expect(eng.errors.value).toBe(1);
+  });
+
   describe('reactive ticker', () => {
     beforeEach(() => {
       vi.useFakeTimers();
