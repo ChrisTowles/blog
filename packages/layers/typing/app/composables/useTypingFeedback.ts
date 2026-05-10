@@ -30,6 +30,14 @@ export type UseTypingFeedbackOptions = {
 export type UseTypingFeedback = {
   /** Briefly true after every wrong keystroke. Bind to a CSS class. */
   wrongFlash: Ref<boolean>;
+  /**
+   * Increments on every correct keystroke — bind via `:key="pressTick"`
+   * on animated nodes so a CSS keyframe re-runs even when the displayed
+   * letter is the same as the previous one (typing "ffff").
+   */
+  pressTick: Ref<number>;
+  /** Consecutive correct keystroke count. Resets to 0 on a wrong press. */
+  streak: Ref<number>;
 };
 
 export function useTypingFeedback(
@@ -38,6 +46,8 @@ export function useTypingFeedback(
   options: UseTypingFeedbackOptions = {},
 ): UseTypingFeedback {
   const wrongFlash = ref(false);
+  const pressTick = ref(0);
+  const streak = ref(0);
   let flashTimer: ReturnType<typeof setTimeout> | null = null;
 
   function clearFlash() {
@@ -50,9 +60,13 @@ export function useTypingFeedback(
   watch(
     () => engine.correctTyped.value,
     (next, prev) => {
-      if (next > prev && options.lessonText) {
-        const justTyped = options.lessonText[engine.cursor.value - 1];
-        if (justTyped) audio.playKey(justTyped.toLowerCase());
+      if (next > prev) {
+        pressTick.value++;
+        streak.value++;
+        if (options.lessonText) {
+          const justTyped = options.lessonText[engine.cursor.value - 1];
+          if (justTyped) audio.playKey(justTyped.toLowerCase());
+        }
       }
     },
   );
@@ -61,6 +75,7 @@ export function useTypingFeedback(
     () => engine.errors.value,
     (next, prev) => {
       if (next > prev) {
+        streak.value = 0;
         audio.playWrong();
         options.onWrong?.();
         clearFlash();
@@ -75,5 +90,5 @@ export function useTypingFeedback(
 
   onUnmounted(clearFlash);
 
-  return { wrongFlash };
+  return { wrongFlash, pressTick, streak };
 }
