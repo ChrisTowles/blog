@@ -54,6 +54,12 @@ export type RecordGameAttemptInput = {
   durationMs: number;
   errorsByKey: Record<string, number>;
   completedAt?: string;
+  /** Spelling list this attempt is associated with, if any (Lake Leap spelling mode). */
+  spellingListId?: number | null;
+  /** Words cleared during the round; feeds the spelling-mastery hook. */
+  wordsCleared?: string[];
+  /** Words errored during the round; resets streak in the spelling-mastery hook. */
+  wordsErrored?: string[];
 };
 
 export type UseTypingProgress = {
@@ -77,7 +83,17 @@ export function useTypingProgress(): UseTypingProgress {
 
   const { activeLearnerId } = useActiveLearner();
 
-  function maybePushToServer(attempt: LocalAttempt, perKeyStats: Record<string, LocalKeyStat>) {
+  type ServerExtras = {
+    spellingListId?: number | null;
+    wordsCleared?: string[];
+    wordsErrored?: string[];
+  };
+
+  function maybePushToServer(
+    attempt: LocalAttempt,
+    perKeyStats: Record<string, LocalKeyStat>,
+    extras: ServerExtras = {},
+  ) {
     if (!import.meta.client) return;
     const id = activeLearnerId.value;
     if (id === 'anon' || typeof id !== 'number') return;
@@ -94,13 +110,20 @@ export function useTypingProgress(): UseTypingProgress {
         durationMs: attempt.durationMs,
         errorsByKey: attempt.errorsByKey,
         perKeyStats,
+        spellingListId: extras.spellingListId ?? null,
+        wordsCleared: extras.wordsCleared ?? [],
+        wordsErrored: extras.wordsErrored ?? [],
       },
     }).catch(() => {
       // Network failures fall through silently.
     });
   }
 
-  function recordAttempt(attempt: RecordAttemptInput, perKeyStats?: Record<string, LocalKeyStat>) {
+  function recordAttempt(
+    attempt: RecordAttemptInput,
+    perKeyStats?: Record<string, LocalKeyStat>,
+    extras: ServerExtras = {},
+  ) {
     const stats = perKeyStats ?? {};
     const next: LocalProgress = {
       ...progress.value,
@@ -109,7 +132,7 @@ export function useTypingProgress(): UseTypingProgress {
     };
     progress.value = next;
     writeStorage(next);
-    maybePushToServer(attempt, stats);
+    maybePushToServer(attempt, stats, extras);
   }
 
   function recordGameAttempt(
@@ -128,6 +151,11 @@ export function useTypingProgress(): UseTypingProgress {
         completedAt: attempt.completedAt ?? new Date().toISOString(),
       },
       perKeyStats,
+      {
+        spellingListId: attempt.spellingListId ?? null,
+        wordsCleared: attempt.wordsCleared ?? [],
+        wordsErrored: attempt.wordsErrored ?? [],
+      },
     );
   }
 

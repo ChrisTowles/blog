@@ -28,6 +28,10 @@ export type GameResult = {
   accuracy: number;
   durationMs: number;
   errorsByKey: Record<string, number>;
+  /** Words the learner typed correctly during the round (spelling mode). */
+  wordsCleared?: string[];
+  /** Words the learner missed at least once during the round (spelling mode). */
+  wordsErrored?: string[];
 };
 
 export type GameScene = {
