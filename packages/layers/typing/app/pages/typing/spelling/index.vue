@@ -6,7 +6,15 @@ definePageMeta({
   layout: 'typing',
 });
 
-useHead({ title: 'Typing — Spelling' });
+useHead({
+  title: 'Typing — Spelling',
+  meta: [
+    {
+      name: 'description',
+      content: 'Weekly spelling lists turned into typing practice with mastery tracking.',
+    },
+  ],
+});
 
 const { active } = useActiveLearner();
 const lists = ref<SpellingList[]>([]);
@@ -53,7 +61,7 @@ watchEffect(load);
       </div>
       <NuxtLink
         to="/typing/spelling/new"
-        class="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700"
+        class="rounded-lg bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800"
       >
         New list
       </NuxtLink>

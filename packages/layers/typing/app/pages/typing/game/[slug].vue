@@ -35,8 +35,20 @@ const spellingListId = computed(() => {
   return Number.isFinite(n) && n > 0 ? n : null;
 });
 
+const gameDescriptions: Record<string, string> = {
+  'letter-rain': 'Letter Rain — type falling letters before they hit the ground.',
+  'letter-tic-tac-toe': 'Letter Tic-Tac-Toe — type letters to claim the grid against an AI.',
+  'lake-leap': 'Lake Leap — type the word on the next platform to leap across the lake.',
+};
+
 useHead(() => ({
   title: `Typing — ${slug.value}`,
+  meta: [
+    {
+      name: 'description',
+      content: gameDescriptions[slug.value] ?? 'Typing game — practice typing through play.',
+    },
+  ],
 }));
 
 const scene = computed<GameScene | null>(() => {

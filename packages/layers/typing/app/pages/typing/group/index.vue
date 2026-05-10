@@ -6,7 +6,15 @@ definePageMeta({
   layout: 'typing',
 });
 
-useHead({ title: 'Typing — Group' });
+useHead({
+  title: 'Typing — Group',
+  meta: [
+    {
+      name: 'description',
+      content: 'Manage your typing-app family or classroom — guardians, learners, invites.',
+    },
+  ],
+});
 
 const { data, refresh, error } = await useFetch<{
   groups: Array<{ group: TypingGroup; learners: Learner[] }>;
@@ -74,7 +82,7 @@ async function generateInvite(groupId: number) {
       <p class="text-sm">Sign in to create a family or join one via an invite link.</p>
       <NuxtLink
         to="/typing/sign-in"
-        class="mt-3 inline-flex rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700"
+        class="mt-3 inline-flex rounded-lg bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800"
       >
         Sign in
       </NuxtLink>
@@ -99,7 +107,7 @@ async function generateInvite(groupId: number) {
         />
         <button
           :disabled="creating"
-          class="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50"
+          class="rounded-lg bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800 disabled:opacity-50"
           type="submit"
         >
           {{ creating ? 'Creating…' : 'Create family' }}
@@ -142,7 +150,7 @@ async function generateInvite(groupId: number) {
           <button
             type="button"
             :data-testid="TEST_IDS.TYPING.GROUP_INVITE_LINK"
-            class="rounded-lg bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700"
+            class="rounded-lg bg-amber-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-800"
             @click="generateInvite(entry.group.id)"
           >
             Generate invite link

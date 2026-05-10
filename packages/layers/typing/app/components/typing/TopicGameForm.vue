@@ -99,7 +99,7 @@ async function submit() {
       type="submit"
       :disabled="generating || !topic.trim()"
       :data-testid="TEST_IDS.TYPING.TOPIC_GAME_SUBMIT"
-      class="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50"
+      class="rounded-lg bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800 disabled:opacity-50"
     >
       {{ generating ? 'Generating…' : 'Generate' }}
     </button>
