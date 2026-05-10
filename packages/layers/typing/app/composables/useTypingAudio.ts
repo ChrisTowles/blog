@@ -57,7 +57,12 @@ export function useTypingAudio() {
 
   function getAudioCtx(): AudioContext | null {
     if (!audioOn.value || !import.meta.client) return null;
-    if (sharedAudioCtx) return sharedAudioCtx;
+    if (sharedAudioCtx) {
+      // Browsers suspend the context after periods of inactivity or
+      // tab-switching. Resume on demand so the next tone actually plays.
+      if (sharedAudioCtx.state === 'suspended') void sharedAudioCtx.resume();
+      return sharedAudioCtx;
+    }
     const AudioCtx =
       window.AudioContext ??
       (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
@@ -80,15 +85,15 @@ export function useTypingAudio() {
     if (!ctx) return;
     try {
       const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+      const gainNode = ctx.createGain();
       osc.type = opts.type ?? 'sine';
       osc.frequency.value = freq;
       const startAt = ctx.currentTime + (opts.startOffsetMs ?? 0) / 1000;
       const peak = opts.gain ?? 0.05;
-      gain.gain.setValueAtTime(0.0001, startAt);
-      gain.gain.exponentialRampToValueAtTime(peak, startAt + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, startAt + durationMs / 1000);
-      osc.connect(gain).connect(ctx.destination);
+      gainNode.gain.setValueAtTime(0.0001, startAt);
+      gainNode.gain.exponentialRampToValueAtTime(peak, startAt + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, startAt + durationMs / 1000);
+      osc.connect(gainNode).connect(ctx.destination);
       osc.start(startAt);
       osc.stop(startAt + durationMs / 1000 + 0.01);
       // Don't close the shared context on tone end; reuse it for the

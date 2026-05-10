@@ -8,11 +8,15 @@
  * blunt abuse without a Redis/KV dependency.
  */
 import { z } from 'zod';
-import { MIN_TOPIC_STAGE, type LessonRow } from '../../../../../../blog/shared/typing-types';
+import {
+  MAX_STAGE,
+  MIN_TOPIC_STAGE,
+  type LessonRow,
+} from '../../../../../../blog/shared/typing-types';
 import { generateLesson } from '../../../utils/typing/lesson-generator';
 
 const bodySchema = z.object({
-  stage: z.number().int().min(MIN_TOPIC_STAGE).max(20),
+  stage: z.number().int().min(MIN_TOPIC_STAGE).max(MAX_STAGE),
   topic: z.string().min(1).max(80),
   kind: z.enum(['sentence', 'paragraph']),
   length: z.enum(['short', 'medium']),

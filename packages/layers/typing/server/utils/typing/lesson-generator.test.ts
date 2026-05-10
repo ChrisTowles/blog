@@ -66,6 +66,21 @@ describe('truncateWithinBounds', () => {
     const result = truncateWithinBounds(overflow, { min: 20, max: 22 });
     expect(result).toBeNull();
   });
+
+  it('never returns a string longer than max — punctuation at the last valid index fits exactly', () => {
+    const overflow = 'abcdef.xyz';
+    const result = truncateWithinBounds(overflow, { min: 1, max: 7 });
+    expect(result).toBe('abcdef.');
+    expect(result?.length).toBe(7);
+  });
+
+  it('returns null rather than overshooting when punctuation only fits past the boundary', () => {
+    // Period sits at index 7, but max=7 only allows positions 0..6.
+    // Returning anything that includes the period would be 8 chars.
+    const overflow = 'abcdefg.xyz';
+    const result = truncateWithinBounds(overflow, { min: 1, max: 7 });
+    expect(result).toBeNull();
+  });
 });
 
 describe('blockListCheck', () => {

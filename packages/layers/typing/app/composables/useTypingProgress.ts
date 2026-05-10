@@ -10,6 +10,7 @@
  * tagged.
  */
 import {
+  MAX_STAGE,
   TYPING_PROGRESS_LOCAL_STORAGE_KEY,
   emptyLocalProgress,
   stageTargetWpm,
@@ -193,7 +194,7 @@ export function useTypingProgress(): UseTypingProgress {
     if (attempt.gameSlug === null && attempt.lessonId !== null) {
       const target = stageTargetWpm(previousStage);
       if (attempt.accuracy >= 0.95 && attempt.wpm >= target) {
-        nextStage = Math.min(20, previousStage + 1);
+        nextStage = Math.min(MAX_STAGE, previousStage + 1);
       }
     }
 
@@ -239,7 +240,7 @@ export function useTypingProgress(): UseTypingProgress {
   }
 
   function setCurrentStage(stage: number) {
-    const next = { ...progress.value, currentStage: Math.max(1, Math.min(20, stage)) };
+    const next = { ...progress.value, currentStage: Math.max(1, Math.min(MAX_STAGE, stage)) };
     progress.value = next;
     writeStorage(next);
   }
