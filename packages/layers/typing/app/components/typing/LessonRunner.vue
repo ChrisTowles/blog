@@ -25,6 +25,19 @@ const engine = useTypingEngine({
 
 const { hint } = useVirtualKeyboard({ nextChar: engine.nextChar });
 
+// Centralized typing feedback: per-key audio on correct, buzz + red
+// flash on wrong. See useTypingFeedback for the rules — every typing
+// surface should reuse this composable.
+const { wrongFlash } = useTypingFeedback(engine, audio, {
+  lessonText: props.text,
+  onWrong: () => {
+    // Speak the expected letter so a learner who can't read the cue
+    // hears what they need to press.
+    const expected = engine.nextChar.value;
+    if (expected) void audio.play(expected.toLowerCase());
+  },
+});
+
 const inputEl = ref<HTMLInputElement | null>(null);
 
 function focusInput() {
@@ -35,18 +48,6 @@ onMounted(() => {
   focusInput();
   void audio.preload();
 });
-
-// Play the per-key sound on each correct keystroke. We watch the
-// correctTyped counter so wrong presses stay silent.
-watch(
-  () => engine.correctTyped.value,
-  (next, prev) => {
-    if (next > prev) {
-      const justTyped = props.text[engine.cursor.value - 1];
-      if (justTyped) audio.playKey(justTyped.toLowerCase());
-    }
-  },
-);
 
 function onKeydown(e: KeyboardEvent) {
   // Prevent the browser's default tab navigation while running.
@@ -76,7 +77,9 @@ const charClasses = computed(() => {
       return 'text-emerald-700 dark:text-emerald-400';
     }
     if (idx === engine.cursor.value) {
-      return 'rounded bg-amber-200 px-0.5 text-slate-900 dark:bg-amber-300 dark:text-slate-900';
+      return wrongFlash.value
+        ? 'rounded bg-rose-300 px-0.5 text-rose-950 dark:bg-rose-400 dark:text-rose-950'
+        : 'rounded bg-amber-200 px-0.5 text-slate-900 dark:bg-amber-300 dark:text-slate-900';
     }
     return 'text-slate-500 dark:text-slate-400';
   });
@@ -103,6 +106,13 @@ const accuracyPct = computed(() => Math.round(engine.accuracy.value * 100));
       <span>Target: {{ targetWpm }} WPM</span>
       <span v-if="targetAccuracy">Accuracy goal: {{ Math.round(targetAccuracy * 100) }}%</span>
     </div>
+
+    <TypingNextLetterSpotlight
+      v-if="hint && engine.state.value !== 'done'"
+      :hint="hint"
+      :wrong-flash="wrongFlash"
+      class="mb-6"
+    />
 
     <div
       :data-testid="TEST_IDS.TYPING.LESSON_TEXT"
@@ -147,16 +157,10 @@ const accuracyPct = computed(() => Math.round(engine.accuracy.value * 100));
     </div>
 
     <div v-if="hint" class="mt-6 space-y-3">
-      <div
-        :data-testid="TEST_IDS.TYPING.NEXT_KEY_HIGHLIGHT"
-        class="text-center text-sm text-slate-600 dark:text-slate-300"
-      >
-        Next key:
-        <span class="font-mono text-base font-semibold text-amber-700 dark:text-amber-300">
-          {{ hint.nextKey === ' ' ? 'space' : hint.nextKey }}
-        </span>
-        ({{ hint.hand }} {{ hint.finger }})
-      </div>
+      <span :data-testid="TEST_IDS.TYPING.NEXT_KEY_HIGHLIGHT" class="sr-only">
+        Next key: {{ hint.nextKey === ' ' ? 'space' : hint.nextKey }} ({{ hint.hand }}
+        {{ hint.finger }})
+      </span>
       <TypingVirtualKeyboard :hint="hint" />
       <TypingHandHint :hint="hint" />
     </div>

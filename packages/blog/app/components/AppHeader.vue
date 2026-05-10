@@ -36,7 +36,7 @@ const items = computed(() => [
   {
     label: 'Typing',
     to: '/typing',
-    icon: 'i-heroicons-keyboard',
+    icon: 'i-lucide-keyboard',
     active: route.path.startsWith('/typing'),
     'data-testid': TEST_IDS.NAVIGATION.TYPING_LINK,
   },
