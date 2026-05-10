@@ -88,6 +88,8 @@ const progressPct = computed(() => {
   if (props.text.length === 0) return 0;
   return Math.min(100, Math.round((engine.cursor.value / props.text.length) * 100));
 });
+const lessonChars = computed(() => Array.from(props.text));
+const hasSpace = computed(() => props.text.includes(' '));
 
 // Rocket mood: bobs while streaking, dips on wrong, blasts off when done.
 const rocketMood = computed<'idle' | 'happy' | 'oops' | 'launch'>(() => {
@@ -160,7 +162,7 @@ const rocketMood = computed<'idle' | 'happy' | 'oops' | 'launch'>(() => {
 
             <!-- Space-glyph legend, only when a lesson contains spaces. -->
             <div
-              v-if="props.text.includes(' ')"
+              v-if="hasSpace"
               class="flex items-center justify-end gap-2 text-sm text-slate-600 dark:text-slate-300"
             >
               <span
@@ -176,7 +178,7 @@ const rocketMood = computed<'idle' | 'happy' | 'oops' | 'launch'>(() => {
               class="flex flex-wrap gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/50"
             >
               <span
-                v-for="(ch, idx) in props.text.split('')"
+                v-for="(ch, idx) in lessonChars"
                 :key="idx"
                 :class="[
                   'flex h-10 min-w-[2.25rem] select-none items-center justify-center rounded-md font-mono text-xl font-bold transition-colors',

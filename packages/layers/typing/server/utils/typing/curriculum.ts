@@ -8,7 +8,11 @@
  * The seed endpoint upserts these lessons by `slug` so re-running is
  * idempotent.
  */
-import type { LessonKind, StageDefinition } from '../../../../../blog/shared/typing-types';
+import {
+  stageTargetWpm,
+  type LessonKind,
+  type StageDefinition,
+} from '../../../../../blog/shared/typing-types';
 
 const SPACE = ' ';
 
@@ -39,17 +43,6 @@ const STAGE_INTRODUCTIONS: Array<{ stage: number; name: string; keys: string[] }
   { stage: 19, name: 'Symbols', keys: ['@', '#', '$', '%', '&', '*', '(', ')'] },
   { stage: 20, name: 'Mixed prose at speed', keys: [':', '-'] },
 ];
-
-/** Targets per stage (start slow, ramp up). */
-function stageTargetWpm(stage: number): number {
-  if (stage <= 3) return 5;
-  if (stage <= 6) return 8;
-  if (stage <= 9) return 12;
-  if (stage <= 12) return 16;
-  if (stage <= 15) return 20;
-  if (stage <= 18) return 25;
-  return 30;
-}
 
 const STAGES: StageDefinition[] = (() => {
   const out: StageDefinition[] = [];

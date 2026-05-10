@@ -12,6 +12,12 @@ const ENCOURAGEMENT = ['good job', 'nice work', 'keep going', 'almost there'] as
 
 type CacheEntry = HTMLAudioElement | { kind: 'web-speech' };
 
+// Module-scope so every play* helper (and every component that uses
+// useTypingAudio) shares one AudioContext. Browsers cap the number of
+// active contexts (~6 in Safari) so creating one per tone causes
+// failures during long sessions.
+let sharedAudioCtx: AudioContext | null = null;
+
 export function useTypingAudio() {
   const audioOn = useState<boolean>('typing:audio-on', () => true);
   const cache = useState<Record<string, CacheEntry>>('typing:audio-cache', () => ({}));
@@ -51,15 +57,17 @@ export function useTypingAudio() {
 
   function getAudioCtx(): AudioContext | null {
     if (!audioOn.value || !import.meta.client) return null;
+    if (sharedAudioCtx) return sharedAudioCtx;
     const AudioCtx =
       window.AudioContext ??
       (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AudioCtx) return null;
     try {
-      return new AudioCtx();
+      sharedAudioCtx = new AudioCtx();
     } catch {
       return null;
     }
+    return sharedAudioCtx;
   }
 
   /** Tiny self-contained synth helper. Returns silently if audio is off. */
@@ -83,7 +91,8 @@ export function useTypingAudio() {
       osc.connect(gain).connect(ctx.destination);
       osc.start(startAt);
       osc.stop(startAt + durationMs / 1000 + 0.01);
-      osc.onended = () => void ctx.close();
+      // Don't close the shared context on tone end; reuse it for the
+      // next tone. The osc itself disconnects when it ends.
     } catch {
       // best-effort
     }
@@ -104,10 +113,8 @@ export function useTypingAudio() {
    * higher final note, so 15-in-a-row genuinely sounds better than 3.
    */
   function playStreakDing(tier: number) {
-    if (!audioOn.value || !import.meta.client) return;
     const t = Math.max(1, Math.min(tier, 5));
     const base = 523.25; // C5
-    // Major triad climbing per tier: do-mi-sol, plus a high octave at tier 5.
     const notes = [base, base * 1.25, base * 1.5];
     if (t >= 4) notes.push(base * 2);
     if (t >= 5) notes.push(base * 2.5);
@@ -120,10 +127,8 @@ export function useTypingAudio() {
     });
   }
 
-  /** Three-note arpeggio "ta-da" on lesson completion. */
+  /** Four-note "ta-da" arpeggio on lesson completion. */
   function playFanfare() {
-    if (!audioOn.value || !import.meta.client) return;
-    // C5 → E5 → G5 → C6
     [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
       playTone(freq, 200, {
         type: 'triangle',
@@ -163,11 +168,6 @@ export function useTypingAudio() {
     await Promise.all(phrases.map((p) => ensure(p).catch(() => null)));
   }
 
-  function playKey(key: string) {
-    if (key === ' ') return; // space gets no audio cue
-    void play(key);
-  }
-
   function playEncouragement() {
     const choice = ENCOURAGEMENT[Math.floor(Math.random() * ENCOURAGEMENT.length)];
     if (choice !== undefined) void play(choice);
@@ -178,7 +178,6 @@ export function useTypingAudio() {
     setAudioForStage,
     preload,
     play,
-    playKey,
     playEncouragement,
     playWrong,
     playClick,

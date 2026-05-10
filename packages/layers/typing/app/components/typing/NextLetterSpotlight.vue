@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { Finger } from '~~/shared/typing-types';
 import type { KeyboardHint } from '../../composables/useVirtualKeyboard';
+import { FINGER_BG_SOFT, FINGER_LABEL } from '../../utils/typing/finger-colors';
 
 const props = defineProps<{
   hint: KeyboardHint | null;
@@ -62,32 +62,6 @@ const streakStyle = computed<StreakStyle | null>(() => {
   const idx = Math.min(STREAK_TIERS.length - 1, Math.floor(s / 3) - 1);
   return STREAK_TIERS[idx] ?? null;
 });
-
-// Same finger palette as VirtualKeyboard / HandHint so the kid can
-// connect the spotlight, the keyboard key, and the hand at a glance.
-const FINGER_BG: Record<Finger, string> = {
-  lp: 'bg-rose-300 dark:bg-rose-700',
-  lr: 'bg-amber-300 dark:bg-amber-700',
-  lm: 'bg-emerald-300 dark:bg-emerald-700',
-  li: 'bg-sky-300 dark:bg-sky-700',
-  thumb: 'bg-slate-300 dark:bg-slate-600',
-  ri: 'bg-sky-300 dark:bg-sky-700',
-  rm: 'bg-emerald-300 dark:bg-emerald-700',
-  rr: 'bg-amber-300 dark:bg-amber-700',
-  rp: 'bg-rose-300 dark:bg-rose-700',
-};
-
-const FINGER_LABEL: Record<Finger, string> = {
-  lp: 'pinky',
-  lr: 'ring finger',
-  lm: 'middle finger',
-  li: 'index finger',
-  thumb: 'thumb',
-  ri: 'index finger',
-  rm: 'middle finger',
-  rr: 'ring finger',
-  rp: 'pinky',
-};
 </script>
 
 <template>
@@ -123,27 +97,23 @@ const FINGER_LABEL: Record<Finger, string> = {
         {{ wrongFlash ? 'Try again — type this letter' : 'Type this letter' }}
       </template>
     </div>
-    <div class="relative">
-      <div
-        :key="pressTick ?? 0"
-        :class="[
-          'letter-tile flex h-32 w-32 items-center justify-center rounded-2xl font-mono text-7xl font-extrabold uppercase shadow-md',
-          FINGER_BG[hint.finger],
-          wrongFlash
-            ? 'scale-105 ring-4 ring-rose-500'
-            : 'ring-4 ring-amber-400 dark:ring-amber-500',
-        ]"
-      >
-        {{ hint.nextKey === ' ' ? '␣' : hint.nextKey }}
-      </div>
-      <div
+    <div
+      :key="pressTick ?? 0"
+      :class="[
+        'letter-tile relative flex h-32 w-32 items-center justify-center rounded-2xl font-mono text-7xl font-extrabold uppercase shadow-md',
+        FINGER_BG_SOFT[hint.finger],
+        wrongFlash ? 'scale-105 ring-4 ring-rose-500' : 'ring-4 ring-amber-400 dark:ring-amber-500',
+      ]"
+    >
+      {{ hint.nextKey === ' ' ? '␣' : hint.nextKey }}
+      <span
         v-if="!wrongFlash && (pressTick ?? 0) > 0"
         :key="`plus-${pressTick}`"
         class="plus-one pointer-events-none absolute -right-3 top-2 select-none font-mono text-2xl font-extrabold text-emerald-500 dark:text-emerald-400"
         aria-hidden="true"
       >
         +1
-      </div>
+      </span>
     </div>
     <div class="text-base font-semibold text-slate-800 dark:text-slate-200">
       <template v-if="hint.nextKey === ' '">␣ = space</template>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Finger } from '~~/shared/typing-types';
-import type { KeyboardHint } from '../../composables/useVirtualKeyboard';
+import { FINGER_MAP, type KeyboardHint } from '../../composables/useVirtualKeyboard';
+import { FINGER_BG_KEY, FINGER_BG_SOLID } from '../../utils/typing/finger-colors';
 
 defineProps<{
   hint: KeyboardHint | null;
@@ -63,77 +64,6 @@ const ROWS: ReadonlyArray<Row> = [
   [{ key: ' ', w: 8, label: 'space' }],
 ];
 
-const FINGER_OF: Record<string, Finger> = {
-  '1': 'lp',
-  '2': 'lr',
-  '3': 'lm',
-  '4': 'li',
-  '5': 'li',
-  '6': 'ri',
-  '7': 'ri',
-  '8': 'rm',
-  '9': 'rr',
-  '0': 'rp',
-  q: 'lp',
-  w: 'lr',
-  e: 'lm',
-  r: 'li',
-  t: 'li',
-  y: 'ri',
-  u: 'ri',
-  i: 'rm',
-  o: 'rr',
-  p: 'rp',
-  a: 'lp',
-  s: 'lr',
-  d: 'lm',
-  f: 'li',
-  g: 'li',
-  h: 'ri',
-  j: 'ri',
-  k: 'rm',
-  l: 'rr',
-  ';': 'rp',
-  z: 'lp',
-  x: 'lr',
-  c: 'lm',
-  v: 'li',
-  b: 'li',
-  n: 'ri',
-  m: 'ri',
-  ',': 'rm',
-  '.': 'rr',
-  '/': 'rp',
-  ' ': 'thumb',
-};
-
-const FINGER_BG: Record<Finger, string> = {
-  lp: 'bg-rose-200 dark:bg-rose-900/40 text-rose-900 dark:text-rose-100',
-  lr: 'bg-amber-200 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100',
-  lm: 'bg-emerald-200 dark:bg-emerald-900/40 text-emerald-900 dark:text-emerald-100',
-  li: 'bg-sky-200 dark:bg-sky-900/40 text-sky-900 dark:text-sky-100',
-  thumb: 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100',
-  ri: 'bg-sky-200 dark:bg-sky-900/40 text-sky-900 dark:text-sky-100',
-  rm: 'bg-emerald-200 dark:bg-emerald-900/40 text-emerald-900 dark:text-emerald-100',
-  rr: 'bg-amber-200 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100',
-  rp: 'bg-rose-200 dark:bg-rose-900/40 text-rose-900 dark:text-rose-100',
-};
-
-// Saturated tones used for the translucent finger column above the
-// keyboard. These need to read on top of darker keyboards while still
-// feeling soft, so they're a touch deeper than the key fills.
-const FINGER_SOLID: Record<Finger, string> = {
-  lp: 'bg-rose-400 dark:bg-rose-500',
-  lr: 'bg-amber-400 dark:bg-amber-500',
-  lm: 'bg-emerald-400 dark:bg-emerald-500',
-  li: 'bg-sky-400 dark:bg-sky-500',
-  thumb: 'bg-slate-300 dark:bg-slate-500',
-  ri: 'bg-sky-400 dark:bg-sky-500',
-  rm: 'bg-emerald-400 dark:bg-emerald-500',
-  rr: 'bg-amber-400 dark:bg-amber-500',
-  rp: 'bg-rose-400 dark:bg-rose-500',
-};
-
 // One bar per finger (8 long fingers + 2 thumbs). Index fingers each
 // span 2 home-row keys (F+G left, H+J right) so we render them as
 // double-wide bars sitting between the two keys they cover. Widths
@@ -173,7 +103,7 @@ function cellWidthRem(cols: 1 | 2): string {
           HOME_ROW_KEYS.has(cell.key)
             ? 'border-2 border-slate-500 dark:border-slate-400'
             : 'border-slate-300 dark:border-slate-700',
-          FINGER_BG[FINGER_OF[cell.key] ?? 'thumb'],
+          FINGER_BG_KEY[FINGER_MAP[cell.key] ?? 'thumb'],
           hint && hint.expected === cell.key
             ? 'scale-110 ring-4 ring-amber-400 dark:ring-amber-500'
             : 'opacity-90',
@@ -209,7 +139,7 @@ function cellWidthRem(cols: 1 | 2): string {
             :class="[
               'rounded-b-full transition-all duration-200',
               cell.cols === 2 ? 'w-14' : 'w-7',
-              FINGER_SOLID[cell.finger],
+              FINGER_BG_SOLID[cell.finger],
               hint && hint.finger === cell.finger
                 ? 'h-12 opacity-100 ring-2 ring-amber-400 dark:ring-amber-300'
                 : 'h-7 opacity-25',
@@ -220,7 +150,7 @@ function cellWidthRem(cols: 1 | 2): string {
       <div
         :class="[
           'w-12 rounded-b-full transition-all duration-200',
-          FINGER_SOLID.thumb,
+          FINGER_BG_SOLID.thumb,
           hint && hint.finger === 'thumb'
             ? 'h-10 opacity-100 ring-2 ring-amber-400 dark:ring-amber-300'
             : 'h-6 opacity-25',
