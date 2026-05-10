@@ -133,6 +133,23 @@ export const MIN_TOPIC_STAGE = 10;
 export const MAX_STAGE = 20;
 
 /**
+ * The first stage where capital letters become part of the curriculum.
+ * Stages before this run case-insensitive (kids fumble shift / leave
+ * caps lock on). Stage 16 onward requires correct capitalization
+ * because capitals practice is the point of the stage.
+ */
+export const CAPITALS_STAGE = 16;
+
+/**
+ * Returns true when the engine should accept either case for this stage's
+ * lesson. Callers (pages, AI lesson generator) thread this through to
+ * `useTypingEngine`'s `caseInsensitive` option.
+ */
+export function isCaseInsensitiveStage(stage: number): boolean {
+  return stage < CAPITALS_STAGE;
+}
+
+/**
  * Per-stage target WPM, mirrored on server (curriculum.ts) and client
  * (useTypingProgress mastery gate). Kept as a single source of truth in
  * shared so the two can't drift.

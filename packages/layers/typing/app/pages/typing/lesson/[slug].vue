@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { TEST_IDS } from '~~/shared/test-ids';
-import type { LessonCompleteResult } from '~~/shared/typing-types';
+import { isCaseInsensitiveStage, type LessonCompleteResult } from '~~/shared/typing-types';
 import { getBuiltInLessons } from '../../../../server/utils/typing/curriculum';
 
 definePageMeta({
@@ -195,6 +195,7 @@ function backToList() {
       :title="lesson.title"
       :target-wpm="lesson.targetWpm"
       :target-accuracy="lesson.targetAccuracy"
+      :case-insensitive="isCaseInsensitiveStage(lesson.stage)"
       @complete="onComplete"
     />
     <div

@@ -48,6 +48,14 @@ export type UseTypingEngineOptions = {
    * ticker even when using the default clock.
    */
   ticker?: boolean;
+  /**
+   * When true, key comparison is case-insensitive — typing 'D' counts as
+   * 'd' and vice versa. The lesson page enables this for stages 1-15
+   * because capitals aren't introduced until stage 16 and kids fumble
+   * shift / leave caps lock on. Defaults to false so any caller that
+   * needs strict case (capitals stage, capital drills) gets it.
+   */
+  caseInsensitive?: boolean;
 };
 
 export type UseTypingEngine = {
@@ -180,7 +188,10 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
 
     totalTyped.value++;
 
-    if (e.key === expected) {
+    const matches = options.caseInsensitive
+      ? e.key.toLowerCase() === expected.toLowerCase()
+      : e.key === expected;
+    if (matches) {
       // Attribute attempt count + inter-press time only to correct keys.
       // Wrong-key inter-press deltas should not pollute the expected
       // key's avgMs (we'd otherwise count "kid pauses, then mistypes"
