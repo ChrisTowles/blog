@@ -28,14 +28,20 @@ describe('useTypingEngine', () => {
     expect(eng.totalTyped.value).toBe(1);
   });
 
-  it('counts errors and records per-key error counts', () => {
+  it('locks the cursor on a wrong key until the correct key is pressed', () => {
     const clock = makeClock();
     const eng = useTypingEngine({ text: 'abc', clock: clock.fn });
     eng.feed({ key: 'x', at: clock.fn() }); // wrong, expected 'a'
-    expect(eng.errors.value).toBe(1);
-    expect(eng.errorsByKey.value).toEqual({ a: 1 });
+    eng.feed({ key: 'y', at: clock.fn() }); // wrong again
+    expect(eng.errors.value).toBe(2);
+    expect(eng.errorsByKey.value).toEqual({ a: 2 });
+    expect(eng.cursor.value).toBe(0);
+    expect(eng.totalTyped.value).toBe(2);
+    expect(eng.correctTyped.value).toBe(0);
+
+    eng.feed({ key: 'a', at: clock.fn() }); // finally correct
     expect(eng.cursor.value).toBe(1);
-    expect(eng.totalTyped.value).toBe(1);
+    expect(eng.correctTyped.value).toBe(1);
   });
 
   it('completes and emits onComplete when reaching end', () => {
@@ -97,19 +103,20 @@ describe('useTypingEngine', () => {
     expect(eng.accuracy.value).toBeCloseTo(1 / 3, 5);
   });
 
-  it('backspace reverses the cursor without inflating typed counts', () => {
+  it('backspace rewinds a previously correct char and decrements correctTyped', () => {
     const clock = makeClock();
     const eng = useTypingEngine({ text: 'abc', clock: clock.fn });
-    eng.feed({ key: 'X', at: clock.fn() }); // wrong at pos 0
+    eng.feed({ key: 'a', at: clock.fn() });
     expect(eng.cursor.value).toBe(1);
-    expect(eng.errors.value).toBe(1);
+    expect(eng.correctTyped.value).toBe(1);
+
     eng.feed({ key: 'Backspace', at: clock.fn() });
     expect(eng.cursor.value).toBe(0);
-    // Backspace itself does not change totalTyped or correctTyped beyond
-    // the original keystroke.
-    expect(eng.totalTyped.value).toBe(1);
     expect(eng.correctTyped.value).toBe(0);
-    // After the correction, typing 'a' should advance correctly.
+    // totalTyped is the historical count of keystrokes, not the current
+    // cursor — backspace doesn't undo it.
+    expect(eng.totalTyped.value).toBe(1);
+
     eng.feed({ key: 'a', at: clock.fn() });
     expect(eng.cursor.value).toBe(1);
     expect(eng.correctTyped.value).toBe(1);
