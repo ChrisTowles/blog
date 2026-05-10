@@ -62,13 +62,23 @@ export type RecordGameAttemptInput = {
   wordsErrored?: string[];
 };
 
+export type RecordAttemptResult = {
+  /** True when this attempt cleared the stage's mastery gate. */
+  stageAdvanced: boolean;
+  previousStage: number;
+  currentStage: number;
+};
+
 export type UseTypingProgress = {
   progress: Ref<LocalProgress>;
-  recordAttempt: (attempt: RecordAttemptInput, perKeyStats?: Record<string, LocalKeyStat>) => void;
+  recordAttempt: (
+    attempt: RecordAttemptInput,
+    perKeyStats?: Record<string, LocalKeyStat>,
+  ) => RecordAttemptResult;
   recordGameAttempt: (
     attempt: RecordGameAttemptInput,
     perKeyStats?: Record<string, LocalKeyStat>,
-  ) => void;
+  ) => RecordAttemptResult;
   setCurrentStage: (stage: number) => void;
   reset: () => void;
 };
@@ -123,19 +133,20 @@ export function useTypingProgress(): UseTypingProgress {
     attempt: RecordAttemptInput,
     perKeyStats?: Record<string, LocalKeyStat>,
     extras: ServerExtras = {},
-  ) {
+  ): RecordAttemptResult {
     const stats = perKeyStats ?? {};
     const nextAttempts = [...progress.value.attempts, attempt].slice(-200);
-    let nextStage = progress.value.currentStage;
+    const previousStage = progress.value.currentStage;
+    let nextStage = previousStage;
 
     // Mastery gating — advance the stage when the latest attempt clears
     // 95% accuracy + the stage's target WPM. The lesson runner reports
     // gross WPM in `attempt.wpm`. We apply this only to drill / sentence
     // attempts; game attempts use their own pacing rules.
     if (attempt.gameSlug === null && attempt.lessonId !== null) {
-      const target = stageTargetWpm(progress.value.currentStage);
+      const target = stageTargetWpm(previousStage);
       if (attempt.accuracy >= 0.95 && attempt.wpm >= target) {
-        nextStage = Math.min(20, progress.value.currentStage + 1);
+        nextStage = Math.min(20, previousStage + 1);
       }
     }
 
@@ -148,13 +159,19 @@ export function useTypingProgress(): UseTypingProgress {
     progress.value = next;
     writeStorage(next);
     maybePushToServer(attempt, stats, extras);
+
+    return {
+      stageAdvanced: nextStage > previousStage,
+      previousStage,
+      currentStage: nextStage,
+    };
   }
 
   function recordGameAttempt(
     attempt: RecordGameAttemptInput,
     perKeyStats?: Record<string, LocalKeyStat>,
-  ) {
-    recordAttempt(
+  ): RecordAttemptResult {
+    return recordAttempt(
       {
         lessonId: null,
         gameSlug: attempt.gameSlug,

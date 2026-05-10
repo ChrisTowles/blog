@@ -18,9 +18,10 @@ useHead(() => ({
 }));
 
 const { recordAttempt } = useTypingProgress();
+const toast = useToast();
 
 function onComplete(result: LessonCompleteResult) {
-  recordAttempt({
+  const outcome = recordAttempt({
     lessonId: null,
     gameSlug: null,
     wpm: result.wpm,
@@ -30,6 +31,15 @@ function onComplete(result: LessonCompleteResult) {
     errorsByKey: result.errorsByKey,
     completedAt: new Date().toISOString(),
   });
+  if (outcome.stageAdvanced) {
+    toast.add({
+      title: `Stage ${outcome.currentStage} unlocked! 🎉`,
+      description: `You cleared stage ${outcome.previousStage}. New keys are ready for you.`,
+      color: 'success',
+      icon: 'i-lucide-key-round',
+      duration: 6000,
+    });
+  }
 }
 
 function backToList() {
