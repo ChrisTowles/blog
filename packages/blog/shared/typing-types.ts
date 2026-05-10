@@ -191,6 +191,13 @@ export type LessonCompleteResult = {
   accuracy: number;
   durationMs: number;
   errorsByKey: ErrorsByKeyMap;
+  /**
+   * True when the lesson was cancelled (e.g. Escape pressed) rather than
+   * typed to completion. Callers should treat cancelled results as
+   * informational only — don't record attempts, don't update PRs, don't
+   * auto-advance.
+   */
+  cancelled: boolean;
 };
 
 export type GenerateTopicLessonRequest = {

@@ -100,7 +100,7 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
     lastKeyAt.value = null;
   }
 
-  function complete(now: number) {
+  function complete(now: number, opts: { cancelled?: boolean } = {}) {
     if (state.value === 'done') return;
     state.value = 'done';
     endedAt.value = now;
@@ -110,6 +110,7 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
       accuracy: accuracy.value,
       durationMs: durationMs.value,
       errorsByKey: errorsByKey.value,
+      cancelled: opts.cancelled ?? false,
     });
   }
 
@@ -141,20 +142,22 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
 
     totalTyped.value++;
 
-    const attemptsForKey = perKeyAttempts.value[expected] ?? 0;
-    perKeyAttempts.value[expected] = attemptsForKey + 1;
-
-    // Track per-key avg time (using last key timing).
-    if (lastKeyAt.value !== null) {
-      const dt = e.at - lastKeyAt.value;
-      const prior = perKeyAvgMs.value[expected] ?? 0;
-      // Running mean.
-      const newCount = perKeyAttempts.value[expected];
-      perKeyAvgMs.value[expected] = (prior * (newCount - 1) + dt) / newCount;
-    }
-    lastKeyAt.value = e.at;
-
     if (e.key === expected) {
+      // Attribute attempt count + inter-press time only to correct keys.
+      // Wrong-key inter-press deltas should not pollute the expected
+      // key's avgMs (we'd otherwise count "kid pauses, then mistypes"
+      // toward the heatmap as fast time on the correct letter).
+      const attemptsForKey = perKeyAttempts.value[expected] ?? 0;
+      perKeyAttempts.value[expected] = attemptsForKey + 1;
+
+      if (lastKeyAt.value !== null) {
+        const dt = e.at - lastKeyAt.value;
+        const prior = perKeyAvgMs.value[expected] ?? 0;
+        const newCount = perKeyAttempts.value[expected];
+        perKeyAvgMs.value[expected] = (prior * (newCount - 1) + dt) / newCount;
+      }
+      lastKeyAt.value = e.at;
+
       correctTyped.value++;
       cursor.value++;
       if (cursor.value >= text.length) {
@@ -166,11 +169,12 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
       errors.value++;
       errorsByKey.value[expected] = (errorsByKey.value[expected] ?? 0) + 1;
       perKeyErrorAttempts.value[expected] = (perKeyErrorAttempts.value[expected] ?? 0) + 1;
+      lastKeyAt.value = e.at;
     }
   }
 
   function cancel() {
-    complete(clock());
+    complete(clock(), { cancelled: true });
   }
 
   const durationMs = computed(() => {

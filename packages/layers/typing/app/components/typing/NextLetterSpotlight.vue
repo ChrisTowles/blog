@@ -2,7 +2,7 @@
 import type { KeyboardHint } from '../../composables/useVirtualKeyboard';
 import { FINGER_BG_SOFT, FINGER_LABEL } from '../../utils/typing/finger-colors';
 
-const props = defineProps<{
+defineProps<{
   hint: KeyboardHint | null;
   /** Briefly true after a wrong keystroke. Pulses the spotlight red. */
   wrongFlash?: boolean;
@@ -12,56 +12,9 @@ const props = defineProps<{
    * next letter is the same as the previous one (e.g. "ffff").
    */
   pressTick?: number;
-  /** Consecutive correct keystroke count; badge appears at 3+. */
-  streak?: number;
   /** Increments at every milestone (3, 6, 9, ...). Drives the burst remount. */
   tierUp?: number;
 }>();
-
-type StreakStyle = {
-  emoji: string;
-  caption: string;
-  badge: string;
-  text: string;
-};
-
-const STREAK_TIERS: ReadonlyArray<StreakStyle> = [
-  { emoji: '🔥', caption: 'in a row', badge: 'bg-amber-400 dark:bg-amber-500', text: 'text-xs' },
-  {
-    emoji: '🔥🔥',
-    caption: 'streak!',
-    badge: 'bg-amber-500 dark:bg-amber-400',
-    text: 'text-sm',
-  },
-  {
-    emoji: '🔥🔥🔥',
-    caption: 'on fire!',
-    badge:
-      'bg-gradient-to-r from-orange-500 to-rose-500 dark:from-orange-400 dark:to-rose-400 text-white',
-    text: 'text-base',
-  },
-  {
-    emoji: '⚡⚡⚡',
-    caption: 'unstoppable!',
-    badge:
-      'bg-gradient-to-r from-amber-400 via-rose-500 to-fuchsia-500 dark:from-amber-300 dark:via-rose-400 dark:to-fuchsia-400 text-white',
-    text: 'text-lg',
-  },
-  {
-    emoji: '🚀',
-    caption: 'legendary!',
-    badge:
-      'bg-gradient-to-r from-fuchsia-500 via-violet-500 to-sky-500 dark:from-fuchsia-400 dark:via-violet-400 dark:to-sky-400 text-white',
-    text: 'text-xl',
-  },
-];
-
-const streakStyle = computed<StreakStyle | null>(() => {
-  const s = props.streak ?? 0;
-  if (s < 3) return null;
-  const idx = Math.min(STREAK_TIERS.length - 1, Math.floor(s / 3) - 1);
-  return STREAK_TIERS[idx] ?? null;
-});
 </script>
 
 <template>
@@ -74,19 +27,6 @@ const streakStyle = computed<StreakStyle | null>(() => {
         : 'border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60',
     ]"
   >
-    <div
-      v-if="!wrongFlash && streakStyle"
-      :key="`streak-${streak}`"
-      :class="[
-        'streak-badge absolute right-3 top-3 flex items-center gap-2 rounded-full px-3 py-1 font-bold text-amber-950 shadow-md',
-        streakStyle.badge,
-        streakStyle.text,
-      ]"
-    >
-      <span aria-hidden="true">{{ streakStyle.emoji }}</span>
-      <span>{{ streak }} {{ streakStyle.caption }}</span>
-    </div>
-
     <TypingStreakBurst v-if="(tierUp ?? 0) > 0" :key="`burst-${tierUp}`" />
 
     <div class="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -161,25 +101,9 @@ const streakStyle = computed<StreakStyle | null>(() => {
   animation: plus-one-float 700ms ease-out forwards;
 }
 
-@keyframes streak-pop {
-  0% {
-    transform: scale(0.7);
-  }
-  60% {
-    transform: scale(1.15);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-.streak-badge {
-  animation: streak-pop 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .letter-tile,
-  .plus-one,
-  .streak-badge {
+  .plus-one {
     animation: none;
   }
 }
