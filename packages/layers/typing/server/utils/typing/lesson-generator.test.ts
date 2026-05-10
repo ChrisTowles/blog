@@ -8,7 +8,12 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { unlockedKeysForStage } from './curriculum';
-import { validateGeneratedText, generateLesson, type AnthropicLike } from './lesson-generator';
+import {
+  validateGeneratedText,
+  generateLesson,
+  truncateWithinBounds,
+  type AnthropicLike,
+} from './lesson-generator';
 import { blockListCheck } from './lesson-safety';
 
 describe('validateGeneratedText', () => {
@@ -36,6 +41,30 @@ describe('validateGeneratedText', () => {
     const result = validateGeneratedText('a'.repeat(500), stage5, { min: 10, max: 200 });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toMatch(/too long/);
+  });
+});
+
+describe('truncateWithinBounds', () => {
+  it('returns the trimmed text unchanged when already within bounds', () => {
+    expect(truncateWithinBounds('hello world.', { min: 5, max: 50 })).toBe('hello world.');
+  });
+
+  it('cuts at the last sentence-ending punctuation within max', () => {
+    const overflow = 'a sad lad has a flask. a flag has a glass. one more sentence keeps going';
+    const result = truncateWithinBounds(overflow, { min: 15, max: 25 });
+    expect(result).toBe('a sad lad has a flask.');
+  });
+
+  it('falls back to last space when no terminal punctuation fits', () => {
+    const overflow = 'a sad lad has a flask and a flag and a glass and one more thing';
+    const result = truncateWithinBounds(overflow, { min: 20, max: 30 });
+    expect(result).toBe('a sad lad has a flask and a');
+  });
+
+  it('returns null when no punctuation or space falls within bounds', () => {
+    const overflow = 'a'.repeat(40);
+    const result = truncateWithinBounds(overflow, { min: 20, max: 22 });
+    expect(result).toBeNull();
   });
 });
 
@@ -119,6 +148,29 @@ describe('generateLesson (stub Anthropic client)', () => {
       stub,
     );
     expect(result.ok).toBe(false);
+  });
+
+  it('recovers via truncation when the model overshoots the upper bound', async () => {
+    // 230 chars, all stage-5 legal. Truncator falls back to last-space cut
+    // because there's no terminal punctuation (period isn't unlocked yet).
+    const overflow = 'a sad lad has a flask; '.repeat(10);
+    create.mockResolvedValueOnce({
+      content: [{ type: 'text', text: overflow }],
+    });
+    create.mockResolvedValueOnce({
+      content: [{ type: 'text', text: '{"safe": true}' }],
+    });
+
+    const result = await generateLesson(
+      { stage: 5, topic: 'glass', kind: 'sentence', length: 'short' },
+      stub,
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.text.length).toBeLessThanOrEqual(160);
+      expect(result.text.length).toBeGreaterThanOrEqual(60);
+    }
+    expect(create).toHaveBeenCalledTimes(2);
   });
 
   it('errors when ANTHROPIC_API_KEY is missing', async () => {

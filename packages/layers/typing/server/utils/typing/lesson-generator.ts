@@ -47,17 +47,43 @@ function buildPrompt(input: GenerateLessonInput, unlocked: string[]): string {
   const allowed = unlocked.join('');
   const bounds = LENGTH_BOUNDS[input.length];
   const kindHint = KIND_HINTS[input.kind];
+  const target = Math.round((bounds.min + bounds.max) / 2);
   return `You are writing a typing exercise for a child age 7 who is learning to type.
 
 Topic: ${input.topic}
-Length: ${kindHint}, ${bounds.min}-${bounds.max} characters total.
+Format: ${kindHint}.
+Length: aim for ~${target} characters; HARD MAX ${bounds.max} characters total. Going over ${bounds.max} characters is a failure.
 Allowed characters (CRITICAL — every character in your reply must be one of these): "${allowed}".
 
 Hard rules:
 - ONLY use characters from the allowed set. Letters not in the set are FORBIDDEN.
 - No proper nouns that introduce new letters. Pick simple words.
 - No quotes, no emoji, no smart punctuation, no newlines, no markdown.
+- DO NOT exceed ${bounds.max} characters. Count before you reply.
 - One short kid-friendly text on the topic. Reply with ONLY the typing text — no preamble, no explanation, no quotation marks.`;
+}
+
+/**
+ * If the model overshoots the upper bound, try to recover deterministically
+ * by cutting at the last sentence-ending punctuation (or last space) that
+ * still falls within bounds. Returns null if no usable cut exists.
+ */
+export function truncateWithinBounds(
+  text: string,
+  bounds: { min: number; max: number },
+): string | null {
+  const trimmed = text.trim();
+  if (trimmed.length <= bounds.max) return trimmed;
+  const window = trimmed.slice(0, bounds.max + 1);
+  const punct = Math.max(window.lastIndexOf('.'), window.lastIndexOf('!'), window.lastIndexOf('?'));
+  if (punct >= bounds.min - 1) {
+    return window.slice(0, punct + 1).trim();
+  }
+  const space = window.lastIndexOf(' ');
+  if (space >= bounds.min) {
+    return window.slice(0, space).trim();
+  }
+  return null;
 }
 
 export function validateGeneratedText(
@@ -110,8 +136,18 @@ export async function generateLesson(
       lastReason = 'no text response';
       continue;
     }
-    const text = block.text.trim();
-    const valid = validateGeneratedText(text, unlocked, bounds);
+    let text = block.text.trim();
+    let valid = validateGeneratedText(text, unlocked, bounds);
+    if (!valid.ok && valid.reason.startsWith('too long')) {
+      const truncated = truncateWithinBounds(text, bounds);
+      if (truncated) {
+        const reValid = validateGeneratedText(truncated, unlocked, bounds);
+        if (reValid.ok) {
+          text = truncated;
+          valid = reValid;
+        }
+      }
+    }
     if (!valid.ok) {
       lastReason = `validation: ${valid.reason}`;
       continue;
