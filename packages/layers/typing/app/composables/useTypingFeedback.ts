@@ -20,7 +20,6 @@ import type { UseTypingEngine } from './useTypingEngine';
 import type { useTypingAudio } from './useTypingAudio';
 
 export type UseTypingFeedbackOptions = {
-  lessonText?: string;
   /** Hook for additional visual side-effects on wrong (e.g. screen shake). */
   onWrong?: () => void;
   /** How long the wrong flash stays high before resetting (ms). */
@@ -59,7 +58,10 @@ export function useTypingFeedback(
   let flashTimer: ReturnType<typeof setTimeout> | null = null;
 
   watch(streakTier, (next, prev) => {
-    if (next > prev && next > 0) tierUp.value++;
+    if (next > prev && next > 0) {
+      tierUp.value++;
+      audio.playStreakDing(next);
+    }
   });
 
   function clearFlash() {
@@ -75,10 +77,7 @@ export function useTypingFeedback(
       if (next > prev) {
         pressTick.value++;
         streak.value++;
-        if (options.lessonText) {
-          const justTyped = options.lessonText[engine.cursor.value - 1];
-          if (justTyped) audio.playKey(justTyped.toLowerCase());
-        }
+        audio.playClick();
       }
     },
   );

@@ -49,32 +49,88 @@ export function useTypingAudio() {
     window.speechSynthesis.speak(utter);
   }
 
-  /**
-   * Short low-pitched buzz to signal a wrong key. Synthesized with the
-   * Web Audio API so it works without any backend / asset cache and
-   * never blocks on a network round-trip.
-   */
-  function playWrong() {
-    if (!audioOn.value || !import.meta.client) return;
+  function getAudioCtx(): AudioContext | null {
+    if (!audioOn.value || !import.meta.client) return null;
     const AudioCtx =
       window.AudioContext ??
       (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AudioCtx) return;
+    if (!AudioCtx) return null;
     try {
-      const ctx = new AudioCtx();
+      return new AudioCtx();
+    } catch {
+      return null;
+    }
+  }
+
+  /** Tiny self-contained synth helper. Returns silently if audio is off. */
+  function playTone(
+    freq: number,
+    durationMs: number,
+    opts: { type?: OscillatorType; gain?: number; startOffsetMs?: number } = {},
+  ) {
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    try {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.type = 'square';
-      osc.frequency.value = 220;
-      gain.gain.setValueAtTime(0.06, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+      osc.type = opts.type ?? 'sine';
+      osc.frequency.value = freq;
+      const startAt = ctx.currentTime + (opts.startOffsetMs ?? 0) / 1000;
+      const peak = opts.gain ?? 0.05;
+      gain.gain.setValueAtTime(0.0001, startAt);
+      gain.gain.exponentialRampToValueAtTime(peak, startAt + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startAt + durationMs / 1000);
       osc.connect(gain).connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.13);
+      osc.start(startAt);
+      osc.stop(startAt + durationMs / 1000 + 0.01);
       osc.onended = () => void ctx.close();
     } catch {
-      // ignore — audio is best-effort
+      // best-effort
     }
+  }
+
+  /** Soft low buzz on a wrong keystroke. */
+  function playWrong() {
+    playTone(220, 130, { type: 'square', gain: 0.06 });
+  }
+
+  /** Brief positive blip on every correct keystroke — typewriter-feel. */
+  function playClick() {
+    playTone(880, 50, { type: 'sine', gain: 0.04 });
+  }
+
+  /**
+   * Ascending chime that pairs with the streak burst. Higher tier =
+   * higher final note, so 15-in-a-row genuinely sounds better than 3.
+   */
+  function playStreakDing(tier: number) {
+    if (!audioOn.value || !import.meta.client) return;
+    const t = Math.max(1, Math.min(tier, 5));
+    const base = 523.25; // C5
+    // Major triad climbing per tier: do-mi-sol, plus a high octave at tier 5.
+    const notes = [base, base * 1.25, base * 1.5];
+    if (t >= 4) notes.push(base * 2);
+    if (t >= 5) notes.push(base * 2.5);
+    notes.forEach((freq, i) => {
+      playTone(freq * (1 + (t - 1) * 0.05), 140, {
+        type: 'triangle',
+        gain: 0.045,
+        startOffsetMs: i * 75,
+      });
+    });
+  }
+
+  /** Three-note arpeggio "ta-da" on lesson completion. */
+  function playFanfare() {
+    if (!audioOn.value || !import.meta.client) return;
+    // C5 → E5 → G5 → C6
+    [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+      playTone(freq, 200, {
+        type: 'triangle',
+        gain: 0.06,
+        startOffsetMs: i * 110,
+      });
+    });
   }
 
   async function play(phrase: string) {
@@ -125,5 +181,8 @@ export function useTypingAudio() {
     playKey,
     playEncouragement,
     playWrong,
+    playClick,
+    playStreakDing,
+    playFanfare,
   };
 }

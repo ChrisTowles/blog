@@ -18,6 +18,7 @@ const audio = useTypingAudio();
 const engine = useTypingEngine({
   text: props.text,
   onComplete: (result) => {
+    audio.playFanfare();
     audio.playEncouragement();
     emit('complete', result);
   },
@@ -25,11 +26,9 @@ const engine = useTypingEngine({
 
 const { hint } = useVirtualKeyboard({ nextChar: engine.nextChar });
 
-// Centralized typing feedback: per-key audio on correct, buzz + red
-// flash on wrong. See useTypingFeedback for the rules — every typing
-// surface should reuse this composable.
+// Centralized typing feedback: per-key blip on correct, buzz + red
+// flash on wrong, streak chimes on tier-up. See useTypingFeedback.
 const { wrongFlash, pressTick, streak, tierUp } = useTypingFeedback(engine, audio, {
-  lessonText: props.text,
   onWrong: () => {
     // Speak the expected letter so a learner who can't read the cue
     // hears what they need to press.
@@ -89,6 +88,14 @@ const progressPct = computed(() => {
   if (props.text.length === 0) return 0;
   return Math.min(100, Math.round((engine.cursor.value / props.text.length) * 100));
 });
+
+// Rocket mood: bobs while streaking, dips on wrong, blasts off when done.
+const rocketMood = computed<'idle' | 'happy' | 'oops' | 'launch'>(() => {
+  if (engine.state.value === 'done') return 'launch';
+  if (wrongFlash.value) return 'oops';
+  if (streak.value >= 3) return 'happy';
+  return 'idle';
+});
 </script>
 
 <template>
@@ -124,83 +131,97 @@ const progressPct = computed(() => {
       </div>
 
       <!-- RIGHT: where you are + how you're doing -->
-      <div class="space-y-4 lg:col-span-3">
-        <!-- Stats chip strip — single horizontal line -->
-        <div
-          class="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-full bg-slate-100 px-5 py-2 text-sm text-slate-700 dark:bg-slate-900/60 dark:text-slate-200"
-        >
-          <span :data-testid="TEST_IDS.TYPING.WPM_METER" class="flex items-baseline gap-1">
-            <strong class="font-mono text-base">{{ wpmRounded }}</strong>
-            <span class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400"
-              >WPM</span
+      <div class="lg:col-span-3">
+        <div class="flex gap-4">
+          <div class="flex flex-1 flex-col gap-3">
+            <!-- Stats chip strip -->
+            <div
+              class="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-full bg-slate-100 px-5 py-2 text-sm text-slate-700 dark:bg-slate-900/60 dark:text-slate-200"
             >
-          </span>
-          <span :data-testid="TEST_IDS.TYPING.ACCURACY_METER" class="flex items-baseline gap-1">
-            <strong class="font-mono text-base">{{ accuracyPct }}%</strong>
-            <span class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400"
-              >accuracy</span
-            >
-          </span>
-          <span class="flex items-baseline gap-1">
-            <strong class="font-mono text-base">{{ engine.errors.value }}</strong>
-            <span class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400"
-              >errors</span
-            >
-          </span>
-        </div>
+              <span :data-testid="TEST_IDS.TYPING.WPM_METER" class="flex items-baseline gap-1">
+                <strong class="font-mono text-base">{{ wpmRounded }}</strong>
+                <span class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  >WPM</span
+                >
+              </span>
+              <span :data-testid="TEST_IDS.TYPING.ACCURACY_METER" class="flex items-baseline gap-1">
+                <strong class="font-mono text-base">{{ accuracyPct }}%</strong>
+                <span class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  >accuracy</span
+                >
+              </span>
+              <span class="flex items-baseline gap-1">
+                <strong class="font-mono text-base">{{ engine.errors.value }}</strong>
+                <span class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  >errors</span
+                >
+              </span>
+            </div>
 
-        <!-- Lesson rendered as chunky tiles. `␣` is the open-box glyph
-             used wherever a space is expected; the legend reminds the
-             kid what it means. -->
-        <div
-          v-if="props.text.includes(' ')"
-          class="flex items-center justify-end gap-2 text-sm text-slate-600 dark:text-slate-300"
-        >
-          <span
-            class="flex h-7 w-9 items-center justify-center rounded-md bg-slate-200 font-mono text-base font-bold dark:bg-slate-700"
-            >␣</span
-          >
-          <span>means <strong>space bar</strong></span>
-        </div>
-        <div
-          :data-testid="TEST_IDS.TYPING.LESSON_TEXT"
-          class="flex flex-wrap gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/50"
-        >
-          <span
-            v-for="(ch, idx) in props.text.split('')"
-            :key="idx"
-            :class="[
-              'flex h-10 min-w-[2.25rem] select-none items-center justify-center rounded-md font-mono text-xl font-bold transition-colors',
-              tileClass(idx),
-            ]"
-          >
-            {{ ch === ' ' ? '␣' : ch }}
-          </span>
-        </div>
+            <!-- Space-glyph legend, only when a lesson contains spaces. -->
+            <div
+              v-if="props.text.includes(' ')"
+              class="flex items-center justify-end gap-2 text-sm text-slate-600 dark:text-slate-300"
+            >
+              <span
+                class="flex h-7 w-9 items-center justify-center rounded-md bg-slate-200 font-mono text-base font-bold dark:bg-slate-700"
+                >␣</span
+              >
+              <span>means <strong>space bar</strong></span>
+            </div>
 
-        <!-- Progress race-track with mascot -->
-        <div
-          class="relative h-9 overflow-visible rounded-full bg-slate-200 shadow-inner dark:bg-slate-900/60"
-          :aria-label="`Progress ${progressPct}%`"
-          role="progressbar"
-          :aria-valuenow="progressPct"
-        >
+            <!-- Lesson rendered as chunky tiles. -->
+            <div
+              :data-testid="TEST_IDS.TYPING.LESSON_TEXT"
+              class="flex flex-wrap gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/50"
+            >
+              <span
+                v-for="(ch, idx) in props.text.split('')"
+                :key="idx"
+                :class="[
+                  'flex h-10 min-w-[2.25rem] select-none items-center justify-center rounded-md font-mono text-xl font-bold transition-colors',
+                  tileClass(idx),
+                ]"
+              >
+                {{ ch === ' ' ? '␣' : ch }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Vertical rocket launchpad. Track grows from bottom up; rocket
+               sits at progressPct of the way up. At 100% it animates off
+               screen leaving a fading trail. -->
           <div
-            class="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-sky-400 via-emerald-400 to-amber-400 transition-all duration-200 ease-out dark:from-sky-500 dark:via-emerald-500 dark:to-amber-500"
-            :style="{ width: `${progressPct}%` }"
-          />
-          <span
-            class="mascot pointer-events-none absolute -top-2 select-none text-3xl drop-shadow"
-            :style="{ left: `calc(${progressPct}% - 1.1rem)` }"
-            aria-hidden="true"
+            class="rocket-track relative w-14 flex-none overflow-hidden rounded-2xl bg-slate-200 shadow-inner dark:bg-slate-900/60"
+            :aria-label="`Progress ${progressPct}%`"
+            role="progressbar"
+            :aria-valuenow="progressPct"
           >
-            🚀
-          </span>
-          <span
-            class="absolute right-3 top-1.5 text-xs font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200"
-          >
-            {{ progressPct }}%
-          </span>
+            <div
+              class="absolute inset-x-0 bottom-0 rounded-2xl bg-gradient-to-t from-sky-400 via-emerald-400 to-amber-400 transition-all duration-300 ease-out dark:from-sky-500 dark:via-emerald-500 dark:to-amber-500"
+              :style="{ height: `${progressPct}%` }"
+            />
+            <span
+              :class="[
+                'rocket pointer-events-none absolute left-1/2 -translate-x-1/2 select-none text-3xl drop-shadow-md transition-all duration-300 ease-out',
+                `rocket-${rocketMood}`,
+              ]"
+              :style="{ bottom: `calc(${progressPct}% - 0.5rem)` }"
+              aria-hidden="true"
+            >
+              🚀
+            </span>
+            <span
+              v-if="rocketMood === 'launch'"
+              aria-hidden="true"
+              class="rocket-trail pointer-events-none absolute left-1/2 -translate-x-1/2"
+            />
+            <span
+              class="absolute inset-x-0 top-2 text-center text-xs font-bold text-slate-700 dark:text-slate-100"
+            >
+              {{ progressPct }}%
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -225,12 +246,15 @@ const progressPct = computed(() => {
       <TypingVirtualKeyboard :hint="hint" />
     </div>
 
+    <!-- Lesson cleared celebration: confetti shower over the whole card -->
     <div
       v-if="engine.state.value === 'done'"
       :data-testid="TEST_IDS.TYPING.LESSON_COMPLETE"
-      class="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-center text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200"
+      class="relative mt-6 overflow-visible rounded-xl border-2 border-emerald-300 bg-emerald-50 p-5 text-center text-emerald-900 dark:border-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-100"
     >
-      Nice work! {{ wpmRounded }} WPM at {{ accuracyPct }}% accuracy.
+      <TypingStreakBurst :count="36" />
+      <div class="text-2xl font-extrabold">🎉 Lesson cleared!</div>
+      <div class="mt-1 text-sm opacity-80">{{ wpmRounded }} WPM · {{ accuracyPct }}% accuracy</div>
     </div>
   </div>
 </template>
@@ -249,8 +273,88 @@ const progressPct = computed(() => {
   animation: tile-bob 1s ease-in-out infinite;
 }
 
+.rocket-track {
+  /* Tall enough to feel like a launchpad without dominating the layout. */
+  min-height: 16rem;
+}
+
+@keyframes rocket-bob {
+  0%,
+  100% {
+    transform: translate(-50%, 0) rotate(-3deg);
+  }
+  50% {
+    transform: translate(-50%, -4px) rotate(3deg);
+  }
+}
+.rocket-happy {
+  animation: rocket-bob 0.6s ease-in-out infinite;
+}
+
+@keyframes rocket-shake {
+  0%,
+  100% {
+    transform: translate(-50%, 0);
+  }
+  25% {
+    transform: translate(calc(-50% - 4px), 0);
+  }
+  75% {
+    transform: translate(calc(-50% + 4px), 0);
+  }
+}
+.rocket-oops {
+  animation: rocket-shake 180ms ease-in-out 1;
+}
+
+@keyframes rocket-blastoff {
+  0% {
+    transform: translate(-50%, 0) scale(1);
+    opacity: 1;
+  }
+  20% {
+    transform: translate(-50%, -1rem) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -28rem) scale(1.4);
+    opacity: 0;
+  }
+}
+.rocket-launch {
+  animation: rocket-blastoff 1.4s cubic-bezier(0.5, 0, 0.6, 1) forwards;
+}
+
+@keyframes trail-rise {
+  0% {
+    height: 0;
+    opacity: 0.9;
+    bottom: 0;
+  }
+  60% {
+    height: 8rem;
+    opacity: 0.6;
+    bottom: 0;
+  }
+  100% {
+    height: 12rem;
+    opacity: 0;
+    bottom: 0;
+  }
+}
+.rocket-trail {
+  width: 1.5rem;
+  background: linear-gradient(to top, rgba(251, 191, 36, 0.7), rgba(251, 113, 133, 0));
+  border-radius: 0.75rem;
+  animation: trail-rise 1.4s ease-out forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .tile-current {
+  .tile-current,
+  .rocket-happy,
+  .rocket-oops,
+  .rocket-launch,
+  .rocket-trail {
     animation: none;
   }
 }
