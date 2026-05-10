@@ -8,6 +8,9 @@ defineProps<{
 
 type Row = ReadonlyArray<{ key: string; w?: number; label?: string }>;
 
+const HOME_ROW_KEYS = new Set(['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';']);
+const NUB_KEYS = new Set(['f', 'j']);
+
 const ROWS: ReadonlyArray<Row> = [
   [
     { key: '1' },
@@ -166,7 +169,10 @@ function cellWidthRem(cols: 1 | 2): string {
         type="button"
         tabindex="-1"
         :class="[
-          'flex h-10 select-none items-center justify-center rounded-md border border-slate-300 font-mono text-sm font-semibold uppercase shadow-sm transition-all dark:border-slate-700',
+          'relative flex h-10 select-none items-center justify-center rounded-md border font-mono text-sm font-semibold uppercase shadow-sm transition-all',
+          HOME_ROW_KEYS.has(cell.key)
+            ? 'border-2 border-slate-500 dark:border-slate-400'
+            : 'border-slate-300 dark:border-slate-700',
           FINGER_BG[FINGER_OF[cell.key] ?? 'thumb'],
           hint && hint.expected === cell.key
             ? 'scale-110 ring-4 ring-amber-400 dark:ring-amber-500'
@@ -175,6 +181,11 @@ function cellWidthRem(cols: 1 | 2): string {
         :style="{ width: `${(cell.w ?? 1) * 2.25}rem` }"
       >
         {{ cell.label ?? cell.key }}
+        <span
+          v-if="NUB_KEYS.has(cell.key)"
+          aria-hidden="true"
+          class="absolute bottom-1 left-1/2 h-1 w-2 -translate-x-1/2 rounded-full bg-slate-700 dark:bg-slate-200"
+        />
       </button>
     </div>
     <!-- Hand strip — 8 long fingers aligned to home-row columns plus a

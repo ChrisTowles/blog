@@ -17,6 +17,38 @@ import {
   type LocalProgress,
 } from '~~/shared/typing-types';
 
+const TYPING_BESTS_LOCAL_STORAGE_KEY = 'typing:bests:v1';
+
+export type LessonBest = {
+  wpm: number;
+  accuracy: number;
+  durationMs: number;
+  recordedAt: string;
+};
+
+type LessonBestMap = Record<string, LessonBest>;
+
+function readBests(): LessonBestMap {
+  if (typeof localStorage === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(TYPING_BESTS_LOCAL_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as LessonBestMap;
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeBests(b: LessonBestMap) {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(TYPING_BESTS_LOCAL_STORAGE_KEY, JSON.stringify(b));
+  } catch {
+    // best-effort; lessons still work without PR tracking.
+  }
+}
+
 function readStorage(): LocalProgress {
   if (typeof localStorage === 'undefined') return emptyLocalProgress();
   try {
@@ -79,6 +111,16 @@ export type UseTypingProgress = {
     attempt: RecordGameAttemptInput,
     perKeyStats?: Record<string, LocalKeyStat>,
   ) => RecordAttemptResult;
+  /** Read the personal best for a lesson slug, or null if none yet. */
+  getLessonBest: (slug: string) => LessonBest | null;
+  /**
+   * Save a new best if `wpm` beats the existing one. Returns whether it
+   * was a new best plus the previous record (or null when first attempt).
+   */
+  recordLessonBest: (
+    slug: string,
+    attempt: { wpm: number; accuracy: number; durationMs: number },
+  ) => { isNewBest: boolean; previous: LessonBest | null };
   setCurrentStage: (stage: number) => void;
   reset: () => void;
 };
@@ -203,7 +245,38 @@ export function useTypingProgress(): UseTypingProgress {
     writeStorage(next);
   }
 
-  return { progress, recordAttempt, recordGameAttempt, setCurrentStage, reset };
+  function getLessonBest(slug: string): LessonBest | null {
+    return readBests()[slug] ?? null;
+  }
+
+  function recordLessonBest(
+    slug: string,
+    attempt: { wpm: number; accuracy: number; durationMs: number },
+  ): { isNewBest: boolean; previous: LessonBest | null } {
+    const bests = readBests();
+    const previous = bests[slug] ?? null;
+    const isNewBest = previous === null || attempt.wpm > previous.wpm;
+    if (isNewBest) {
+      bests[slug] = {
+        wpm: attempt.wpm,
+        accuracy: attempt.accuracy,
+        durationMs: attempt.durationMs,
+        recordedAt: new Date().toISOString(),
+      };
+      writeBests(bests);
+    }
+    return { isNewBest, previous };
+  }
+
+  return {
+    progress,
+    recordAttempt,
+    recordGameAttempt,
+    getLessonBest,
+    recordLessonBest,
+    setCurrentStage,
+    reset,
+  };
 }
 
 /**

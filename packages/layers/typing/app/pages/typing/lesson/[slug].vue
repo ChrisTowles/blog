@@ -31,8 +31,10 @@ useHead(() => ({
   ],
 }));
 
-const { recordAttempt } = useTypingProgress();
+const { recordAttempt, recordLessonBest, getLessonBest } = useTypingProgress();
 const toast = useToast();
+const isNewBest = ref(false);
+const previousBest = ref<{ wpm: number; accuracy: number } | null>(null);
 
 const AUTO_ADVANCE_SECONDS = 5;
 const lessonDone = ref(false);
@@ -58,6 +60,8 @@ function tryAgain() {
   clearAdvance();
   lessonDone.value = false;
   lastResult.value = null;
+  isNewBest.value = false;
+  previousBest.value = null;
   runnerKey.value++;
 }
 
@@ -83,6 +87,8 @@ const passed = computed(() => {
 watch(slug, () => {
   lessonDone.value = false;
   lastResult.value = null;
+  isNewBest.value = false;
+  previousBest.value = null;
   clearAdvance();
 });
 
@@ -106,6 +112,24 @@ function onComplete(result: LessonCompleteResult) {
       color: 'success',
       icon: 'i-lucide-key-round',
       duration: 6000,
+    });
+  }
+  const best = recordLessonBest(slug.value, {
+    wpm: result.wpm,
+    accuracy: result.accuracy,
+    durationMs: result.durationMs,
+  });
+  isNewBest.value = best.isNewBest;
+  previousBest.value = best.previous
+    ? { wpm: best.previous.wpm, accuracy: best.previous.accuracy }
+    : null;
+  if (best.isNewBest && best.previous) {
+    toast.add({
+      title: 'New personal best! 🏆',
+      description: `${Math.round(result.wpm)} WPM beats your previous ${Math.round(best.previous.wpm)} WPM.`,
+      color: 'success',
+      icon: 'i-lucide-trophy',
+      duration: 5000,
     });
   }
   if (passed.value && nextLesson.value) startAutoAdvance();
@@ -163,7 +187,7 @@ function backToList() {
           : 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-500 dark:bg-amber-950/30 dark:text-amber-100',
       ]"
     >
-      <div class="flex flex-col">
+      <div class="flex flex-col gap-1">
         <span class="text-base">
           <span v-if="passed" class="font-bold">Nice work! 🎉</span>
           <span v-else class="font-bold">Lesson finished!</span>
@@ -171,10 +195,28 @@ function backToList() {
             >Next up: <strong>{{ nextLesson.title }}</strong></span
           >
         </span>
-        <span class="text-xs opacity-80">
-          <span v-if="advanceCountdown !== null">Auto-advancing in {{ advanceCountdown }}s · </span>
-          Press <kbd class="rounded border border-current px-1 font-mono text-xs">Enter</kbd> to
-          continue
+        <span class="flex flex-wrap items-center gap-2 text-xs">
+          <span
+            v-if="isNewBest && previousBest"
+            class="rounded-full bg-amber-200 px-2 py-0.5 font-bold text-amber-950 dark:bg-amber-300"
+            >🏆 new best · +{{ Math.round(lastResult!.wpm - previousBest.wpm) }} WPM</span
+          >
+          <span
+            v-else-if="isNewBest"
+            class="rounded-full bg-amber-200 px-2 py-0.5 font-bold text-amber-950 dark:bg-amber-300"
+            >🏆 first run logged</span
+          >
+          <span v-else-if="previousBest" class="opacity-70">
+            best so far: {{ Math.round(previousBest.wpm) }} WPM ·
+            {{ Math.round(previousBest.accuracy * 100) }}% accuracy
+          </span>
+          <span class="opacity-80">
+            <span v-if="advanceCountdown !== null"
+              >Auto-advancing in {{ advanceCountdown }}s ·
+            </span>
+            Press <kbd class="rounded border border-current px-1 font-mono text-xs">Enter</kbd> to
+            continue
+          </span>
         </span>
       </div>
       <div class="flex gap-2">
