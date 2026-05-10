@@ -1,0 +1,29 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "blog",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@chris-towles/blog", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "mcp",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["mcp:dev"],
+      "port": 8081
+    },
+    {
+      "name": "slides",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@chris-towles/slides", "dev"],
+      "port": 3030
+    },
+    {
+      "name": "all",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev"],
+      "port": 3000
+    }
+  ]
+}
