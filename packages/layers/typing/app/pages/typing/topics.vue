@@ -6,7 +6,10 @@ definePageMeta({
   layout: 'typing',
 });
 
-useHead({ title: 'Typing — Topic games' });
+useHead({
+  title: 'Typing — Topic games',
+  meta: [{ name: 'description', content: 'Generate kid-safe typing games on any topic.' }],
+});
 
 const lesson = ref<LessonRow | null>(null);
 const { recordAttempt } = useTypingProgress();

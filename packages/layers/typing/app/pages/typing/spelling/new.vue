@@ -5,7 +5,15 @@ definePageMeta({
   layout: 'typing',
 });
 
-useHead({ title: 'Typing — New spelling list' });
+useHead({
+  title: 'Typing — New spelling list',
+  meta: [
+    {
+      name: 'description',
+      content: 'Add this weeks spelling words by paste, type, or worksheet photo.',
+    },
+  ],
+});
 
 const { active } = useActiveLearner();
 const router = useRouter();

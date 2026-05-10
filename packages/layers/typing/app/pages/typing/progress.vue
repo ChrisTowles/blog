@@ -5,7 +5,15 @@ definePageMeta({
   layout: 'typing',
 });
 
-useHead({ title: 'Typing — Progress' });
+useHead({
+  title: 'Typing — Progress',
+  meta: [
+    {
+      name: 'description',
+      content: 'Your typing progress — stages cleared, key heatmap, recent attempts.',
+    },
+  ],
+});
 
 const { progress, reset } = useTypingProgress();
 
@@ -116,7 +124,7 @@ function formatTime(iso: string): string {
       </p>
       <NuxtLink
         to="/typing"
-        class="mt-4 inline-flex items-center rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700"
+        class="mt-4 inline-flex items-center rounded-lg bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800"
       >
         Start a lesson
       </NuxtLink>

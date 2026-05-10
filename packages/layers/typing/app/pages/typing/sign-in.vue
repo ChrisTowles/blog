@@ -3,7 +3,10 @@ definePageMeta({
   layout: 'typing',
 });
 
-useHead({ title: 'Typing — Sign in' });
+useHead({
+  title: 'Typing — Sign in',
+  meta: [{ name: 'description', content: 'Sign in to save your typing progress across devices.' }],
+});
 
 // The blog uses nuxt-auth-utils with GitHub OAuth — sign-in is handled by
 // the existing /api/auth/github endpoint. This page is just a friendly

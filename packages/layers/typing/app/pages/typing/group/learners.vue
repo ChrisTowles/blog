@@ -6,7 +6,10 @@ definePageMeta({
   layout: 'typing',
 });
 
-useHead({ title: 'Typing — Learners' });
+useHead({
+  title: 'Typing — Learners',
+  meta: [{ name: 'description', content: 'Add and manage learners in your typing-app group.' }],
+});
 
 const route = useRoute();
 const groupId = computed(() => Number(route.query.groupId ?? 0));
@@ -90,7 +93,7 @@ await load();
           />
         </label>
         <button
-          class="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700"
+          class="rounded-lg bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800"
           type="submit"
         >
           Add

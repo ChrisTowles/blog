@@ -15,6 +15,14 @@ const lesson = computed(() => getBuiltInLessons().find((l) => l.slug === slug.va
 
 useHead(() => ({
   title: lesson.value ? `${lesson.value.title} — Typing` : 'Lesson — Typing',
+  meta: [
+    {
+      name: 'description',
+      content: lesson.value
+        ? `Practice typing: ${lesson.value.title}. Stage ${lesson.value.stage} ${lesson.value.kind}.`
+        : 'Typing lesson runner — works without an account.',
+    },
+  ],
 }));
 
 const { recordAttempt } = useTypingProgress();
@@ -75,7 +83,7 @@ function backToList() {
       Lesson not found.
     </p>
     <button
-      class="mt-4 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white"
+      class="mt-4 rounded-lg bg-amber-700 px-4 py-2 text-sm font-medium text-white"
       @click="backToList"
     >
       Back to lessons

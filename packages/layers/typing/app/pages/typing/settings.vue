@@ -3,7 +3,12 @@ definePageMeta({
   layout: 'typing',
 });
 
-useHead({ title: 'Typing — Settings' });
+useHead({
+  title: 'Typing — Settings',
+  meta: [
+    { name: 'description', content: 'Typing app settings — voice, audio toggle, accessibility.' },
+  ],
+});
 
 const { audioOn } = useTypingAudio();
 const { progress, setCurrentStage } = useTypingProgress();
