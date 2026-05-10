@@ -189,6 +189,5 @@ docs/superpowers/
 
 .auto-claude
 
-# Claude Code agent runtime artifacts (per-machine, per-session)
-.claude/launch.json
+# Claude Code agent runtime worktrees (per-session, never commit)
 .claude/worktrees/
