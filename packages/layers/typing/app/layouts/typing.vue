@@ -1,6 +1,22 @@
 <script setup lang="ts">
 const route = useRoute();
 const isLessonRunner = computed(() => route.path.startsWith('/typing/lesson/'));
+
+// Hydrate available learners on first render (signed-in only). Errors are
+// silent — the layout renders fine for anonymous users.
+const { setLearners } = useActiveLearner();
+const { data: groupsData } = await useFetch('/api/typing/groups', {
+  default: () => ({ groups: [] as Array<{ learners: Array<unknown> }> }),
+  // Auth-required endpoint; ignore 401 silently.
+  ignoreResponseError: true,
+});
+watchEffect(() => {
+  const all = groupsData.value?.groups ?? [];
+  // Flatten all learners across groups (single-group-per-learner UI for MVP,
+  // but the schema supports many).
+  const merged = all.flatMap((g) => g.learners as never[]);
+  setLearners(merged as never);
+});
 </script>
 
 <template>
@@ -21,11 +37,24 @@ const isLessonRunner = computed(() => route.path.startsWith('/typing/lesson/'));
             Lessons
           </NuxtLink>
           <NuxtLink
+            to="/typing/topics"
+            class="text-slate-700 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white"
+          >
+            Topics
+          </NuxtLink>
+          <NuxtLink
+            to="/typing/spelling"
+            class="text-slate-700 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white"
+          >
+            Spelling
+          </NuxtLink>
+          <NuxtLink
             to="/typing/progress"
             class="text-slate-700 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white"
           >
             Progress
           </NuxtLink>
+          <TypingLearnerSwitcher />
         </nav>
       </div>
     </header>

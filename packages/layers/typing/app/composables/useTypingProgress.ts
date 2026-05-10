@@ -1,11 +1,13 @@
 /**
  * useTypingProgress — anonymous-first progress storage.
  *
- * Wraps localStorage under `typing:progress:v1`. When a learner is active
- * and the user is signed in, future phases will mirror writes to the
- * `/api/typing/progress` route. For now this is anonymous-only.
+ * Wraps localStorage under `typing:progress:v1` for anonymous users.
+ * When the active learner is a real DB row, attempts are also POSTed to
+ * `/api/typing/progress` (best-effort; localStorage is the source of
+ * truth for the UI even when logged in so we never block on the network).
  *
- * The composable returns refs that consumers can render reactively.
+ * Game attempts call `recordGameAttempt({ gameSlug, ... })` so attempts get
+ * tagged.
  */
 import {
   TYPING_PROGRESS_LOCAL_STORAGE_KEY,
@@ -42,9 +44,25 @@ function writeStorage(p: LocalProgress) {
   }
 }
 
+export type RecordAttemptInput = LocalAttempt;
+
+export type RecordGameAttemptInput = {
+  gameSlug: string;
+  wpm: number;
+  netWpm: number;
+  accuracy: number;
+  durationMs: number;
+  errorsByKey: Record<string, number>;
+  completedAt?: string;
+};
+
 export type UseTypingProgress = {
   progress: Ref<LocalProgress>;
-  recordAttempt: (attempt: LocalAttempt, perKeyStats?: Record<string, LocalKeyStat>) => void;
+  recordAttempt: (attempt: RecordAttemptInput, perKeyStats?: Record<string, LocalKeyStat>) => void;
+  recordGameAttempt: (
+    attempt: RecordGameAttemptInput,
+    perKeyStats?: Record<string, LocalKeyStat>,
+  ) => void;
   setCurrentStage: (stage: number) => void;
   reset: () => void;
 };
@@ -57,14 +75,60 @@ export function useTypingProgress(): UseTypingProgress {
     progress.value = readStorage();
   }
 
-  function recordAttempt(attempt: LocalAttempt, perKeyStats?: Record<string, LocalKeyStat>) {
+  const { activeLearnerId } = useActiveLearner();
+
+  function maybePushToServer(attempt: LocalAttempt, perKeyStats: Record<string, LocalKeyStat>) {
+    if (!import.meta.client) return;
+    const id = activeLearnerId.value;
+    if (id === 'anon' || typeof id !== 'number') return;
+    // Fire-and-forget; localStorage remains the UI source of truth.
+    void $fetch('/api/typing/progress', {
+      method: 'POST',
+      body: {
+        learnerId: id,
+        lessonId: attempt.lessonId,
+        gameSlug: attempt.gameSlug,
+        wpm: attempt.wpm,
+        netWpm: attempt.netWpm,
+        accuracy: attempt.accuracy,
+        durationMs: attempt.durationMs,
+        errorsByKey: attempt.errorsByKey,
+        perKeyStats,
+      },
+    }).catch(() => {
+      // Network failures fall through silently.
+    });
+  }
+
+  function recordAttempt(attempt: RecordAttemptInput, perKeyStats?: Record<string, LocalKeyStat>) {
+    const stats = perKeyStats ?? {};
     const next: LocalProgress = {
       ...progress.value,
       attempts: [...progress.value.attempts, attempt].slice(-200),
-      keyStats: mergeKeyStats(progress.value.keyStats, perKeyStats ?? {}),
+      keyStats: mergeKeyStats(progress.value.keyStats, stats),
     };
     progress.value = next;
     writeStorage(next);
+    maybePushToServer(attempt, stats);
+  }
+
+  function recordGameAttempt(
+    attempt: RecordGameAttemptInput,
+    perKeyStats?: Record<string, LocalKeyStat>,
+  ) {
+    recordAttempt(
+      {
+        lessonId: null,
+        gameSlug: attempt.gameSlug,
+        wpm: attempt.wpm,
+        netWpm: attempt.netWpm,
+        accuracy: attempt.accuracy,
+        durationMs: attempt.durationMs,
+        errorsByKey: attempt.errorsByKey,
+        completedAt: attempt.completedAt ?? new Date().toISOString(),
+      },
+      perKeyStats,
+    );
   }
 
   function setCurrentStage(stage: number) {
@@ -79,7 +143,7 @@ export function useTypingProgress(): UseTypingProgress {
     writeStorage(next);
   }
 
-  return { progress, recordAttempt, setCurrentStage, reset };
+  return { progress, recordAttempt, recordGameAttempt, setCurrentStage, reset };
 }
 
 function mergeKeyStats(
