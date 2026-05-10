@@ -61,6 +61,30 @@ watch(selectedStage, (val) => {
       </select>
     </section>
 
+    <section class="grid gap-3 md:grid-cols-3">
+      <NuxtLink
+        :to="`/typing/game/letter-rain?stage=${selectedStage}`"
+        class="rounded-xl border border-amber-300 bg-amber-50 p-4 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40"
+      >
+        <h3 class="font-semibold text-amber-900 dark:text-amber-200">Letter Rain</h3>
+        <p class="text-sm text-amber-800 dark:text-amber-300">Type falling letters to zap them.</p>
+      </NuxtLink>
+      <NuxtLink
+        :to="`/typing/game/letter-tic-tac-toe?stage=${selectedStage}`"
+        class="rounded-xl border border-emerald-300 bg-emerald-50 p-4 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-950/40"
+      >
+        <h3 class="font-semibold text-emerald-900 dark:text-emerald-200">Letter Tic-Tac-Toe</h3>
+        <p class="text-sm text-emerald-800 dark:text-emerald-300">Strategy + key practice.</p>
+      </NuxtLink>
+      <NuxtLink
+        :to="`/typing/game/lake-leap?stage=${selectedStage}&mode=curriculum`"
+        class="rounded-xl border border-sky-300 bg-sky-50 p-4 hover:bg-sky-100 dark:border-sky-700 dark:bg-sky-950/40"
+      >
+        <h3 class="font-semibold text-sky-900 dark:text-sky-200">Lake Leap</h3>
+        <p class="text-sm text-sky-800 dark:text-sky-300">Type words to leap across.</p>
+      </NuxtLink>
+    </section>
+
     <section
       :data-testid="TEST_IDS.TYPING.LESSON_PICKER"
       class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"

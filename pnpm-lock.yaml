@@ -338,6 +338,21 @@ importers:
         specifier: ^4.3.4
         version: 4.3.6
 
+  packages/layers/typing:
+    devDependencies:
+      drizzle-orm:
+        specifier: ^0.44.7
+        version: 0.44.7(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(better-sqlite3@12.8.0)(pg@8.20.0)(postgres@3.4.9)
+      evlog:
+        specifier: ^2.11.0
+        version: 2.11.0(@nuxt/kit@4.4.2(magicast@0.5.2))(express@5.2.1)(h3@1.15.11)(hono@4.12.12)(nitropack@2.13.3(better-sqlite3@12.8.0)(drizzle-orm@0.44.7(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(better-sqlite3@12.8.0)(pg@8.20.0)(postgres@3.4.9))(rolldown@1.0.0-rc.15))(ofetch@1.5.1)(vite@8.0.8(@types/node@25.5.2)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      pixi.js:
+        specifier: ^8.18.1
+        version: 8.18.1
+      zod:
+        specifier: ^4.3.4
+        version: 4.3.6
+
   packages/layers/workflows:
     dependencies:
       evlog:
