@@ -27,6 +27,7 @@ function makeAudio() {
     play: vi.fn(),
     preload: vi.fn(),
     setAudioForStage: vi.fn(),
+    stopAll: vi.fn(),
     audioOn: ref(true),
   };
 }

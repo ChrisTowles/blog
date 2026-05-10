@@ -32,13 +32,38 @@ type LessonBestMap = Record<string, LessonBest>;
 
 let bestsCache: LessonBestMap | null = null;
 
+function isLessonBest(val: unknown): val is LessonBest {
+  if (!val || typeof val !== 'object') return false;
+  const v = val as Record<string, unknown>;
+  return (
+    typeof v.wpm === 'number' &&
+    typeof v.accuracy === 'number' &&
+    typeof v.durationMs === 'number' &&
+    typeof v.recordedAt === 'string'
+  );
+}
+
 function readBests(): LessonBestMap {
   if (bestsCache) return bestsCache;
   if (typeof localStorage === 'undefined') return {};
   try {
     const raw = localStorage.getItem(TYPING_BESTS_LOCAL_STORAGE_KEY);
-    bestsCache = raw && typeof raw === 'string' ? (JSON.parse(raw) as LessonBestMap) : {};
-    if (!bestsCache || typeof bestsCache !== 'object') bestsCache = {};
+    if (!raw || typeof raw !== 'string') {
+      bestsCache = {};
+      return bestsCache;
+    }
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      bestsCache = {};
+      return bestsCache;
+    }
+    // Drop any entries that don't match the LessonBest shape — guards
+    // against half-written rows or older schema leaking in.
+    const out: LessonBestMap = {};
+    for (const [slug, entry] of Object.entries(parsed as Record<string, unknown>)) {
+      if (isLessonBest(entry)) out[slug] = entry;
+    }
+    bestsCache = out;
   } catch {
     bestsCache = {};
   }
@@ -137,6 +162,23 @@ export function useTypingProgress(): UseTypingProgress {
   // Re-read on mount in case localStorage was updated by another tab.
   if (import.meta.client) {
     progress.value = readStorage();
+  }
+
+  // Cross-tab sync — when another tab writes to typing:progress:v1 or
+  // typing:bests:v1, invalidate our caches and refresh reactive state so
+  // the kid sees their PR / current-stage update without a reload.
+  if (import.meta.client) {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === TYPING_BESTS_LOCAL_STORAGE_KEY) {
+        bestsCache = null;
+      } else if (e.key === TYPING_PROGRESS_LOCAL_STORAGE_KEY) {
+        progress.value = readStorage();
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    onScopeDispose(() => {
+      window.removeEventListener('storage', onStorage);
+    });
   }
 
   const { activeLearnerId } = useActiveLearner();
