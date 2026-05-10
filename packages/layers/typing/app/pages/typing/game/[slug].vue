@@ -73,6 +73,9 @@ function onResult(result: GameResult) {
     durationMs: result.durationMs,
     errorsByKey: result.errorsByKey,
     completedAt: new Date().toISOString(),
+    spellingListId: spellingListId.value,
+    wordsCleared: result.wordsCleared ?? [],
+    wordsErrored: result.wordsErrored ?? [],
   });
 }
 </script>
