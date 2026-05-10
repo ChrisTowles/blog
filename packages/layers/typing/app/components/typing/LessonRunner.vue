@@ -71,22 +71,24 @@ function onKeydown(e: KeyboardEvent) {
   }
 }
 
-const charClasses = computed(() => {
-  return props.text.split('').map((_, idx) => {
-    if (idx < engine.cursor.value) {
-      return 'text-emerald-700 dark:text-emerald-400';
-    }
-    if (idx === engine.cursor.value) {
-      return wrongFlash.value
-        ? 'rounded bg-rose-300 px-0.5 text-rose-950 dark:bg-rose-400 dark:text-rose-950'
-        : 'rounded bg-amber-200 px-0.5 text-slate-900 dark:bg-amber-300 dark:text-slate-900';
-    }
-    return 'text-slate-500 dark:text-slate-400';
-  });
-});
+function tileClass(idx: number) {
+  if (idx < engine.cursor.value) {
+    return 'bg-emerald-300 text-emerald-950 dark:bg-emerald-500 dark:text-emerald-50';
+  }
+  if (idx === engine.cursor.value) {
+    return wrongFlash.value
+      ? 'bg-rose-400 text-white ring-4 ring-rose-500 animate-pulse'
+      : 'bg-amber-300 text-amber-950 ring-4 ring-amber-400 dark:bg-amber-400 dark:text-amber-950 tile-current';
+  }
+  return 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400';
+}
 
 const wpmRounded = computed(() => Math.round(engine.wpm.value));
 const accuracyPct = computed(() => Math.round(engine.accuracy.value * 100));
+const progressPct = computed(() => {
+  if (props.text.length === 0) return 0;
+  return Math.min(100, Math.round((engine.cursor.value / props.text.length) * 100));
+});
 </script>
 
 <template>
@@ -95,35 +97,101 @@ const accuracyPct = computed(() => Math.round(engine.accuracy.value * 100));
     class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800"
     @click="focusInput"
   >
-    <div v-if="title" class="mb-4 text-xl font-semibold text-slate-900 dark:text-slate-100">
-      {{ title }}
-    </div>
+    <header class="mb-4 flex flex-wrap items-baseline justify-between gap-3">
+      <h2 v-if="title" class="text-xl font-semibold text-slate-900 dark:text-slate-100">
+        {{ title }}
+      </h2>
+      <div
+        v-if="targetWpm"
+        class="flex flex-wrap items-center gap-3 text-sm text-slate-600 dark:text-slate-300"
+      >
+        <span>Target: {{ targetWpm }} WPM</span>
+        <span v-if="targetAccuracy">Accuracy goal: {{ Math.round(targetAccuracy * 100) }}%</span>
+      </div>
+    </header>
 
-    <div
-      v-if="targetWpm"
-      class="mb-4 flex flex-wrap items-center gap-4 text-sm text-slate-600 dark:text-slate-300"
-    >
-      <span>Target: {{ targetWpm }} WPM</span>
-      <span v-if="targetAccuracy">Accuracy goal: {{ Math.round(targetAccuracy * 100) }}%</span>
-    </div>
+    <div class="grid gap-6 lg:grid-cols-5 lg:items-start">
+      <!-- LEFT: what to press -->
+      <div class="space-y-4 lg:col-span-2">
+        <TypingNextLetterSpotlight
+          v-if="hint && engine.state.value !== 'done'"
+          :hint="hint"
+          :wrong-flash="wrongFlash"
+          :press-tick="pressTick"
+          :streak="streak"
+          :tier-up="tierUp"
+        />
+        <TypingHandHint v-if="hint" :hint="hint" />
+      </div>
 
-    <TypingNextLetterSpotlight
-      v-if="hint && engine.state.value !== 'done'"
-      :hint="hint"
-      :wrong-flash="wrongFlash"
-      :press-tick="pressTick"
-      :streak="streak"
-      :tier-up="tierUp"
-      class="mb-6"
-    />
+      <!-- RIGHT: where you are + how you're doing -->
+      <div class="space-y-4 lg:col-span-3">
+        <!-- Stats chip strip — single horizontal line -->
+        <div
+          class="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-full bg-slate-100 px-5 py-2 text-sm text-slate-700 dark:bg-slate-900/60 dark:text-slate-200"
+        >
+          <span :data-testid="TEST_IDS.TYPING.WPM_METER" class="flex items-baseline gap-1">
+            <strong class="font-mono text-base">{{ wpmRounded }}</strong>
+            <span class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >WPM</span
+            >
+          </span>
+          <span :data-testid="TEST_IDS.TYPING.ACCURACY_METER" class="flex items-baseline gap-1">
+            <strong class="font-mono text-base">{{ accuracyPct }}%</strong>
+            <span class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >accuracy</span
+            >
+          </span>
+          <span class="flex items-baseline gap-1">
+            <strong class="font-mono text-base">{{ engine.errors.value }}</strong>
+            <span class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >errors</span
+            >
+          </span>
+        </div>
 
-    <div
-      :data-testid="TEST_IDS.TYPING.LESSON_TEXT"
-      class="mb-6 select-none break-words font-mono text-2xl leading-relaxed md:text-3xl"
-    >
-      <span v-for="(ch, idx) in props.text.split('')" :key="idx" :class="charClasses[idx]">{{
-        ch === ' ' ? '·' : ch
-      }}</span>
+        <!-- Lesson rendered as chunky tiles -->
+        <div
+          :data-testid="TEST_IDS.TYPING.LESSON_TEXT"
+          class="flex flex-wrap gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/50"
+        >
+          <span
+            v-for="(ch, idx) in props.text.split('')"
+            :key="idx"
+            :class="[
+              'flex h-10 min-w-[2.25rem] select-none items-center justify-center rounded-md font-mono text-xl font-bold transition-colors',
+              tileClass(idx),
+            ]"
+          >
+            {{ ch === ' ' ? '·' : ch }}
+          </span>
+        </div>
+
+        <!-- Progress race-track with mascot -->
+        <div
+          class="relative h-9 overflow-visible rounded-full bg-slate-200 shadow-inner dark:bg-slate-900/60"
+          :aria-label="`Progress ${progressPct}%`"
+          role="progressbar"
+          :aria-valuenow="progressPct"
+        >
+          <div
+            class="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-sky-400 via-emerald-400 to-amber-400 transition-all duration-200 ease-out dark:from-sky-500 dark:via-emerald-500 dark:to-amber-500"
+            :style="{ width: `${progressPct}%` }"
+          />
+          <span
+            class="mascot pointer-events-none absolute -top-2 select-none text-3xl drop-shadow"
+            :style="{ left: `calc(${progressPct}% - 1.1rem)` }"
+            aria-hidden="true"
+          >
+            🚀
+          </span>
+          <span
+            class="absolute right-3 top-1.5 text-xs font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200"
+          >
+            {{ progressPct }}%
+          </span>
+        </div>
+      </div>
     </div>
 
     <input
@@ -138,34 +206,12 @@ const accuracyPct = computed(() => Math.round(engine.accuracy.value * 100));
       @keydown="onKeydown"
     />
 
-    <div class="grid grid-cols-3 gap-4 text-center">
-      <div :data-testid="TEST_IDS.TYPING.WPM_METER">
-        <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">WPM</div>
-        <div class="font-mono text-2xl text-slate-900 dark:text-slate-100">
-          {{ wpmRounded }}
-        </div>
-      </div>
-      <div :data-testid="TEST_IDS.TYPING.ACCURACY_METER">
-        <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          Accuracy
-        </div>
-        <div class="font-mono text-2xl text-slate-900 dark:text-slate-100">{{ accuracyPct }}%</div>
-      </div>
-      <div>
-        <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Errors</div>
-        <div class="font-mono text-2xl text-slate-900 dark:text-slate-100">
-          {{ engine.errors.value }}
-        </div>
-      </div>
-    </div>
-
-    <div v-if="hint" class="mt-6 space-y-3">
+    <div v-if="hint" class="mt-6">
       <span :data-testid="TEST_IDS.TYPING.NEXT_KEY_HIGHLIGHT" class="sr-only">
         Next key: {{ hint.nextKey === ' ' ? 'space' : hint.nextKey }} ({{ hint.hand }}
         {{ hint.finger }})
       </span>
       <TypingVirtualKeyboard :hint="hint" />
-      <TypingHandHint :hint="hint" />
     </div>
 
     <div
@@ -177,3 +223,24 @@ const accuracyPct = computed(() => Math.round(engine.accuracy.value * 100));
     </div>
   </div>
 </template>
+
+<style scoped>
+@keyframes tile-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+.tile-current {
+  animation: tile-bob 1s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile-current {
+    animation: none;
+  }
+}
+</style>
