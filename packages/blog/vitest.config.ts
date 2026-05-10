@@ -29,8 +29,13 @@ export default defineConfig({
           globals: true,
           // Setup file provides Nitro server auto-imports as globals
           setupFiles: ['./vitest.setup.ts'],
-          include: ['**/*.{test,spec}.ts'],
-          exclude: ['**/node_modules/**', '**/e2e/**', '**/*.integration.test.ts'],
+          include: ['**/*.{test,spec}.ts', '../layers/**/*.{test,spec}.ts'],
+          exclude: [
+            '**/node_modules/**',
+            '../layers/**/node_modules/**',
+            '**/e2e/**',
+            '**/*.integration.test.ts',
+          ],
           environment: 'nuxt',
           environmentOptions: {
             nuxt: {
