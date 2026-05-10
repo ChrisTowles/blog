@@ -39,6 +39,15 @@ export type UseTypingEngineOptions = {
   onComplete?: (result: LessonCompleteResult) => void;
   /** Inject a clock for tests; defaults to Date.now */
   clock?: () => number;
+  /**
+   * When the default clock is in use the engine starts a setInterval ticker
+   * (250ms) so that `durationMs`/`wpm`/`netWpm` re-evaluate as wall-clock
+   * time passes. Tests that inject `clock` opt out automatically — their
+   * fake clock only advances when the test advances it, and a real-time
+   * ticker would race with fake timers. Pass `ticker: false` to disable the
+   * ticker even when using the default clock.
+   */
+  ticker?: boolean;
 };
 
 export type UseTypingEngine = {
@@ -68,7 +77,11 @@ export type UseTypingEngine = {
 };
 
 export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngine {
+  const usingDefaultClock = options.clock === undefined;
   const clock = options.clock ?? (() => Date.now());
+  // Default ticker behavior: only on when using the default (real) clock.
+  // Tests with injected clocks would otherwise race the ticker vs. fake timers.
+  const tickerEnabled = options.ticker ?? usingDefaultClock;
 
   const state = ref<EngineState>('idle');
   const cursor = ref(0);
@@ -82,6 +95,26 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
   const lastKeyAt = ref<number | null>(null);
   const startedAt = ref<number | null>(null);
   const endedAt = ref<number | null>(null);
+  // Reactive "now" used by `durationMs` so that the WPM computed re-evaluates
+  // while the lesson is running. Without this, `durationMs` only recomputes
+  // when one of its reactive deps (state/startedAt/endedAt) changes — which
+  // means WPM stays frozen at the value it had at the first keystroke,
+  // producing absurd numbers like 120000 WPM.
+  const nowRef = ref<number>(clock());
+  let tickerHandle: ReturnType<typeof setInterval> | null = null;
+
+  function startTicker() {
+    if (!tickerEnabled || tickerHandle !== null) return;
+    tickerHandle = setInterval(() => {
+      nowRef.value = clock();
+    }, 250);
+  }
+
+  function stopTicker() {
+    if (tickerHandle === null) return;
+    clearInterval(tickerHandle);
+    tickerHandle = null;
+  }
 
   const text = options.text;
 
@@ -98,12 +131,15 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
     startedAt.value = null;
     endedAt.value = null;
     lastKeyAt.value = null;
+    nowRef.value = clock();
+    stopTicker();
   }
 
   function complete(now: number, opts: { cancelled?: boolean } = {}) {
     if (state.value === 'done') return;
     state.value = 'done';
     endedAt.value = now;
+    stopTicker();
     options.onComplete?.({
       wpm: wpm.value,
       netWpm: netWpm.value,
@@ -120,6 +156,8 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
     if (state.value === 'idle') {
       state.value = 'running';
       startedAt.value = e.at;
+      nowRef.value = e.at;
+      startTicker();
     }
 
     // Backspace: rewind one previously-correct char if any.
@@ -179,7 +217,12 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
 
   const durationMs = computed(() => {
     const start = startedAt.value;
-    const end = endedAt.value ?? (state.value === 'running' ? clock() : start);
+    // Reference nowRef.value so the computed re-evaluates when the ticker
+    // updates it. We still call `clock()` to get the freshest reading, but
+    // the reactive dep on `nowRef` is what triggers recomputation. When
+    // `state` is 'done' we use `endedAt`; when idle we have no duration.
+    const tick = nowRef.value;
+    const end = endedAt.value ?? (state.value === 'running' ? Math.max(tick, clock()) : start);
     if (start === null || end === null) return 0;
     return Math.max(0, end - start);
   });
@@ -205,6 +248,17 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
     if (cursor.value >= text.length) return '';
     return text[cursor.value] ?? '';
   });
+
+  // Ensure we never leak the interval if the consuming component is
+  // unmounted mid-lesson. Guard with `getCurrentScope` so calling the
+  // composable outside a setup/effectScope context (bare unit tests)
+  // doesn't trigger Vue's "onScopeDispose() is called when there is no
+  // active effect scope" warning.
+  if (getCurrentScope()) {
+    onScopeDispose(() => {
+      stopTicker();
+    });
+  }
 
   return {
     state,
