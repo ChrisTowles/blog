@@ -62,3 +62,38 @@ Decisions / deviations:
 
 Verification: `pnpm typecheck`, `pnpm lint`, `pnpm test --run`,
 `pnpm test:integration -- --run typing` all clean.
+
+## Phase 5 — AI topic games
+
+Status: complete (live integration test gated).
+
+Commits:
+
+- `54b8a6e` feat(typing): AI topic-game generator + safety review + topics UI
+
+Files added:
+
+- `server/utils/typing/lesson-safety.ts` — block list + Claude Haiku
+  safety review (temp 0).
+- `server/utils/typing/lesson-generator.ts` — Claude Haiku (temp 0.3),
+  constrained to unlocked keys, 2 retries.
+- `server/api/typing/lessons/generate.post.ts` — public route,
+  in-memory rate limit (10/day anon, 30/day authed).
+- `app/components/typing/TopicGameForm.vue` + `app/pages/typing/topics.vue`.
+- `lesson-generator.test.ts` (10 unit tests, all passing).
+- `lesson-generator.integration.test.ts` (gated on `RUN_INTEGRATION=1`).
+
+Decisions / deviations:
+
+- Both `generateLesson` and `aiSafetyReview` accept an optional
+  `client` parameter — tests inject a stub; production calls
+  `getAnthropicClient()` by default. Avoided `vi.mock` because the
+  Nuxt vitest environment was unreliable with relative-path mocks.
+- The test hit a length-validation failure on the first run; lesson
+  text was bumped to 70 chars to match the `LENGTH_BOUNDS.short`
+  60-160 floor.
+- Live integration tests stay skipped (no `RUN_INTEGRATION` flag).
+  The user can enable them with `RUN_INTEGRATION=1 pnpm test ...`.
+
+Verification: `pnpm typecheck`, `pnpm lint`, `pnpm test --run` (451
+passing) clean.
