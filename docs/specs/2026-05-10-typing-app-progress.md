@@ -170,3 +170,49 @@ Decisions / deviations:
 
 Verification: `pnpm typecheck`, `pnpm lint`, `pnpm test --run` (469
 passing) clean.
+
+## Phase 8 — Spelling lists
+
+Status: complete (live vision integration test gated on `RUN_INTEGRATION`).
+
+Commits:
+
+- `894bcc3` feat(typing): spelling lists with vision import + auto-lessons + mastery
+- `3e219b4` fix(typing): pass spellingListId + word arrays through game attempts
+
+Files added:
+
+- `server/utils/typing/spelling-extractor.ts` — Claude Sonnet 4 vision
+  with strict-JSON validation (1-30 words, 2-15 chars, [a-z'] only).
+- `server/utils/typing/spelling-lessons.ts` — auto-generates a
+  `spelling-drill` (3x repetition) + `spelling-sentence` (Haiku +
+  fallback) lesson per list.
+- `server/api/typing/spelling/extract.post.ts` — multipart upload
+  (4 MB cap, png/jpeg/webp). Caller must be a guardian; does not save.
+- `server/api/typing/spelling/{index,[id]}` — GET/POST/PUT/DELETE.
+- Spelling mastery hook in `progress/index.post.ts` — resolves the
+  spelling list via `lesson.spellingListId` or `body.spellingListId`,
+  bumps consecutive-correct counts, marks mastered at >= 3, resets
+  the streak on any errored word.
+- Components: `SpellingListForm.vue`, `SpellingImageDropzone.vue`,
+  `SpellingMasteryCard.vue`.
+- Pages: `pages/typing/spelling/{index,new}.vue`.
+- Lake Leap spelling mode: `pages/typing/game/[slug].vue` reads
+  `?words=` and `?list=` and passes them through `recordGameAttempt`.
+- Tests: `spelling-extractor.test.ts` (10 unit tests, all passing),
+  `spelling-extractor.integration.test.ts` (gated, requires fixture
+  image at `packages/blog/public/images/typing/test-worksheet.png`),
+  `e2e/typing-spelling-import.spec.ts` smoke.
+
+Decisions / deviations:
+
+- The `requireGuardian` hook makes the routes safe even when called
+  cross-user. The integration test stays focused on helper logic;
+  Phase 8 ships UI-driven E2E coverage of the form + index page
+  rather than a full multipart roundtrip.
+- Integration test fixture not committed; the test self-skips when
+  the image is missing. Drop a 6-word PNG worksheet at the path
+  noted in the test to enable.
+
+Verification: `pnpm typecheck`, `pnpm lint`, `pnpm test --run` (479
+passing) clean. `pnpm test:integration` (79 passing) clean.

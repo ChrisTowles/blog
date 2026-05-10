@@ -125,9 +125,24 @@ export function useTypingProgress(): UseTypingProgress {
     extras: ServerExtras = {},
   ) {
     const stats = perKeyStats ?? {};
+    const nextAttempts = [...progress.value.attempts, attempt].slice(-200);
+    let nextStage = progress.value.currentStage;
+
+    // Mastery gating — advance the stage when the latest attempt clears
+    // 95% accuracy + the stage's target WPM. The lesson runner reports
+    // gross WPM in `attempt.wpm`. We apply this only to drill / sentence
+    // attempts; game attempts use their own pacing rules.
+    if (attempt.gameSlug === null && attempt.lessonId !== null) {
+      const target = stageTargetWpm(progress.value.currentStage);
+      if (attempt.accuracy >= 0.95 && attempt.wpm >= target) {
+        nextStage = Math.min(20, progress.value.currentStage + 1);
+      }
+    }
+
     const next: LocalProgress = {
       ...progress.value,
-      attempts: [...progress.value.attempts, attempt].slice(-200),
+      currentStage: nextStage,
+      attempts: nextAttempts,
       keyStats: mergeKeyStats(progress.value.keyStats, stats),
     };
     progress.value = next;
@@ -172,6 +187,21 @@ export function useTypingProgress(): UseTypingProgress {
   }
 
   return { progress, recordAttempt, recordGameAttempt, setCurrentStage, reset };
+}
+
+/**
+ * Per-stage target WPM (mirrors `stageTargetWpm` in
+ * `server/utils/typing/curriculum.ts`). Kept inline so the composable
+ * has no server-side imports.
+ */
+function stageTargetWpm(stage: number): number {
+  if (stage <= 3) return 5;
+  if (stage <= 6) return 8;
+  if (stage <= 9) return 12;
+  if (stage <= 12) return 16;
+  if (stage <= 15) return 20;
+  if (stage <= 18) return 25;
+  return 30;
 }
 
 function mergeKeyStats(

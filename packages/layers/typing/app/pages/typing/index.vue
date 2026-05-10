@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { TEST_IDS } from '~~/shared/test-ids';
+import type { SpellingList, SpellingProgress } from '~~/shared/typing-types';
 import { getBuiltInLessons, getStages } from '../../../server/utils/typing/curriculum';
 
 definePageMeta({
@@ -35,6 +36,38 @@ onMounted(() => {
 watch(selectedStage, (val) => {
   router.replace({ query: { ...route.query, stage: val } });
 });
+
+// Active spelling list (most recent week) for the active learner.
+const { active } = useActiveLearner();
+const activeSpellingList = ref<SpellingList | null>(null);
+const activeSpellingProgress = ref<SpellingProgress[]>([]);
+
+watchEffect(async () => {
+  if (!active.value) {
+    activeSpellingList.value = null;
+    activeSpellingProgress.value = [];
+    return;
+  }
+  try {
+    const result = await $fetch<{
+      lists: SpellingList[];
+      progressByList: Record<number, SpellingProgress[]>;
+    }>('/api/typing/spelling', {
+      params: { learnerId: active.value.id },
+    });
+    activeSpellingList.value = result.lists[0] ?? null;
+    activeSpellingProgress.value = activeSpellingList.value
+      ? (result.progressByList[activeSpellingList.value.id] ?? [])
+      : [];
+  } catch {
+    activeSpellingList.value = null;
+    activeSpellingProgress.value = [];
+  }
+});
+
+const masteredWordsForActive = computed(() =>
+  activeSpellingProgress.value.filter((p) => p.mastered).map((p) => p.word),
+);
 </script>
 
 <template>
@@ -45,6 +78,14 @@ watch(selectedStage, (val) => {
         Pick a stage and run a drill — works without an account.
       </p>
     </header>
+
+    <section v-if="activeSpellingList" class="space-y-2">
+      <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">This week's spelling</h2>
+      <TypingSpellingMasteryCard
+        :list="activeSpellingList"
+        :mastered-words="masteredWordsForActive"
+      />
+    </section>
 
     <section :data-testid="TEST_IDS.TYPING.STAGE_MAP" class="space-y-3">
       <label class="block text-sm font-medium text-slate-700 dark:text-slate-200" for="stage-pick">
