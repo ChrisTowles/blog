@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { TEST_IDS } from '~~/shared/test-ids';
-import type { SpellingList } from '~~/shared/typing-types';
+import type { SpellingList, SpellingProgress } from '~~/shared/typing-types';
 
 definePageMeta({
   layout: 'typing',
@@ -10,23 +10,33 @@ useHead({ title: 'Typing — Spelling' });
 
 const { active } = useActiveLearner();
 const lists = ref<SpellingList[]>([]);
+const progressByList = ref<Record<number, SpellingProgress[]>>({});
 const error = ref<string | null>(null);
 
 async function load() {
   if (!active.value) {
     lists.value = [];
+    progressByList.value = {};
     return;
   }
   try {
-    const result = await $fetch<{ lists: SpellingList[] }>('/api/typing/spelling', {
+    const result = await $fetch<{
+      lists: SpellingList[];
+      progressByList: Record<number, SpellingProgress[]>;
+    }>('/api/typing/spelling', {
       params: { learnerId: active.value.id },
     });
     lists.value = result.lists;
+    progressByList.value = result.progressByList ?? {};
     error.value = null;
   } catch (e: unknown) {
     const err = e as { statusMessage?: string };
     error.value = err.statusMessage ?? 'Failed to load lists';
   }
+}
+
+function masteredFor(listId: number): string[] {
+  return (progressByList.value[listId] ?? []).filter((p) => p.mastered).map((p) => p.word);
 }
 
 watchEffect(load);
@@ -73,7 +83,12 @@ watchEffect(load);
     </section>
 
     <section v-else class="grid gap-4">
-      <TypingSpellingMasteryCard v-for="list in lists" :key="list.id" :list="list" />
+      <TypingSpellingMasteryCard
+        v-for="list in lists"
+        :key="list.id"
+        :list="list"
+        :mastered-words="masteredFor(list.id)"
+      />
     </section>
   </div>
 </template>
