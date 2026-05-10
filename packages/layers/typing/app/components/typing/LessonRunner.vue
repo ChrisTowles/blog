@@ -13,9 +13,14 @@ const emit = defineEmits<{
   (e: 'complete', result: LessonCompleteResult): void;
 }>();
 
+const audio = useTypingAudio();
+
 const engine = useTypingEngine({
   text: props.text,
-  onComplete: (result) => emit('complete', result),
+  onComplete: (result) => {
+    audio.playEncouragement();
+    emit('complete', result);
+  },
 });
 
 const { hint } = useVirtualKeyboard({ nextChar: engine.nextChar });
@@ -28,7 +33,20 @@ function focusInput() {
 
 onMounted(() => {
   focusInput();
+  void audio.preload();
 });
+
+// Play the per-key sound on each correct keystroke. We watch the
+// correctTyped counter so wrong presses stay silent.
+watch(
+  () => engine.correctTyped.value,
+  (next, prev) => {
+    if (next > prev) {
+      const justTyped = props.text[engine.cursor.value - 1];
+      if (justTyped) audio.playKey(justTyped.toLowerCase());
+    }
+  },
+);
 
 function onKeydown(e: KeyboardEvent) {
   // Prevent the browser's default tab navigation while running.
@@ -128,14 +146,19 @@ const accuracyPct = computed(() => Math.round(engine.accuracy.value * 100));
       </div>
     </div>
 
-    <div v-if="hint" class="mt-6 text-center text-sm text-slate-600 dark:text-slate-300">
-      <span :data-testid="TEST_IDS.TYPING.NEXT_KEY_HIGHLIGHT">
+    <div v-if="hint" class="mt-6 space-y-3">
+      <div
+        :data-testid="TEST_IDS.TYPING.NEXT_KEY_HIGHLIGHT"
+        class="text-center text-sm text-slate-600 dark:text-slate-300"
+      >
         Next key:
         <span class="font-mono text-base font-semibold text-amber-700 dark:text-amber-300">
           {{ hint.nextKey === ' ' ? 'space' : hint.nextKey }}
         </span>
         ({{ hint.hand }} {{ hint.finger }})
-      </span>
+      </div>
+      <TypingVirtualKeyboard :hint="hint" />
+      <TypingHandHint :hint="hint" />
     </div>
 
     <div

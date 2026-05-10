@@ -73,10 +73,17 @@ const scene = computed<GameScene | null>(() => {
 });
 
 const { recordGameAttempt } = useTypingProgress();
+const audio = useTypingAudio();
 const lastResult = ref<GameResult | null>(null);
+const runId = ref(0);
+
+onMounted(() => {
+  void audio.preload();
+});
 
 function onResult(result: GameResult) {
   lastResult.value = result;
+  audio.playEncouragement();
   recordGameAttempt({
     gameSlug: result.gameSlug,
     wpm: result.wpm,
@@ -89,6 +96,11 @@ function onResult(result: GameResult) {
     wordsCleared: result.wordsCleared ?? [],
     wordsErrored: result.wordsErrored ?? [],
   });
+}
+
+function restart() {
+  lastResult.value = null;
+  runId.value++;
 }
 </script>
 
@@ -109,6 +121,7 @@ function onResult(result: GameResult) {
     <ClientOnly>
       <TypingGamesGameStage
         v-if="scene"
+        :key="runId"
         :slug="slug as 'letter-rain' | 'letter-tic-tac-toe' | 'lake-leap'"
         :scene="scene"
         @result="onResult"
@@ -121,6 +134,16 @@ function onResult(result: GameResult) {
         Unknown game.
       </p>
     </ClientOnly>
+
+    <div class="flex justify-center">
+      <button
+        type="button"
+        class="rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+        @click="restart"
+      >
+        Play again
+      </button>
+    </div>
 
     <div
       v-if="lastResult"
