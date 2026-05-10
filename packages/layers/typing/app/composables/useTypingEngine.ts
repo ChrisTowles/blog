@@ -10,14 +10,19 @@
  * - cursor reaching the end of `text` transitions running -> done.
  * - `cancel()` transitions running -> done early.
  *
+ * Wrong-key behavior: the cursor does NOT advance on a mismatch. The
+ * lesson is kid-friendly — a learner keeps trying until they hit the
+ * expected key. We still count the wrong attempt in totalTyped, errors,
+ * errorsByKey, and perKeyErrorAttempts so the heatmap and accuracy
+ * metrics reflect reality.
+ *
  * WPM definitions:
  *   gross WPM = (chars typed / 5) / minutes elapsed
  *   net WPM   = gross - (errors / minutes)
  *
  * Accuracy = correctChars / totalCharsTyped (NOT lesson length).
  *
- * Backspace counts as a typed char only if it corrects a wrong char (no
- * penalty for self-correction).
+ * Backspace rewinds a previously correct character by one position.
  */
 import type { ErrorsByKeyMap, LessonCompleteResult } from '~~/shared/typing-types';
 
@@ -77,8 +82,6 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
   const lastKeyAt = ref<number | null>(null);
   const startedAt = ref<number | null>(null);
   const endedAt = ref<number | null>(null);
-  // Track which positions in the lesson text are wrong (for backspace correction logic).
-  const errorMarks = ref<boolean[]>([]);
 
   const text = options.text;
 
@@ -95,7 +98,6 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
     startedAt.value = null;
     endedAt.value = null;
     lastKeyAt.value = null;
-    errorMarks.value = [];
   }
 
   function complete(now: number) {
@@ -119,18 +121,11 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
       startedAt.value = e.at;
     }
 
-    // Backspace: rewind cursor by one if possible.
+    // Backspace: rewind one previously-correct char if any.
     if (e.key === 'Backspace') {
       if (cursor.value > 0) {
         cursor.value--;
-        const wasError = errorMarks.value[cursor.value];
-        errorMarks.value[cursor.value] = false;
-        // Backspace counts as a typed char only if it corrects an error
-        // (no penalty for self-correction beyond the original error).
-        if (wasError) {
-          // We do not increment totalTyped — the original wrong key already
-          // contributed to totalTyped. Backspace just resets the position.
-        }
+        if (correctTyped.value > 0) correctTyped.value--;
       }
       lastKeyAt.value = e.at;
       return;
@@ -161,18 +156,16 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
 
     if (e.key === expected) {
       correctTyped.value++;
-      errorMarks.value[cursor.value] = false;
       cursor.value++;
+      if (cursor.value >= text.length) {
+        complete(e.at);
+      }
     } else {
+      // Wrong key: don't advance. Kid keeps trying until they hit
+      // the expected character.
       errors.value++;
-      errorMarks.value[cursor.value] = true;
       errorsByKey.value[expected] = (errorsByKey.value[expected] ?? 0) + 1;
       perKeyErrorAttempts.value[expected] = (perKeyErrorAttempts.value[expected] ?? 0) + 1;
-      cursor.value++;
-    }
-
-    if (cursor.value >= text.length) {
-      complete(e.at);
     }
   }
 
