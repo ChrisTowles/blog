@@ -256,17 +256,17 @@ passing) clean. `pnpm test:integration` (79 passing) clean.
 
 Branch: `feature/typing-app`. Commits since phase 2 head (`0d23afe`):
 
-| Phase | Commit                                       | Subject                                                                |
-| ----- | -------------------------------------------- | ---------------------------------------------------------------------- |
-| 3     | `8966eda`                                    | feat(typing): public lesson API + progress page + anonymous E2E        |
-| 3     | `fb26d16`                                    | docs(typing): start phase progress log at phase 3                      |
-| 4     | `03a9486`                                    | feat(typing): groups, learners, invites, act-as switcher, progress merge |
-| 5     | `54b8a6e`                                    | feat(typing): AI topic-game generator + safety review + topics UI      |
-| 6     | `7664eb7`                                    | feat(typing): TTS audio with on-disk cache + Web Speech fallback       |
-| 7     | `27ae4c2`                                    | feat(typing): PixiJS games framework + Letter Rain, Tic-Tac-Toe, Lake Leap |
-| 8     | `894bcc3`                                    | feat(typing): spelling lists with vision import + auto-lessons + mastery |
-| 8     | `3e219b4`                                    | fix(typing): pass spellingListId + word arrays through game attempts   |
-| 9     | `944cc1f`                                    | feat(typing): mastery gating + polish + final progress log             |
+| Phase | Commit    | Subject                                                                    |
+| ----- | --------- | -------------------------------------------------------------------------- |
+| 3     | `8966eda` | feat(typing): public lesson API + progress page + anonymous E2E            |
+| 3     | `fb26d16` | docs(typing): start phase progress log at phase 3                          |
+| 4     | `03a9486` | feat(typing): groups, learners, invites, act-as switcher, progress merge   |
+| 5     | `54b8a6e` | feat(typing): AI topic-game generator + safety review + topics UI          |
+| 6     | `7664eb7` | feat(typing): TTS audio with on-disk cache + Web Speech fallback           |
+| 7     | `27ae4c2` | feat(typing): PixiJS games framework + Letter Rain, Tic-Tac-Toe, Lake Leap |
+| 8     | `894bcc3` | feat(typing): spelling lists with vision import + auto-lessons + mastery   |
+| 8     | `3e219b4` | fix(typing): pass spellingListId + word arrays through game attempts       |
+| 9     | `944cc1f` | feat(typing): mastery gating + polish + final progress log                 |
 
 Gated tests (require additional env / fixtures):
 
