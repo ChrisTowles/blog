@@ -149,7 +149,19 @@ const progressPct = computed(() => {
           </span>
         </div>
 
-        <!-- Lesson rendered as chunky tiles -->
+        <!-- Lesson rendered as chunky tiles. `␣` is the open-box glyph
+             used wherever a space is expected; the legend reminds the
+             kid what it means. -->
+        <div
+          v-if="props.text.includes(' ')"
+          class="flex items-center justify-end gap-2 text-sm text-slate-600 dark:text-slate-300"
+        >
+          <span
+            class="flex h-7 w-9 items-center justify-center rounded-md bg-slate-200 font-mono text-base font-bold dark:bg-slate-700"
+            >␣</span
+          >
+          <span>means <strong>space bar</strong></span>
+        </div>
         <div
           :data-testid="TEST_IDS.TYPING.LESSON_TEXT"
           class="flex flex-wrap gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/50"
@@ -162,7 +174,7 @@ const progressPct = computed(() => {
               tileClass(idx),
             ]"
           >
-            {{ ch === ' ' ? '·' : ch }}
+            {{ ch === ' ' ? '␣' : ch }}
           </span>
         </div>
 

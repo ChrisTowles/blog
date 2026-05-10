@@ -35,7 +35,10 @@ const { recordAttempt } = useTypingProgress();
 const toast = useToast();
 
 const AUTO_ADVANCE_SECONDS = 5;
+const lessonDone = ref(false);
+const lastResult = ref<LessonCompleteResult | null>(null);
 const advanceCountdown = ref<number | null>(null);
+const runnerKey = ref(0);
 let advanceTimer: ReturnType<typeof setInterval> | null = null;
 
 function clearAdvance() {
@@ -51,6 +54,13 @@ function goToNextLesson() {
   if (nextLesson.value) router.push(`/typing/lesson/${nextLesson.value.slug}`);
 }
 
+function tryAgain() {
+  clearAdvance();
+  lessonDone.value = false;
+  lastResult.value = null;
+  runnerKey.value++;
+}
+
 function startAutoAdvance() {
   clearAdvance();
   if (!nextLesson.value) return;
@@ -58,15 +68,27 @@ function startAutoAdvance() {
   advanceTimer = setInterval(() => {
     if (advanceCountdown.value === null) return;
     advanceCountdown.value--;
-    if (advanceCountdown.value <= 0) {
-      goToNextLesson();
-    }
+    if (advanceCountdown.value <= 0) goToNextLesson();
   }, 1000);
 }
 
-onUnmounted(clearAdvance);
+const passed = computed(() => {
+  if (!lesson.value || !lastResult.value) return false;
+  return (
+    lastResult.value.accuracy >= lesson.value.targetAccuracy &&
+    lastResult.value.wpm >= lesson.value.targetWpm
+  );
+});
+
+watch(slug, () => {
+  lessonDone.value = false;
+  lastResult.value = null;
+  clearAdvance();
+});
 
 function onComplete(result: LessonCompleteResult) {
+  lastResult.value = result;
+  lessonDone.value = true;
   const outcome = recordAttempt({
     lessonId: null,
     gameSlug: null,
@@ -86,14 +108,26 @@ function onComplete(result: LessonCompleteResult) {
       duration: 6000,
     });
   }
-  const passed =
-    lesson.value !== undefined &&
-    result.accuracy >= lesson.value.targetAccuracy &&
-    result.wpm >= lesson.value.targetWpm;
-  if (passed && nextLesson.value) {
-    startAutoAdvance();
+  if (passed.value && nextLesson.value) startAutoAdvance();
+}
+
+// Once a lesson is done, Enter / Space jump straight to the next one
+// so a kid can blow through a stage without ever reaching for the mouse.
+function onKeydown(e: KeyboardEvent) {
+  if (!lessonDone.value || !nextLesson.value) return;
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    goToNextLesson();
   }
 }
+
+onMounted(() => {
+  if (import.meta.client) window.addEventListener('keydown', onKeydown);
+});
+onUnmounted(() => {
+  if (import.meta.client) window.removeEventListener('keydown', onKeydown);
+  clearAdvance();
+});
 
 function backToList() {
   router.push('/typing');
@@ -113,6 +147,7 @@ function backToList() {
       </div>
     </header>
     <TypingLessonRunner
+      :key="runnerKey"
       :text="lesson.text"
       :title="lesson.title"
       :target-wpm="lesson.targetWpm"
@@ -120,29 +155,57 @@ function backToList() {
       @complete="onComplete"
     />
     <div
-      v-if="advanceCountdown !== null && nextLesson"
-      class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200"
+      v-if="lessonDone && nextLesson"
+      :class="[
+        'flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 p-4',
+        passed
+          ? 'border-emerald-400 bg-emerald-50 text-emerald-900 dark:border-emerald-500 dark:bg-emerald-950/40 dark:text-emerald-100'
+          : 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-500 dark:bg-amber-950/30 dark:text-amber-100',
+      ]"
     >
-      <span>
-        Next up: <strong>{{ nextLesson.title }}</strong>
-        <span class="ml-2 opacity-70">in {{ advanceCountdown }}s…</span>
-      </span>
-      <span class="flex gap-2">
+      <div class="flex flex-col">
+        <span class="text-base">
+          <span v-if="passed" class="font-bold">Nice work! 🎉</span>
+          <span v-else class="font-bold">Lesson finished!</span>
+          <span class="ml-1"
+            >Next up: <strong>{{ nextLesson.title }}</strong></span
+          >
+        </span>
+        <span class="text-xs opacity-80">
+          <span v-if="advanceCountdown !== null">Auto-advancing in {{ advanceCountdown }}s · </span>
+          Press <kbd class="rounded border border-current px-1 font-mono text-xs">Enter</kbd> to
+          continue
+        </span>
+      </div>
+      <div class="flex gap-2">
         <button
           type="button"
-          class="rounded-full border border-emerald-400 bg-white px-4 py-1.5 text-sm font-semibold text-emerald-900 hover:bg-emerald-100 dark:border-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-100 dark:hover:bg-emerald-800"
+          class="rounded-full bg-emerald-500 px-5 py-2 text-base font-bold text-white shadow-md hover:bg-emerald-600 dark:bg-emerald-400 dark:text-emerald-950 dark:hover:bg-emerald-300"
           @click="goToNextLesson"
         >
-          Next now →
+          Next lesson →
         </button>
         <button
           type="button"
-          class="rounded-full border border-slate-300 bg-white px-4 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-          @click="clearAdvance"
+          class="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+          @click="tryAgain"
         >
-          Stay here
+          Try again
         </button>
-      </span>
+      </div>
+    </div>
+    <div
+      v-else-if="lessonDone && !nextLesson"
+      class="rounded-xl border-2 border-emerald-400 bg-emerald-50 p-4 text-center text-emerald-900 dark:border-emerald-500 dark:bg-emerald-950/40 dark:text-emerald-100"
+    >
+      <span class="font-bold">All done! 🏁</span> You finished the last lesson on this list.
+      <button
+        type="button"
+        class="ml-3 rounded-full border border-emerald-400 bg-white px-3 py-1 text-sm font-semibold hover:bg-emerald-100 dark:border-emerald-600 dark:bg-emerald-900/40 dark:hover:bg-emerald-800"
+        @click="backToList"
+      >
+        Back to lessons
+      </button>
     </div>
   </div>
   <div
