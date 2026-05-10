@@ -2,6 +2,16 @@
  * useTypingFeedback — central audio + visual reactions every typing
  * surface shares. Increments pressTick/streak/tierUp on correct keys,
  * sets wrongFlash and runs an optional onWrong hook on mistakes.
+ *
+ * Remount-key pattern: pressTick (per keystroke) and tierUp (per
+ * streak milestone) are monotonically-increasing counters. Bind them
+ * via `:key` on a Vue node and the node is destroyed + recreated each
+ * time the counter changes, which restarts any one-shot CSS keyframe
+ * tied to that node. This is how we replay the letter pop and the
+ * streak burst even when the displayed letter doesn't change.
+ * runnerKey in pages/typing/lesson/[slug].vue is the same idea at a
+ * coarser grain — it forces a fresh TypingLessonRunner when the kid
+ * picks "Try again."
  */
 import type { UseTypingEngine } from './useTypingEngine';
 import type { useTypingAudio } from './useTypingAudio';
@@ -63,6 +73,11 @@ export function useTypingFeedback(
         pressTick.value++;
         streak.value++;
         audio.playClick();
+      } else if (next < prev) {
+        // Backspace rewound a previously correct keystroke. Reset the
+        // streak so a kid can't backspace + retype to game the badge
+        // tier-up animation.
+        streak.value = 0;
       }
     },
   );

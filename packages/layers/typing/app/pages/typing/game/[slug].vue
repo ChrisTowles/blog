@@ -12,7 +12,15 @@ definePageMeta({
 });
 
 const route = useRoute();
+
+const KNOWN_GAME_SLUGS = ['letter-rain', 'letter-tic-tac-toe', 'lake-leap'] as const;
+type GameSlug = (typeof KNOWN_GAME_SLUGS)[number];
+
 const slug = computed(() => String(route.params.slug ?? ''));
+const knownSlug = computed<GameSlug | null>(() => {
+  const s = slug.value;
+  return (KNOWN_GAME_SLUGS as ReadonlyArray<string>).includes(s) ? (s as GameSlug) : null;
+});
 const stage = computed(() => Number(route.query.stage ?? 5));
 const mode = computed<LakeLeapMode>(
   () => (route.query.mode as LakeLeapMode | undefined) ?? 'curriculum',
@@ -120,9 +128,9 @@ function restart() {
 
     <ClientOnly>
       <TypingGamesGameStage
-        v-if="scene"
+        v-if="scene && knownSlug"
         :key="runId"
-        :slug="slug as 'letter-rain' | 'letter-tic-tac-toe' | 'lake-leap'"
+        :slug="knownSlug"
         :scene="scene"
         @result="onResult"
       />

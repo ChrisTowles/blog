@@ -41,6 +41,10 @@ const lastResult = ref<LessonCompleteResult | null>(null);
 const advanceCountdown = ref<number | null>(null);
 const runnerKey = ref(0);
 const lessonDone = computed(() => lastResult.value !== null);
+// True once goToNextLesson has been called this run, false until slug
+// changes. Prevents Enter/Space spam from firing router.push twice
+// before lastResult clears via watch(slug).
+const navigating = ref(false);
 let advanceTimer: ReturnType<typeof setInterval> | null = null;
 
 function clearAdvance() {
@@ -52,8 +56,12 @@ function clearAdvance() {
 }
 
 function goToNextLesson() {
+  if (navigating.value) return;
   clearAdvance();
-  if (nextLesson.value) router.push(`/typing/lesson/${nextLesson.value.slug}`);
+  if (nextLesson.value) {
+    navigating.value = true;
+    router.push(`/typing/lesson/${nextLesson.value.slug}`);
+  }
 }
 
 function tryAgain() {
@@ -61,6 +69,7 @@ function tryAgain() {
   lastResult.value = null;
   isNewBest.value = false;
   previousBest.value = null;
+  navigating.value = false;
   runnerKey.value++;
 }
 
@@ -70,6 +79,9 @@ function startAutoAdvance() {
   advanceCountdown.value = AUTO_ADVANCE_SECONDS;
   advanceTimer = setInterval(() => {
     if (advanceCountdown.value === null) return;
+    // Background tabs keep firing setInterval; skip the tick rather than
+    // silently navigating the kid away while they're looking elsewhere.
+    if (import.meta.client && document.visibilityState === 'hidden') return;
     advanceCountdown.value--;
     if (advanceCountdown.value <= 0) goToNextLesson();
   }, 1000);
@@ -87,10 +99,16 @@ watch(slug, () => {
   lastResult.value = null;
   isNewBest.value = false;
   previousBest.value = null;
+  navigating.value = false;
   clearAdvance();
 });
 
 function onComplete(result: LessonCompleteResult) {
+  // Cancelled runs (Escape) report bogus stats — one correct char in
+  // 100ms reads as 120 WPM. Don't record the attempt, don't update PRs,
+  // don't auto-advance. Treat it as a no-op except for resetting the
+  // engine on the next remount.
+  if (result.cancelled) return;
   lastResult.value = result;
   const outcome = recordAttempt({
     lessonId: null,

@@ -18,8 +18,10 @@ const audio = useTypingAudio();
 const engine = useTypingEngine({
   text: props.text,
   onComplete: (result) => {
-    audio.playFanfare();
-    audio.playEncouragement();
+    if (!result.cancelled) {
+      audio.playFanfare();
+      audio.playEncouragement();
+    }
     emit('complete', result);
   },
 });
@@ -119,6 +121,12 @@ const rocketMood = computed<'idle' | 'happy' | 'oops' | 'launch'>(() => {
       </div>
     </header>
 
+    <!-- Streak banner — full-width, room to grow. Hidden until 3 in a row;
+         escalates per tier with bigger text + denser emoji + richer gradient. -->
+    <div class="mb-4 min-h-[3rem]">
+      <TypingStreakBadge :streak="streak" :tier-up="tierUp" />
+    </div>
+
     <div class="grid gap-6 lg:grid-cols-5 lg:items-start">
       <!-- LEFT: what to press -->
       <div class="lg:col-span-2">
@@ -127,7 +135,6 @@ const rocketMood = computed<'idle' | 'happy' | 'oops' | 'launch'>(() => {
           :hint="hint"
           :wrong-flash="wrongFlash"
           :press-tick="pressTick"
-          :streak="streak"
           :tier-up="tierUp"
         />
       </div>
