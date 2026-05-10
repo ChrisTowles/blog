@@ -131,22 +131,27 @@ const FINGER_SOLID: Record<Finger, string> = {
   rp: 'bg-rose-400 dark:bg-rose-500',
 };
 
-// Each home-row column has a finger that lives above it. The index
-// fingers cover two columns each (F+G left, H+J right) and we honor
-// that — when the active finger is `li`, both F and G fingers light up
-// so the kid sees the reach.
-const HOME_FINGERS: ReadonlyArray<{ key: string; finger: Finger; tall?: boolean }> = [
-  { key: 'a', finger: 'lp' },
-  { key: 's', finger: 'lr' },
-  { key: 'd', finger: 'lm' },
-  { key: 'f', finger: 'li' },
-  { key: 'g', finger: 'li', tall: true },
-  { key: 'h', finger: 'ri', tall: true },
-  { key: 'j', finger: 'ri' },
-  { key: 'k', finger: 'rm' },
-  { key: 'l', finger: 'rr' },
-  { key: ';', finger: 'rp' },
+// One bar per finger (8 long fingers + 2 thumbs). Index fingers each
+// span 2 home-row keys (F+G left, H+J right) so we render them as
+// double-wide bars sitting between the two keys they cover. Widths
+// are expressed in keyboard columns; gap-1 (0.25rem) between cells
+// makes the total width match the 10-key home row exactly.
+const HOME_FINGERS: ReadonlyArray<{ finger: Finger; cols: 1 | 2 }> = [
+  { finger: 'lp', cols: 1 },
+  { finger: 'lr', cols: 1 },
+  { finger: 'lm', cols: 1 },
+  { finger: 'li', cols: 2 },
+  { finger: 'ri', cols: 2 },
+  { finger: 'rm', cols: 1 },
+  { finger: 'rr', cols: 1 },
+  { finger: 'rp', cols: 1 },
 ];
+
+function cellWidthRem(cols: 1 | 2): string {
+  // 2.25rem per key + 0.25rem inter-key gap absorbed for multi-col cells.
+  const total = cols * 2.25 + (cols - 1) * 0.25;
+  return `${total}rem`;
+}
 </script>
 
 <template>
@@ -172,28 +177,44 @@ const HOME_FINGERS: ReadonlyArray<{ key: string; finger: Finger; tall?: boolean 
         {{ cell.label ?? cell.key }}
       </button>
     </div>
-    <!-- Finger strip — translucent rounded bars sit below the keys, each
-         column aligned to its home-row key so a kid can see which finger
-         reaches which key. The active finger lights up with an amber ring. -->
-    <div class="flex justify-center gap-1 pt-2" aria-label="Hand position" role="presentation">
-      <div
-        v-for="cell in HOME_FINGERS"
-        :key="`finger-${cell.key}`"
-        class="flex justify-start"
-        :style="{ width: '2.25rem' }"
-      >
+    <!-- Hand strip — 8 long fingers aligned to home-row columns plus a
+         single thumb centered under the space bar. Index fingers span
+         two keys (F+G left, H+J right) so they render double-wide. The
+         active finger pops to full opacity and grows taller with an
+         amber ring. -->
+    <div
+      class="flex flex-col items-center gap-1 pt-2"
+      aria-label="Hand position"
+      role="presentation"
+    >
+      <div class="flex justify-center gap-1">
         <div
-          :class="[
-            'w-7 rounded-b-full transition-all duration-200',
-            FINGER_SOLID[cell.finger],
-            hint && hint.finger === cell.finger
-              ? 'h-12 opacity-100 ring-2 ring-amber-400 dark:ring-amber-300'
-              : cell.tall
-                ? 'h-9 opacity-25'
+          v-for="cell in HOME_FINGERS"
+          :key="`finger-${cell.finger}`"
+          class="flex justify-center"
+          :style="{ width: cellWidthRem(cell.cols) }"
+        >
+          <div
+            :class="[
+              'rounded-b-full transition-all duration-200',
+              cell.cols === 2 ? 'w-14' : 'w-7',
+              FINGER_SOLID[cell.finger],
+              hint && hint.finger === cell.finger
+                ? 'h-12 opacity-100 ring-2 ring-amber-400 dark:ring-amber-300'
                 : 'h-7 opacity-25',
-          ]"
-        />
+            ]"
+          />
+        </div>
       </div>
+      <div
+        :class="[
+          'w-12 rounded-b-full transition-all duration-200',
+          FINGER_SOLID.thumb,
+          hint && hint.finger === 'thumb'
+            ? 'h-10 opacity-100 ring-2 ring-amber-400 dark:ring-amber-300'
+            : 'h-6 opacity-25',
+        ]"
+      />
     </div>
 
     <div

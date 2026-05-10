@@ -116,7 +116,12 @@ const FINGER_LABEL: Record<Finger, string> = {
     <TypingStreakBurst v-if="(tierUp ?? 0) > 0" :key="`burst-${tierUp}`" />
 
     <div class="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">
-      {{ wrongFlash ? 'Try again — type this letter' : 'Type this letter' }}
+      <template v-if="hint.nextKey === ' '">
+        {{ wrongFlash ? 'Try again — press the space bar' : 'Press the space bar' }}
+      </template>
+      <template v-else>
+        {{ wrongFlash ? 'Try again — type this letter' : 'Type this letter' }}
+      </template>
     </div>
     <div class="relative">
       <div
@@ -141,7 +146,10 @@ const FINGER_LABEL: Record<Finger, string> = {
       </div>
     </div>
     <div class="text-base font-semibold text-slate-800 dark:text-slate-200">
-      {{ hint.hand === 'left' ? 'Left' : 'Right' }} {{ FINGER_LABEL[hint.finger] }}
+      <template v-if="hint.nextKey === ' '">␣ = space</template>
+      <template v-else>
+        {{ hint.hand === 'left' ? 'Left' : 'Right' }} {{ FINGER_LABEL[hint.finger] }}
+      </template>
     </div>
     <div v-if="hint.shiftRequired" class="text-sm text-amber-700 dark:text-amber-300">
       Hold <span class="font-mono font-semibold">Shift</span> + the key
