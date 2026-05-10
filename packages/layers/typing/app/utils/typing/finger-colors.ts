@@ -1,6 +1,6 @@
 import type { Finger } from '~~/shared/typing-types';
 
-/** Soft palette used for fills (HandHint-style accents, hand strip resting). */
+/** Soft palette used for the spotlight letter tile and hand-strip resting state. */
 export const FINGER_BG_SOFT: Record<Finger, string> = {
   lp: 'bg-rose-300 dark:bg-rose-700',
   lr: 'bg-amber-300 dark:bg-amber-700',

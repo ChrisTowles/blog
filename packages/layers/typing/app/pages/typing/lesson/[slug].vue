@@ -194,9 +194,9 @@ function backToList() {
         </span>
         <span class="flex flex-wrap items-center gap-2 text-xs">
           <span
-            v-if="isNewBest && previousBest"
+            v-if="isNewBest && previousBest && lastResult"
             class="rounded-full bg-amber-200 px-2 py-0.5 font-bold text-amber-950 dark:bg-amber-300"
-            >🏆 new best · +{{ Math.round(lastResult!.wpm - previousBest.wpm) }} WPM</span
+            >🏆 new best · +{{ Math.round(lastResult.wpm - previousBest.wpm) }} WPM</span
           >
           <span
             v-else-if="isNewBest"

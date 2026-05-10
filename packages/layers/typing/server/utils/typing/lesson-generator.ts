@@ -74,7 +74,7 @@ export function truncateWithinBounds(
 ): string | null {
   const trimmed = text.trim();
   if (trimmed.length <= bounds.max) return trimmed;
-  const window = trimmed.slice(0, bounds.max + 1);
+  const window = trimmed.slice(0, bounds.max);
   const punct = Math.max(window.lastIndexOf('.'), window.lastIndexOf('!'), window.lastIndexOf('?'));
   if (punct >= bounds.min - 1) {
     return window.slice(0, punct + 1).trim();

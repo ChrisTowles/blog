@@ -41,7 +41,7 @@ test.describe('Typing app — anonymous flow', () => {
       return spans
         .map((s) => {
           const t = (s.textContent ?? '').trim();
-          return t === '·' ? ' ' : t;
+          return t === '␣' ? ' ' : t;
         })
         .join('');
     });

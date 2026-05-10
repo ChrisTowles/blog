@@ -24,10 +24,8 @@ export type UseTypingFeedback = {
   pressTick: Ref<number>;
   /** Consecutive correct keystroke count. Resets to 0 on a wrong press. */
   streak: Ref<number>;
-  /** Streak tier (every 3 correct presses bumps it). 0 below the badge threshold. */
-  streakTier: ComputedRef<number>;
-  /** Increments each time `streakTier` crosses a higher tier. Bind via `:key`
-   *  to a celebration burst so it replays on every milestone. */
+  /** Increments each time the streak crosses a higher tier (3, 6, 9, ...).
+   *  Bind via `:key` to a celebration burst so it replays on every milestone. */
   tierUp: Ref<number>;
 };
 
@@ -88,5 +86,5 @@ export function useTypingFeedback(
 
   onUnmounted(clearFlash);
 
-  return { wrongFlash, pressTick, streak, streakTier, tierUp };
+  return { wrongFlash, pressTick, streak, tierUp };
 }
