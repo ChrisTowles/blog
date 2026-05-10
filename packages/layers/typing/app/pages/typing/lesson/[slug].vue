@@ -110,6 +110,10 @@ function onComplete(result: LessonCompleteResult) {
   // engine on the next remount.
   if (result.cancelled) return;
   lastResult.value = result;
+  // Lessons fire both recorders: recordAttempt logs the per-attempt event
+  // and runs the stage-gate (mastery) check, while recordLessonBest writes
+  // the per-slug PR shown above. Games have no per-slug PR table, so
+  // topics.vue and game/[slug].vue only call recordAttempt.
   const outcome = recordAttempt({
     lessonId: null,
     gameSlug: null,
