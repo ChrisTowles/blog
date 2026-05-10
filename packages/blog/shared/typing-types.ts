@@ -44,7 +44,15 @@ export type LessonKind =
   | 'paragraph'
   | 'topic'
   | 'spelling-drill'
-  | 'spelling-sentence';
+  | 'spelling-sentence'
+  // Mixed real-word practice using every key learned so far. Inserted at
+  // odd stages from 5 onward so a kid blends prior keys into fluid skill
+  // instead of always drilling the newest two in isolation.
+  | 'accumulation'
+  // Mandatory "use all keys from the row block" passage that gates
+  // moving into the next row (stages 5 -> 6, 10 -> 11). Mirrors Peter's
+  // Online Typing Course row-boundary review structure.
+  | 'consolidation';
 
 export type LessonRow = {
   id: number;

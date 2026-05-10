@@ -176,6 +176,43 @@ export function getBuiltInLessons(): BuiltInLesson[] {
         });
       }
     }
+
+    // Mixed real-word practice that blends ALL prior keys, not just the
+    // newest pair. Inserted at odd stages from 5 onward to address the
+    // blocked-practice gap (motor-learning literature on interleaving
+    // shows blocked drills produce brittle skill that doesn't transfer
+    // to mixed input).
+    const accumulationText = accumulationForStage(stage);
+    if (accumulationText) {
+      lessons.push({
+        slug: `stage-${stage}-accumulation`,
+        stage,
+        kind: 'accumulation',
+        title: `Stage ${stage}: mixed practice`,
+        text: accumulationText,
+        targetWpm,
+        targetAccuracy,
+      });
+    }
+
+    // Row-boundary consolidation passages. After completing a full row
+    // (home row at s5, top row at s10), the kid has a long passage that
+    // uses every key learned so far. Passing it at >= 95% accuracy +
+    // target WPM advances them — the existing mastery gate enforces
+    // this naturally. Mirrors Peter's Online Typing Course "Whole
+    // Shebang" / "Row by Row Combined" structure.
+    const consolidationText = consolidationForStage(stage);
+    if (consolidationText) {
+      lessons.push({
+        slug: `stage-${stage}-consolidation`,
+        stage,
+        kind: 'consolidation',
+        title: `Stage ${stage}: row review`,
+        text: consolidationText,
+        targetWpm,
+        targetAccuracy,
+      });
+    }
   }
 
   return lessons;
@@ -351,4 +388,59 @@ const STAGE_PARAGRAPHS: Record<number, string> = {
 
 function paragraphForStage(stage: number): string {
   return STAGE_PARAGRAPHS[stage] ?? '';
+}
+
+// ---------------------------------------------------------------------------
+// Accumulation lessons — mixed real-word practice using EVERY key learned so
+// far. Inserted at odd stages from 5 onward. Skips stages 1-3 because the
+// unlocked set is too sparse to form meaningful English (f/j only at s1,
+// f/j/d/k/s/l only at s3).
+// ---------------------------------------------------------------------------
+
+const STAGE_ACCUMULATIONS: Record<number, string> = {
+  // s5 unlocked: a d f g h j k l s ; (full home row) + space
+  5: 'a sad lad has a flask; a flag has a glass; dad asks all glad lads; a hall has half a flag',
+  // s7 adds e i r u
+  7: 'she hides her fresh red fries; his idea is here; jade fled; she sells sails; sad deer flees',
+  // s9 adds o p q w
+  9: 'our wise pup wishes; she shows her queer papers; he hops up; we used proud quails; fresh frog spoke up',
+  // s11 adds m t v y
+  11: 'the merry team types my story; we try every vivid happy poem; she sees my pretty puppy; have a steady ride',
+  // s13 adds c x , .
+  13: 'the cat sat. six cats came home. exit, fox. quick fix. extra credit, mr. cute code crews.',
+  // s15 adds b n z /
+  15: 'the big brown box ran. zip, nine balloons zoom. zebras nod. brave bunnies in barns. quick zigzag.',
+};
+
+function accumulationForStage(stage: number): string {
+  return STAGE_ACCUMULATIONS[stage] ?? '';
+}
+
+// ---------------------------------------------------------------------------
+// Consolidation lessons — long passages at row boundaries. Stage 5 = home
+// row complete, stage 10 = top row complete. The existing 95% accuracy +
+// target WPM mastery gate means the kid has to nail this lesson to advance
+// — that's the gate by construction, no extra UI logic needed.
+// ---------------------------------------------------------------------------
+
+const STAGE_CONSOLIDATIONS: Record<number, string> = {
+  // s5: home row only (a d f g h j k l s ; + space). No period, no comma —
+  // those don't unlock until s12/s13. Separator is ';'.
+  5:
+    'a sad lad had a flask; a glass had a flag; dad asks all glad lads; ' +
+    'half a glass falls; all gas falls; half a slash; a lass has a sash; ' +
+    'ask dad; lads ask all sad dads; glass has a flag; half glass falls; ' +
+    'all lads gag; ask half; a sash had a flag',
+  // s10: home row + top row (adds e i o p q r t u w y). Still no period
+  // or comma (s12/s13). Real prose unlocks at s10 — this is the first
+  // lesson that actually feels like reading.
+  10:
+    'the two writers type their stories; we wait quietly today; ' +
+    'your fresh idea fits us; the puppy paws at her ride; ' +
+    'quiet group sits here; their party is ready; we type pretty poetry; ' +
+    'our story has a swift frog; today we ride;',
+};
+
+function consolidationForStage(stage: number): string {
+  return STAGE_CONSOLIDATIONS[stage] ?? '';
 }
