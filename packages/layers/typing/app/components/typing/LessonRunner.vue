@@ -58,6 +58,13 @@ onMounted(() => {
   void audio.preload();
 });
 
+// Stop any scheduled tones (fanfare, streak chimes) when the runner
+// unmounts — e.g. parent key-bumped on "Try again". Without this, the
+// next lesson plays its first sound layered over leftover fanfare.
+onScopeDispose(() => {
+  audio.stopAll();
+});
+
 function onKeydown(e: KeyboardEvent) {
   // Prevent the browser's default tab navigation while running.
   if (e.key === 'Tab') {

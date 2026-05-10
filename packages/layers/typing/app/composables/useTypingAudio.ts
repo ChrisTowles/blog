@@ -22,6 +22,12 @@ export function useTypingAudio() {
   const audioOn = useState<boolean>('typing:audio-on', () => true);
   const cache = useState<Record<string, CacheEntry>>('typing:audio-cache', () => ({}));
 
+  // Per-instance tracker for oscillators that this composable scheduled.
+  // We use a per-instance Set (not module-scope) so each consumer gets
+  // its own stopAll() — a game restart should silence its own pending
+  // chimes without nuking audio for other mounted consumers.
+  const activeOscillators = new Set<OscillatorNode>();
+
   function setAudioForStage(stage: number) {
     audioOn.value = stage <= 5;
   }
@@ -94,6 +100,10 @@ export function useTypingAudio() {
       gainNode.gain.exponentialRampToValueAtTime(peak, startAt + 0.01);
       gainNode.gain.exponentialRampToValueAtTime(0.0001, startAt + durationMs / 1000);
       osc.connect(gainNode).connect(ctx.destination);
+      activeOscillators.add(osc);
+      osc.onended = () => {
+        activeOscillators.delete(osc);
+      };
       osc.start(startAt);
       osc.stop(startAt + durationMs / 1000 + 0.01);
       // Don't close the shared context on tone end; reuse it for the
@@ -101,6 +111,28 @@ export function useTypingAudio() {
     } catch {
       // best-effort
     }
+  }
+
+  /**
+   * Stop and disconnect every oscillator this composable scheduled.
+   * Components key-bump on restart (LessonRunner runnerKey, game runId)
+   * which unmounts the old subtree — we call this from onScopeDispose
+   * so pending fanfare / streak chimes don't bleed across runs.
+   */
+  function stopAll() {
+    for (const osc of activeOscillators) {
+      try {
+        osc.stop();
+      } catch {
+        // already stopped
+      }
+      try {
+        osc.disconnect();
+      } catch {
+        // already disconnected
+      }
+    }
+    activeOscillators.clear();
   }
 
   /** Soft low buzz on a wrong keystroke. */
@@ -132,13 +164,18 @@ export function useTypingAudio() {
     });
   }
 
-  /** Four-note "ta-da" arpeggio on lesson completion. */
+  /**
+   * Four-note "ta-da" arpeggio on lesson completion. The initial 200 ms
+   * offset lets the final-keystroke playClick (and a possible streak
+   * tier-up ding) settle so the fanfare doesn't muddy into them.
+   */
   function playFanfare() {
+    const baseDelayMs = 200;
     [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
       playTone(freq, 200, {
         type: 'triangle',
         gain: 0.06,
-        startOffsetMs: i * 110,
+        startOffsetMs: baseDelayMs + i * 110,
       });
     });
   }
@@ -188,5 +225,6 @@ export function useTypingAudio() {
     playClick,
     playStreakDing,
     playFanfare,
+    stopAll,
   };
 }
