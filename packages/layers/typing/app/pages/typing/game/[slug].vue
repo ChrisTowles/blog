@@ -89,6 +89,12 @@ onMounted(() => {
   void audio.preload();
 });
 
+// Stop any scheduled fanfare / encouragement tones on unmount so the
+// prior run's leftover oscillators don't bleed into a new route mount.
+onScopeDispose(() => {
+  audio.stopAll();
+});
+
 function onResult(result: GameResult) {
   lastResult.value = result;
   audio.playEncouragement();
@@ -107,6 +113,9 @@ function onResult(result: GameResult) {
 }
 
 function restart() {
+  // Silence any lingering encouragement / fanfare tones from the last
+  // run before the new GameStage instance mounts.
+  audio.stopAll();
   lastResult.value = null;
   runId.value++;
 }
