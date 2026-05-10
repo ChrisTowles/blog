@@ -6,8 +6,17 @@ const emit = defineEmits<{
   (e: 'generated', lesson: LessonRow): void;
 }>();
 
+// Topic games gate at stage 10 — earlier stages don't unlock enough
+// letters to spell most kid-friendly topics. Server enforces the same.
+const MIN_TOPIC_STAGE = 10;
+const MAX_STAGE = 20;
+const STAGE_OPTIONS = Array.from(
+  { length: MAX_STAGE - MIN_TOPIC_STAGE + 1 },
+  (_, i) => MIN_TOPIC_STAGE + i,
+);
+
 const topic = ref('');
-const stage = ref(5);
+const stage = ref(MIN_TOPIC_STAGE);
 const kind = ref<'sentence' | 'paragraph'>('sentence');
 const length = ref<'short' | 'medium'>('short');
 
@@ -49,7 +58,8 @@ async function submit() {
     </h2>
     <p class="text-sm text-slate-600 dark:text-slate-300">
       Pick a topic — Pokemon, soccer, marble run — and Claude writes a kid-safe typing exercise
-      using only the keys you've unlocked.
+      using only the keys you've unlocked. Topic games unlock at Stage {{ MIN_TOPIC_STAGE }} once
+      you have enough letters to spell real words.
     </p>
 
     <label class="block">
@@ -70,7 +80,7 @@ async function submit() {
           v-model.number="stage"
           class="mt-1 rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
         >
-          <option v-for="s in 20" :key="s" :value="s">Stage {{ s }}</option>
+          <option v-for="s in STAGE_OPTIONS" :key="s" :value="s">Stage {{ s }}</option>
         </select>
       </label>
       <label class="block">
