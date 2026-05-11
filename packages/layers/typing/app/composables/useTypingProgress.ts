@@ -1,13 +1,14 @@
 /**
- * useTypingProgress — anonymous-first progress storage.
+ * useTypingProgress — per-learner progress storage.
  *
- * Wraps localStorage under `typing:progress:v1` for anonymous users.
+ * Each active learner gets their own localStorage namespace so switching
+ * between siblings shows distinct WPM, PRs, and current stage. The
+ * anonymous "Acting as You" user keeps the legacy unsuffixed key so any
+ * pre-existing local progress stays attached to them.
+ *
  * When the active learner is a real DB row, attempts are also POSTed to
  * `/api/typing/progress` (best-effort; localStorage is the source of
  * truth for the UI even when logged in so we never block on the network).
- *
- * Game attempts call `recordGameAttempt({ gameSlug, ... })` so attempts get
- * tagged.
  */
 import {
   MAX_STAGE,
@@ -18,6 +19,7 @@ import {
   type LocalKeyStat,
   type LocalProgress,
 } from '~~/shared/typing-types';
+import type { ActiveLearnerId } from './useActiveLearner';
 
 const TYPING_BESTS_LOCAL_STORAGE_KEY = 'typing:bests:v1';
 
@@ -30,7 +32,21 @@ export type LessonBest = {
 
 type LessonBestMap = Record<string, LessonBest>;
 
-let bestsCache: LessonBestMap | null = null;
+function progressKeyFor(id: ActiveLearnerId): string {
+  return id === 'anon'
+    ? TYPING_PROGRESS_LOCAL_STORAGE_KEY
+    : `${TYPING_PROGRESS_LOCAL_STORAGE_KEY}:learner:${id}`;
+}
+
+function bestsKeyFor(id: ActiveLearnerId): string {
+  return id === 'anon'
+    ? TYPING_BESTS_LOCAL_STORAGE_KEY
+    : `${TYPING_BESTS_LOCAL_STORAGE_KEY}:learner:${id}`;
+}
+
+// Per-learner bests cache keyed by full storage key. A naive module-level
+// cache would leak one learner's PRs into another.
+const bestsCacheByKey = new Map<string, LessonBestMap>();
 
 function isLessonBest(val: unknown): val is LessonBest {
   if (!val || typeof val !== 'object') return false;
@@ -43,47 +59,46 @@ function isLessonBest(val: unknown): val is LessonBest {
   );
 }
 
-function readBests(): LessonBestMap {
-  if (bestsCache) return bestsCache;
+function readBests(id: ActiveLearnerId): LessonBestMap {
+  const key = bestsKeyFor(id);
+  const cached = bestsCacheByKey.get(key);
+  if (cached) return cached;
   if (typeof localStorage === 'undefined') return {};
+  let out: LessonBestMap = {};
   try {
-    const raw = localStorage.getItem(TYPING_BESTS_LOCAL_STORAGE_KEY);
-    if (!raw || typeof raw !== 'string') {
-      bestsCache = {};
-      return bestsCache;
+    const raw = localStorage.getItem(key);
+    if (raw && typeof raw === 'string') {
+      const parsed: unknown = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        // Drop any entries that don't match the LessonBest shape — guards
+        // against half-written rows or older schema leaking in.
+        for (const [slug, entry] of Object.entries(parsed as Record<string, unknown>)) {
+          if (isLessonBest(entry)) out[slug] = entry;
+        }
+      }
     }
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      bestsCache = {};
-      return bestsCache;
-    }
-    // Drop any entries that don't match the LessonBest shape — guards
-    // against half-written rows or older schema leaking in.
-    const out: LessonBestMap = {};
-    for (const [slug, entry] of Object.entries(parsed as Record<string, unknown>)) {
-      if (isLessonBest(entry)) out[slug] = entry;
-    }
-    bestsCache = out;
   } catch {
-    bestsCache = {};
+    out = {};
   }
-  return bestsCache;
+  bestsCacheByKey.set(key, out);
+  return out;
 }
 
-function writeBests(b: LessonBestMap) {
-  bestsCache = b;
+function writeBests(id: ActiveLearnerId, b: LessonBestMap) {
+  const key = bestsKeyFor(id);
+  bestsCacheByKey.set(key, b);
   if (typeof localStorage === 'undefined') return;
   try {
-    localStorage.setItem(TYPING_BESTS_LOCAL_STORAGE_KEY, JSON.stringify(b));
+    localStorage.setItem(key, JSON.stringify(b));
   } catch {
     // best-effort; lessons still work without PR tracking.
   }
 }
 
-function readStorage(): LocalProgress {
+function readStorage(id: ActiveLearnerId): LocalProgress {
   if (typeof localStorage === 'undefined') return emptyLocalProgress();
   try {
-    const raw = localStorage.getItem(TYPING_PROGRESS_LOCAL_STORAGE_KEY);
+    const raw = localStorage.getItem(progressKeyFor(id));
     if (!raw) return emptyLocalProgress();
     const parsed = JSON.parse(raw) as Partial<LocalProgress>;
     if (parsed.schemaVersion !== 1) return emptyLocalProgress();
@@ -98,12 +113,12 @@ function readStorage(): LocalProgress {
   }
 }
 
-function writeStorage(p: LocalProgress) {
+function writeStorage(id: ActiveLearnerId, p: LocalProgress) {
   if (typeof localStorage === 'undefined') return;
   try {
-    localStorage.setItem(TYPING_PROGRESS_LOCAL_STORAGE_KEY, JSON.stringify(p));
+    localStorage.setItem(progressKeyFor(id), JSON.stringify(p));
   } catch {
-    // Ignore quota errors — anonymous progress is best-effort.
+    // Ignore quota errors — progress writes are best-effort.
   }
 }
 
@@ -157,22 +172,43 @@ export type UseTypingProgress = {
 };
 
 export function useTypingProgress(): UseTypingProgress {
-  const progress = useState<LocalProgress>('typing:progress', () => readStorage());
+  const { activeLearnerId, active } = useActiveLearner();
 
-  // Re-read on mount in case localStorage was updated by another tab.
+  const progress = useState<LocalProgress>('typing:progress', () =>
+    readStorage(activeLearnerId.value),
+  );
+
+  // Re-read whenever the active learner changes so switching siblings
+  // shows that learner's distinct attempts and current stage. For a
+  // real learner we also seed currentStage from the server-tracked
+  // value so a fresh device respects progress made elsewhere; the kid
+  // is never demoted (local may be ahead from offline practice).
   if (import.meta.client) {
-    progress.value = readStorage();
+    watch(
+      activeLearnerId,
+      (id) => {
+        const next = readStorage(id);
+        if (id !== 'anon' && active.value) {
+          next.currentStage = Math.max(next.currentStage, active.value.currentStage);
+        }
+        progress.value = next;
+      },
+      { immediate: true },
+    );
   }
 
-  // Cross-tab sync — when another tab writes to typing:progress:v1 or
-  // typing:bests:v1, invalidate our caches and refresh reactive state so
-  // the kid sees their PR / current-stage update without a reload.
+  // Cross-tab sync — when another tab writes to either keyed slot for
+  // the current learner, invalidate our caches and refresh reactive
+  // state so the kid sees their PR / current-stage update without a
+  // reload.
   if (import.meta.client) {
     const onStorage = (e: StorageEvent) => {
-      if (e.key === TYPING_BESTS_LOCAL_STORAGE_KEY) {
-        bestsCache = null;
-      } else if (e.key === TYPING_PROGRESS_LOCAL_STORAGE_KEY) {
-        progress.value = readStorage();
+      const id = activeLearnerId.value;
+      if (!e.key) return;
+      if (e.key === bestsKeyFor(id)) {
+        bestsCacheByKey.delete(e.key);
+      } else if (e.key === progressKeyFor(id)) {
+        progress.value = readStorage(id);
       }
     };
     window.addEventListener('storage', onStorage);
@@ -180,8 +216,6 @@ export function useTypingProgress(): UseTypingProgress {
       window.removeEventListener('storage', onStorage);
     });
   }
-
-  const { activeLearnerId } = useActiveLearner();
 
   type ServerExtras = {
     spellingListId?: number | null;
@@ -246,9 +280,21 @@ export function useTypingProgress(): UseTypingProgress {
       attempts: nextAttempts,
       keyStats: mergeKeyStats(progress.value.keyStats, stats),
     };
+    const id = activeLearnerId.value;
     progress.value = next;
-    writeStorage(next);
+    writeStorage(id, next);
     maybePushToServer(attempt, stats, extras);
+    // If a real learner just cleared the mastery gate, persist the new
+    // stage on the learner row so the next sign-in / device respects it.
+    if (nextStage > previousStage && id !== 'anon') {
+      void $fetch(`/api/typing/learners/${id}/stage`, {
+        method: 'PUT',
+        body: { currentStage: nextStage },
+      }).catch(() => {
+        // Network failure: localStorage still has the new stage. The
+        // next stage advance or explicit setCurrentStage will retry.
+      });
+    }
 
     return {
       stageAdvanced: nextStage > previousStage,
@@ -282,26 +328,38 @@ export function useTypingProgress(): UseTypingProgress {
   }
 
   function setCurrentStage(stage: number) {
-    const next = { ...progress.value, currentStage: Math.max(1, Math.min(MAX_STAGE, stage)) };
+    const clamped = Math.max(1, Math.min(MAX_STAGE, stage));
+    const id = activeLearnerId.value;
+    const next = { ...progress.value, currentStage: clamped };
     progress.value = next;
-    writeStorage(next);
+    writeStorage(id, next);
+    if (id !== 'anon') {
+      void $fetch(`/api/typing/learners/${id}/stage`, {
+        method: 'PUT',
+        body: { currentStage: clamped },
+      }).catch(() => {
+        // best-effort
+      });
+    }
   }
 
   function reset() {
+    const id = activeLearnerId.value;
     const next = emptyLocalProgress();
     progress.value = next;
-    writeStorage(next);
+    writeStorage(id, next);
   }
 
   function getLessonBest(slug: string): LessonBest | null {
-    return readBests()[slug] ?? null;
+    return readBests(activeLearnerId.value)[slug] ?? null;
   }
 
   function recordLessonBest(
     slug: string,
     attempt: { wpm: number; accuracy: number; durationMs: number },
   ): { isNewBest: boolean; previous: LessonBest | null } {
-    const bests = readBests();
+    const id = activeLearnerId.value;
+    const bests = readBests(id);
     const previous = bests[slug] ?? null;
     const isNewBest = previous === null || attempt.wpm > previous.wpm;
     if (isNewBest) {
@@ -311,7 +369,7 @@ export function useTypingProgress(): UseTypingProgress {
         durationMs: attempt.durationMs,
         recordedAt: new Date().toISOString(),
       };
-      writeBests(bests);
+      writeBests(id, bests);
     }
     return { isNewBest, previous };
   }
