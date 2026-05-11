@@ -33,7 +33,12 @@ export default defineOAuthGoogleEventHandler({
 
     await setUserSession(event, { user });
 
-    const redirectTo = (getQuery(event).redirect as string) || '/';
+    // The 02-oauth-redirect middleware stashed the caller's intended
+    // landing page in a cookie before bouncing to Google. Google's
+    // callback strips our `?redirect=` query, so we read from the
+    // cookie instead. Falls back to `/` for direct visits.
+    const redirectTo = getCookie(event, 'oauth_redirect') || '/';
+    deleteCookie(event, 'oauth_redirect');
     return sendRedirect(event, redirectTo);
   },
   onError(event, error) {
