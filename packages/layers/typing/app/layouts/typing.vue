@@ -53,10 +53,13 @@ const items = computed(() => [
   <div class="min-h-screen bg-slate-50 dark:bg-slate-900">
     <UHeader v-if="!isLessonRunner">
       <template #left>
-        <div class="flex items-baseline gap-3">
+        <div class="flex items-center gap-2">
           <LogoAndHeader />
-          <span class="text-slate-400 dark:text-slate-600">/</span>
-          <NuxtLink to="/typing" class="text-xl font-semibold text-(--ui-text-highlighted)">
+          <span class="text-xl text-(--ui-text-muted)">/</span>
+          <NuxtLink
+            to="/typing"
+            class="text-xl font-bold text-(--ui-text-highlighted) hover:text-(--ui-primary)"
+          >
             Typing
           </NuxtLink>
         </div>
