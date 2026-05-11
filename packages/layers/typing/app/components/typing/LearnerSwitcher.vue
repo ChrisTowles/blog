@@ -2,6 +2,7 @@
 import { TEST_IDS } from '~~/shared/test-ids';
 
 const { activeLearnerId, active, learners, setActive } = useActiveLearner();
+const { loggedIn } = useUserSession();
 
 const open = ref(false);
 
@@ -87,7 +88,18 @@ if (import.meta.client) {
             <span v-if="activeLearnerId === l.id" class="text-amber-600">●</span>
           </button>
         </li>
-        <li class="border-t border-slate-200 dark:border-slate-700">
+        <li v-if="!loggedIn" class="border-t border-slate-200 dark:border-slate-700">
+          <NuxtLink
+            to="/login?redirect=/typing"
+            class="block px-3 py-2 text-amber-700 hover:bg-slate-100 dark:text-amber-300 dark:hover:bg-slate-700"
+          >
+            <div class="font-semibold">Sign in to save progress</div>
+            <div class="mt-0.5 text-xs opacity-80">
+              Track multiple kids and keep progress across devices.
+            </div>
+          </NuxtLink>
+        </li>
+        <li v-else class="border-t border-slate-200 dark:border-slate-700">
           <NuxtLink
             to="/typing/group"
             class="block px-3 py-2 text-amber-700 hover:bg-slate-100 dark:text-amber-300 dark:hover:bg-slate-700"

@@ -2,6 +2,8 @@
 const route = useRoute();
 const isLessonRunner = computed(() => route.path.startsWith('/typing/lesson/'));
 
+const { loggedIn } = useUserSession();
+
 // Hydrate available learners on first render (signed-in only). Errors are
 // silent — the layout renders fine for anonymous users.
 const { setLearners } = useActiveLearner();
@@ -26,9 +28,15 @@ watchEffect(() => {
       class="border-b border-slate-200 bg-white px-6 py-4 dark:border-slate-700 dark:bg-slate-800"
     >
       <div class="mx-auto flex max-w-5xl items-center justify-between">
-        <NuxtLink to="/typing" class="text-xl font-semibold text-slate-900 dark:text-slate-100">
-          Typing
-        </NuxtLink>
+        <div class="flex items-baseline gap-3">
+          <!-- Keep the blog brand visible so the kid (and parent)
+               doesn't lose site context. -->
+          <LogoAndHeader />
+          <span class="text-slate-400 dark:text-slate-600">/</span>
+          <NuxtLink to="/typing" class="text-xl font-semibold text-slate-900 dark:text-slate-100">
+            Typing
+          </NuxtLink>
+        </div>
         <nav class="flex items-center gap-4 text-sm">
           <NuxtLink
             to="/typing"
@@ -53,6 +61,13 @@ watchEffect(() => {
             class="text-slate-700 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white"
           >
             Progress
+          </NuxtLink>
+          <NuxtLink
+            v-if="!loggedIn"
+            to="/login?redirect=/typing"
+            class="rounded-full border border-amber-400/60 bg-amber-100/60 px-4 py-1.5 text-sm font-semibold text-amber-950 hover:bg-amber-200 dark:border-amber-500/60 dark:bg-amber-500/20 dark:text-amber-100 dark:hover:bg-amber-500/30"
+          >
+            Sign in
           </NuxtLink>
           <TypingLearnerSwitcher />
         </nav>
