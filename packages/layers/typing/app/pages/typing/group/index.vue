@@ -81,7 +81,7 @@ async function generateInvite(groupId: number) {
     >
       <p class="text-sm">Sign in to create a family or join one via an invite link.</p>
       <NuxtLink
-        to="/typing/sign-in"
+        to="/login?redirect=/typing/group"
         class="mt-3 inline-flex rounded-lg bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800"
       >
         Sign in
