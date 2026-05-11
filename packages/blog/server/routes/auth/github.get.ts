@@ -33,7 +33,11 @@ export default defineOAuthGitHubEventHandler({
 
     await setUserSession(event, { user });
 
-    const redirectTo = (getQuery(event).redirect as string) || '/';
+    // See google.get.ts — the OAuth callback strips our `?redirect=`
+    // query, so 02-oauth-redirect middleware stashed it in a cookie
+    // before bouncing to GitHub. Read it back here.
+    const redirectTo = getCookie(event, 'oauth_redirect') || '/';
+    deleteCookie(event, 'oauth_redirect');
     return sendRedirect(event, redirectTo);
   },
   // Optional, will return a json error and 401 status code by default
