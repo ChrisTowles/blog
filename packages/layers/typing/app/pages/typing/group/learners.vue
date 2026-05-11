@@ -43,7 +43,7 @@ async function add() {
   });
   newName.value = '';
   newBirthYear.value = null;
-  await load();
+  await Promise.all([load(), refreshNuxtData('typing:groups')]);
 }
 
 async function bumpStage(learner: Learner, delta: number) {
@@ -53,7 +53,7 @@ async function bumpStage(learner: Learner, delta: number) {
     method: 'PUT',
     body: { currentStage: nextStage },
   });
-  await load();
+  await Promise.all([load(), refreshNuxtData('typing:groups')]);
 }
 
 await load();
