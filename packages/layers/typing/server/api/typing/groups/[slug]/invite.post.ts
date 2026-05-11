@@ -12,9 +12,11 @@ const paramsSchema = z.object({
   slug: z.string().min(1).max(96),
 });
 
-const bodySchema = z.object({
-  email: z.string().email().optional(),
-});
+const bodySchema = z
+  .object({
+    email: z.string().email().optional(),
+  })
+  .default({});
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 

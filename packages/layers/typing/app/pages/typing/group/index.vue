@@ -16,11 +16,18 @@ useHead({
   ],
 });
 
-const { data, refresh, error } = await useFetch<{
+// Auth-required endpoint — load client-side only so the session cookie is
+// always attached. Without server:false, SSR runs the request with no
+// session cookie and the page renders the empty-state even when the
+// user has groups. Key is shared with the layout so a refresh from any
+// mutating action also refreshes the header switcher.
+const { data, refresh, error, pending } = await useFetch<{
   groups: Array<{ group: TypingGroup; learners: Learner[] }>;
 }>('/api/typing/groups', {
+  key: 'typing:groups',
   default: () => ({ groups: [] }),
   ignoreResponseError: true,
+  server: false,
 });
 
 const isUnauthed = computed(() => {
@@ -35,10 +42,12 @@ const newLearnerName = ref('');
 const inviteLink = ref<string | null>(null);
 const inviteExpires = ref<string | null>(null);
 const creating = ref(false);
+const formError = ref<string | null>(null);
 
 async function createFamily() {
   if (!newGroupName.value || creating.value) return;
   creating.value = true;
+  formError.value = null;
   try {
     await $fetch('/api/typing/groups', {
       method: 'POST',
@@ -50,19 +59,88 @@ async function createFamily() {
     });
     newGroupName.value = '';
     newLearnerName.value = '';
+    // refresh() updates this page's data; the layout shares the same
+    // 'typing:groups' key so the header switcher picks up the new
+    // group + learner immediately too.
     await refresh();
+  } catch (e: unknown) {
+    const err = e as { statusMessage?: string; message?: string };
+    formError.value = err.statusMessage ?? err.message ?? 'Failed to create family';
   } finally {
     creating.value = false;
   }
 }
 
-async function generateInvite(groupSlug: string) {
-  const result = await $fetch<{ url: string; expiresAt: string }>(
-    `/api/typing/groups/${groupSlug}/invite`,
-    { method: 'POST' },
-  );
-  inviteLink.value = result.url;
-  inviteExpires.value = result.expiresAt;
+const invitePending = ref<number | null>(null);
+async function generateInvite(group: TypingGroup) {
+  if (invitePending.value === group.id) return;
+  invitePending.value = group.id;
+  formError.value = null;
+  try {
+    const result = await $fetch<{ url: string; expiresAt: string }>(
+      `/api/typing/groups/${group.slug}/invite`,
+      { method: 'POST', body: {} },
+    );
+    // Make the link copy-able with the full origin baked in.
+    const origin =
+      typeof window !== 'undefined' && window.location?.origin ? window.location.origin : '';
+    inviteLink.value = origin ? `${origin}${result.url}` : result.url;
+    inviteExpires.value = result.expiresAt;
+  } catch (e: unknown) {
+    const err = e as { statusMessage?: string; message?: string };
+    formError.value = err.statusMessage ?? err.message ?? 'Failed to generate invite';
+  } finally {
+    invitePending.value = null;
+  }
+}
+
+async function copyInvite() {
+  if (!inviteLink.value) return;
+  try {
+    await navigator.clipboard.writeText(inviteLink.value);
+  } catch {
+    // Clipboard may be blocked; user can still copy by selecting.
+  }
+}
+
+// --- Delete-group with type-the-name confirm --------------------------
+
+const deletingGroup = ref<TypingGroup | null>(null);
+const deleteTyped = ref('');
+const deletePending = ref(false);
+const deleteMatches = computed(() => {
+  if (!deletingGroup.value) return false;
+  const expected = `delete ${deletingGroup.value.name.trim().toLowerCase()}`;
+  return deleteTyped.value.trim().toLowerCase() === expected;
+});
+
+function openDeleteGroup(group: TypingGroup) {
+  deletingGroup.value = group;
+  deleteTyped.value = '';
+  formError.value = null;
+}
+
+function cancelDeleteGroup() {
+  deletingGroup.value = null;
+  deleteTyped.value = '';
+}
+
+async function confirmDeleteGroup() {
+  if (!deletingGroup.value || !deleteMatches.value || deletePending.value) return;
+  deletePending.value = true;
+  formError.value = null;
+  try {
+    await $fetch(`/api/typing/groups/${deletingGroup.value.slug}`, { method: 'DELETE' });
+    cancelDeleteGroup();
+    inviteLink.value = null;
+    inviteExpires.value = null;
+    await refresh();
+  } catch (e: unknown) {
+    const err = e as { statusMessage?: string; message?: string };
+    formError.value = err.statusMessage ?? err.message ?? 'Failed to delete group';
+  } finally {
+    deletePending.value = false;
+  }
 }
 </script>
 
@@ -74,6 +152,14 @@ async function generateInvite(groupSlug: string) {
         Families and classrooms — manage learners and invite other guardians.
       </p>
     </header>
+
+    <p
+      v-if="formError"
+      class="rounded-lg border border-rose-300 bg-rose-50 px-4 py-2 text-sm text-rose-800 dark:border-rose-700 dark:bg-rose-950/40 dark:text-rose-200"
+      role="alert"
+    >
+      {{ formError }}
+    </p>
 
     <section
       v-if="isUnauthed"
@@ -87,6 +173,8 @@ async function generateInvite(groupSlug: string) {
         Sign in
       </NuxtLink>
     </section>
+
+    <p v-else-if="pending" class="text-sm text-slate-500">Loading your groups…</p>
 
     <section v-else-if="groups.length === 0" class="space-y-3">
       <h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100">Create your family</h2>
@@ -150,10 +238,18 @@ async function generateInvite(groupSlug: string) {
           <button
             type="button"
             :data-testid="TEST_IDS.TYPING.GROUP_INVITE_LINK"
-            class="rounded-lg bg-amber-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-800"
-            @click="generateInvite(entry.group.slug)"
+            :disabled="invitePending === entry.group.id"
+            class="rounded-lg bg-amber-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-800 disabled:opacity-50"
+            @click="generateInvite(entry.group)"
           >
-            Generate invite link
+            {{ invitePending === entry.group.id ? 'Generating…' : 'Generate invite link' }}
+          </button>
+          <button
+            type="button"
+            class="rounded-lg border border-rose-300 px-3 py-1.5 text-sm text-rose-700 hover:bg-rose-50 dark:border-rose-700 dark:text-rose-300 dark:hover:bg-rose-950/40"
+            @click="openDeleteGroup(entry.group)"
+          >
+            Delete group
           </button>
         </div>
       </article>
@@ -163,9 +259,79 @@ async function generateInvite(groupSlug: string) {
         class="rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200"
       >
         <p class="mb-2 font-semibold">Invite link generated</p>
-        <p class="font-mono text-xs">{{ inviteLink }}</p>
+        <p class="break-all font-mono text-xs">{{ inviteLink }}</p>
         <p class="mt-1 text-xs">Expires {{ inviteExpires }}</p>
+        <button
+          type="button"
+          class="mt-2 rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-800"
+          @click="copyInvite"
+        >
+          Copy link
+        </button>
       </div>
     </section>
+
+    <!-- Delete-group confirm dialog (type the name) -->
+    <div
+      v-if="deletingGroup"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4"
+      role="dialog"
+      aria-modal="true"
+      :aria-labelledby="`delete-group-${deletingGroup.id}-title`"
+      @click.self="cancelDeleteGroup"
+    >
+      <div
+        class="w-full max-w-md space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+      >
+        <header>
+          <h3
+            :id="`delete-group-${deletingGroup.id}-title`"
+            class="text-lg font-semibold text-slate-900 dark:text-slate-100"
+          >
+            Delete this group?
+          </h3>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
+            This permanently removes
+            <strong class="text-slate-900 dark:text-slate-100">{{ deletingGroup.name }}</strong>
+            along with every learner, attempt, invite, and guardian membership in it. Type the group
+            name to confirm.
+          </p>
+        </header>
+
+        <label class="block">
+          <span
+            class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
+          >
+            Type: delete {{ deletingGroup.name.toLowerCase() }}
+          </span>
+          <input
+            v-model="deleteTyped"
+            type="text"
+            autocomplete="off"
+            :placeholder="`delete ${deletingGroup.name.toLowerCase()}`"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            @keydown.enter="confirmDeleteGroup"
+          />
+        </label>
+
+        <div class="flex justify-end gap-2">
+          <button
+            type="button"
+            class="rounded-lg border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
+            @click="cancelDeleteGroup"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            :disabled="!deleteMatches || deletePending"
+            class="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+            @click="confirmDeleteGroup"
+          >
+            {{ deletePending ? 'Deleting…' : 'Delete group' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

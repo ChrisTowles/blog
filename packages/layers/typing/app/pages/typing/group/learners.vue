@@ -14,23 +14,28 @@ useHead({
 const route = useRoute();
 const groupSlug = computed(() => String(route.query.groupSlug ?? ''));
 
-const learners = ref<Learner[]>([]);
-const loading = ref(false);
 const newName = ref('');
 const newBirthYear = ref<number | null>(null);
 
-async function load() {
-  if (!groupSlug.value) return;
-  loading.value = true;
-  try {
-    const result = await $fetch<{ learners: Learner[] }>(
-      `/api/typing/groups/${groupSlug.value}/learners`,
-    );
-    learners.value = result.learners;
-  } finally {
-    loading.value = false;
-  }
-}
+// useFetch keyed by slug, client-only — auth cookie isn't forwarded
+// during SSR for $fetch/useFetch internal calls in this setup. Tying
+// `key` to the slug means switching groups re-runs the fetch.
+const {
+  data: learnersData,
+  refresh: refreshLearners,
+  pending: loading,
+} = await useFetch<{ learners: Learner[] }>(
+  () => `/api/typing/groups/${groupSlug.value}/learners`,
+  {
+    key: () => `typing:learners:${groupSlug.value}`,
+    default: () => ({ learners: [] as Learner[] }),
+    ignoreResponseError: true,
+    server: false,
+    watch: [groupSlug],
+    immediate: true,
+  },
+);
+const learners = computed(() => learnersData.value?.learners ?? []);
 
 async function add() {
   if (!newName.value || !groupSlug.value) return;
@@ -43,7 +48,7 @@ async function add() {
   });
   newName.value = '';
   newBirthYear.value = null;
-  await Promise.all([load(), refreshNuxtData('typing:groups')]);
+  await Promise.all([refreshLearners(), refreshNuxtData('typing:groups')]);
 }
 
 async function bumpStage(learner: Learner, delta: number) {
@@ -53,7 +58,7 @@ async function bumpStage(learner: Learner, delta: number) {
     method: 'PUT',
     body: { currentStage: nextStage },
   });
-  await Promise.all([load(), refreshNuxtData('typing:groups')]);
+  await Promise.all([refreshLearners(), refreshNuxtData('typing:groups')]);
 }
 
 // --- Delete with type-the-name confirm ---------------------------------
@@ -85,13 +90,11 @@ async function confirmDelete() {
       method: 'DELETE',
     });
     cancelDelete();
-    await Promise.all([load(), refreshNuxtData('typing:groups')]);
+    await Promise.all([refreshLearners(), refreshNuxtData('typing:groups')]);
   } finally {
     deletePending.value = false;
   }
 }
-
-await load();
 </script>
 
 <template>
