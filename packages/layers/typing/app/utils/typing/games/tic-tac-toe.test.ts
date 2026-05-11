@@ -58,9 +58,12 @@ describe('tic-tac-toe', () => {
     });
 
     it('weighted picks center on first move', () => {
-      // Run many trials; center should win the bulk.
+      // Statistical test: with weights [3,2,3,2,4,2,3,2,3] the center cell
+      // is sampled at ~16.7% vs ~12.5% per corner. At 500 trials a corner
+      // can occasionally edge out the center; bump the sample size so the
+      // gap is many sigma above noise.
       const tally = Array(9).fill(0);
-      for (let i = 0; i < 500; i++) {
+      for (let i = 0; i < 5000; i++) {
         const move = chooseAIMove(emptyBoard(), 'weighted');
         tally[move]++;
       }
