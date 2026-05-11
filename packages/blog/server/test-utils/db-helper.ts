@@ -149,6 +149,7 @@ export async function createTestTypingGroup(
   const [group] = await db
     .insert(tables.typingGroups)
     .values({
+      slug: `test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       name: 'Test Family',
       kind: 'family',
       ...overrides,

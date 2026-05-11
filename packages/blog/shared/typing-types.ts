@@ -8,6 +8,8 @@ export type TypingGroupKind = 'family' | 'classroom';
 
 export type TypingGroup = {
   id: number;
+  /** Public URL handle: <first-6-of-creator-userId>-<slugified-name>. */
+  slug: string;
   name: string;
   kind: TypingGroupKind;
   createdAt: string;

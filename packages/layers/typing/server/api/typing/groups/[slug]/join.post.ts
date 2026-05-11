@@ -1,10 +1,10 @@
 /**
- * POST /api/typing/groups/:id/join
+ * POST /api/typing/groups/:slug/join
  *
  * Accepts a single-use invite token and adds the calling user as a guardian
- * of the group. The :id in the URL is the invite token (we use the same
- * route shape as other group routes for symmetry — `groupId` is read from
- * the invite row, not the URL).
+ * of the group. The :slug here is actually the invite token (we use this
+ * shape for symmetry with other group routes — `groupId` is read from the
+ * invite row, not the URL).
  *
  * Token must:
  *   - exist
@@ -15,11 +15,11 @@ import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 
 const paramsSchema = z.object({
-  id: z.string().min(1),
+  slug: z.string().min(1),
 });
 
 export default defineEventHandler(async (event) => {
-  const { id: token } = await getValidatedRouterParams(event, paramsSchema.parse);
+  const { slug: token } = await getValidatedRouterParams(event, paramsSchema.parse);
 
   const session = await getUserSession(event);
   const userId = session.user?.id;
@@ -60,5 +60,18 @@ export default defineEventHandler(async (event) => {
     .set({ acceptedAt: new Date(), acceptedBy: userId })
     .where(eq(tables.typingGroupInvites.id, invite.id));
 
-  return { ok: true, groupId: invite.groupId };
+  // Look up the group so the client can display name + use slug in any URL.
+  const groupRows = await db
+    .select({ slug: tables.typingGroups.slug, name: tables.typingGroups.name })
+    .from(tables.typingGroups)
+    .where(eq(tables.typingGroups.id, invite.groupId))
+    .limit(1);
+  const group = groupRows[0];
+
+  return {
+    ok: true,
+    groupId: invite.groupId,
+    groupSlug: group?.slug ?? null,
+    groupName: group?.name ?? null,
+  };
 });

@@ -20,18 +20,20 @@ const token = computed(() => String(route.params.token ?? ''));
 
 const status = ref<'idle' | 'joining' | 'done' | 'error'>('idle');
 const error = ref<string | null>(null);
-const joinedGroupId = ref<number | null>(null);
+const joinedGroupName = ref<string | null>(null);
 
 async function accept() {
   if (status.value === 'joining' || !token.value) return;
   status.value = 'joining';
   error.value = null;
   try {
-    const result = await $fetch<{ ok: true; groupId: number }>(
-      `/api/typing/groups/${token.value}/join`,
-      { method: 'POST' },
-    );
-    joinedGroupId.value = result.groupId;
+    const result = await $fetch<{
+      ok: true;
+      groupId: number;
+      groupSlug: string | null;
+      groupName: string | null;
+    }>(`/api/typing/groups/${token.value}/join`, { method: 'POST' });
+    joinedGroupName.value = result.groupName;
     status.value = 'done';
   } catch (e: unknown) {
     const err = e as { statusMessage?: string; message?: string };
@@ -55,7 +57,12 @@ async function accept() {
       v-if="status === 'done'"
       class="rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200"
     >
-      <p>You're in! Group #{{ joinedGroupId }}.</p>
+      <p>
+        You're in!<span v-if="joinedGroupName">
+          Welcome to <strong>{{ joinedGroupName }}</strong
+          >.</span
+        >
+      </p>
       <NuxtLink
         to="/typing/group"
         class="mt-3 inline-flex rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"

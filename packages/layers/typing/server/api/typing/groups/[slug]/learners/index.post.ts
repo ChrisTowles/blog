@@ -1,14 +1,15 @@
 /**
- * POST /api/typing/groups/:id/learners
+ * POST /api/typing/groups/:slug/learners
  *
  * Creates a new learner in the group. Caller must be a guardian.
  */
 import { z } from 'zod';
 import type { Learner } from '../../../../../../../../blog/shared/typing-types';
+import { findGroupBySlug } from '../../../../../utils/typing/groups';
 import { requireGuardian } from '../../../../../utils/typing/require-guardian';
 
 const paramsSchema = z.object({
-  id: z.coerce.number().int().positive(),
+  slug: z.string().min(1).max(96),
 });
 
 const bodySchema = z.object({
@@ -18,15 +19,19 @@ const bodySchema = z.object({
 });
 
 export default defineEventHandler(async (event) => {
-  const { id: groupId } = await getValidatedRouterParams(event, paramsSchema.parse);
-  await requireGuardian(event, { groupId });
+  const { slug } = await getValidatedRouterParams(event, paramsSchema.parse);
+  const group = await findGroupBySlug(slug);
+  if (!group) {
+    throw createError({ statusCode: 404, statusMessage: 'Group not found' });
+  }
+  await requireGuardian(event, { groupId: group.id });
 
   const body = await readValidatedBody(event, bodySchema.parse);
   const db = useDrizzle();
   const [created] = await db
     .insert(tables.typingLearners)
     .values({
-      groupId,
+      groupId: group.id,
       displayName: body.displayName,
       birthYear: body.birthYear ?? null,
       avatarUrl: body.avatarUrl ?? null,

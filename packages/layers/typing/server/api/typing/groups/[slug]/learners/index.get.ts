@@ -1,22 +1,26 @@
 /**
- * GET /api/typing/groups/:id/learners
+ * GET /api/typing/groups/:slug/learners
  *
  * Lists every learner in the group. Caller must be a guardian.
  */
 import { z } from 'zod';
 import type { Learner } from '../../../../../../../../blog/shared/typing-types';
-import { listGroupLearners } from '../../../../../utils/typing/groups';
+import { findGroupBySlug, listGroupLearners } from '../../../../../utils/typing/groups';
 import { requireGuardian } from '../../../../../utils/typing/require-guardian';
 
 const paramsSchema = z.object({
-  id: z.coerce.number().int().positive(),
+  slug: z.string().min(1).max(96),
 });
 
 export default defineEventHandler(async (event) => {
-  const { id: groupId } = await getValidatedRouterParams(event, paramsSchema.parse);
-  await requireGuardian(event, { groupId });
+  const { slug } = await getValidatedRouterParams(event, paramsSchema.parse);
+  const group = await findGroupBySlug(slug);
+  if (!group) {
+    throw createError({ statusCode: 404, statusMessage: 'Group not found' });
+  }
+  await requireGuardian(event, { groupId: group.id });
 
-  const rows = await listGroupLearners(groupId);
+  const rows = await listGroupLearners(group.id);
   const learners: Learner[] = rows.map((l) => ({
     id: l.id,
     groupId: l.groupId,
