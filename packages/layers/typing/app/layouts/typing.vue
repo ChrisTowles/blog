@@ -10,8 +10,11 @@ const { setLearners } = useActiveLearner();
 const { data: groupsData } = await useFetch('/api/typing/groups', {
   key: 'typing:groups',
   default: () => ({ groups: [] as Array<{ learners: Array<unknown> }> }),
-  // Auth-required endpoint; ignore 401 silently.
+  // Auth-required endpoint; ignore 401 silently. Skip SSR — the session
+  // cookie isn't attached to the internal fetch during SSR, so the
+  // request would 401 and the page would hydrate with empty groups.
   ignoreResponseError: true,
+  server: false,
 });
 watchEffect(() => {
   const all = groupsData.value?.groups ?? [];
