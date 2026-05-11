@@ -27,6 +27,7 @@ const route = useRoute();
 const router = useRouter();
 
 const selectedStage = ref<number>(progress.value.currentStage);
+const lessonPickerRef = ref<HTMLElement | null>(null);
 
 onMounted(() => {
   const q = Number(route.query.stage);
@@ -36,6 +37,18 @@ onMounted(() => {
 watch(selectedStage, (val) => {
   router.replace({ query: { ...route.query, stage: val } });
 });
+
+function selectStage(stage: number) {
+  const isChanging = selectedStage.value !== stage;
+  selectedStage.value = stage;
+  // If the user clicked a stage tile from down in the grid, lift them
+  // back up to the lesson picker so they actually see the "Start" cards.
+  if (isChanging && import.meta.client) {
+    nextTick(() => {
+      lessonPickerRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+}
 
 // --- Derived state per stage --------------------------------------------
 
@@ -183,8 +196,7 @@ const masteredWordsForActive = computed(() =>
         </span>
       </div>
       <p class="max-w-prose text-slate-600 dark:text-slate-300">
-        Tap a stage to see its lessons. Every stage adds new keys — finish lessons to unlock the
-        next one.
+        Pick a lesson below to start typing. Finish lessons to unlock the next stage.
       </p>
     </header>
 
@@ -197,55 +209,14 @@ const masteredWordsForActive = computed(() =>
       />
     </section>
 
-    <!-- THE GRID -->
-    <section :data-testid="TEST_IDS.TYPING.STAGE_MAP" class="space-y-5">
-      <div class="flex items-baseline justify-between">
-        <h2 class="text-lg font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-          Stages
-        </h2>
-        <div class="flex items-center gap-3 text-xs">
-          <span class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
-            <span class="inline-block h-2.5 w-2.5 rounded-full bg-emerald-400"></span>
-            Done
-          </span>
-          <span class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
-            <span class="inline-block h-2.5 w-2.5 rounded-full bg-amber-300"></span>
-            You're here
-          </span>
-          <span class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
-            <span class="inline-block h-2.5 w-2.5 rounded-full bg-slate-600"></span>
-            Coming up
-          </span>
-        </div>
-      </div>
-
-      <div class="grid auto-rows-fr gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5" role="list">
-        <div
-          v-for="(row, idx) in stageRows"
-          :key="row.stage"
-          role="listitem"
-          class="stage-card-enter"
-          :style="{ animationDelay: `${idx * 35}ms` }"
-        >
-          <TypingStageCard
-            :stage="row.stage"
-            :name="row.name"
-            :keys="row.keys"
-            :target-wpm="row.targetWpm"
-            :status="row.status"
-            :progress-pct="row.progressPct"
-            :family="row.family"
-            :selected="selectedStage === row.stage"
-            @click="selectedStage = row.stage"
-          />
-        </div>
-      </div>
-    </section>
-
-    <!-- Inline lesson panel for the selected stage. Inline (not modal)
-         so kids see the relationship between the stage tile and its
-         lessons. -->
-    <section v-if="selectedStageDef" :data-testid="TEST_IDS.TYPING.LESSON_PICKER">
+    <!-- Lesson picker for the selected stage. Rendered ABOVE the stage
+         grid so the kid's primary action — picking a lesson and tapping
+         Start — is the first thing they see, not buried below 20 tiles. -->
+    <section
+      v-if="selectedStageDef"
+      ref="lessonPickerRef"
+      :data-testid="TEST_IDS.TYPING.LESSON_PICKER"
+    >
       <div
         class="rounded-2xl border-2 border-amber-400/40 bg-gradient-to-br from-amber-50 to-white p-5 shadow-lg dark:border-amber-500/40 dark:from-amber-950/30 dark:to-slate-900"
       >
@@ -309,6 +280,52 @@ const masteredWordsForActive = computed(() =>
               </span>
             </div>
           </NuxtLink>
+        </div>
+      </div>
+    </section>
+
+    <!-- The grid — kept below the picker so it acts as "jump to another
+         stage" rather than as the primary call-to-action. -->
+    <section :data-testid="TEST_IDS.TYPING.STAGE_MAP" class="space-y-5">
+      <div class="flex items-baseline justify-between">
+        <h2 class="text-lg font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+          All stages
+        </h2>
+        <div class="flex items-center gap-3 text-xs">
+          <span class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+            <span class="inline-block h-2.5 w-2.5 rounded-full bg-emerald-400"></span>
+            Done
+          </span>
+          <span class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+            <span class="inline-block h-2.5 w-2.5 rounded-full bg-amber-300"></span>
+            You're here
+          </span>
+          <span class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+            <span class="inline-block h-2.5 w-2.5 rounded-full bg-slate-600"></span>
+            Coming up
+          </span>
+        </div>
+      </div>
+
+      <div class="grid auto-rows-fr gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5" role="list">
+        <div
+          v-for="(row, idx) in stageRows"
+          :key="row.stage"
+          role="listitem"
+          class="stage-card-enter"
+          :style="{ animationDelay: `${idx * 35}ms` }"
+        >
+          <TypingStageCard
+            :stage="row.stage"
+            :name="row.name"
+            :keys="row.keys"
+            :target-wpm="row.targetWpm"
+            :status="row.status"
+            :progress-pct="row.progressPct"
+            :family="row.family"
+            :selected="selectedStage === row.stage"
+            @click="selectStage(row.stage)"
+          />
         </div>
       </div>
     </section>
