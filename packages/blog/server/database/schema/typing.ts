@@ -21,6 +21,9 @@ import type { ErrorsByKeyMap } from '../../../shared/typing-types';
 
 export const typingGroups = pgTable('typing_groups', {
   id: serial().primaryKey(),
+  // Public URL handle: <first-6-of-creator-userId>-<slugified-name>.
+  // Integer id is kept for foreign keys; slug is what shows up in URLs.
+  slug: varchar({ length: 96 }).notNull().unique(),
   name: varchar({ length: 120 }).notNull(),
   // 'family' | 'classroom'
   kind: varchar({ length: 16 }).notNull().default('family'),

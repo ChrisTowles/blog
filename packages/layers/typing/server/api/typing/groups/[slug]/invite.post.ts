@@ -1,15 +1,15 @@
 /**
- * POST /api/typing/groups/:id/invite
+ * POST /api/typing/groups/:slug/invite
  *
  * Generates a single-use invite token (7-day TTL). Caller must be a guardian.
  * Returns `{ token, url, expiresAt }` so the client can copy or send.
  */
 import { z } from 'zod';
 import { requireGuardian } from '../../../../utils/typing/require-guardian';
-import { generateInviteToken } from '../../../../utils/typing/groups';
+import { findGroupBySlug, generateInviteToken } from '../../../../utils/typing/groups';
 
 const paramsSchema = z.object({
-  id: z.coerce.number().int().positive(),
+  slug: z.string().min(1).max(96),
 });
 
 const bodySchema = z.object({
@@ -19,8 +19,12 @@ const bodySchema = z.object({
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 export default defineEventHandler(async (event) => {
-  const { id: groupId } = await getValidatedRouterParams(event, paramsSchema.parse);
-  await requireGuardian(event, { groupId });
+  const { slug } = await getValidatedRouterParams(event, paramsSchema.parse);
+  const group = await findGroupBySlug(slug);
+  if (!group) {
+    throw createError({ statusCode: 404, statusMessage: 'Group not found' });
+  }
+  await requireGuardian(event, { groupId: group.id });
 
   const body = await readValidatedBody(event, bodySchema.parse);
   const db = useDrizzle();
@@ -31,7 +35,7 @@ export default defineEventHandler(async (event) => {
   const [invite] = await db
     .insert(tables.typingGroupInvites)
     .values({
-      groupId,
+      groupId: group.id,
       token,
       email: body.email ?? null,
       expiresAt,

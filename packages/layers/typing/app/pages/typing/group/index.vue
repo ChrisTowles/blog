@@ -56,9 +56,9 @@ async function createFamily() {
   }
 }
 
-async function generateInvite(groupId: number) {
+async function generateInvite(groupSlug: string) {
   const result = await $fetch<{ url: string; expiresAt: string }>(
-    `/api/typing/groups/${groupId}/invite`,
+    `/api/typing/groups/${groupSlug}/invite`,
     { method: 'POST' },
   );
   inviteLink.value = result.url;
@@ -142,7 +142,7 @@ async function generateInvite(groupId: number) {
 
         <div class="flex flex-wrap items-center gap-2">
           <NuxtLink
-            :to="`/typing/group/learners?groupId=${entry.group.id}`"
+            :to="`/typing/group/learners?groupSlug=${entry.group.slug}`"
             class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-700"
           >
             Manage learners
@@ -151,7 +151,7 @@ async function generateInvite(groupId: number) {
             type="button"
             :data-testid="TEST_IDS.TYPING.GROUP_INVITE_LINK"
             class="rounded-lg bg-amber-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-800"
-            @click="generateInvite(entry.group.id)"
+            @click="generateInvite(entry.group.slug)"
           >
             Generate invite link
           </button>

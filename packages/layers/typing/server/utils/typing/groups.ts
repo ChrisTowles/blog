@@ -47,6 +47,7 @@ export async function listGuardianGroups(userId: string) {
   return db
     .select({
       id: tables.typingGroups.id,
+      slug: tables.typingGroups.slug,
       name: tables.typingGroups.name,
       kind: tables.typingGroups.kind,
       createdAt: tables.typingGroups.createdAt,
@@ -58,6 +59,48 @@ export async function listGuardianGroups(userId: string) {
       eq(tables.typingGroupMembers.groupId, tables.typingGroups.id),
     )
     .where(eq(tables.typingGroupMembers.userId, userId));
+}
+
+export async function findGroupBySlug(slug: string) {
+  const db = useDrizzle();
+  const rows = await db
+    .select()
+    .from(tables.typingGroups)
+    .where(eq(tables.typingGroups.slug, slug))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/**
+ * Build a public group slug from the creating user's id plus the group name.
+ * Format: <first-6-of-userId>-<slug(name)>. Collisions are resolved by
+ * appending `-2`, `-3`, ... via the caller's uniqueness check.
+ */
+export function buildGroupSlug(userId: string, name: string): string {
+  const prefix = userId.replace(/-/g, '').slice(0, 6).toLowerCase();
+  const namePart = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return `${prefix}-${namePart || 'group'}`;
+}
+
+export async function generateUniqueGroupSlug(userId: string, name: string): Promise<string> {
+  const db = useDrizzle();
+  const base = buildGroupSlug(userId, name);
+  let candidate = base;
+  let suffix = 2;
+  // Tiny loop: collisions are rare (same user, same group name).
+  while (true) {
+    const existing = await db
+      .select({ id: tables.typingGroups.id })
+      .from(tables.typingGroups)
+      .where(eq(tables.typingGroups.slug, candidate))
+      .limit(1);
+    if (existing.length === 0) return candidate;
+    candidate = `${base}-${suffix}`;
+    suffix += 1;
+  }
 }
 
 export async function listGroupLearners(groupId: number) {

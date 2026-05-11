@@ -85,6 +85,13 @@
       "when": 1778803200000,
       "tag": "0011_cutover_reading_to_typing",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1778803200001,
+      "tag": "0012_typing_groups_slug",
+      "breakpoints": true
     }
   ]
 }

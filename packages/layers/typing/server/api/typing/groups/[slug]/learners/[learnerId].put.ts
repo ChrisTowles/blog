@@ -1,5 +1,5 @@
 /**
- * PUT /api/typing/groups/:id/learners/:learnerId
+ * PUT /api/typing/groups/:slug/learners/:learnerId
  *
  * Updates a learner's display name, avatar, birth year, current stage, or
  * preferred voice. Caller must be a guardian of the group.
@@ -7,10 +7,11 @@
 import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import type { Learner } from '../../../../../../../../blog/shared/typing-types';
+import { findGroupBySlug } from '../../../../../utils/typing/groups';
 import { requireGuardian } from '../../../../../utils/typing/require-guardian';
 
 const paramsSchema = z.object({
-  id: z.coerce.number().int().positive(),
+  slug: z.string().min(1).max(96),
   learnerId: z.coerce.number().int().positive(),
 });
 
@@ -23,8 +24,12 @@ const bodySchema = z.object({
 });
 
 export default defineEventHandler(async (event) => {
-  const { id: groupId, learnerId } = await getValidatedRouterParams(event, paramsSchema.parse);
-  await requireGuardian(event, { groupId });
+  const { slug, learnerId } = await getValidatedRouterParams(event, paramsSchema.parse);
+  const group = await findGroupBySlug(slug);
+  if (!group) {
+    throw createError({ statusCode: 404, statusMessage: 'Group not found' });
+  }
+  await requireGuardian(event, { groupId: group.id });
 
   const body = await readValidatedBody(event, bodySchema.parse);
   const db = useDrizzle();
@@ -43,7 +48,9 @@ export default defineEventHandler(async (event) => {
   const [updated] = await db
     .update(tables.typingLearners)
     .set(set)
-    .where(and(eq(tables.typingLearners.id, learnerId), eq(tables.typingLearners.groupId, groupId)))
+    .where(
+      and(eq(tables.typingLearners.id, learnerId), eq(tables.typingLearners.groupId, group.id)),
+    )
     .returning();
   if (!updated) {
     throw createError({ statusCode: 404, statusMessage: 'Learner not found' });

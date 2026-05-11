@@ -27,6 +27,7 @@ export default defineEventHandler(async (event) => {
     out.push({
       group: {
         id: g.id,
+        slug: g.slug,
         name: g.name,
         kind: g.kind as TypingGroupKind,
         createdAt: g.createdAt.toISOString(),

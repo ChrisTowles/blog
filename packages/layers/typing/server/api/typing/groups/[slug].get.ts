@@ -1,5 +1,5 @@
 /**
- * GET /api/typing/groups/:id
+ * GET /api/typing/groups/:slug
  *
  * Returns the group with its members and learners. Caller must be a guardian.
  */
@@ -12,38 +12,33 @@ import type {
   TypingGroupKind,
 } from '../../../../../../blog/shared/typing-types';
 import { requireGuardian } from '../../../utils/typing/require-guardian';
+import { findGroupBySlug } from '../../../utils/typing/groups';
 
 const paramsSchema = z.object({
-  id: z.coerce.number().int().positive(),
+  slug: z.string().min(1).max(96),
 });
 
 export default defineEventHandler(async (event) => {
-  const { id: groupId } = await getValidatedRouterParams(event, paramsSchema.parse);
-  await requireGuardian(event, { groupId });
-
-  const db = useDrizzle();
-
-  const groupRows = await db
-    .select()
-    .from(tables.typingGroups)
-    .where(eq(tables.typingGroups.id, groupId))
-    .limit(1);
-  const group = groupRows[0];
+  const { slug } = await getValidatedRouterParams(event, paramsSchema.parse);
+  const group = await findGroupBySlug(slug);
   if (!group) {
     throw createError({ statusCode: 404, statusMessage: 'Group not found' });
   }
+  await requireGuardian(event, { groupId: group.id });
 
+  const db = useDrizzle();
   const memberRows = await db
     .select()
     .from(tables.typingGroupMembers)
-    .where(eq(tables.typingGroupMembers.groupId, groupId));
+    .where(eq(tables.typingGroupMembers.groupId, group.id));
   const learnerRows = await db
     .select()
     .from(tables.typingLearners)
-    .where(eq(tables.typingLearners.groupId, groupId));
+    .where(eq(tables.typingLearners.groupId, group.id));
 
   const groupOut: TypingGroup = {
     id: group.id,
+    slug: group.slug,
     name: group.name,
     kind: group.kind as TypingGroupKind,
     createdAt: group.createdAt.toISOString(),

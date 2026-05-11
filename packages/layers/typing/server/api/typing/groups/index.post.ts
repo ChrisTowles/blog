@@ -10,6 +10,7 @@ import type {
   TypingGroupKind,
   Learner,
 } from '../../../../../../blog/shared/typing-types';
+import { generateUniqueGroupSlug } from '../../../utils/typing/groups';
 
 const bodySchema = z.object({
   name: z.string().min(1).max(120),
@@ -27,9 +28,11 @@ export default defineEventHandler(async (event) => {
   const body = await readValidatedBody(event, bodySchema.parse);
   const db = useDrizzle();
 
+  const slug = await generateUniqueGroupSlug(userId, body.name);
+
   const [group] = await db
     .insert(tables.typingGroups)
-    .values({ name: body.name, kind: body.kind })
+    .values({ slug, name: body.name, kind: body.kind })
     .returning();
   if (!group) {
     throw createError({ statusCode: 500, statusMessage: 'Failed to create group' });
@@ -64,6 +67,7 @@ export default defineEventHandler(async (event) => {
 
   const out: TypingGroup = {
     id: group.id,
+    slug: group.slug,
     name: group.name,
     kind: group.kind as TypingGroupKind,
     createdAt: group.createdAt.toISOString(),
