@@ -86,4 +86,30 @@ describe('scoreClock', () => {
     const res = await scoreClock(bigImage, stubClient('nope', 'nope again'));
     expect(res.ok).toBe(false);
   });
+
+  it('does not throw when the vision request errors, and surfaces the reason', async () => {
+    const create = vi
+      .fn()
+      .mockRejectedValue(new Error('400 You have reached your specified API usage limits.'));
+    const res = await scoreClock(bigImage, { messages: { create } });
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.reason).toContain('model request failed');
+    expect(create).toHaveBeenCalledTimes(2);
+  });
+
+  it('recovers on the second attempt when the first request throws', async () => {
+    const raw = JSON.stringify({
+      criteria: criteria(true),
+      normal: true,
+      score: 2,
+      explanation: 'a clear clock',
+    });
+    const create = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('transient network error'))
+      .mockResolvedValueOnce({ content: [{ type: 'text', text: raw }] });
+    const res = await scoreClock(bigImage, { messages: { create } });
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.data.score).toBe(2);
+  });
 });

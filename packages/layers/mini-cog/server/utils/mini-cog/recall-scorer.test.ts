@@ -94,4 +94,38 @@ describe('scoreRecall', () => {
     );
     expect(res.ok).toBe(false);
   });
+
+  it('does not throw when the model request errors, and surfaces the reason', async () => {
+    const create = vi
+      .fn()
+      .mockRejectedValue(new Error('400 You have reached your specified API usage limits.'));
+    const res = await scoreRecall(
+      { targetWords: TARGETS, spokenText: 'x' },
+      { messages: { create } },
+    );
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.reason).toContain('model request failed');
+    expect(create).toHaveBeenCalledTimes(2); // both attempts tried
+  });
+
+  it('recovers on the second attempt when the first request throws', async () => {
+    const good = JSON.stringify({
+      scores: [
+        { word: 'Banana', recalled: true, evidence: 'banana' },
+        { word: 'Sunrise', recalled: true, evidence: 'sunrise' },
+        { word: 'Chair', recalled: true, evidence: 'chair' },
+      ],
+      totalRecalled: 3,
+    });
+    const create = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('transient network error'))
+      .mockResolvedValueOnce({ content: [{ type: 'text', text: good }] });
+    const res = await scoreRecall(
+      { targetWords: TARGETS, spokenText: 'banana sunrise chair' },
+      { messages: { create } },
+    );
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.data.totalRecalled).toBe(3);
+  });
 });
