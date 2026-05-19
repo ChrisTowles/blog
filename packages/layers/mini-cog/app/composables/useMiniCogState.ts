@@ -13,8 +13,8 @@ import type {
   MiniCogResultData,
   RecallScore,
   WordTriplet,
-} from '../../../../blog/shared/mini-cog-types';
-import { MINI_COG_REFER_THRESHOLD } from '../../../../blog/shared/mini-cog-types';
+} from '~~/shared/mini-cog-types';
+import { MINI_COG_REFER_THRESHOLD } from '~~/shared/mini-cog-types';
 
 const MAX_REGISTRATION_ATTEMPTS = 3;
 
