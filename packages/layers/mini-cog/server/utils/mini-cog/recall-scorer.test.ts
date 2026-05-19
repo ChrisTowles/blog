@@ -105,7 +105,7 @@ describe('scoreRecall', () => {
     );
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.reason).toContain('model request failed');
-    expect(create).toHaveBeenCalledTimes(2); // both attempts tried
+    expect(create).toHaveBeenCalledTimes(2);
   });
 
   it('recovers on the second attempt when the first request throws', async () => {
