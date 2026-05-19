@@ -133,11 +133,35 @@ jobs:
           STATE=$(gcloud sql instances describe "$INSTANCE" --project="$PROJECT" --format='value(state)')
           echo "Cloud SQL state: ${STATE}"
           if [ "$STATE" != "RUNNABLE" ]; then
-            echo "Starting Cloud SQL instance..."
-            gcloud sql instances patch "$INSTANCE" --activation-policy=ALWAYS --project="$PROJECT"
-            echo "Waiting for instance to become ready..."
-            sleep 30
+            # --async: a cold start after the cost kill-switch stop can take
+            # well over gcloud's ~10 min built-in operation-wait, which would
+            # fail this step and abort the pipeline. Dispatch and poll state
+            # ourselves instead. A patch may already be in flight from a
+            # prior run, so a non-zero exit here is non-fatal.
+            echo "Requesting Cloud SQL start (async)..."
+            gcloud sql instances patch "$INSTANCE" --activation-policy=ALWAYS \
+              --project="$PROJECT" --async \
+              || echo "patch dispatch non-zero (likely already starting) — will poll state"
           fi
+          echo "Waiting for Cloud SQL to reach RUNNABLE (up to 25 min)..."
+          for i in $(seq 1 100); do
+            STATE=$(gcloud sql instances describe "$INSTANCE" --project="$PROJECT" --format='value(state)' 2>/dev/null || echo UNKNOWN)
+            if [ "$STATE" = "RUNNABLE" ]; then
+              echo "Cloud SQL RUNNABLE after ~$((i * 15))s"
+              break
+            fi
+            echo "  [$((i * 15))s] state=${STATE}"
+            sleep 15
+          done
+          if [ "$STATE" != "RUNNABLE" ]; then
+            echo "::error::Cloud SQL did not reach RUNNABLE in time (state=${STATE})"
+            exit 1
+          fi
+          # RUNNABLE precedes actually accepting connections. The container
+          # runs DB migrations on boot and exits(1) on ECONNREFUSED, so give
+          # Postgres time to start serving before the Cloud Run rollout.
+          echo "Cloud SQL RUNNABLE; allowing Postgres to accept connections..."
+          sleep 60
 
       - name: Deploy to Cloud Run
         run: |
@@ -148,13 +172,22 @@ jobs:
 
       - name: Smoke test staging
         run: |
-          sleep 10
-          STATUS=$(curl -s -o /dev/null -w '%{http_code}' ${{ steps.tfvars.outputs.site_url }})
-          echo "Staging health check status: ${STATUS}"
-          if [ "$STATUS" -ne 200 ]; then
-            echo "::error::Staging smoke test failed with HTTP ${STATUS}"
-            exit 1
-          fi
+          URL="${{ steps.tfvars.outputs.site_url }}"
+          # gcloud run services update returns when the revision is created,
+          # not when it serves traffic; first request also pays cold start +
+          # the boot DB migration. Retry instead of a single shot.
+          echo "Smoke testing ${URL} (retry up to ~4 min)..."
+          for i in $(seq 1 24); do
+            STATUS=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$URL" || echo 000)
+            echo "  [attempt $i] HTTP ${STATUS}"
+            if [ "$STATUS" -eq 200 ]; then
+              echo "Staging healthy."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::Staging smoke test failed — last status ${STATUS}"
+          exit 1
 
   deploy-prod:
     name: Deploy Production
