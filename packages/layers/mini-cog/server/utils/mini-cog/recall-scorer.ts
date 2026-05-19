@@ -98,13 +98,19 @@ export async function scoreRecall(
 
   let lastReason = 'no attempts';
   for (let attempt = 0; attempt < 2; attempt++) {
-    const response = await ai.messages.create({
-      model: MODEL_HAIKU,
-      max_tokens: 500,
-      temperature: 0,
-      system: RECALL_SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: userPrompt }],
-    });
+    let response: { content: Array<{ type: string; text?: string }> };
+    try {
+      response = await ai.messages.create({
+        model: MODEL_HAIKU,
+        max_tokens: 500,
+        temperature: 0,
+        system: RECALL_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userPrompt }],
+      });
+    } catch (err) {
+      lastReason = `model request failed: ${err instanceof Error ? err.message : String(err)}`;
+      continue;
+    }
     const block = response.content[0];
     if (!block || block.type !== 'text' || !block.text) {
       lastReason = 'no text response';
