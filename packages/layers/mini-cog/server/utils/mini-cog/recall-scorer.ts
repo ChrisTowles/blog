@@ -98,27 +98,25 @@ export async function scoreRecall(
 
   let lastReason = 'no attempts';
   for (let attempt = 0; attempt < 2; attempt++) {
-    let response: { content: Array<{ type: string; text?: string }> };
     try {
-      response = await ai.messages.create({
+      const response = await ai.messages.create({
         model: MODEL_HAIKU,
         max_tokens: 500,
         temperature: 0,
         system: RECALL_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userPrompt }],
       });
+      const block = response.content[0];
+      if (!block || block.type !== 'text' || !block.text) {
+        lastReason = 'no text response';
+        continue;
+      }
+      const parsed = parseRecall(block.text, input.targetWords);
+      if (parsed.ok) return parsed;
+      lastReason = parsed.reason;
     } catch (err) {
       lastReason = `model request failed: ${err instanceof Error ? err.message : String(err)}`;
-      continue;
     }
-    const block = response.content[0];
-    if (!block || block.type !== 'text' || !block.text) {
-      lastReason = 'no text response';
-      continue;
-    }
-    const parsed = parseRecall(block.text, input.targetWords);
-    if (parsed.ok) return parsed;
-    lastReason = parsed.reason;
   }
   return { ok: false, reason: `failed after retries — last reason: ${lastReason}` };
 }
