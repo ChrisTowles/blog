@@ -4,6 +4,7 @@ import { MINI_COG_REFERENCE_URL, type MiniCogResultData } from '~~/shared/mini-c
 
 const props = defineProps<{
   result: MiniCogResultData;
+  clockImage: string | null;
   suggestsFollowUp: boolean;
 }>();
 defineEmits<{ (e: 'restart'): void }>();
@@ -23,6 +24,23 @@ const criteriaRows = computed(() =>
     pass: v as boolean,
   })),
 );
+
+/**
+ * Trigger a client-side download of the user's clock drawing. The PNG
+ * lives only in-memory as a data URL — same byte that was sent for
+ * scoring, no second round-trip. Filename includes a timestamp so
+ * repeated downloads don't collide.
+ */
+function downloadClockImage() {
+  if (!props.clockImage) return;
+  const a = document.createElement('a');
+  a.href = props.clockImage;
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  a.download = `mini-cog-clock-${stamp}.png`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
 </script>
 
 <template>
@@ -97,6 +115,26 @@ const criteriaRows = computed(() =>
               >Source ↗</a
             >
           </div>
+
+          <div v-if="clockImage" class="mb-3 space-y-2">
+            <img
+              :data-testid="TEST_IDS.MINI_COG.RESULT_CLOCK_IMAGE"
+              :src="clockImage"
+              alt="Your clock drawing"
+              class="aspect-square w-full rounded-lg border border-(--ui-border) bg-white"
+            />
+            <UButton
+              :data-testid="TEST_IDS.MINI_COG.RESULT_CLOCK_DOWNLOAD"
+              variant="soft"
+              color="neutral"
+              size="xs"
+              icon="i-lucide-download"
+              label="Download PNG"
+              block
+              @click="downloadClockImage"
+            />
+          </div>
+
           <ul class="space-y-1.5 text-sm">
             <li v-for="row in criteriaRows" :key="row.label" class="flex items-center gap-2">
               <UIcon

@@ -151,6 +151,8 @@ export const TEST_IDS = {
     REGISTRATION_SUBMIT: 'mini-cog-registration-submit',
     CLOCK_CANVAS: 'mini-cog-clock-canvas',
     CLOCK_CLEAR: 'mini-cog-clock-clear',
+    CLOCK_DRAW_TOGGLE: 'mini-cog-clock-draw-toggle',
+    CLOCK_ERASE_TOGGLE: 'mini-cog-clock-erase-toggle',
     CLOCK_SUBMIT: 'mini-cog-clock-submit',
     RECALL_INPUT: 'mini-cog-recall-input',
     RECALL_SUBMIT: 'mini-cog-recall-submit',
@@ -158,6 +160,8 @@ export const TEST_IDS = {
     RESULT_SCORE: 'mini-cog-result-score',
     RESULT_RECALL_SOURCE: 'mini-cog-result-recall-source',
     RESULT_CLOCK_SOURCE: 'mini-cog-result-clock-source',
+    RESULT_CLOCK_IMAGE: 'mini-cog-result-clock-image',
+    RESULT_CLOCK_DOWNLOAD: 'mini-cog-result-clock-download',
     RESTART_BUTTON: 'mini-cog-restart-button',
   },
   SHARED: {

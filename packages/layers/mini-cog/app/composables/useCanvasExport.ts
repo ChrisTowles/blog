@@ -4,13 +4,39 @@
  *
  * The canvas is filled white before export so the model sees ink on a
  * white field (a transparent PNG reads as black on black to vision).
+ *
+ * Tool modes:
+ *   - 'draw'  → thin dark stroke (#0f172a, 3px)
+ *   - 'erase' → fat white stroke (#ffffff, 24px) painted over existing
+ *     ink. Same path geometry — we don't use globalCompositeOperation
+ *     'destination-out' because that would punch transparent holes and
+ *     break the white-background invariant the scorer depends on.
  */
+
+export type CanvasMode = 'draw' | 'erase';
+
+const DRAW_COLOR = '#0f172a';
+const DRAW_WIDTH = 3;
+const ERASE_COLOR = '#ffffff';
+const ERASE_WIDTH = 24;
 
 export function useCanvasExport(canvasRef: Ref<HTMLCanvasElement | null>) {
   const hasDrawing = ref(false);
+  const mode = ref<CanvasMode>('draw');
   let ctx: CanvasRenderingContext2D | null = null;
   let drawing = false;
   let last: { x: number; y: number } | null = null;
+
+  function applyToolStyle() {
+    if (!ctx) return;
+    if (mode.value === 'erase') {
+      ctx.strokeStyle = ERASE_COLOR;
+      ctx.lineWidth = ERASE_WIDTH;
+    } else {
+      ctx.strokeStyle = DRAW_COLOR;
+      ctx.lineWidth = DRAW_WIDTH;
+    }
+  }
 
   function prepare() {
     const canvas = canvasRef.value;
@@ -19,10 +45,14 @@ export function useCanvasExport(canvasRef: Ref<HTMLCanvasElement | null>) {
     if (!ctx) return;
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = '#0f172a';
-    ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    applyToolStyle();
+  }
+
+  function setMode(next: CanvasMode) {
+    mode.value = next;
+    applyToolStyle();
   }
 
   function pos(e: MouseEvent | TouchEvent): { x: number; y: number } {
@@ -52,7 +82,8 @@ export function useCanvasExport(canvasRef: Ref<HTMLCanvasElement | null>) {
     ctx.lineTo(p.x, p.y);
     ctx.stroke();
     last = p;
-    hasDrawing.value = true;
+    // Erasing doesn't add new content; only draw mode flips hasDrawing.
+    if (mode.value === 'draw') hasDrawing.value = true;
   }
 
   function end() {
@@ -61,7 +92,11 @@ export function useCanvasExport(canvasRef: Ref<HTMLCanvasElement | null>) {
   }
 
   function clear() {
+    // Preserve current mode across full-canvas clears.
+    const prev = mode.value;
     prepare();
+    mode.value = prev;
+    applyToolStyle();
     hasDrawing.value = false;
   }
 
@@ -72,5 +107,5 @@ export function useCanvasExport(canvasRef: Ref<HTMLCanvasElement | null>) {
     return canvas.toDataURL('image/png');
   }
 
-  return { hasDrawing, prepare, start, move, end, clear, toDataUrl };
+  return { hasDrawing, mode, setMode, prepare, start, move, end, clear, toDataUrl };
 }
