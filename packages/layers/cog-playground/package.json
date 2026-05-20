@@ -1,0 +1,10 @@
+{
+  "name": "@chris-towles/cog-playground-layer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "devDependencies": {
+    "zod": "^4.3.4"
+  }
+}
