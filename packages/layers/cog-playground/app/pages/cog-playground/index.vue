@@ -25,8 +25,7 @@ type ScreenCard = {
   duration: string;
   scoreOutOf: string;
   description: string;
-  legalNote: string;
-  legalColor: 'success' | 'info' | 'neutral';
+  attribution: string;
 };
 
 const screens: ScreenCard[] = [
@@ -38,8 +37,7 @@ const screens: ScreenCard[] = [
     scoreOutOf: '0–17',
     description:
       'Five public-domain tasks I assembled myself — orientation, 5-word recall, animal fluency, clock drawing, digit span. AI-native scoring against transparent rules. No instrument-name claims.',
-    legalNote: 'Built entirely from public-domain task paradigms. Legally safest path.',
-    legalColor: 'success',
+    attribution: 'Original composition of public-domain task paradigms.',
   },
   {
     to: '/cog-playground/mini-ace',
@@ -49,9 +47,7 @@ const screens: ScreenCard[] = [
     scoreOutOf: '0–24',
     description:
       'Inspired by the Mini-ACE / ACE-III (Hodges): 3-word registration, time orientation, animal fluency, clock drawing, and a 7-element address recall. My own words and addresses, not the canonical items.',
-    legalNote:
-      "Under Hodges's explicit grant for non-commercial digital reimplementation, provided it remains free.",
-    legalColor: 'info',
+    attribution: 'Based on the ACE-III / Mini-ACE by John R. Hodges et al.',
   },
   {
     to: '/cog-playground/mini-cog',
@@ -61,9 +57,7 @@ const screens: ScreenCard[] = [
     scoreOutOf: '0–5',
     description:
       'Reimplementation of the Mini-Cog screen (Borson & Scanlan): three-word recall and clock drawing. The shortest of the three. Was the first thing I built — kept here for reference.',
-    legalNote:
-      'Mini-Cog© is copyrighted. Non-commercial educational use with attribution is permitted; interactive AI reimplementation is a gray area.',
-    legalColor: 'neutral',
+    attribution: 'Mini-Cog© 2000, 2004 Soo Borson & James Scanlan.',
   },
 ];
 </script>
@@ -110,16 +104,9 @@ const screens: ScreenCard[] = [
             </span>
           </div>
           <p class="mt-2 text-sm text-(--ui-text-toned)">{{ s.description }}</p>
-          <p
-            class="mt-2 text-xs"
-            :class="{
-              'text-(--ui-success)': s.legalColor === 'success',
-              'text-(--ui-info)': s.legalColor === 'info',
-              'text-(--ui-text-muted)': s.legalColor === 'neutral',
-            }"
-          >
-            <UIcon name="i-lucide-shield-check" class="-mt-0.5 inline-block size-3.5" />
-            {{ s.legalNote }}
+          <p class="mt-2 text-xs text-(--ui-text-muted)">
+            <UIcon name="i-lucide-book-open" class="-mt-0.5 inline-block size-3.5" />
+            {{ s.attribution }}
           </p>
         </NuxtLink>
       </div>
