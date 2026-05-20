@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { extractJson, parseRecall, scoreRecall, type RecallAnthropicLike } from './recall-scorer';
+import { parseRecall, scoreRecall, type RecallAnthropicLike } from './recall-scorer';
 
 const TARGETS = ['Banana', 'Sunrise', 'Chair'];
 
@@ -10,15 +10,6 @@ function stubClient(...replies: string[]): RecallAnthropicLike {
   }
   return { messages: { create } };
 }
-
-describe('extractJson', () => {
-  it('pulls a balanced object out of surrounding prose', () => {
-    expect(extractJson('here you go {"a":{"b":1}} thanks')).toBe('{"a":{"b":1}}');
-  });
-  it('returns null when there is no object', () => {
-    expect(extractJson('no json here')).toBeNull();
-  });
-});
 
 describe('parseRecall', () => {
   it('accepts a well-formed response and re-derives the count', () => {

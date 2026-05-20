@@ -7,14 +7,16 @@
  * sketch, not frontier reasoning. Opus was the original default and was
  * dropped to halve cost and latency on a user-blocking call.
  *
- * Client is injectable for unit tests, same seam as the recall scorer.
+ * Thin caller of the shared `callModelForJson` helper — observability,
+ * retry, and graceful error handling all live there.
  */
 import { z } from 'zod';
 import { getAnthropicClient } from '../../../../../blog/server/utils/ai/anthropic';
 import { MODEL_SONNET } from '../../../../../blog/shared/models';
 import type { ClockScore } from '../../../../../blog/shared/cog-playground/mini-cog-types';
+import { type AnthropicLike, callModelForJson, type ParseResult } from '../shared/anthropic-call';
+import { extractJson } from '../shared/extract-json';
 import { CLOCK_SYSTEM_PROMPT } from './prompts';
-import { extractJson } from './recall-scorer';
 
 type ImageBlock = {
   type: 'image';
@@ -22,17 +24,14 @@ type ImageBlock = {
 };
 type TextBlock = { type: 'text'; text: string };
 
-export type VisionAnthropicLike = {
-  messages: {
-    create: (args: {
-      model: string;
-      max_tokens: number;
-      temperature?: number;
-      system?: string;
-      messages: Array<{ role: 'user'; content: Array<ImageBlock | TextBlock> }>;
-    }) => Promise<{ content: Array<{ type: string; text?: string }> }>;
-  };
+type VisionArgs = {
+  model: string;
+  max_tokens: number;
+  temperature?: number;
+  system?: string;
+  messages: Array<{ role: 'user'; content: Array<ImageBlock | TextBlock> }>;
 };
+export type VisionAnthropicLike = AnthropicLike<VisionArgs>;
 
 const clockSchema = z.object({
   criteria: z.object({
@@ -48,7 +47,7 @@ const clockSchema = z.object({
   explanation: z.string(),
 });
 
-export type ClockResult = { ok: true; data: ClockScore } | { ok: false; reason: string };
+export type ClockResult = ParseResult<ClockScore>;
 
 /** Strip an optional `data:image/png;base64,` prefix. */
 export function stripDataUrl(input: string): string {
@@ -98,41 +97,23 @@ export async function scoreClock(
   }
   const ai = client ?? (getAnthropicClient() as unknown as VisionAnthropicLike);
 
-  let lastReason = 'no attempts';
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const response = await ai.messages.create({
-        model: MODEL_SONNET,
-        max_tokens: 700,
-        temperature: 0,
-        system: CLOCK_SYSTEM_PROMPT,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'image',
-                source: { type: 'base64', media_type: 'image/png', data },
-              },
-              {
-                type: 'text',
-                text: 'Score this clock drawing. Reply with ONLY the JSON object.',
-              },
-            ],
-          },
-        ],
-      });
-      const block = response.content[0];
-      if (!block || block.type !== 'text' || !block.text) {
-        lastReason = 'no text response';
-        continue;
-      }
-      const parsed = parseClock(block.text);
-      if (parsed.ok) return parsed;
-      lastReason = parsed.reason;
-    } catch (err) {
-      lastReason = `model request failed: ${err instanceof Error ? err.message : String(err)}`;
-    }
-  }
-  return { ok: false, reason: `failed after retries — last reason: ${lastReason}` };
+  return callModelForJson<VisionArgs, ClockScore>(
+    ai,
+    {
+      model: MODEL_SONNET,
+      max_tokens: 700,
+      temperature: 0,
+      system: CLOCK_SYSTEM_PROMPT,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/png', data } },
+            { type: 'text', text: 'Score this clock drawing. Reply with ONLY the JSON object.' },
+          ],
+        },
+      ],
+    },
+    parseClock,
+  );
 }
