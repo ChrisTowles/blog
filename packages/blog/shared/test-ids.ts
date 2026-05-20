@@ -142,6 +142,10 @@ export const TEST_IDS = {
     DECK_SECTION: 'poker-deck-section',
   },
   COG_PLAYGROUND: {
+    LANDING_PAGE: 'cog-playground-landing-page',
+    LANDING_LINK_MINI_COG: 'cog-playground-landing-link-mini-cog',
+    LANDING_LINK_COMPOSED: 'cog-playground-landing-link-composed',
+    LANDING_LINK_MINI_ACE: 'cog-playground-landing-link-mini-ace',
     MINI_COG: {
       PAGE: 'cog-playground-mini-cog-page',
       DISCLAIMER_BANNER: 'cog-playground-mini-cog-disclaimer-banner',
