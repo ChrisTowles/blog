@@ -4,7 +4,8 @@ import { TEST_IDS } from '~~/shared/test-ids';
 const emit = defineEmits<{ (e: 'submit', dataUrl: string): void }>();
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
-const { hasDrawing, prepare, start, move, end, clear, toDataUrl } = useCanvasExport(canvasRef);
+const { hasDrawing, mode, setMode, prepare, start, move, end, clear, toDataUrl } =
+  useCanvasExport(canvasRef);
 
 const SOFT_LIMIT = 120;
 const secondsLeft = ref(SOFT_LIMIT);
@@ -65,13 +66,33 @@ function done() {
     </div>
 
     <template #footer>
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-3">
+        <UButtonGroup>
+          <UButton
+            :data-testid="TEST_IDS.COG_PLAYGROUND.MINI_COG.CLOCK_DRAW_TOGGLE"
+            :variant="mode === 'draw' ? 'solid' : 'soft'"
+            color="neutral"
+            icon="i-lucide-pencil"
+            label="Draw"
+            :aria-pressed="mode === 'draw'"
+            @click="setMode('draw')"
+          />
+          <UButton
+            :data-testid="TEST_IDS.COG_PLAYGROUND.MINI_COG.CLOCK_ERASE_TOGGLE"
+            :variant="mode === 'erase' ? 'solid' : 'soft'"
+            color="neutral"
+            icon="i-lucide-eraser"
+            label="Erase"
+            :aria-pressed="mode === 'erase'"
+            @click="setMode('erase')"
+          />
+        </UButtonGroup>
         <UButton
           :data-testid="TEST_IDS.COG_PLAYGROUND.MINI_COG.CLOCK_CLEAR"
           variant="soft"
           color="neutral"
-          icon="i-lucide-eraser"
-          label="Clear"
+          icon="i-lucide-trash-2"
+          label="Clear all"
           @click="clear"
         />
         <UButton
