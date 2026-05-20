@@ -1,13 +1,17 @@
 /**
- * Clock Drawing Test scorer (Claude Opus, vision). Evaluates a PNG of
+ * Clock Drawing Test scorer (Claude Sonnet, vision). Evaluates a PNG of
  * the user's clock drawing against the six binary Shulman/Mini-Cog
  * criteria and returns a structured, zod-validated result.
+ *
+ * Sonnet is plenty for this task — six booleans about a freehand clock
+ * sketch, not frontier reasoning. Opus was the original default and was
+ * dropped to halve cost and latency on a user-blocking call.
  *
  * Client is injectable for unit tests, same seam as the recall scorer.
  */
 import { z } from 'zod';
 import { getAnthropicClient } from '../../../../../blog/server/utils/ai/anthropic';
-import { MODEL_OPUS } from '../../../../../blog/shared/models';
+import { MODEL_SONNET } from '../../../../../blog/shared/models';
 import type { ClockScore } from '../../../../../blog/shared/cog-playground/mini-cog-types';
 import { CLOCK_SYSTEM_PROMPT } from './prompts';
 import { extractJson } from './recall-scorer';
@@ -98,7 +102,7 @@ export async function scoreClock(
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const response = await ai.messages.create({
-        model: MODEL_OPUS,
+        model: MODEL_SONNET,
         max_tokens: 700,
         temperature: 0,
         system: CLOCK_SYSTEM_PROMPT,

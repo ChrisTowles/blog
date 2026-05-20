@@ -59,3 +59,11 @@ export type MiniCogResultData = {
 };
 
 export const MINI_COG_REFER_THRESHOLD = 3;
+
+/**
+ * Canonical home of the Mini-Cog instrument — scoring rules, the
+ * Universal Mini-Cog Form PDF, and the authors' contact info all live
+ * here. Used on the result screen so users can verify the rules we
+ * scored against come from the published instrument.
+ */
+export const MINI_COG_REFERENCE_URL = 'https://mini-cog.com';

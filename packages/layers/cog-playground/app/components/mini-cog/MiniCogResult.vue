@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import {
+  MINI_COG_REFERENCE_URL,
+  type MiniCogResultData,
+} from '~~/shared/cog-playground/mini-cog-types';
 import { TEST_IDS } from '~~/shared/test-ids';
-import type { MiniCogResultData } from '~~/shared/cog-playground/mini-cog-types';
 
 const props = defineProps<{
   result: MiniCogResultData;
+  clockImage: string | null;
   suggestsFollowUp: boolean;
 }>();
 defineEmits<{ (e: 'restart'): void }>();
@@ -23,6 +27,23 @@ const criteriaRows = computed(() =>
     pass: v as boolean,
   })),
 );
+
+/**
+ * Trigger a client-side download of the user's clock drawing. The PNG
+ * lives only in-memory as a data URL — same byte that was sent for
+ * scoring, no second round-trip. Filename includes a timestamp so
+ * repeated downloads don't collide.
+ */
+function downloadClockImage() {
+  if (!props.clockImage) return;
+  const a = document.createElement('a');
+  a.href = props.clockImage;
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  a.download = `mini-cog-clock-${stamp}.png`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
 </script>
 
 <template>
@@ -55,9 +76,19 @@ const criteriaRows = computed(() =>
 
       <div class="grid gap-4 sm:grid-cols-2">
         <div class="rounded-xl border border-(--ui-border) p-4">
-          <h3 class="mb-2 font-semibold text-(--ui-text-highlighted)">
-            Word recall — {{ result.recall.totalRecalled }}/3
-          </h3>
+          <div class="mb-2 flex items-baseline justify-between gap-2">
+            <h3 class="font-semibold text-(--ui-text-highlighted)">
+              Word recall — {{ result.recall.totalRecalled }}/3
+            </h3>
+            <a
+              :data-testid="TEST_IDS.COG_PLAYGROUND.MINI_COG.RESULT_RECALL_SOURCE"
+              :href="MINI_COG_REFERENCE_URL"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="shrink-0 text-xs text-(--ui-text-muted) hover:text-(--ui-primary) hover:underline"
+              >Source ↗</a
+            >
+          </div>
           <ul class="space-y-2 text-sm">
             <li v-for="s in result.recall.scores" :key="s.word" class="flex items-start gap-2">
               <UIcon
@@ -74,9 +105,39 @@ const criteriaRows = computed(() =>
         </div>
 
         <div class="rounded-xl border border-(--ui-border) p-4">
-          <h3 class="mb-2 font-semibold text-(--ui-text-highlighted)">
-            Clock drawing — {{ result.clock.score }}/2
-          </h3>
+          <div class="mb-2 flex items-baseline justify-between gap-2">
+            <h3 class="font-semibold text-(--ui-text-highlighted)">
+              Clock drawing — {{ result.clock.score }}/2
+            </h3>
+            <a
+              :data-testid="TEST_IDS.COG_PLAYGROUND.MINI_COG.RESULT_CLOCK_SOURCE"
+              :href="MINI_COG_REFERENCE_URL"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="shrink-0 text-xs text-(--ui-text-muted) hover:text-(--ui-primary) hover:underline"
+              >Source ↗</a
+            >
+          </div>
+
+          <div v-if="clockImage" class="mb-3 space-y-2">
+            <img
+              :data-testid="TEST_IDS.COG_PLAYGROUND.MINI_COG.RESULT_CLOCK_IMAGE"
+              :src="clockImage"
+              alt="Your clock drawing"
+              class="aspect-square w-full rounded-lg border border-(--ui-border) bg-white"
+            />
+            <UButton
+              :data-testid="TEST_IDS.COG_PLAYGROUND.MINI_COG.RESULT_CLOCK_DOWNLOAD"
+              variant="soft"
+              color="neutral"
+              size="xs"
+              icon="i-lucide-download"
+              label="Download PNG"
+              block
+              @click="downloadClockImage"
+            />
+          </div>
+
           <ul class="space-y-1.5 text-sm">
             <li v-for="row in criteriaRows" :key="row.label" class="flex items-center gap-2">
               <UIcon

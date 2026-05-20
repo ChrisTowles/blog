@@ -113,6 +113,7 @@ async function onRecall(spokenText: string) {
     <MiniCogResult
       v-else-if="s.phase.value === 'result' && s.result.value"
       :result="s.result.value"
+      :clock-image="s.clockImage.value"
       :suggests-follow-up="s.suggestsFollowUp.value"
       @restart="s.startIntro"
     />
