@@ -156,6 +156,8 @@ export const TEST_IDS = {
     RECALL_SUBMIT: 'mini-cog-recall-submit',
     RESULT: 'mini-cog-result',
     RESULT_SCORE: 'mini-cog-result-score',
+    RESULT_RECALL_SOURCE: 'mini-cog-result-recall-source',
+    RESULT_CLOCK_SOURCE: 'mini-cog-result-clock-source',
     RESTART_BUTTON: 'mini-cog-restart-button',
   },
   SHARED: {
