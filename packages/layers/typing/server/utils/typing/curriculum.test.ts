@@ -1,4 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import {
+  CAPITALS_STAGE,
+  CONSOLIDATION_STAGES,
+  MIN_GATE_ATTEMPT_CHARS,
+} from '../../../../../blog/shared/typing-types';
 import { getBuiltInLessons, getStage, getStages, unlockedKeysForStage } from './curriculum';
 
 describe('typing curriculum', () => {
@@ -63,19 +68,71 @@ describe('typing curriculum', () => {
     }
   });
 
-  it('lesson text only uses chars from the unlocked set for the stage', () => {
-    // Capitals (stage 16+) and spelling-list / topic lessons can break this
-    // rule; the curriculum lessons must not.
-    const lessons = getBuiltInLessons();
-    for (const lesson of lessons) {
-      if (lesson.stage >= 16) continue; // capitals + numbers + symbols stages allowed
-      const unlocked = new Set(unlockedKeysForStage(lesson.stage));
-      for (const ch of lesson.text) {
-        expect(unlocked.has(ch), `lesson ${lesson.slug} contains forbidden char "${ch}"`).toBe(
-          true,
-        );
+  it('lesson text only uses chars from the unlocked set, across many seeds', () => {
+    // Stage 16+ additionally allows uppercase letters (the capitals stage
+    // makes the engine case-sensitive); everything else must be unlocked.
+    for (let seed = 0; seed < 12; seed++) {
+      for (const lesson of getBuiltInLessons(seed)) {
+        const allowed = new Set(unlockedKeysForStage(lesson.stage));
+        if (lesson.stage >= CAPITALS_STAGE) {
+          for (let c = 65; c <= 90; c++) allowed.add(String.fromCharCode(c));
+        }
+        for (const ch of lesson.text) {
+          expect(
+            allowed.has(ch),
+            `lesson ${lesson.slug} (seed ${seed}) contains forbidden char ${JSON.stringify(ch)}`,
+          ).toBe(true);
+        }
       }
     }
+  });
+
+  it('every lesson is long enough to be gate-eligible', () => {
+    for (const lesson of getBuiltInLessons()) {
+      expect(
+        lesson.text.length,
+        `lesson ${lesson.slug} too short (${lesson.text.length})`,
+      ).toBeGreaterThanOrEqual(MIN_GATE_ATTEMPT_CHARS);
+    }
+  });
+
+  it('has a consolidation lesson at exactly the row-boundary stages', () => {
+    const lessons = getBuiltInLessons();
+    const consolidationStages = lessons
+      .filter((l) => l.kind === 'consolidation')
+      .map((l) => l.stage)
+      .sort((a, b) => a - b);
+    expect(consolidationStages).toEqual([...CONSOLIDATION_STAGES]);
+  });
+
+  it('has accumulation (mixed practice) lessons at odd stages 5-15', () => {
+    const stages = getBuiltInLessons()
+      .filter((l) => l.kind === 'accumulation')
+      .map((l) => l.stage)
+      .sort((a, b) => a - b);
+    expect(stages).toEqual([5, 7, 9, 11, 13, 15]);
+  });
+
+  it('skips sentence lessons for stages 1-3 (too few letters for meaning)', () => {
+    const lessons = getBuiltInLessons();
+    for (const stage of [1, 2, 3]) {
+      expect(lessons.some((l) => l.stage === stage && l.kind === 'sentence')).toBe(false);
+    }
+    for (const stage of [4, 10, 20]) {
+      expect(lessons.some((l) => l.stage === stage && l.kind === 'sentence')).toBe(true);
+    }
+  });
+
+  it('regenerates different text for a different seed, same slugs', () => {
+    const canonical = getBuiltInLessons(0);
+    const reseeded = getBuiltInLessons(99);
+    expect(reseeded.map((l) => l.slug)).toEqual(canonical.map((l) => l.slug));
+    const changed = canonical.filter((l, i) => l.text !== reseeded[i]?.text);
+    expect(changed.length).toBeGreaterThan(10);
+  });
+
+  it('is deterministic for a given seed', () => {
+    expect(getBuiltInLessons(5)).toEqual(getBuiltInLessons(5));
   });
 
   it('lesson kinds are within the allowed enum', () => {

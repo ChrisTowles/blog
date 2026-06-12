@@ -6,7 +6,7 @@
  *
  * Auth: requires `x-admin-token` header to match `ADMIN_SEED_TOKEN` env.
  */
-import { sql } from 'drizzle-orm';
+import { and, eq, notInArray } from 'drizzle-orm';
 import { getBuiltInLessons } from '../../utils/typing/curriculum';
 
 export default defineEventHandler(async (event) => {
@@ -60,8 +60,18 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Ensure deterministic order for any callers that re-read directly.
-  void sql; // sql import used in some setups; keep ref to avoid unused-import sweep
+  // Hard cutover: drop system lessons whose slug no longer exists in the
+  // curriculum (e.g. removed stage-1-sentence) so stale rows don't linger.
+  const slugs = lessons.map((l) => l.slug);
+  const removed = await db
+    .delete(tables.typingLessons)
+    .where(
+      and(
+        eq(tables.typingLessons.generatedBy, 'system'),
+        notInArray(tables.typingLessons.slug, slugs),
+      ),
+    )
+    .returning({ id: tables.typingLessons.id });
 
-  return { ok: true, total: lessons.length, inserted, updated };
+  return { ok: true, total: lessons.length, inserted, updated, removed: removed.length };
 });
