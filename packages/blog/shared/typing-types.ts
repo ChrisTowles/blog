@@ -174,9 +174,87 @@ export function stageTargetWpm(stage: number): number {
   return 30;
 }
 
+// --- Stage-mastery gate -----------------------------------------------------
+
+/** Accuracy required on a gate-eligible attempt. Mirrored in curriculum.ts. */
+export const STAGE_TARGET_ACCURACY = 0.95;
+
+/**
+ * Attempts on texts shorter than this can't trip the gate — on a 30-char
+ * drill a single typo still reads as ~97% accuracy, so short texts are
+ * statistically meaningless as a mastery signal.
+ */
+export const MIN_GATE_ATTEMPT_CHARS = 40;
+
+/**
+ * Passing attempts (on distinct lessons) required to advance a stage. One
+ * lucky run shouldn't promote; two clean runs on different lessons is a
+ * legible bar for a kid ("two green checks and you level up").
+ */
+export const STAGE_PASSES_TO_ADVANCE = 2;
+
+/**
+ * Row-boundary stages whose consolidation ("row review") lesson must be
+ * passed before advancing: home row (5), top row (10), bottom row (15),
+ * and the final mixed-prose stage (20). curriculum.ts generates a
+ * consolidation lesson for exactly these stages.
+ */
+export const CONSOLIDATION_STAGES: readonly number[] = [5, 10, 15, 20];
+
+/**
+ * True when a single attempt counts as a passing run toward advancing
+ * `stage`. Requires lesson context (game attempts never gate), a
+ * stage-matched lesson, a long-enough text, and accuracy + NET WPM at
+ * target — net so fast-and-sloppy doesn't pay.
+ */
+export function attemptPassesStageGate(attempt: LocalAttempt, stage: number): boolean {
+  const ctx = attempt.lesson;
+  if (!ctx || attempt.gameSlug !== null) return false;
+  if (ctx.stage !== stage) return false;
+  if (ctx.textLength < MIN_GATE_ATTEMPT_CHARS) return false;
+  return attempt.accuracy >= STAGE_TARGET_ACCURACY && attempt.netWpm >= stageTargetWpm(stage);
+}
+
+/** All attempts in history that count as passing runs for `stage`. */
+export function stagePassingAttempts(attempts: LocalAttempt[], stage: number): LocalAttempt[] {
+  return attempts.filter((a) => attemptPassesStageGate(a, stage));
+}
+
+/**
+ * Whether the attempt history (including the just-recorded attempt) clears
+ * the mastery gate for `stage`: at least STAGE_PASSES_TO_ADVANCE passing
+ * runs across distinct lessons, and — at row-boundary stages — at least
+ * one passing run on the consolidation lesson.
+ */
+export function shouldAdvanceStage(attempts: LocalAttempt[], stage: number): boolean {
+  const passes = stagePassingAttempts(attempts, stage);
+  const distinctLessons = new Set(passes.map((a) => a.lesson?.slug));
+  if (distinctLessons.size < STAGE_PASSES_TO_ADVANCE) return false;
+  if (CONSOLIDATION_STAGES.includes(stage)) {
+    return passes.some((a) => a.lesson?.kind === 'consolidation');
+  }
+  return true;
+}
+
+/**
+ * What the attempt was typed against. Recorded so the stage-mastery gate
+ * can verify the attempt belongs to the learner's current stage and was
+ * long enough to be a meaningful accuracy sample. Built-in lessons have
+ * no client-side DB id, so the gate keys off this context, never `lessonId`.
+ */
+export type AttemptLessonContext = {
+  slug: string;
+  stage: number;
+  kind: LessonKind;
+  /** Character count of the text actually typed (varies per seeded run). */
+  textLength: number;
+};
+
 export type LocalAttempt = {
   lessonId: number | null;
   gameSlug: string | null;
+  /** Absent on game attempts and on attempts recorded before this field existed. */
+  lesson?: AttemptLessonContext;
   wpm: number;
   netWpm: number;
   accuracy: number;
