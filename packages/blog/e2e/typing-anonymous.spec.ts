@@ -34,17 +34,13 @@ test.describe('Typing app — anonymous flow', () => {
     // Pull the lesson text and type it character-by-character.
     const lessonText = await page.getByTestId(TEST_IDS.TYPING.LESSON_TEXT).textContent();
     expect(lessonText).toBeTruthy();
-    // The displayed dot character replaces real spaces; reconstruct by reading
-    // the original lesson via a quick inline query against the DOM.
+    // Spaces render as bar-shaped tiles with no text; every tile carries its
+    // real character in data-char, so reconstruct the lesson from those.
     const text = await page.evaluate(() => {
       const el = document.querySelector('[data-testid="typing-lesson-text"]');
       if (!el) return '';
-      const spans = Array.from(el.querySelectorAll('span'));
-      return spans
-        .map((s) => {
-          const t = (s.textContent ?? '').trim();
-          return t === '␣' ? ' ' : t;
-        })
+      return Array.from(el.querySelectorAll('[data-char]'))
+        .map((s) => s.getAttribute('data-char') ?? '')
         .join('');
     });
     expect(text.length).toBeGreaterThan(0);

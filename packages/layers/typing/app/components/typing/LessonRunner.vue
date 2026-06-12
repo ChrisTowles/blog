@@ -105,7 +105,31 @@ const progressPct = computed(() => {
   if (props.text.length === 0) return 0;
   return Math.min(100, Math.round((engine.cursor.value / props.text.length) * 100));
 });
-const lessonChars = computed(() => Array.from(props.text));
+
+// Lesson text grouped into word/space tokens so the tile row wraps at word
+// boundaries (never mid-word) and spaces render as a wide spacebar-shaped
+// tile — the old '␣' glyph read as a lowercase "u" and kids typed the next
+// letter while the engine waited for a space.
+type LessonToken =
+  | { type: 'word'; chars: Array<{ ch: string; idx: number }> }
+  | { type: 'space'; idx: number };
+
+const lessonTokens = computed<LessonToken[]>(() => {
+  const tokens: LessonToken[] = [];
+  let current: Array<{ ch: string; idx: number }> = [];
+  Array.from(props.text).forEach((ch, idx) => {
+    if (ch === ' ') {
+      if (current.length > 0) tokens.push({ type: 'word', chars: current });
+      current = [];
+      tokens.push({ type: 'space', idx });
+    } else {
+      current.push({ ch, idx });
+    }
+  });
+  if (current.length > 0) tokens.push({ type: 'word', chars: current });
+  return tokens;
+});
+
 const hasSpace = computed(() => props.text.includes(' '));
 
 // Rocket mood: bobs while streaking, dips on wrong, blasts off when done.
@@ -185,33 +209,50 @@ const rocketMood = computed<'idle' | 'happy' | 'oops' | 'launch'>(() => {
               </span>
             </div>
 
-            <!-- Space-glyph legend, only when a lesson contains spaces. -->
+            <!-- Spacebar-tile legend, only when a lesson contains spaces. -->
             <div
               v-if="hasSpace"
               class="flex items-center justify-end gap-2 text-sm text-slate-600 dark:text-slate-300"
             >
               <span
-                class="flex h-7 w-9 items-center justify-center rounded-md bg-slate-200 font-mono text-base font-bold dark:bg-slate-700"
-                >␣</span
+                class="flex h-7 w-12 items-center justify-center rounded-md bg-slate-200 dark:bg-slate-700"
               >
+                <span class="h-1 w-7 rounded-full bg-slate-500 dark:bg-slate-300"></span>
+              </span>
               <span>means <strong>space bar</strong></span>
             </div>
 
-            <!-- Lesson rendered as chunky tiles. -->
+            <!-- Lesson rendered as chunky tiles, grouped so words never
+                 break across lines and spaces look like a mini spacebar. -->
             <div
               :data-testid="TEST_IDS.TYPING.LESSON_TEXT"
-              class="flex flex-wrap gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/50"
+              class="flex flex-wrap items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/50"
             >
-              <span
-                v-for="(ch, idx) in lessonChars"
-                :key="idx"
-                :class="[
-                  'flex h-10 min-w-[2.25rem] select-none items-center justify-center rounded-md font-mono text-xl font-bold transition-colors',
-                  tileClass(idx),
-                ]"
-              >
-                {{ ch === ' ' ? '␣' : ch }}
-              </span>
+              <template v-for="(token, tIdx) in lessonTokens" :key="tIdx">
+                <span v-if="token.type === 'word'" class="flex gap-1.5">
+                  <span
+                    v-for="{ ch, idx } in token.chars"
+                    :key="idx"
+                    :data-char="ch"
+                    :class="[
+                      'flex h-10 min-w-[2.25rem] select-none items-center justify-center rounded-md font-mono text-xl font-bold transition-colors',
+                      tileClass(idx),
+                    ]"
+                  >
+                    {{ ch }}
+                  </span>
+                </span>
+                <span
+                  v-else
+                  data-char=" "
+                  :class="[
+                    'flex h-10 w-12 select-none items-center justify-center rounded-md transition-colors',
+                    tileClass(token.idx),
+                  ]"
+                >
+                  <span class="h-1.5 w-7 rounded-full bg-current opacity-60"></span>
+                </span>
+              </template>
             </div>
           </div>
 
