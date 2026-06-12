@@ -1,7 +1,18 @@
 <script setup lang="ts">
 import { TEST_IDS } from '~~/shared/test-ids';
-import type { LessonKind, SpellingList, SpellingProgress } from '~~/shared/typing-types';
-import { getBuiltInLessons, getStages } from '../../../server/utils/typing/curriculum';
+import {
+  STAGE_PASSES_TO_ADVANCE,
+  stagePassingAttempts,
+  type LessonKind,
+  type SpellingList,
+  type SpellingProgress,
+} from '~~/shared/typing-types';
+import {
+  getBuiltInLessons,
+  getStages,
+  unlockedKeysForStage,
+} from '../../../server/utils/typing/curriculum';
+import { pickTrickyKeys } from '../../utils/typing/tricky-keys';
 
 definePageMeta({
   layout: 'typing',
@@ -22,6 +33,19 @@ const stages = getStages();
 const lessons = getBuiltInLessons();
 
 const { progress, getLessonBest } = useTypingProgress();
+
+// Mastery-gate progress at the kid's current stage: distinct lessons
+// passed out of STAGE_PASSES_TO_ADVANCE.
+const gatePassCount = computed(() => {
+  const passes = stagePassingAttempts(progress.value.attempts, progress.value.currentStage);
+  return Math.min(new Set(passes.map((a) => a.lesson?.slug)).size, STAGE_PASSES_TO_ADVANCE);
+});
+
+// Adaptive review: the keys (within the unlocked set) with the worst error
+// rates. Drives the "tricky keys" card; empty until enough data exists.
+const trickyKeys = computed(() =>
+  pickTrickyKeys(progress.value.keyStats, unlockedKeysForStage(progress.value.currentStage)),
+);
 
 const route = useRoute();
 const router = useRouter();
@@ -194,11 +218,50 @@ const masteredWordsForActive = computed(() =>
         >
           You're on stage {{ progress.currentStage }}
         </span>
+        <ClientOnly>
+          <span
+            class="rounded-full border border-sky-300/60 bg-sky-100/60 px-3 py-0.5 text-sm font-bold text-sky-950 dark:border-sky-500/60 dark:bg-sky-500/20 dark:text-sky-200"
+          >
+            {{ gatePassCount }}/{{ STAGE_PASSES_TO_ADVANCE }} passes
+          </span>
+        </ClientOnly>
       </div>
       <p class="max-w-prose text-slate-600 dark:text-slate-300">
-        Pick a lesson below to start typing. Finish lessons to unlock the next stage.
+        Pick a lesson below to start typing. Pass {{ STAGE_PASSES_TO_ADVANCE }} different lessons at
+        your stage — 95% accuracy at target speed — to unlock the next one. Row-review stages also
+        need the row review passed.
       </p>
     </header>
+
+    <!-- Adaptive review card: appears once the heatmap has enough signal. -->
+    <ClientOnly>
+      <section v-if="trickyKeys.length > 0">
+        <NuxtLink
+          to="/typing/lesson/tricky-keys"
+          class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-sky-400/50 bg-gradient-to-br from-sky-500/20 to-cyan-500/10 p-4 transition-all hover:scale-[1.01] hover:shadow-md"
+        >
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-2xl">🎯</span>
+            <span class="font-extrabold text-slate-900 dark:text-slate-100">Tricky keys</span>
+            <span
+              v-for="k in trickyKeys"
+              :key="k.key"
+              class="rounded-md border border-sky-400/60 bg-white px-2 py-0.5 font-mono text-sm font-extrabold text-slate-900 dark:bg-slate-900 dark:text-slate-100"
+            >
+              {{ k.key }}
+            </span>
+            <span class="text-sm text-slate-600 dark:text-slate-300">
+              these trip you up the most — practice just them
+            </span>
+          </div>
+          <span
+            class="rounded-full bg-sky-600 px-3 py-1 text-xs font-bold text-white dark:bg-sky-400 dark:text-sky-950"
+          >
+            Practice →
+          </span>
+        </NuxtLink>
+      </section>
+    </ClientOnly>
 
     <!-- Spelling card surfaces above the grid when set -->
     <section v-if="activeSpellingList" class="space-y-2">
@@ -243,6 +306,7 @@ const masteredWordsForActive = computed(() =>
             :key="lesson.slug"
             :data-testid="TEST_IDS.TYPING.LESSON_CARD"
             :to="`/typing/lesson/${lesson.slug}`"
+            :aria-label="`Start lesson: ${lesson.title}`"
             :class="[
               'group relative overflow-hidden rounded-xl border-2 bg-gradient-to-br p-4 transition-all duration-200 hover:scale-[1.02] hover:shadow-md',
               KIND_META[lesson.kind].accent,
