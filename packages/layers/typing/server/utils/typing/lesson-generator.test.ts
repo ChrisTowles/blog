@@ -9,9 +9,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { unlockedKeysForStage } from './curriculum';
 import {
-  validateGeneratedText,
+  emphasisKeysForStage,
+  emphasisMinCount,
   generateLesson,
   truncateWithinBounds,
+  validateEmphasis,
+  validateGeneratedText,
   type AnthropicLike,
 } from './lesson-generator';
 import { blockListCheck } from './lesson-safety';
@@ -166,9 +169,10 @@ describe('generateLesson (stub Anthropic client)', () => {
   });
 
   it('recovers via truncation when the model overshoots the upper bound', async () => {
-    // 230 chars, all stage-5 legal. Truncator falls back to last-space cut
-    // because there's no terminal punctuation (period isn't unlocked yet).
-    const overflow = 'a sad lad has a flask; '.repeat(10);
+    // 240 chars, all stage-5 legal and rich in the new keys (g, h) so the
+    // emphasis check passes post-truncation. Truncator falls back to a
+    // last-space cut because the period isn't unlocked yet.
+    const overflow = 'a glad lad has a glass; '.repeat(10);
     create.mockResolvedValueOnce({
       content: [{ type: 'text', text: overflow }],
     });
@@ -196,5 +200,80 @@ describe('generateLesson (stub Anthropic client)', () => {
     );
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toMatch(/ANTHROPIC_API_KEY/);
+  });
+
+  it("retries when the stage's new keys are missing, then accepts a key-rich attempt", async () => {
+    // Stage 5 introduces g and h. First reply is legal but never uses g —
+    // generic prose that avoids locked letters isn't good enough.
+    create.mockResolvedValueOnce({
+      content: [
+        {
+          type: 'text',
+          text: 'a sad lad has a flask; a sad lad has a flask; a sad lad has a flask',
+        },
+      ],
+    });
+    create.mockResolvedValueOnce({
+      content: [
+        {
+          type: 'text',
+          text: 'a glad lad has a glass; a flag has a glass; a glad lad has a flag',
+        },
+      ],
+    });
+    create.mockResolvedValueOnce({
+      content: [{ type: 'text', text: '{"safe": true}' }],
+    });
+
+    const result = await generateLesson(
+      { stage: 5, topic: 'glass', kind: 'sentence', length: 'short' },
+      stub,
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.text).toContain('glad');
+    expect(create).toHaveBeenCalledTimes(3);
+  });
+
+  it('skips the new-key emphasis when emphasizeNewKeys is false (spelling lessons)', async () => {
+    create.mockResolvedValueOnce({
+      content: [
+        {
+          type: 'text',
+          text: 'a sad lad has a flask; a sad lad has a flask; a sad lad has a flask',
+        },
+      ],
+    });
+    create.mockResolvedValueOnce({
+      content: [{ type: 'text', text: '{"safe": true}' }],
+    });
+
+    const result = await generateLesson(
+      { stage: 5, topic: 'flask', kind: 'sentence', length: 'short', emphasizeNewKeys: false },
+      stub,
+    );
+    expect(result.ok).toBe(true);
+    expect(create).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('emphasis helpers', () => {
+  it('emphasisKeysForStage returns the new letters for letter stages only', () => {
+    expect(emphasisKeysForStage(5)).toEqual(['g', 'h']);
+    expect(emphasisKeysForStage(12)).toEqual(['c']); // comma is not a letter
+    expect(emphasisKeysForStage(16)).toEqual([]); // capitals
+    expect(emphasisKeysForStage(17)).toEqual([]); // digits
+  });
+
+  it('emphasisMinCount is higher for paragraphs', () => {
+    expect(emphasisMinCount('sentence')).toBe(2);
+    expect(emphasisMinCount('paragraph')).toBe(3);
+  });
+
+  it('validateEmphasis counts case-insensitively and reports the missing key', () => {
+    expect(validateEmphasis('Go Get the doG', ['g'], 3).ok).toBe(true);
+    const fail = validateEmphasis('a cat sat', ['g'], 2);
+    expect(fail.ok).toBe(false);
+    if (!fail.ok) expect(fail.reason).toContain('"g"');
+    expect(validateEmphasis('anything', [], 2).ok).toBe(true);
   });
 });

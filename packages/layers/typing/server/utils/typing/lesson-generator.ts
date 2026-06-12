@@ -7,7 +7,7 @@
  * occasionally slips a comma or apostrophe through).
  */
 import { getAnthropicClient } from '../../../../../blog/server/utils/ai/anthropic';
-import { unlockedKeysForStage } from './curriculum';
+import { getStage, unlockedKeysForStage } from './curriculum';
 import { reviewLesson } from './lesson-safety';
 
 // Test seam — callers (and tests) may pass a stub client.
@@ -41,19 +41,64 @@ export type GenerateLessonInput = {
   topic: string;
   kind: 'sentence' | 'paragraph';
   length: 'short' | 'medium';
+  /**
+   * The learner's weakest keys (from their error heatmap). Woven into the
+   * prompt as a soft request — no occurrence count is enforced, unlike the
+   * stage's newly introduced keys.
+   */
+  trickyKeys?: string[];
+  /**
+   * Set false to skip the new-key emphasis requirement — spelling-list
+   * sentences target the list's words, not the stage's newest letters.
+   * Defaults to true (topic lessons should practice the new keys).
+   */
+  emphasizeNewKeys?: boolean;
 };
+
+/**
+ * Letters introduced AT this stage — the skill the lesson should target.
+ * Only letter keys count; capitals/digit/symbol stages (16+) get softer
+ * prompt guidance instead of an enforced occurrence count.
+ */
+export function emphasisKeysForStage(stage: number): string[] {
+  if (stage >= 16) return [];
+  return (getStage(stage)?.keys ?? []).filter((k) => /^[a-z]$/.test(k));
+}
+
+/** Minimum times each emphasized letter must appear in valid output. */
+export function emphasisMinCount(kind: 'sentence' | 'paragraph'): number {
+  return kind === 'paragraph' ? 3 : 2;
+}
 
 function buildPrompt(input: GenerateLessonInput, unlocked: string[]): string {
   const allowed = unlocked.join('');
   const bounds = LENGTH_BOUNDS[input.length];
   const kindHint = KIND_HINTS[input.kind];
   const target = Math.round((bounds.min + bounds.max) / 2);
+
+  const emphasis = input.emphasizeNewKeys === false ? [] : emphasisKeysForStage(input.stage);
+  const minCount = emphasisMinCount(input.kind);
+  const emphasisLine =
+    emphasis.length > 0
+      ? `\nSkill focus: the student JUST learned the letter${emphasis.length > 1 ? 's' : ''} ${emphasis
+          .map((k) => `"${k}"`)
+          .join(
+            ' and ',
+          )}. Feature ${emphasis.length > 1 ? 'them' : 'it'} heavily — each must appear at least ${minCount} times across different words.`
+      : '';
+
+  const tricky = (input.trickyKeys ?? []).filter((k) => /^[a-z]$/.test(k)).slice(0, 3);
+  const trickyLine =
+    tricky.length > 0
+      ? `\nThe student often mistypes ${tricky.map((k) => `"${k}"`).join(', ')} — work in a few extra words that use ${tricky.length > 1 ? 'these letters' : 'this letter'}.`
+      : '';
+
   return `You are writing a typing exercise for a child age 7 who is learning to type.
 
 Topic: ${input.topic}
 Format: ${kindHint}.
 Length: aim for ~${target} characters; HARD MAX ${bounds.max} characters total. Going over ${bounds.max} characters is a failure.
-Allowed characters (CRITICAL — every character in your reply must be one of these): "${allowed}".
+Allowed characters (CRITICAL — every character in your reply must be one of these): "${allowed}".${emphasisLine}${trickyLine}
 
 Hard rules:
 - ONLY use characters from the allowed set. Letters not in the set are FORBIDDEN.
@@ -61,6 +106,27 @@ Hard rules:
 - No quotes, no emoji, no smart punctuation, no newlines, no markdown.
 - DO NOT exceed ${bounds.max} characters. Count before you reply.
 - One short kid-friendly text on the topic. Reply with ONLY the typing text — no preamble, no explanation, no quotation marks.`;
+}
+
+/**
+ * Checks that each emphasized letter appears at least minCount times.
+ * Exported for tests; returns ok when `keys` is empty.
+ */
+export function validateEmphasis(
+  text: string,
+  keys: string[],
+  minCount: number,
+): { ok: true } | { ok: false; reason: string } {
+  for (const key of keys) {
+    const count = [...text.toLowerCase()].filter((ch) => ch === key).length;
+    if (count < minCount) {
+      return {
+        ok: false,
+        reason: `emphasis: "${key}" appears ${count}x, need ${minCount}`,
+      };
+    }
+  }
+  return { ok: true };
 }
 
 /**
@@ -150,6 +216,17 @@ export async function generateLesson(
     }
     if (!valid.ok) {
       lastReason = `validation: ${valid.reason}`;
+      continue;
+    }
+    // The lesson must actually practice the stage's new letters, not just
+    // avoid locked ones — otherwise topic lessons are generic prose.
+    const emphasis = validateEmphasis(
+      text,
+      input.emphasizeNewKeys === false ? [] : emphasisKeysForStage(input.stage),
+      emphasisMinCount(input.kind),
+    );
+    if (!emphasis.ok) {
+      lastReason = `validation: ${emphasis.reason}`;
       continue;
     }
     const safety = await reviewLesson(text, input.topic, ai);

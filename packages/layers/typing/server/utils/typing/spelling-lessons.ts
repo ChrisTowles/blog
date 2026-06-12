@@ -46,6 +46,8 @@ async function generateSpellingSentence(
       topic: `a sentence using the words ${words.join(', ')}`,
       kind: 'sentence',
       length: 'short',
+      // The lesson targets the spelling words, not the stage's newest keys.
+      emphasizeNewKeys: false,
     },
     client,
   );

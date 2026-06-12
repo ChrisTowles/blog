@@ -20,6 +20,12 @@ const bodySchema = z.object({
   topic: z.string().min(1).max(80),
   kind: z.enum(['sentence', 'paragraph']),
   length: z.enum(['short', 'medium']),
+  // Learner's weakest keys (from the client-side heatmap) — woven into the
+  // prompt so generated text doubles as targeted practice. Letters only.
+  trickyKeys: z
+    .array(z.string().regex(/^[a-z]$/))
+    .max(3)
+    .optional(),
 });
 
 type Bucket = { count: number; resetAt: number };
