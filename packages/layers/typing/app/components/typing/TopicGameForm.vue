@@ -2,10 +2,14 @@
 import { TEST_IDS } from '~~/shared/test-ids';
 import { fetchErrorMessage } from '../../utils/typing/fetch-error';
 import { MAX_STAGE, MIN_TOPIC_STAGE, type LessonRow } from '~~/shared/typing-types';
+import { unlockedKeysForStage } from '../../../server/utils/typing/curriculum';
+import { pickTrickyKeys } from '../../utils/typing/tricky-keys';
 
 const emit = defineEmits<{
   (e: 'generated', lesson: LessonRow): void;
 }>();
+
+const { progress } = useTypingProgress();
 
 const STAGE_OPTIONS = Array.from(
   { length: MAX_STAGE - MIN_TOPIC_STAGE + 1 },
@@ -30,6 +34,11 @@ async function submit() {
   error.value = null;
 
   try {
+    // Weak keys from the learner's heatmap (letters only) so the generated
+    // text doubles as targeted practice for whatever trips them up.
+    const trickyKeys = pickTrickyKeys(progress.value.keyStats, unlockedKeysForStage(stage.value))
+      .map((k) => k.key)
+      .filter((k) => /^[a-z]$/.test(k));
     const result = await $fetch<{ lesson: LessonRow }>('/api/typing/lessons/generate', {
       method: 'POST',
       body: {
@@ -37,6 +46,7 @@ async function submit() {
         topic: topic.value.trim(),
         kind: kind.value,
         length: length.value,
+        trickyKeys,
       },
     });
 
