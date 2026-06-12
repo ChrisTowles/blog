@@ -87,16 +87,43 @@ function onKeydown(e: KeyboardEvent) {
   }
 }
 
+/**
+ * Four-tier tile hierarchy so a kid can plan ahead, not just react:
+ * done (green) -> current (amber, bobbing) -> on-deck (the next few keys,
+ * noticeably brighter) -> far future (dimmed). The brightness gradient
+ * pulls the eye to what's coming next instead of a flat wall of grey.
+ */
+const LOOKAHEAD = 3;
+
 function tileClass(idx: number) {
-  if (idx < engine.cursor.value) {
+  const cursor = engine.cursor.value;
+  if (idx < cursor) {
     return 'bg-emerald-300 text-emerald-950 dark:bg-emerald-500 dark:text-emerald-50';
   }
-  if (idx === engine.cursor.value) {
+  if (idx === cursor) {
     return wrongFlash.value
       ? 'bg-rose-400 text-white ring-4 ring-rose-500 animate-pulse'
       : 'bg-amber-300 text-amber-950 ring-4 ring-amber-400 dark:bg-amber-400 dark:text-amber-950 tile-current';
   }
-  return 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400';
+  if (idx <= cursor + LOOKAHEAD) {
+    return 'bg-slate-300 text-slate-800 dark:bg-slate-600 dark:text-slate-100';
+  }
+  return 'bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-500';
+}
+
+/**
+ * The word being typed right now gets a soft amber ring so the kid sees
+ * which cluster of letters they're working through. Every word group
+ * carries the same padding so toggling the ring never shifts layout.
+ */
+function wordClass(token: Extract<LessonToken, { type: 'word' }>) {
+  const cursor = engine.cursor.value;
+  const first = token.chars[0]?.idx ?? -1;
+  const last = token.chars[token.chars.length - 1]?.idx ?? -1;
+  const active = cursor >= first && cursor <= last;
+  return active
+    ? 'ring-2 ring-amber-400/70 bg-amber-100/60 dark:bg-amber-400/10 dark:ring-amber-400/50'
+    : '';
 }
 
 const wpmRounded = computed(() => Math.round(engine.wpm.value));
@@ -169,20 +196,30 @@ const rocketMood = computed<'idle' | 'happy' | 'oops' | 'launch'>(() => {
       </div>
     </header>
 
-    <div class="grid gap-6 lg:grid-cols-5 lg:items-start">
-      <!-- LEFT: what to press -->
-      <div class="lg:col-span-2">
+    <div class="grid gap-6 lg:grid-cols-2 lg:items-stretch">
+      <!-- LEFT: what to press (spotlight) and where it lives (keyboard),
+           stacked so the whole column height is teaching surface instead
+           of dead space under the spotlight. -->
+      <div class="flex flex-col gap-4">
         <TypingNextLetterSpotlight
           v-if="hint && engine.state.value !== 'done'"
+          class="flex-1 justify-center"
           :hint="hint"
           :wrong-flash="wrongFlash"
           :press-tick="pressTick"
           :tier-up="tierUp"
         />
+        <div v-if="hint">
+          <span :data-testid="TEST_IDS.TYPING.NEXT_KEY_HIGHLIGHT" class="sr-only">
+            Next key: {{ hint.nextKey === ' ' ? 'space' : hint.nextKey }} ({{ hint.hand }}
+            {{ hint.finger }})
+          </span>
+          <TypingVirtualKeyboard :hint="hint" />
+        </div>
       </div>
 
       <!-- RIGHT: where you are + how you're doing -->
-      <div class="lg:col-span-3">
+      <div>
         <div class="flex gap-4">
           <div class="flex flex-1 flex-col gap-3">
             <!-- Stats chip strip -->
@@ -229,7 +266,10 @@ const rocketMood = computed<'idle' | 'happy' | 'oops' | 'launch'>(() => {
               class="flex flex-wrap items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/50"
             >
               <template v-for="(token, tIdx) in lessonTokens" :key="tIdx">
-                <span v-if="token.type === 'word'" class="flex gap-1.5">
+                <span
+                  v-if="token.type === 'word'"
+                  :class="['flex gap-1.5 rounded-lg p-0.5 transition-all', wordClass(token)]"
+                >
                   <span
                     v-for="{ ch, idx } in token.chars"
                     :key="idx"
@@ -275,14 +315,6 @@ const rocketMood = computed<'idle' | 'happy' | 'oops' | 'launch'>(() => {
       spellcheck="false"
       @keydown="onKeydown"
     />
-
-    <div v-if="hint" class="mt-6">
-      <span :data-testid="TEST_IDS.TYPING.NEXT_KEY_HIGHLIGHT" class="sr-only">
-        Next key: {{ hint.nextKey === ' ' ? 'space' : hint.nextKey }} ({{ hint.hand }}
-        {{ hint.finger }})
-      </span>
-      <TypingVirtualKeyboard :hint="hint" />
-    </div>
 
     <!-- Lesson cleared celebration: confetti shower over the whole card -->
     <div
