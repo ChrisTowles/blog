@@ -1,4 +1,5 @@
 /** Idempotent: upserts by `slug`, so re-running only re-syncs the curriculum with the code. */
+import { eq, inArray } from 'drizzle-orm';
 import { getBuiltInLessons } from '../../utils/typing/curriculum';
 
 const UPSERT_BATCH_SIZE = 50;
@@ -68,5 +69,22 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  return { ok: true, total: lessons.length, inserted, updated };
+  // Hard cutover: drop system lessons whose slug left the curriculum. Compared in JS and
+  // deleted by id in chunks, because D1 caps a statement at 100 bound parameters.
+  const slugs = new Set(lessons.map((l) => l.slug));
+
+  const systemLessons = await db
+    .select({ id: tables.typingLessons.id, slug: tables.typingLessons.slug })
+    .from(tables.typingLessons)
+    .where(eq(tables.typingLessons.generatedBy, 'system'));
+
+  const staleIds = systemLessons.filter((l) => !slugs.has(l.slug)).map((l) => l.id);
+
+  for (let i = 0; i < staleIds.length; i += UPSERT_BATCH_SIZE) {
+    await db
+      .delete(tables.typingLessons)
+      .where(inArray(tables.typingLessons.id, staleIds.slice(i, i + UPSERT_BATCH_SIZE)));
+  }
+
+  return { ok: true, total: lessons.length, inserted, updated, removed: staleIds.length };
 });
