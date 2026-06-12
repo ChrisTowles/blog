@@ -320,13 +320,13 @@ importers:
         specifier: ^3.2.6
         version: 3.2.6(typescript@5.9.3)
 
-  packages/layers/cog-playground:
+  packages/blog/layers/cog-playground:
     devDependencies:
       zod:
         specifier: ^4.3.4
         version: 4.3.6
 
-  packages/layers/typing:
+  packages/blog/layers/typing:
     devDependencies:
       drizzle-orm:
         specifier: ^0.44.7
@@ -341,7 +341,7 @@ importers:
         specifier: ^4.3.4
         version: 4.3.6
 
-  packages/layers/workflows:
+  packages/blog/layers/workflows:
     dependencies:
       evlog:
         specifier: ^2.11.0

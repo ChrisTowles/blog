@@ -3,11 +3,11 @@ import {
   topologicalSort,
   resolveTemplate,
   findTerminalNodes,
-} from '../../../layers/workflows/server/utils/workflow-engine';
+} from '../../layers/workflows/server/utils/workflow-engine';
 import type {
   WorkflowNode,
   WorkflowEdge,
-} from '../../../layers/workflows/server/utils/workflow-engine';
+} from '../../layers/workflows/server/utils/workflow-engine';
 
 describe('topologicalSort', () => {
   it('returns single node unchanged', () => {

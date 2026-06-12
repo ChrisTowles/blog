@@ -21,8 +21,10 @@ test.describe('Typing app — anonymous flow', () => {
     const cards = page.getByTestId(TEST_IDS.TYPING.LESSON_CARD);
     await expect(cards.first()).toBeVisible();
 
-    // Pick the first stage 1 lesson.
-    const firstStartLink = cards.first().getByRole('link', { name: /start lesson/i });
+    // Pick the first stage 1 lesson. The card itself is the link (labelled
+    // "Start lesson: …"), so query the page by role rather than descending
+    // into the card locator.
+    const firstStartLink = page.getByRole('link', { name: /start lesson/i }).first();
     await firstStartLink.click();
 
     // Lesson runner visible.
@@ -32,17 +34,13 @@ test.describe('Typing app — anonymous flow', () => {
     // Pull the lesson text and type it character-by-character.
     const lessonText = await page.getByTestId(TEST_IDS.TYPING.LESSON_TEXT).textContent();
     expect(lessonText).toBeTruthy();
-    // The displayed dot character replaces real spaces; reconstruct by reading
-    // the original lesson via a quick inline query against the DOM.
+    // Spaces render as bar-shaped tiles with no text; every tile carries its
+    // real character in data-char, so reconstruct the lesson from those.
     const text = await page.evaluate(() => {
       const el = document.querySelector('[data-testid="typing-lesson-text"]');
       if (!el) return '';
-      const spans = Array.from(el.querySelectorAll('span'));
-      return spans
-        .map((s) => {
-          const t = (s.textContent ?? '').trim();
-          return t === '␣' ? ' ' : t;
-        })
+      return Array.from(el.querySelectorAll('[data-char]'))
+        .map((s) => s.getAttribute('data-char') ?? '')
         .join('');
     });
     expect(text.length).toBeGreaterThan(0);
@@ -60,7 +58,7 @@ test.describe('Typing app — anonymous flow', () => {
     // Lesson complete card appears.
     const complete = page.getByTestId(TEST_IDS.TYPING.LESSON_COMPLETE);
     await expect(complete).toBeVisible({ timeout: 10_000 });
-    await expect(complete).toContainText(/Nice work/i);
+    await expect(complete).toContainText(/Lesson cleared/i);
   });
 
   test('progress persists across reload via localStorage', async ({ page }) => {

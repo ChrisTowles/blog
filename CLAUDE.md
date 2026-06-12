@@ -55,7 +55,7 @@ The blog includes several AI-powered features built on the Anthropic SDK:
 - **Chat** (`/chat`) — Conversational AI with tool use (search blog, weather, dice), code execution, and document generation (PDF/PPTX/XLSX/DOCX via Skills API). Server-streamed via SSE. See `server/api/chats/`.
 - **Artifacts** — Interactive code execution embedded in blog posts via `::code-runner` MDC component. Uses Anthropic's Code Execution Tool (beta) to run code in isolated containers. See `server/api/artifacts/` and `app/components/CodeRunner.vue`.
 - **RAG** — Blog content is chunked and embedded for semantic search. See `server/utils/rag/`.
-- **Typing** (`/typing`) — Kid-friendly, game-based typing tutor. 20-stage curriculum, virtual keyboard with finger hints, PixiJS games (Letter Rain, Letter Tic-Tac-Toe, Lake Leap), AI topic-themed lessons (Claude Haiku), weekly spelling-list import with Claude vision. Multi-guardian families/classrooms, anonymous-first progress with localStorage merge on sign-in. Optional Google Cloud TTS Chirp3 audio with on-disk cache + Web Speech fallback. Curriculum mastery gates advance the stage at >= 95% accuracy + target WPM. See `packages/layers/typing/`.
+- **Typing** (`/typing`) — Kid-friendly, game-based typing tutor. 20-stage curriculum, virtual keyboard with finger hints, PixiJS games (Letter Rain, Letter Tic-Tac-Toe, Lake Leap), AI topic-themed lessons (Claude Haiku), weekly spelling-list import with Claude vision. Multi-guardian families/classrooms, anonymous-first progress with localStorage merge on sign-in. Optional Google Cloud TTS Chirp3 audio with on-disk cache + Web Speech fallback. Curriculum mastery gates advance the stage at >= 95% accuracy + target WPM. See `packages/blog/layers/typing/`.
 
 ## Printable Worksheets
 

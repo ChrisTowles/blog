@@ -13,7 +13,9 @@ dotenv.config({
 });
 
 export default defineNuxtConfig({
-  extends: ['../layers/workflows', '../layers/typing', '../layers/cog-playground'],
+  // Layers live in ./layers and are auto-registered (and properly
+  // file-watched) by Nuxt — no `extends` needed. See issue #270 for the
+  // stale-HMR failure mode the old out-of-tree packages/layers/* had.
 
   modules: [
     '@nuxt/image',
@@ -127,9 +129,29 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2026-01-02',
 
+  // Atomic (rename-over) file writes — sed -i, AI tooling, some editors —
+  // silently kill the dev watcher's per-file watch: the first save fires an
+  // HMR event, every later save is invisible until a server restart, often
+  // leaving half-applied modules (new script + old template). Polling trades
+  // a little idle CPU for invalidation that works regardless of how a file
+  // was written. Dev-only; no effect on production builds. See issue #270.
+  vite: {
+    server: {
+      watch: {
+        usePolling: true,
+        interval: 300,
+      },
+    },
+  },
+
   nitro: {
     preset: 'node-server',
     ignore: ['**/*.test.ts', '**/*.spec.ts', '**/*.test.js', '**/*.spec.js'],
+    // Same rename-over watcher fix for Nitro's server-route watching.
+    watchOptions: {
+      usePolling: true,
+      interval: 300,
+    },
     experimental: {
       openAPI: true,
     },
