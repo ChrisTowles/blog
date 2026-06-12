@@ -8,8 +8,9 @@ import { z } from 'zod';
 import {
   MAX_STAGE,
   TYPING_PROGRESS_LOCAL_STORAGE_KEY,
+  attemptPassesStageGate,
   emptyLocalProgress,
-  stageTargetWpm,
+  shouldAdvanceStage,
   type LocalAttempt,
   type LocalKeyStat,
   type LocalProgress,
@@ -303,14 +304,17 @@ export function useTypingProgress(): UseTypingProgress {
     const previousStage = progress.value.currentStage;
     let nextStage = previousStage;
 
-    // Mastery gate: 95% accuracy + the stage's target WPM (gross, as the runner reports
-    // it) advances the stage. Drill and sentence attempts only — games pace themselves.
-    if (attempt.gameSlug === null && attempt.lessonId !== null) {
-      const target = stageTargetWpm(previousStage);
-
-      if (attempt.accuracy >= 0.95 && attempt.wpm >= target) {
-        nextStage = Math.min(MAX_STAGE, previousStage + 1);
-      }
+    // Mastery gating — the stage advances when THIS attempt is a passing
+    // run (95% accuracy + net WPM at target, on a current-stage lesson
+    // long enough to be a real sample) AND the history now holds enough
+    // passing runs across distinct lessons — including the row-review
+    // consolidation at row-boundary stages. Game attempts never gate;
+    // see attemptPassesStageGate / shouldAdvanceStage in shared types.
+    if (
+      attemptPassesStageGate(attempt, previousStage) &&
+      shouldAdvanceStage(nextAttempts, previousStage)
+    ) {
+      nextStage = Math.min(MAX_STAGE, previousStage + 1);
     }
 
     const next: LocalProgress = {
