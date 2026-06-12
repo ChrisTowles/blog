@@ -24,9 +24,13 @@ function onGenerated(result: LessonRow) {
 }
 
 function onComplete(result: LessonCompleteResult) {
+  const l = lesson.value;
   const outcome = recordAttempt({
-    lessonId: lesson.value?.id ?? null,
+    lessonId: l?.id ?? null,
     gameSlug: null,
+    lesson: l
+      ? { slug: l.slug, stage: l.stage, kind: l.kind, textLength: l.text.length }
+      : undefined,
     wpm: result.wpm,
     netWpm: result.netWpm,
     accuracy: result.accuracy,

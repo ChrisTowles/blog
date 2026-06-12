@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { TEST_IDS } from '~~/shared/test-ids';
-import { isCaseInsensitiveStage, type LessonCompleteResult } from '~~/shared/typing-types';
+import {
+  CONSOLIDATION_STAGES,
+  STAGE_PASSES_TO_ADVANCE,
+  isCaseInsensitiveStage,
+  stagePassingAttempts,
+  type LessonCompleteResult,
+} from '~~/shared/typing-types';
 import { getBuiltInLessons } from '../../../../server/utils/typing/curriculum';
 
 definePageMeta({
@@ -12,7 +18,14 @@ const router = useRouter();
 const slug = computed(() => String(route.params.slug ?? ''));
 
 const allLessons = getBuiltInLessons();
-const lesson = computed(() => allLessons.find((l) => l.slug === slug.value));
+// Seed 0 = canonical text (SSR-stable). "Try again" re-rolls the seed so a
+// retry gets fresh text for the same lesson — practicing the keys, not the
+// memorized string.
+const textSeed = ref(0);
+const lessonsForSeed = computed(() =>
+  textSeed.value === 0 ? allLessons : getBuiltInLessons(textSeed.value),
+);
+const lesson = computed(() => lessonsForSeed.value.find((l) => l.slug === slug.value));
 const nextLesson = computed(() => {
   const idx = allLessons.findIndex((l) => l.slug === slug.value);
   if (idx < 0 || idx === allLessons.length - 1) return null;
@@ -31,10 +44,25 @@ useHead(() => ({
   ],
 }));
 
-const { recordAttempt, recordLessonBest } = useTypingProgress();
+const { progress, recordAttempt, recordLessonBest } = useTypingProgress();
 const toast = useToast();
 const isNewBest = ref(false);
 const previousBest = ref<{ wpm: number; accuracy: number } | null>(null);
+const stageJustAdvanced = ref(false);
+
+// Gate progress for the learner's CURRENT stage — how many distinct lessons
+// they've passed (of STAGE_PASSES_TO_ADVANCE) and whether the row review
+// still stands between them and the next stage.
+const gateStatus = computed(() => {
+  const l = lesson.value;
+  if (!l || l.stage !== progress.value.currentStage) return null;
+  const passes = stagePassingAttempts(progress.value.attempts, l.stage);
+  const distinct = new Set(passes.map((a) => a.lesson?.slug)).size;
+  const needsConsolidation =
+    CONSOLIDATION_STAGES.includes(l.stage) &&
+    !passes.some((a) => a.lesson?.kind === 'consolidation');
+  return { distinct, needsConsolidation };
+});
 
 const AUTO_ADVANCE_SECONDS = 5;
 const lastResult = ref<LessonCompleteResult | null>(null);
@@ -70,6 +98,8 @@ function tryAgain() {
   isNewBest.value = false;
   previousBest.value = null;
   navigating.value = false;
+  // Fresh text every retry — never lets a kid grind one memorized string.
+  textSeed.value = 1 + Math.floor(Math.random() * 2_000_000_000);
   runnerKey.value++;
 }
 
@@ -87,11 +117,12 @@ function startAutoAdvance() {
   }, 1000);
 }
 
+// Net WPM, matching the mastery gate — fast-and-sloppy doesn't pass.
 const passed = computed(() => {
   if (!lesson.value || !lastResult.value) return false;
   return (
     lastResult.value.accuracy >= lesson.value.targetAccuracy &&
-    lastResult.value.wpm >= lesson.value.targetWpm
+    lastResult.value.netWpm >= lesson.value.targetWpm
   );
 });
 
@@ -100,6 +131,8 @@ watch(slug, () => {
   isNewBest.value = false;
   previousBest.value = null;
   navigating.value = false;
+  stageJustAdvanced.value = false;
+  textSeed.value = 0;
   clearAdvance();
 });
 
@@ -114,9 +147,13 @@ function onComplete(result: LessonCompleteResult) {
   // and runs the stage-gate (mastery) check, while recordLessonBest writes
   // the per-slug PR shown above. Games have no per-slug PR table, so
   // topics.vue and game/[slug].vue only call recordAttempt.
+  const l = lesson.value;
   const outcome = recordAttempt({
     lessonId: null,
     gameSlug: null,
+    lesson: l
+      ? { slug: l.slug, stage: l.stage, kind: l.kind, textLength: l.text.length }
+      : undefined,
     wpm: result.wpm,
     netWpm: result.netWpm,
     accuracy: result.accuracy,
@@ -124,6 +161,7 @@ function onComplete(result: LessonCompleteResult) {
     errorsByKey: result.errorsByKey,
     completedAt: new Date().toISOString(),
   });
+  stageJustAdvanced.value = outcome.stageAdvanced;
   if (outcome.stageAdvanced) {
     toast.add({
       title: `Stage ${outcome.currentStage} unlocked! 🎉`,
@@ -229,6 +267,17 @@ function backToList() {
           <span v-else-if="previousBest" class="opacity-70">
             best so far: {{ Math.round(previousBest.wpm) }} WPM ·
             {{ Math.round(previousBest.accuracy * 100) }}% accuracy
+          </span>
+          <span
+            v-if="passed && gateStatus && !stageJustAdvanced"
+            class="rounded-full bg-sky-200 px-2 py-0.5 font-bold text-sky-950 dark:bg-sky-300"
+          >
+            {{ Math.min(gateStatus.distinct, STAGE_PASSES_TO_ADVANCE) }}/{{
+              STAGE_PASSES_TO_ADVANCE
+            }}
+            lessons passed at your stage<template v-if="gateStatus.needsConsolidation">
+              · pass the row review to level up</template
+            >
           </span>
           <span class="opacity-80">
             <span v-if="advanceCountdown !== null"

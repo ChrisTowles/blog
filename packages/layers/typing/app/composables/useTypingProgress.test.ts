@@ -197,3 +197,86 @@ describe('useTypingProgress.recordLessonBest', () => {
     scope.stop();
   });
 });
+
+describe('useTypingProgress.recordAttempt mastery gate', () => {
+  beforeEach(() => {
+    installLocalStorage();
+  });
+
+  function passingAttempt(slug: string, overrides: Record<string, unknown> = {}) {
+    return {
+      lessonId: null,
+      gameSlug: null,
+      lesson: { slug, stage: 1, kind: 'drill' as const, textLength: 80 },
+      wpm: 30,
+      netWpm: 30,
+      accuracy: 1,
+      durationMs: 60_000,
+      errorsByKey: {},
+      completedAt: '2026-06-12T00:00:00Z',
+      ...overrides,
+    };
+  }
+
+  it('advances only after passing two DISTINCT lessons at the current stage', async () => {
+    const useFresh = await loadFreshComposable();
+    const scope = effectScope();
+    const out = scope.run(() => {
+      const { recordAttempt, progress } = useFresh();
+      const first = recordAttempt(passingAttempt('stage-1-drill'));
+      const repeat = recordAttempt(passingAttempt('stage-1-drill'));
+      const second = recordAttempt(passingAttempt('stage-1-words'));
+      return { first, repeat, second, stage: progress.value.currentStage };
+    })!;
+
+    expect(out.first.stageAdvanced).toBe(false);
+    expect(out.repeat.stageAdvanced).toBe(false);
+    expect(out.second.stageAdvanced).toBe(true);
+    expect(out.second.previousStage).toBe(1);
+    expect(out.second.currentStage).toBe(2);
+    expect(out.stage).toBe(2);
+    scope.stop();
+  });
+
+  it('never advances from failing attempts, short texts, or game attempts', async () => {
+    const useFresh = await loadFreshComposable();
+    const scope = effectScope();
+    const out = scope.run(() => {
+      const { recordAttempt, progress } = useFresh();
+      recordAttempt(passingAttempt('stage-1-drill', { accuracy: 0.9 }));
+      recordAttempt(passingAttempt('stage-1-words', { netWpm: 2 }));
+      recordAttempt(
+        passingAttempt('stage-1-bigram', {
+          lesson: { slug: 'stage-1-bigram', stage: 1, kind: 'bigram' as const, textLength: 20 },
+        }),
+      );
+      recordAttempt(passingAttempt('ignored', { gameSlug: 'letter-rain', lesson: undefined }));
+      return progress.value.currentStage;
+    })!;
+
+    expect(out).toBe(1);
+    scope.stop();
+  });
+
+  it('ignores passes on lessons from a different stage', async () => {
+    const useFresh = await loadFreshComposable();
+    const scope = effectScope();
+    const out = scope.run(() => {
+      const { recordAttempt, progress } = useFresh();
+      recordAttempt(
+        passingAttempt('stage-3-drill', {
+          lesson: { slug: 'stage-3-drill', stage: 3, kind: 'drill' as const, textLength: 80 },
+        }),
+      );
+      recordAttempt(
+        passingAttempt('stage-3-words', {
+          lesson: { slug: 'stage-3-words', stage: 3, kind: 'word' as const, textLength: 80 },
+        }),
+      );
+      return progress.value.currentStage;
+    })!;
+
+    expect(out).toBe(1);
+    scope.stop();
+  });
+});
