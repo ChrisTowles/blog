@@ -21,8 +21,10 @@ test.describe('Typing app — anonymous flow', () => {
     const cards = page.getByTestId(TEST_IDS.TYPING.LESSON_CARD);
     await expect(cards.first()).toBeVisible();
 
-    // Pick the first stage 1 lesson.
-    const firstStartLink = cards.first().getByRole('link', { name: /start lesson/i });
+    // Pick the first stage 1 lesson. The card itself is the link (labelled
+    // "Start lesson: …"), so query the page by role rather than descending
+    // into the card locator.
+    const firstStartLink = page.getByRole('link', { name: /start lesson/i }).first();
     await firstStartLink.click();
 
     // Lesson runner visible.
@@ -60,7 +62,7 @@ test.describe('Typing app — anonymous flow', () => {
     // Lesson complete card appears.
     const complete = page.getByTestId(TEST_IDS.TYPING.LESSON_COMPLETE);
     await expect(complete).toBeVisible({ timeout: 10_000 });
-    await expect(complete).toContainText(/Nice work/i);
+    await expect(complete).toContainText(/Lesson cleared/i);
   });
 
   test('progress persists across reload via localStorage', async ({ page }) => {
