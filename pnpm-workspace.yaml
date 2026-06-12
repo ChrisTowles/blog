@@ -1,4 +1,4 @@
 packages:
   - 'packages/*'
-  - 'packages/layers/*'
+  - 'packages/blog/layers/*'
   - 'mcp'

@@ -16,7 +16,7 @@ import {
   findTerminalNodes,
   executeNode,
   dbNodeToEngineNode,
-} from '../../../../layers/workflows/server/utils/workflow-engine';
+} from '../../../layers/workflows/server/utils/workflow-engine';
 
 const hasDatabase = !!process.env.DATABASE_URL;
 const hasAnthropicKey = !!process.env.ANTHROPIC_API_KEY;

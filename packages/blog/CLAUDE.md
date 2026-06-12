@@ -29,7 +29,7 @@ server/
     │   └── tools/              # Individual tool definitions (Agent SDK format)
     └── rag/                # Chunking, ingestion, retrieval
 
-# Typing app lives in packages/layers/typing — see that layer's files for /typing routes,
+# Typing app lives in packages/blog/layers/typing — see that layer's files for /typing routes,
 # composables, components, and AI utilities (lesson-generator, spelling-extractor, tts).
 
 shared/                 # Types shared between client and server
@@ -217,7 +217,7 @@ DB test helpers in `server/test-utils/db-helper.ts`: `cleanupDatabase()`, `creat
 ## Gotchas
 
 - **Anthropic client** — always use `getAnthropicClient()` from `utils/ai/anthropic.ts`, never `new Anthropic()`. The singleton wraps with Braintrust observability.
-- **Typing API auth** — guardian-only routes use `requireGuardian(event, { learnerId | groupId })` from `packages/layers/typing/server/utils/typing/require-guardian.ts`. Public routes (lessons, anonymous progress writes to localStorage) skip auth entirely.
+- **Typing API auth** — guardian-only routes use `requireGuardian(event, { learnerId | groupId })` from `packages/blog/layers/typing/server/utils/typing/require-guardian.ts`. Public routes (lessons, anonymous progress writes to localStorage) skip auth entirely.
 - **Typing active learner** — server routes that take a `learnerId` validate that the session user is a guardian of that learner's group. Anonymous users use `learnerId='anon'` and store progress in localStorage under `typing:progress:v1`.
 - **Composable cleanup** — composables using browser APIs (Speech, TTS) must call cleanup in `onUnmounted`. Don't rely on consumers to clean up.
 - **Mobile-first, no hover** — kid-facing UIs (typing, etc) target tablets and phones in addition to desktop. Never rely on hover for essential interactions (edit, delete, reveal). Use tap/click, long-press, or always-visible controls. Test at 375px width. The typing lesson runner itself is desktop-physical-keyboard only for MVP.

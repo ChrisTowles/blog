@@ -20,19 +20,18 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Copy package files for all workspaces (blog + all layers)
-# Layers are Nuxt layers extended by packages/blog via nuxt.config.ts `extends`.
+# Layers live in packages/blog/layers and are auto-registered by Nuxt.
 # They contain server API routes, components, and composables that must be
 # present at build time or their features silently won't be included.
 COPY packages/blog/package.json ./packages/blog/
-COPY packages/layers/ ./packages/layers/
+COPY packages/blog/layers/ ./packages/blog/layers/
 
 # Install dependencies with cached pnpm store
 # Cache mount persists /pnpm/store between builds - packages only download when lockfile changes
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
-# Copy source code (blog + all layers)
+# Copy source code (layers live inside packages/blog)
 COPY packages/blog ./packages/blog
-COPY packages/layers ./packages/layers
 
 # Build the application
 WORKDIR /app/packages/blog

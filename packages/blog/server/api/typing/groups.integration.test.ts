@@ -24,7 +24,7 @@ import {
   listGuardianGroups,
   listGroupLearners,
   findLearnerById,
-} from '../../../../layers/typing/server/utils/typing/groups';
+} from '../../../layers/typing/server/utils/typing/groups';
 
 const hasDatabase = !!process.env.DATABASE_URL;
 
