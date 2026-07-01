@@ -26,6 +26,8 @@ export default defineConfig({
         test: {
           name: 'nuxt',
           testTimeout: 60_000,
+          // Nuxt env boot in beforeAll exceeds vitest's 10s default hookTimeout on cold caches
+          hookTimeout: 60_000,
           globals: true,
           // Setup file provides Nitro server auto-imports as globals
           setupFiles: ['./vitest.setup.ts'],
