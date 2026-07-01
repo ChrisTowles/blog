@@ -6,8 +6,8 @@
   "main": "./nuxt.config.ts",
   "devDependencies": {
     "drizzle-orm": "^0.44.7",
-    "evlog": "^2.11.0",
-    "pixi.js": "^8.18.1",
-    "zod": "^4.3.4"
+    "evlog": "^2.19.2",
+    "pixi.js": "^8.19.0",
+    "zod": "^4.4.3"
   }
 }

@@ -6,6 +6,8 @@
     "suspicious": "warn",
     "nursery": "off"
   },
-  "rules": {},
+  "rules": {
+    "no-underscore-dangle": "off"
+  },
   "ignorePatterns": ["node_modules", ".nuxt", ".output", "dist", "*.d.ts"]
 }

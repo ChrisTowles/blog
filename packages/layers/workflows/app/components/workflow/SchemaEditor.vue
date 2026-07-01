@@ -39,6 +39,11 @@ const showRaw = ref(false);
 const rawJson = ref('');
 const rawError = ref('');
 
+// UButton's onClick requires a void return; inline toggle returns boolean
+function toggleRaw() {
+  showRaw.value = !showRaw.value;
+}
+
 watch(
   () => props.schema,
   (s) => {
@@ -112,7 +117,7 @@ function onRawBlur() {
       <span class="text-xs text-gray-500"
         >{{ fields.length }} field{{ fields.length !== 1 ? 's' : '' }}</span
       >
-      <UButton size="xs" variant="ghost" @click="showRaw = !showRaw">
+      <UButton size="xs" variant="ghost" @click="toggleRaw">
         {{ showRaw ? 'Form view' : 'View JSON' }}
       </UButton>
     </div>
