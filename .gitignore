@@ -191,3 +191,4 @@ docs/superpowers/
 
 # Claude Code agent runtime worktrees (per-session, never commit)
 .claude/worktrees/
+.claude/scheduled_tasks.lock
