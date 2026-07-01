@@ -11,6 +11,11 @@ const { loggedIn } = useUserSession();
 
 const open = ref(false);
 
+// UButton's onClick requires a void return; inline `open = false` returns boolean
+function closeSidebar() {
+  open.value = false;
+}
+
 const deleteModal = overlay.create(LazyModalConfirm, {
   props: {
     title: 'Delete chat',
@@ -139,7 +144,7 @@ defineShortcuts({
             variant="soft"
             block
             to="/chat"
-            @click="open = false"
+            @click="closeSidebar"
           />
 
           <template v-if="collapsed">
