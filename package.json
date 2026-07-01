@@ -17,9 +17,6 @@
     "ui-bundle:watch": "pnpm --filter @chris-towles/blog build:ui-bundle:watch",
     "dev": "pnpm docker:up && pnpm db:migrate && pnpm kill-port && pnpm ui-bundle:build && (pnpm mcp:dev &) && (pnpm ui-bundle:watch &) && pnpm --filter @chris-towles/blog dev",
     "dev:no-remote": "pnpm docker:up && pnpm db:migrate && pnpm kill-port && pnpm ui-bundle:build && (pnpm mcp:dev &) && (pnpm ui-bundle:watch &) && pnpm --filter @chris-towles/blog dev:no-remote",
-    "changeset": "changeset",
-    "version": "changeset version",
-    "release": "changeset tag",
     "gcp:staging:init": "cd infra/terraform/environments && terraform init -backend-config=staging.backend.tfvars",
     "gcp:staging:plan": "cd infra/terraform/environments && terraform init -backend-config=staging.backend.tfvars -reconfigure && terraform plan -var-file=staging.tfvars -lock-timeout=5m",
     "gcp:staging:apply": "cd infra/terraform/environments && terraform init -backend-config=staging.backend.tfvars -reconfigure && terraform apply -auto-approve -var-file=staging.tfvars -lock-timeout=5m",
@@ -55,10 +52,6 @@
     "test": "pnpm --filter @chris-towles/blog test",
     "test:integration": "pnpm --filter @chris-towles/blog test:integration",
     "test:e2e": "pnpm --filter @chris-towles/blog test:e2e",
-    "test:docker": "pnpm tsx scripts/test-docker.ts",
-    "eval": "pnpm --filter @chris-towles/evals eval",
-    "eval:watch": "pnpm --filter @chris-towles/evals eval:watch",
-    "eval:view": "pnpm --filter @chris-towles/evals eval:view",
     "eval:stories": "tsx packages/evals/run-eval.ts eval -c packages/evals/promptfooconfig.stories.yaml",
     "prepare": "simple-git-hooks",
     "mcp:inspect": "pnpm dlx @modelcontextprotocol/inspector",
@@ -71,7 +64,6 @@
     "youtube-transcript": "^1.3.0"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.8",
     "@types/node": "^25.0.3",
     "citty": "^0.1.6",
     "cli-table3": "^0.6.5",
