@@ -10,6 +10,8 @@ export default defineConfig({
         test: {
           name: 'integration',
           testTimeout: 60_000,
+          // Nuxt env boot in beforeAll exceeds vitest's 10s default hookTimeout on cold caches
+          hookTimeout: 60_000,
           globals: true,
           fileParallelism: false,
           setupFiles: ['./vitest.setup.ts'],
