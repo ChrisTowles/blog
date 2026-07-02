@@ -58,7 +58,7 @@
     "@vue-flow/minimap": "^1.5.4",
     "braintrust": "^1.1.1",
     "date-fns": "^4.4.0",
-    "drizzle-orm": "^0.44.7",
+    "drizzle-orm": "^0.45.2",
     "echarts": "^6.1.0",
     "evlog": "^2.19.2",
     "find-up": "^6.3.0",

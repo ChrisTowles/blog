@@ -17,8 +17,12 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // One local retry absorbs dev-server contention timeouts; persistent
+  // failures still fail the run.
+  retries: process.env.CI ? 2 : 1,
+  // Unbounded local workers oversubscribe the on-demand-compiling dev server
+  // and produce rotating timeout failures; 4 keeps runs reliable.
+  workers: process.env.CI ? 1 : 4,
   reporter: 'html',
   use: {
     baseURL: `http://localhost:` + process.env.UI_PORT,
