@@ -1,17 +1,10 @@
 import dotenv from 'dotenv';
-import { dirname, join } from 'path';
 import { defineConfig } from 'drizzle-kit';
-import { findUpSync } from 'find-up';
 
-// Load package .env, then root .env (root values fill in missing vars)
-const packageEnv = findUpSync('.env');
-if (packageEnv) {
-  dotenv.config({ path: packageEnv });
-  const rootEnv = findUpSync('.env', { cwd: join(dirname(packageEnv), '..') });
-  if (rootEnv && rootEnv !== packageEnv) {
-    dotenv.config({ path: rootEnv });
-  }
-}
+// Load package .env, then root .env (root values fill in missing vars).
+// No find-up here: drizzle-kit compiles this config as CJS, and find-up >= 7
+// is ESM-only. drizzle-kit always runs from packages/blog, so the paths are fixed.
+dotenv.config({ path: ['.env', '../../.env'], quiet: true });
 
 export default defineConfig({
   dialect: 'postgresql',
