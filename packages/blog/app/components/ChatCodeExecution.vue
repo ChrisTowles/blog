@@ -1,15 +1,12 @@
 <script setup lang="ts">
-import { ShikiCachedRenderer } from 'shiki-stream/vue';
 import type { CodeExecutionPart } from '~~/shared/chat-types';
-
-type ShikiHighlighter = InstanceType<typeof ShikiCachedRenderer>['$props']['highlighter'];
 
 const props = defineProps<{
   execution: CodeExecutionPart;
 }>();
 
 const colorMode = useColorMode();
-const highlighter = (await useHighlighter()) as unknown as ShikiHighlighter;
+const highlighter = await useHighlighter();
 const showCode = ref(false);
 
 const LANG_MAP: Record<string, string> = {
@@ -22,9 +19,6 @@ const LANG_MAP: Record<string, string> = {
 };
 
 const lang = computed(() => LANG_MAP[props.execution.language] || props.execution.language);
-const theme = computed(() =>
-  colorMode.value === 'dark' ? 'material-theme-palenight' : 'material-theme-lighter',
-);
 </script>
 
 <template>
@@ -49,15 +43,13 @@ const theme = computed(() =>
         <span>{{ execution.language }} code executed</span>
       </button>
       <div v-if="showCode" class="mt-2">
-        <pre class="rounded-md border border-zinc-800 p-3 text-xs overflow-x-auto shiki-wrapper">
-          <ShikiCachedRenderer
-            :key="`${lang}-${colorMode.value}`"
-            :highlighter="highlighter"
-            :code="execution.code.trim()"
-            :lang="lang"
-            :theme="theme"
-          />
-        </pre>
+        <ShikiCode
+          :key="`${lang}-${colorMode.value}`"
+          class="shiki-wrapper text-xs rounded-md border border-zinc-800 overflow-hidden"
+          :highlighter="highlighter"
+          :code="execution.code.trim()"
+          :lang="lang"
+        />
       </div>
     </div>
 
