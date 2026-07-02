@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import { ShikiCachedRenderer } from 'shiki-stream/vue';
 import mermaid from 'mermaid';
 import { log } from 'evlog';
 
-type ShikiHighlighter = InstanceType<typeof ShikiCachedRenderer>['$props']['highlighter'];
-
 const colorMode = useColorMode();
-const highlighter = (await useHighlighter()) as unknown as ShikiHighlighter;
+const highlighter = await useHighlighter();
 const props = defineProps<{
   code: string;
   language: string;
@@ -118,13 +115,13 @@ const key = computed(() => {
     v-else-if="isMermaid"
     class="my-4 p-4 bg-gray-100 dark:bg-gray-800 rounded overflow-x-auto"
   ><code>{{ props.code }}</code></pre>
-  <pre v-else :class="props.class" class="shiki-wrapper overflow-x-auto rounded-md text-sm">
-    <ShikiCachedRenderer
-      :key="key"
-      :highlighter="highlighter"
-      :code="trimmedCode"
-      :lang="lang"
-      :theme="colorMode.value === 'dark' ? 'material-theme-palenight' : 'material-theme-lighter'"
-    />
-  </pre>
+  <ShikiCode
+    v-else
+    :key="key"
+    :class="props.class"
+    class="shiki-wrapper text-sm"
+    :highlighter="highlighter"
+    :code="trimmedCode"
+    :lang="lang"
+  />
 </template>
