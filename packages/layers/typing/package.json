@@ -5,7 +5,7 @@
   "type": "module",
   "main": "./nuxt.config.ts",
   "devDependencies": {
-    "drizzle-orm": "^0.44.7",
+    "drizzle-orm": "^0.45.2",
     "evlog": "^2.19.2",
     "pixi.js": "^8.19.0",
     "zod": "^4.4.3"
