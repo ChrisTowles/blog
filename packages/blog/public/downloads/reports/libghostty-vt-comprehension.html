@@ -1,0 +1,1253 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+  </head>
+  <body>
+    <title>libghostty-vt Migration — Comprehension Report</title>
+    <style>
+      :root {
+        --ground: #f7f6f3;
+        --surface: #ffffff;
+        --surface-2: #fbfaf7;
+        --ink: #1c1d24;
+        --ink-soft: #55565f;
+        --ink-faint: #86868f;
+        --line: #e5e3dc;
+        --accent: #d9553d;
+        --accent-soft: #fbe8e2;
+        --good: #2f8f57;
+        --good-soft: #e6f2ea;
+        --bad: #c33a2d;
+        --bad-soft: #f9e8e6;
+        --warn: #a86d13;
+        --warn-soft: #f6edd9;
+        --code-bg: #0e0f16;
+        --code-ink: #e6e5df;
+        --code-dim: #7f8494;
+        --code-coral: #f0836a;
+        --code-green: #8fd694;
+        --code-amber: #e0b04e;
+        --code-blue: #8ab6e8;
+        --shadow: 0 1px 2px rgba(20, 20, 30, 0.06), 0 8px 24px rgba(20, 20, 30, 0.05);
+        --radius: 12px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ground: #0f1016;
+          --surface: #16172033;
+          --surface: #171826;
+          --surface-2: #1c1e2e;
+          --ink: #e9e7e1;
+          --ink-soft: #a6a7b2;
+          --ink-faint: #71727e;
+          --line: #282a3b;
+          --accent: #f0836a;
+          --accent-soft: #2b1c1b;
+          --good: #6fce8f;
+          --good-soft: #182a1e;
+          --bad: #f0776a;
+          --bad-soft: #2b1a18;
+          --warn: #e0a458;
+          --warn-soft: #2a2214;
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+      }
+      :root[data-theme='light'] {
+        --ground: #f7f6f3;
+        --surface: #ffffff;
+        --surface-2: #fbfaf7;
+        --ink: #1c1d24;
+        --ink-soft: #55565f;
+        --ink-faint: #86868f;
+        --line: #e5e3dc;
+        --accent: #d9553d;
+        --accent-soft: #fbe8e2;
+        --good: #2f8f57;
+        --good-soft: #e6f2ea;
+        --bad: #c33a2d;
+        --bad-soft: #f9e8e6;
+        --warn: #a86d13;
+        --warn-soft: #f6edd9;
+        --shadow: 0 1px 2px rgba(20, 20, 30, 0.06), 0 8px 24px rgba(20, 20, 30, 0.05);
+      }
+      :root[data-theme='dark'] {
+        --ground: #0f1016;
+        --surface: #171826;
+        --surface-2: #1c1e2e;
+        --ink: #e9e7e1;
+        --ink-soft: #a6a7b2;
+        --ink-faint: #71727e;
+        --line: #282a3b;
+        --accent: #f0836a;
+        --accent-soft: #2b1c1b;
+        --good: #6fce8f;
+        --good-soft: #182a1e;
+        --bad: #f0776a;
+        --bad-soft: #2b1a18;
+        --warn: #e0a458;
+        --warn-soft: #2a2214;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.35);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--ground);
+        color: var(--ink);
+        font:
+          400 17px/1.65 -apple-system,
+          system-ui,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .mono {
+        font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+      }
+
+      .wrap {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+
+      /* ---- hero ---- */
+      header.hero {
+        position: relative;
+        border-bottom: 1px solid var(--line);
+        background:
+          radial-gradient(120% 100% at 82% -10%, var(--accent-soft) 0%, transparent 55%),
+          var(--surface-2);
+        overflow: hidden;
+      }
+      header.hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(var(--line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--line) 1px, transparent 1px);
+        background-size: 15px 26px;
+        opacity: 0.28;
+        -webkit-mask-image: radial-gradient(120% 90% at 80% -20%, #000 0%, transparent 60%);
+        mask-image: radial-gradient(120% 90% at 80% -20%, #000 0%, transparent 60%);
+        pointer-events: none;
+      }
+      .hero-inner {
+        position: relative;
+        padding: 60px 24px 52px;
+        max-width: 760px;
+        margin: 0 auto;
+      }
+      .eyebrow {
+        font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--accent);
+        font-weight: 600;
+        margin: 0 0 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .ghost {
+        width: 20px;
+        height: 20px;
+        flex: none;
+        display: block;
+      }
+      h1 {
+        font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+        font-weight: 600;
+        font-size: clamp(1.9rem, 5.2vw, 2.9rem);
+        line-height: 1.08;
+        letter-spacing: -0.01em;
+        margin: 0 0 20px;
+        text-wrap: balance;
+      }
+      h1 .swap {
+        color: var(--accent);
+      }
+      .standfirst {
+        font-size: 1.12rem;
+        color: var(--ink-soft);
+        max-width: 60ch;
+        margin: 0;
+      }
+      .metabar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 28px;
+      }
+      .chip {
+        font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+        font-size: 0.74rem;
+        letter-spacing: 0.02em;
+        padding: 5px 11px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        white-space: nowrap;
+      }
+      .chip b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      /* ---- flow ---- */
+      main {
+        padding: 8px 0 40px;
+      }
+      section {
+        padding: 44px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      section:last-of-type {
+        border-bottom: none;
+      }
+      .kicker {
+        font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        font-weight: 600;
+        margin: 0 0 10px;
+      }
+      h2 {
+        font-size: 1.55rem;
+        line-height: 1.2;
+        letter-spacing: -0.01em;
+        margin: 0 0 18px;
+        text-wrap: balance;
+      }
+      h3 {
+        font-size: 1.08rem;
+        margin: 30px 0 8px;
+      }
+      p {
+        margin: 0 0 16px;
+      }
+      p + p {
+        margin-top: -2px;
+      }
+      a {
+        color: var(--accent);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 2px;
+      }
+      strong {
+        font-weight: 640;
+      }
+      code:not(pre code) {
+        font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+        font-size: 0.86em;
+        background: var(--accent-soft);
+        color: var(--ink);
+        padding: 1px 6px;
+        border-radius: 5px;
+        border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
+      }
+
+      /* pipeline */
+      .pipes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin: 8px 0 4px;
+      }
+      @media (max-width: 560px) {
+        .pipes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .pipe {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 16px;
+        box-shadow: var(--shadow);
+      }
+      .pipe h4 {
+        font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+        margin: 0 0 12px;
+        font-size: 0.78rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .pipe.after h4 {
+        color: var(--accent);
+      }
+      .node {
+        font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+        font-size: 0.82rem;
+        line-height: 1.3;
+        padding: 9px 11px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: var(--surface-2);
+        color: var(--ink);
+      }
+      .node small {
+        display: block;
+        color: var(--ink-faint);
+        font-size: 0.72rem;
+        margin-top: 2px;
+      }
+      .node.hot {
+        border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+        background: var(--accent-soft);
+      }
+      .arrow {
+        text-align: center;
+        color: var(--ink-faint);
+        font-size: 0.8rem;
+        line-height: 1;
+        padding: 5px 0;
+      }
+
+      /* callouts */
+      .call {
+        border-radius: var(--radius);
+        padding: 16px 18px;
+        margin: 22px 0;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 12px;
+        box-shadow: var(--shadow);
+      }
+      .call .tag {
+        font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+        font-size: 0.64rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 6px;
+        height: fit-content;
+        white-space: nowrap;
+      }
+      .call p {
+        margin: 0;
+        font-size: 0.96rem;
+      }
+      .call.intuition {
+        background: var(--accent-soft);
+        border-color: color-mix(in srgb, var(--accent) 25%, transparent);
+      }
+      .call.intuition .tag {
+        background: var(--accent);
+        color: #fff;
+      }
+      .call.caveat {
+        background: var(--warn-soft);
+        border-color: color-mix(in srgb, var(--warn) 30%, transparent);
+      }
+      .call.caveat .tag {
+        background: var(--warn);
+        color: #fff;
+      }
+      :root[data-theme='dark'] .call.intuition .tag,
+      @media (prefers-color-scheme: dark) {
+        .call.intuition .tag {
+          color: #1a0f0d;
+        }
+      }
+
+      /* code */
+      pre {
+        background: var(--code-bg);
+        color: var(--code-ink);
+        border-radius: var(--radius);
+        padding: 16px 18px;
+        overflow-x: auto;
+        margin: 20px 0;
+        font-size: 0.82rem;
+        line-height: 1.6;
+        border: 1px solid #23252f;
+        font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+        -webkit-overflow-scrolling: touch;
+      }
+      pre .c {
+        color: var(--code-dim);
+      }
+      pre .k {
+        color: var(--code-coral);
+      }
+      pre .s {
+        color: var(--code-green);
+      }
+      pre .n {
+        color: var(--code-amber);
+      }
+      pre .t {
+        color: var(--code-blue);
+      }
+
+      /* stat row */
+      .stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin: 6px 0;
+      }
+      @media (max-width: 480px) {
+        .stats {
+          grid-template-columns: 1fr;
+        }
+      }
+      .stat {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 18px;
+        box-shadow: var(--shadow);
+      }
+      .stat .num {
+        font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+        font-size: 1.9rem;
+        font-weight: 600;
+        color: var(--accent);
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+      }
+      .stat .lbl {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        margin-top: 4px;
+      }
+
+      ul.clean {
+        list-style: none;
+        padding: 0;
+        margin: 12px 0;
+        display: grid;
+        gap: 10px;
+      }
+      ul.clean li {
+        padding-left: 26px;
+        position: relative;
+        color: var(--ink-soft);
+        font-size: 0.97rem;
+      }
+      ul.clean li::before {
+        content: '';
+        position: absolute;
+        left: 4px;
+        top: 0.62em;
+        width: 7px;
+        height: 7px;
+        border-radius: 2px;
+        background: var(--accent);
+        transform: rotate(45deg);
+      }
+      ul.clean li b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .ledger {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      @media (max-width: 560px) {
+        .ledger {
+          grid-template-columns: 1fr;
+        }
+      }
+      .ledger .col h3 {
+        margin-top: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .ledger .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        flex: none;
+      }
+      .dot.g {
+        background: var(--good);
+      }
+      .dot.b {
+        background: var(--warn);
+      }
+
+      /* ---- quiz ---- */
+      .quiz-shell {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 8px 22px 26px;
+        box-shadow: var(--shadow);
+      }
+      .q {
+        padding: 24px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .q:last-of-type {
+        border-bottom: none;
+      }
+      .q .qnum {
+        font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.12em;
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .q .qtext {
+        font-weight: 560;
+        margin: 6px 0 14px;
+        font-size: 1.02rem;
+      }
+      .opts {
+        display: grid;
+        gap: 8px;
+      }
+      .opt {
+        display: flex;
+        gap: 11px;
+        align-items: flex-start;
+        text-align: left;
+        width: 100%;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        color: var(--ink);
+        border-radius: 10px;
+        padding: 11px 13px;
+        font: inherit;
+        font-size: 0.94rem;
+        cursor: pointer;
+        transition:
+          border-color 0.12s,
+          background 0.12s;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .opt {
+          transition: none;
+        }
+      }
+      .opt:hover {
+        border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+      }
+      .opt:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .opt .mk {
+        font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+        font-weight: 700;
+        font-size: 0.8rem;
+        flex: none;
+        width: 20px;
+        height: 20px;
+        border: 1px solid var(--ink-faint);
+        border-radius: 6px;
+        display: grid;
+        place-items: center;
+        color: var(--ink-soft);
+        margin-top: 1px;
+      }
+      .opt[aria-pressed='true'] {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+      }
+      .opt[aria-pressed='true'] .mk {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #fff;
+      }
+      .q.graded .opt {
+        cursor: default;
+      }
+      .q.graded .opt.correct {
+        border-color: var(--good);
+        background: var(--good-soft);
+      }
+      .q.graded .opt.correct .mk {
+        border-color: var(--good);
+        background: var(--good);
+        color: #fff;
+      }
+      .q.graded .opt.wrong {
+        border-color: var(--bad);
+        background: var(--bad-soft);
+      }
+      .q.graded .opt.wrong .mk {
+        border-color: var(--bad);
+        background: var(--bad);
+        color: #fff;
+      }
+      .why {
+        margin-top: 12px;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        border-left: 3px solid var(--accent);
+        padding: 2px 0 2px 12px;
+        display: none;
+      }
+      .q.graded .why {
+        display: block;
+      }
+      .why b {
+        color: var(--ink);
+      }
+
+      .quiz-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 14px;
+        margin-top: 24px;
+      }
+      .btn {
+        font: inherit;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 11px 20px;
+      }
+      .btn:focus-visible {
+        outline: 2px solid var(--ink);
+        outline-offset: 2px;
+      }
+      .btn.ghost {
+        background: transparent;
+        color: var(--ink-soft);
+        border: 1px solid var(--line);
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .scoreline {
+        font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+      }
+
+      .verdict {
+        margin-top: 20px;
+        border-radius: 12px;
+        padding: 18px 20px;
+        display: none;
+        font-size: 1rem;
+      }
+      .verdict.show {
+        display: block;
+      }
+      .verdict.pass {
+        background: var(--good-soft);
+        border: 1px solid var(--good);
+        color: var(--ink);
+      }
+      .verdict.fail {
+        background: var(--bad-soft);
+        border: 1px solid var(--bad);
+        color: var(--ink);
+      }
+      .verdict b {
+        font-weight: 700;
+      }
+      .verdict .big {
+        font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+        font-size: 1.5rem;
+        font-weight: 700;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .verdict.pass .big {
+        color: var(--good);
+      }
+      .verdict.fail .big {
+        color: var(--bad);
+      }
+
+      footer {
+        padding: 40px 0 60px;
+        color: var(--ink-faint);
+        font-size: 0.85rem;
+        text-align: center;
+      }
+      footer .mono {
+        color: var(--ink-soft);
+      }
+
+      @media (max-width: 480px) {
+        body {
+          font-size: 16px;
+        }
+        .hero-inner {
+          padding: 44px 20px 40px;
+        }
+        section {
+          padding: 36px 0;
+        }
+      }
+    </style>
+
+    <header class="hero">
+      <div class="hero-inner">
+        <p class="eyebrow">
+          <svg class="ghost" viewBox="0 0 20 20" aria-hidden="true">
+            <path
+              fill="var(--accent)"
+              d="M10 1c-3.3 0-6 2.7-6 6v9.6c0 .8.9 1.2 1.5.7l1.2-1 1.4 1.1c.5.4 1.2.4 1.7 0l1.2-1 1.2 1c.5.4 1.2.4 1.7 0l1.4-1.1 1.2 1c.6.5 1.5.1 1.5-.7V7c0-3.3-2.7-6-6-6Z"
+            />
+            <circle cx="8" cy="8.4" r="1.25" fill="var(--ground)" />
+            <circle cx="12" cy="8.4" r="1.25" fill="var(--ground)" />
+          </svg>
+          Comprehension Report · code change
+        </p>
+        <h1>The terminal brain moved<br />from the WebView <span class="swap">into Rust</span></h1>
+        <p class="standfirst">
+          A full read-through of the change that swapped <strong>xterm.js</strong> for
+          <strong>libghostty</strong> (Ghostty's own terminal core) inside the Tauri app — with the
+          reasoning behind each decision, and a quiz at the end you have to pass.
+        </p>
+        <div class="metabar">
+          <span class="chip mono">branch <b>feat/libghostty-vt-terminals</b></span>
+          <span class="chip mono">PR <b>#69</b></span>
+          <span class="chip mono">3 commits · <b>+930 / −130</b></span>
+          <span class="chip mono">built with <b>Fable</b></span>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section>
+        <p class="kicker">Why this happened</p>
+        <h2>You built the app, then kept living in Ghostty anyway</h2>
+        <p>
+          Your daily workspace is <strong>Bun&nbsp;+&nbsp;tmux&nbsp;+&nbsp;Ghostty</strong>: a
+          TypeScript CLI orchestrating a tmux grid inside Ghostty, one Claude Code session per pane.
+          You'd been rewriting that as <strong>Rust&nbsp;+&nbsp;Tauri</strong> (towles-tool-rs) — a
+          real app with repos, agent status, PRs, and embedded terminals on one screen.
+        </p>
+        <p>
+          But every time you tried to switch, you lasted a few minutes and went back. The other
+          screens weren't the problem — the <em>terminals</em> were. They ran on
+          <a href="https://xtermjs.org/">xterm.js</a>, and after Ghostty an also-ran terminal is the
+          thing you notice constantly. This change closes exactly that gap: it makes the app's
+          terminal core <em>be</em> Ghostty's.
+        </p>
+        <div class="call intuition">
+          <span class="tag">Intuition</span>
+          <p>
+            The migration is one line of strategy:
+            <b>if you can't give up Ghostty, put Ghostty inside the app.</b> Everything technical
+            below serves that single goal — and the success metric isn't a benchmark, it's whether
+            you actually stay in the app next week.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <p class="kicker">The library</p>
+        <h2>What libghostty-vt is — and what it refuses to do</h2>
+        <p>
+          <code>libghostty-vt</code> is the first extracted piece of Ghostty's core: a
+          zero-dependency C/Zig library with the <strong>SIMD VT parser</strong> and the full
+          <strong>terminal state machine</strong> — screen model, scrollback, cursor, styles, modes,
+          and <strong>reflow on resize</strong>. It also ships a render-state API (dirty-tracked
+          row/cell iterators) so you can draw the state yourself, plus input encoders and a
+          selection API.
+        </p>
+        <p>
+          What it deliberately leaves out is the whole reason the work took a day instead of an
+          hour:
+        </p>
+        <ul class="clean">
+          <li><b>No renderer.</b> It hands you cell data; drawing pixels is your job.</li>
+          <li>
+            <b>No PTY.</b> You feed it bytes and it hands back bytes to write to the shell; spawning
+            the shell is your job.
+          </li>
+          <li><b>No font shaping.</b> Same idea — it's the engine, not the car.</li>
+        </ul>
+        <div class="call caveat">
+          <span class="tag">Caveat</span>
+          <p>
+            libghostty has <b>never been released</b> — no version tag, no artifacts. It's developed
+            in the open on Ghostty's <b>main branch</b> (extraction started Sept 2025) and the C API
+            is explicitly unstable, breaking weekly. The rule that keeps this sane:
+            <b>pin the commit.</b> The Rust bindings crate does exactly that.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <p class="kicker">The shape of the change</p>
+        <h2>Same PTY, a new brain, a dumb renderer</h2>
+        <p>
+          Only the middle of the pipeline changed. <code>portable-pty</code> still spawns the shell;
+          what's different is that the raw bytes now flow through a Rust-side engine that produces
+          <em>frames</em> instead of the WebView doing all the parsing.
+        </p>
+        <div class="pipes">
+          <div class="pipe before">
+            <h4>Before · xterm.js</h4>
+            <div class="node">portable-pty <small>spawns shell, raw bytes</small></div>
+            <div class="arrow">↓ base64 over Tauri event</div>
+            <div class="node">
+              xterm.js in WebView <small>parse · state · scrollback · render — everything</small>
+            </div>
+          </div>
+          <div class="pipe after">
+            <h4>After · libghostty</h4>
+            <div class="node">portable-pty <small>spawns shell, raw bytes</small></div>
+            <div class="arrow">↓ bytes</div>
+            <div class="node hot">
+              tt-vt engine thread <small>libghostty: parse · state · scrollback</small>
+            </div>
+            <div class="arrow">↓ dirty-row frames (JSON)</div>
+            <div class="node">canvas renderer <small>paint only</small></div>
+          </div>
+        </div>
+        <p style="margin-top: 20px">
+          The engine also answers terminal queries (like the "who are you?" DA1 request) by handing
+          reply bytes back into the PTY input queue — so that works even when no WebView is
+          watching.
+        </p>
+      </section>
+
+      <section>
+        <p class="kicker">The new crate</p>
+        <h2>crates/tt-vt — one thread owns one terminal</h2>
+        <p>
+          The engine lives in a new Tauri-free crate. The single most load-bearing fact about it:
+          libghostty-vt's <code>Terminal</code> type is <strong><code>!Send</code></strong> — Rust
+          won't let it move between threads. So the natural (and only) shape is
+          <strong>one dedicated OS thread per terminal</strong>, which owns its engine for its whole
+          life. Callers talk to it over a channel.
+        </p>
+        <pre><span class="c">// bytes in → frames out; the thread never shares its engine</span>
+<span class="k">pub enum</span> <span class="t">Input</span> { Bytes(<span class="t">Vec</span>&lt;u8&gt;), Resize{..}, Scroll(..), Select(..), Copy(..) }
+<span class="k">pub enum</span> <span class="t">Event</span> { Frame(<span class="t">Frame</span>), PtyReply(<span class="t">Vec</span>&lt;u8&gt;) }</pre>
+        <p>
+          A <strong>frame</strong> carries only the rows that changed, and within a row, cells are
+          grouped into <em>style runs</em> — consecutive cells sharing the same
+          foreground/background/flags collapse into one entry. A 200-column row becomes a handful of
+          entries instead of 200 objects.
+        </p>
+        <pre>{ <span class="k">"full"</span>: <span class="n">false</span>,
+  <span class="k">"changed"</span>: [ { <span class="k">"y"</span>: <span class="n">3</span>, <span class="k">"runs"</span>: [
+      { <span class="k">"x"</span>:<span class="n">0</span>, <span class="k">"width"</span>:<span class="n">6</span>, <span class="k">"text"</span>:<span class="s">"❯ echo"</span>, <span class="k">"fg"</span>:<span class="n">5025616</span> },
+      { <span class="k">"x"</span>:<span class="n">7</span>, <span class="k">"width"</span>:<span class="n">16</span>, <span class="k">"text"</span>:<span class="s">"select-me-please"</span> } ] } ],
+  <span class="k">"cursor"</span>: { <span class="k">"x"</span>:<span class="n">0</span>, <span class="k">"y"</span>:<span class="n">5</span>, <span class="k">"shape"</span>:<span class="s">"block"</span> },
+  <span class="k">"modes"</span>: { <span class="k">"appCursorKeys"</span>:<span class="n">false</span>, <span class="k">"bracketedPaste"</span>:<span class="n">true</span>, <span class="k">"altScreen"</span>:<span class="n">false</span> } }</pre>
+        <div class="call intuition">
+          <span class="tag">Intuition</span>
+          <p>
+            The <code>modes</code> on every frame are what let the frontend encode keystrokes
+            correctly — arrows honor <b>DECCKM</b>, paste honors <b>bracketed-paste</b>, and the
+            wheel scrolls history on the primary screen but sends arrow keys on the alt screen. That
+            state used to live invisibly inside xterm.js; now it's explicit on the wire.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <p class="kicker">The backend rewire</p>
+        <h2>terminal.rs — who owns the engine handle matters</h2>
+        <p>
+          The PTY host kept its structure (a generation counter still makes sure a replaced
+          terminal's exit can't close its successor), but two ownership details are worth
+          understanding because they're the kind of thing that causes double-frees or hangs if you
+          get them wrong.
+        </p>
+        <h3>The reader thread owns the engine</h3>
+        <p>
+          The thread pumping PTY output into the engine is the one that <em>holds</em> the engine
+          handle and drops it at EOF — after resolving the generation-checked map entry. That
+          guarantees the engine thread is joined <strong>exactly once</strong>, whether the shell
+          exited normally or the PTY was replaced by a reload.
+        </p>
+        <h3>Resize goes two places</h3>
+        <p>
+          <code>term_resize</code> now updates both the PTY size <em>and</em> the engine grid
+          (reflow is native), and carries the renderer's cell pixel metrics. New commands round out
+          the surface: <code>term_scroll</code>, <code>term_select</code>, and
+          <code>term_copy</code>.
+        </p>
+        <div class="call intuition">
+          <span class="tag">Intuition</span>
+          <p>
+            Nothing in the app parses terminal <em>content</em> for logic — agent status still comes
+            from transcript JSONL and <code>/proc</code>, never the byte stream. That's why this was
+            a rendering-only swap: the attention model that powers the agentboard never touched the
+            terminal.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <p class="kicker">The frontend</p>
+        <h2>A canvas that paints frames and nothing more</h2>
+        <p>
+          <code>terminal-view.tsx</code> is now a 2D-canvas renderer over a client-side grid mirror.
+          It repaints only dirty rows, draws all four cursor shapes, handles wide characters, and
+          pulls its colors from the host element's computed Tailwind styles so it matches
+          light/dark. Selection is a translucent overlay driven by ranges the engine sends back.
+        </p>
+        <p>
+          <code>term-protocol.ts</code> holds the frame types plus the
+          <strong>DOM-key → escape-sequence encoder</strong> — the table that turns a
+          <code>KeyboardEvent</code> into the bytes a shell expects.
+        </p>
+        <div class="call intuition">
+          <span class="tag">Intuition</span>
+          <p>
+            A canvas can't receive text input. The fix — the same one xterm.js uses — is a
+            <b>hidden <code>&lt;textarea&gt;</code></b> that holds focus and catches keydown, IME
+            composition, and paste. Without it, dead keys and non-Latin input (the classic
+            canvas-terminal trap) would break.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <p class="kicker">Selection &amp; the payoff</p>
+        <h2>Selection that knows what a word is</h2>
+        <p>
+          Double-click selection uses Ghostty's <em>own</em> word-boundary rules, computed in the
+          engine; the frontend just sends cell coordinates and paints the highlight ranges that come
+          back. One subtlety worth knowing:
+        </p>
+        <div class="call intuition">
+          <span class="tag">Intuition</span>
+          <p>
+            A selection change <b>forces a full-frame render</b>. Selections don't reliably mark
+            rows dirty, so a full frame is the guarantee that highlights — and de-selection —
+            repaint everywhere instead of leaving stale highlight behind.
+          </p>
+        </div>
+        <h3>The numbers that make it viable</h3>
+        <div class="stats">
+          <div class="stat">
+            <div class="num">418<span style="font-size: 1rem"> MB/s</span></div>
+            <div class="lbl">
+              VT parse throughput — 20 MB of styled output in 48 ms (release build).
+            </div>
+          </div>
+          <div class="stat">
+            <div class="num">190<span style="font-size: 1rem"> µs</span></div>
+            <div class="lbl">
+              Full render pass over a 200×50 grid — every one of 10,000 cells, worst case.
+            </div>
+          </div>
+        </div>
+        <p style="margin-top: 18px">
+          At those numbers the terminal-state layer simply isn't a cost. And per Mitchell's
+          throughput post, most of Ghostty's speed work lands in libghostty-vt
+          <strong>ABI-compatibly</strong> — so the app inherits future gains by upgrading the pin.
+        </p>
+      </section>
+
+      <section>
+        <p class="kicker">The honest ledger</p>
+        <h2>What got better, what it cost</h2>
+        <div class="ledger">
+          <div class="col">
+            <h3><span class="dot g"></span>Gains</h3>
+            <ul class="clean">
+              <li>
+                <b>State lives in Rust.</b> Scrollback survives WebView reloads and can be
+                serialized — xterm.js lost it on every reload.
+              </li>
+              <li>
+                <b>Ghostty-grade emulation.</b> Native reflow on resize; alt-screen TUIs like
+                <code>top</code> render correctly first try.
+              </li>
+              <li><b>Renderer is swappable.</b> The frontend is just a frame consumer now.</li>
+            </ul>
+          </div>
+          <div class="col">
+            <h3><span class="dot b"></span>Costs</h3>
+            <ul class="clean">
+              <li>
+                <b>You wrote a renderer</b> and a <b>key encoder</b> — a few hundred lines xterm.js
+                gave for free.
+              </li>
+              <li>
+                <b>Zig 0.15.x</b> joined the toolchain (the bindings build libghostty from source).
+              </li>
+              <li><b>Alpha API.</b> Upgrades are now deliberate, pinned events.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="call caveat">
+          <span class="tag">Still open</span>
+          <p>
+            <b>App restart still kills shells and agents</b> — only the rail's session definitions
+            survive; the app is the sole host, no daemon. The near-term win is
+            <b>reattach-on-WebView-reload</b> (the engine already holds the state; today
+            <code>term_start</code> replaces instead of reattaching). Also deferred: mouse-event
+            reporting to TUIs, grapheme clusters, a scrollbar.
+          </p>
+        </div>
+      </section>
+
+      <section id="quiz-sec">
+        <p class="kicker">Prove it</p>
+        <h2>Comprehension check</h2>
+        <p style="color: var(--ink-soft)">
+          Ten questions on the reasoning above — not trivia, the <em>why</em>. You need
+          <strong>8 of 10</strong> to pass. Pick an answer for each, then check.
+        </p>
+        <div class="quiz-shell" id="quiz"></div>
+        <div class="quiz-actions">
+          <button class="btn" id="check">Check answers</button>
+          <button class="btn ghost" id="reset" hidden>Try again</button>
+          <span class="scoreline" id="score"></span>
+        </div>
+        <div class="verdict" id="verdict" role="status" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <footer class="wrap">
+      <p class="mono">feat/libghostty-vt-terminals · PR #69 · comprehension report</p>
+      <p>If you passed, you understand the change well enough to defend it in review.</p>
+    </footer>
+
+    <script>
+      const QUESTIONS = [
+        {
+          q: 'Why does each terminal get its own dedicated OS thread in tt-vt?',
+          opts: [
+            "libghostty-vt's Terminal type is !Send — it can't move between threads, so one thread must own it for its whole life",
+            'To parse multiple terminals in parallel for raw speed',
+            'Because portable-pty requires a thread per PTY',
+            'To avoid ever locking the Tauri managed state',
+          ],
+          a: 0,
+          why: 'The <b>!Send</b> constraint is the driver — not performance. One thread owns the engine end-to-end; callers reach it over a channel.',
+        },
+        {
+          q: 'Which of these does libghostty-vt deliberately NOT provide?',
+          opts: [
+            'The VT escape-sequence parser',
+            'Scrollback and reflow-on-resize',
+            'A renderer, a PTY, and font shaping',
+            'The terminal screen/cursor state model',
+          ],
+          a: 2,
+          why: "It's the engine, not the car: it gives you cell data and takes bytes, but you bring the renderer, the PTY, and font shaping.",
+        },
+        {
+          q: "Why are frames sent as 'style runs' rather than per-cell data?",
+          opts: [
+            'The canvas API can only accept runs',
+            'Consecutive cells with the same fg/bg/flags collapse into one entry — a 200-col row becomes a few entries, not 200 objects',
+            'JSON cannot encode individual cells',
+            'Runs are required to preserve grapheme clusters',
+          ],
+          a: 1,
+          why: "It's a compactness win: runs keep frames small so shipping them over the Tauri boundary every update stays cheap.",
+        },
+        {
+          q: "What was libghostty's release status at the time of this change?",
+          opts: [
+            'Shipped as part of Ghostty 1.3',
+            'A stable 1.0 crate on crates.io',
+            "Unreleased — no version tag, built from Ghostty's main branch, API explicitly unstable",
+            'Bundled into Ghostty 2.0',
+          ],
+          a: 2,
+          why: "Never released. It's developed in the open on main; the discipline that makes it usable is pinning the commit.",
+        },
+        {
+          q: 'Why does changing the selection force a full-frame render?',
+          opts: [
+            "Selection changes don't reliably mark rows dirty, so a full frame guarantees highlights and de-selection repaint everywhere",
+            'The canvas cannot do partial repaints',
+            'The selection is stored in the WebView, not the engine',
+            'The engine resets its whole state on selection',
+          ],
+          a: 0,
+          why: "Without the forced full frame you'd get stale highlight left behind, because selection doesn't dirty the affected rows on its own.",
+        },
+        {
+          q: 'Where does terminal state (including 10k scrollback) now live, and why does that matter?',
+          opts: [
+            "In the PTY's kernel buffer, so it's OS-managed",
+            'In the Rust engine thread — it survives WebView reloads and can be serialized, unlike xterm.js which lost it on reload',
+            'In localStorage in the WebView',
+            "In the canvas element's backing store",
+          ],
+          a: 1,
+          why: 'Moving state to Rust is the structural win: reloads no longer wipe scrollback, and restore-across-restart becomes possible.',
+        },
+        {
+          q: 'What new build-toolchain dependency did this introduce?',
+          opts: [
+            'A C++ compiler toolchain',
+            'Node 22 and wasm-pack',
+            'Zig 0.15.x on PATH — the bindings compile libghostty from source at a pinned commit',
+            'A GPU driver for the canvas renderer',
+          ],
+          a: 2,
+          why: 'The Rust crate builds libghostty from source, so Zig 0.15.x has to be on PATH (added to dotfiles as 18-zig.sh).',
+        },
+        {
+          q: 'On an app restart today, what happens to running shells and agents?',
+          opts: [
+            'They reattach automatically from the engine',
+            "They're killed — the app is the sole host with no persistence; only the rail's session definitions survive",
+            'Scrollback is restored but the process is respawned',
+            'A background daemon keeps them alive',
+          ],
+          a: 1,
+          why: 'No daemon by design. Restart kills the processes; the near-term improvement is reattach on WebView reload, not full persistence.',
+        },
+        {
+          q: 'What is the hidden <textarea> in the canvas terminal for?',
+          opts: [
+            'Storing the scrollback buffer',
+            "Holding the current selection's text for copy",
+            "Receiving focus, keydown, IME composition, and paste — input a canvas can't take directly",
+            'Accessibility labelling only',
+          ],
+          a: 2,
+          why: "A canvas can't receive text input, so the hidden textarea catches keys, IME composition, and paste — the classic canvas-terminal fix.",
+        },
+        {
+          q: 'Why does the PTY reader thread own the tt-vt engine handle and drop it at EOF?',
+          opts: [
+            'So the engine thread is joined exactly once, after the generation-checked map entry is resolved — whether the shell exited or the PTY was replaced',
+            'Because the engine needs the PTY file descriptor',
+            'To keep the terminal-map Mutex locked during reads',
+            'So the reader can render frames itself',
+          ],
+          a: 0,
+          why: 'Single ownership of the handle is what makes the join happen exactly once, avoiding a double-join or a leaked thread on replacement.',
+        },
+      ];
+
+      const PASS = 8;
+      const quizEl = document.getElementById('quiz');
+      const scoreEl = document.getElementById('score');
+      const checkBtn = document.getElementById('check');
+      const resetBtn = document.getElementById('reset');
+      const verdictEl = document.getElementById('verdict');
+      const picked = new Array(QUESTIONS.length).fill(-1);
+      let graded = false;
+      const LETTERS = ['A', 'B', 'C', 'D'];
+
+      function esc(s) {
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+      }
+
+      function render() {
+        quizEl.innerHTML = '';
+        QUESTIONS.forEach((item, qi) => {
+          const q = document.createElement('div');
+          q.className = 'q';
+          q.id = 'q' + qi;
+          const opts = item.opts
+            .map(
+              (o, oi) =>
+                `<button class="opt" role="button" aria-pressed="${picked[qi] === oi}" data-q="${qi}" data-o="${oi}">
+         <span class="mk">${LETTERS[oi]}</span><span>${esc(o)}</span>
+       </button>`,
+            )
+            .join('');
+          q.innerHTML = `<div class="qnum">Q${qi + 1} / ${QUESTIONS.length}</div>
+       <div class="qtext">${esc(item.q)}</div>
+       <div class="opts">${opts}</div>
+       <div class="why"><b>Why:</b> ${item.why}</div>`;
+          quizEl.appendChild(q);
+        });
+        quizEl.querySelectorAll('.opt').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            if (graded) return;
+            const qi = +btn.dataset.q,
+              oi = +btn.dataset.o;
+            picked[qi] = oi;
+            quizEl
+              .querySelectorAll(`.opt[data-q="${qi}"]`)
+              .forEach((b) => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+            updateProgress();
+          });
+        });
+        updateProgress();
+      }
+
+      function updateProgress() {
+        if (graded) return;
+        const answered = picked.filter((p) => p >= 0).length;
+        scoreEl.textContent = `${answered} / ${QUESTIONS.length} answered`;
+        checkBtn.disabled = answered < QUESTIONS.length;
+      }
+
+      function grade() {
+        graded = true;
+        let correct = 0;
+        QUESTIONS.forEach((item, qi) => {
+          const q = document.getElementById('q' + qi);
+          q.classList.add('graded');
+          const chosen = picked[qi];
+          if (chosen === item.a) correct++;
+          q.querySelectorAll('.opt').forEach((btn) => {
+            const oi = +btn.dataset.o;
+            if (oi === item.a) btn.classList.add('correct');
+            else if (oi === chosen) btn.classList.add('wrong');
+          });
+        });
+        const passed = correct >= PASS;
+        scoreEl.textContent = `Scored ${correct} / ${QUESTIONS.length}`;
+        checkBtn.hidden = true;
+        resetBtn.hidden = false;
+        verdictEl.className = 'verdict show ' + (passed ? 'pass' : 'fail');
+        verdictEl.innerHTML = passed
+          ? `<span class="big">Passed — ${correct}/10</span> You've got the reasoning, not just the facts. The green rows above confirm each "why."`
+          : `<span class="big">Not yet — ${correct}/10</span> You need <b>${PASS}</b> to pass. Read the highlighted "Why" notes, then <b>Try again</b>.`;
+        verdictEl.scrollIntoView({
+          behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+          block: 'center',
+        });
+      }
+
+      function reset() {
+        graded = false;
+        picked.fill(-1);
+        checkBtn.hidden = false;
+        resetBtn.hidden = true;
+        verdictEl.className = 'verdict';
+        verdictEl.innerHTML = '';
+        render();
+        document.getElementById('quiz-sec').scrollIntoView({
+          behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+          block: 'start',
+        });
+      }
+
+      checkBtn.addEventListener('click', grade);
+      resetBtn.addEventListener('click', reset);
+      render();
+    </script>
+  </body>
+</html>
