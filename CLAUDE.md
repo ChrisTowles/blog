@@ -40,6 +40,33 @@ pnpm gcp:staging:deploy # Build container + deploy to GCP staging
 pnpm etl:aviation      # Download aviation datasets → Parquet → GCS (loads .env)
 ```
 
+## Worktree slots — you are probably working in one
+
+This repo is checked out as **slots**: `~/code/p/blog-repos/` holds a bare
+hub (`blog.git`) plus worktrees named `blog-slot-N`, one per parallel line of
+work (a `.tt-slot` marker sits at each slot's root). Manage slots with
+`ttr slot` — never raw `git worktree` or new clones:
+
+```bash
+ttr slot new -b feat/thing   # next free slot on a new branch (runs pnpm install)
+ttr slot ls                  # fleet: branch, dirty count, claimed ports
+ttr slot env <name>          # (re)render .env — idempotent, keeps claims + secrets
+ttr slot rm <name>           # guarded removal + docker compose down -v
+```
+
+Rules when working in a slot:
+
+- **`.env` is rendered, per slot** — `.env.example` is the template:
+  `${tt:port A-B}` pool claims give each slot its own `UI_PORT`, `DB_PORT`,
+  and `MCP_PORT`; `SLOT_NAME` names the slot's postgres container so
+  `pnpm docker:up` in two slots never collides. Never hardcode a port.
+- Secrets are inherited from a sibling slot's `.env` at creation and survive
+  re-renders; don't copy `.env` files between slots by hand.
+- **Detached HEAD means parked** — create a branch before committing;
+  commits reachable from no branch or remote block `ttr slot rm` by design.
+- **Never touch sibling slot directories** — other agents work there
+  concurrently.
+
 ## CLI Scripts
 
 Scripts in `packages/blog/scripts/` use **citty** for CLI structure (args, help, subcommands) and **consola** for formatted output (icons, colors, boxes). When adding new scripts:
