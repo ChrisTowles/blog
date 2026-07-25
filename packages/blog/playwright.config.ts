@@ -81,9 +81,13 @@ export default defineConfig({
       : `UI_PORT=${uiPort} bun run dev`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
-    // A cold CI boot compiles the whole app on first request; 2 min is not
-    // enough there.
-    timeout: (process.env.CI ? 300 : 120) * 1000,
+    // Nuxt compiles routes on demand, and CI starts with no build cache on a
+    // slower machine — the readiness probe's first request to `/` is still
+    // compiling long after the server reports "Local: http://...". Nuxt only
+    // logs a request once it completes, so this shows up as a webServer
+    // timeout with zero request lines, which reads like a connection failure
+    // rather than a slow one. 5 min was not enough; give it 15.
+    timeout: (process.env.CI ? 900 : 120) * 1000,
     stdout: 'pipe',
     stderr: 'pipe',
   },
