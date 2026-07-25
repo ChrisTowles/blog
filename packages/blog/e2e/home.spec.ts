@@ -1,4 +1,4 @@
-import { test, expect, type Locator } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 import { TEST_IDS } from '~~/shared/test-ids';
 
 // The header nav is down to four items, so this grid is the only index of the
@@ -23,11 +23,17 @@ const EXPERIMENTS = [
 // but click the overlay.
 const overlay = (card: Locator) => card.locator('span').first();
 
+// The home page renders the whole post list, so in dev it is one of the slower
+// routes to compile and hydrate. Gate on the grid with a generous timeout once,
+// rather than letting each per-card assertion race the default 5s.
+async function gotoHome(page: Page) {
+  await page.goto('/');
+  await expect(page.getByTestId(TEST_IDS.HOME.EXPERIMENTS)).toBeVisible({ timeout: 30_000 });
+}
+
 test.describe('Home page', () => {
   test('renders every experiment card with the right link', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
-
-    await expect(page.getByTestId(TEST_IDS.HOME.EXPERIMENTS)).toBeVisible();
+    await gotoHome(page);
 
     for (const { testId, href } of EXPERIMENTS) {
       const card = page.getByTestId(testId).first();
@@ -37,23 +43,22 @@ test.describe('Home page', () => {
   });
 
   test('Towles Tool is the first card', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
+    await gotoHome(page);
 
     const first = page.getByTestId(TEST_IDS.HOME.EXPERIMENTS).getByRole('link').first();
     await expect(first).toHaveAttribute('href', 'https://github.com/ChrisTowles/towles-tool');
   });
 
   test('clicking an experiment card navigates to it', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
+    await gotoHome(page);
 
     await overlay(page.getByTestId(TEST_IDS.HOME.EXPERIMENT_TYPING).first()).click();
-    await page.waitForLoadState('networkidle');
 
     await expect(page).toHaveURL('/typing');
   });
 
   test('header nav is trimmed to four items', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
+    await gotoHome(page);
 
     for (const testId of [
       TEST_IDS.NAVIGATION.HOME_LINK,
@@ -66,8 +71,8 @@ test.describe('Home page', () => {
   });
 
   test('blog posts still list below the experiment grid', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
+    await gotoHome(page);
 
-    await expect(page.getByTestId(TEST_IDS.BLOG.POST_LIST)).toBeVisible();
+    await expect(page.getByTestId(TEST_IDS.BLOG.POST_LIST)).toBeVisible({ timeout: 30_000 });
   });
 });

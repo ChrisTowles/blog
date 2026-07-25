@@ -1,15 +1,20 @@
 name: Test
 
 on:
-  push:
-    branches: [main]
+  # No `push: main` trigger on purpose. Deploy runs this same workflow via
+  # workflow_call as its first job, so a push to main would otherwise start two
+  # copies of it that then fight over the concurrency group below.
   pull_request:
     branches: [main]
   workflow_call:
 
+# `github.workflow` is the *calling* workflow's name, so a run invoked from
+# Deploy gets its own group instead of colliding with a standalone Test run.
+# Cancelling is only right for pull requests, where a new push supersedes the
+# old one; cancelling a queued deploy's tests just fails that deploy.
 concurrency:
-  group: test-${{ github.ref }}
-  cancel-in-progress: true
+  group: test-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test:

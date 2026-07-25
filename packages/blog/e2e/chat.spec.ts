@@ -1,41 +1,36 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { TEST_IDS } from '~~/shared/test-ids';
+
+// `/chat/**` has SSR disabled in nuxt.config, so the composer is mounted by Vue
+// on the client. `waitUntil: 'networkidle'` is a network heuristic that can
+// resolve before that mount happens — which is what made these tests flaky.
+// Wait for the element the test actually needs instead.
+async function gotoChat(page: Page) {
+  await page.goto('/chat');
+  const input = page.getByTestId(TEST_IDS.CHAT.INPUT);
+  await expect(input).toBeVisible({ timeout: 30_000 });
+  return input;
+}
 
 test.describe('AI Chat', () => {
   test('chat page loads', async ({ page }) => {
-    await page.goto('/chat', { waitUntil: 'networkidle' });
+    await page.goto('/chat');
 
     // Verify chat page loaded (may redirect to login, so just check it's accessible)
-    const url = page.url();
-    expect(url).toContain('/chat');
+    await expect(page).toHaveURL(/\/chat/);
   });
 
   test('displays chat interface elements', async ({ page }) => {
-    await page.goto('/chat', { waitUntil: 'networkidle' });
+    const chatContainer = await gotoChat(page);
 
-    // Verify chat input container exists using test ID
-    const chatContainer = page.getByTestId(TEST_IDS.CHAT.INPUT);
-    const count = await chatContainer.count();
-    expect(count).toBe(1);
-
-    // If container exists, find textarea within it
-    await expect(chatContainer).toBeVisible({ timeout: 10000 });
+    await expect(chatContainer).toHaveCount(1);
   });
 
   test('can type in chat input', async ({ page }) => {
-    await page.goto('/chat', { waitUntil: 'networkidle' });
+    const chatContainer = await gotoChat(page);
 
-    // Try test ID first, fallback to generic selector
-    const chatContainer = page.getByTestId(TEST_IDS.CHAT.INPUT);
-
-    expect(chatContainer).toBeVisible();
-
-    await chatContainer.waitFor({ state: 'visible', timeout: 10000 });
-
-    // Type a message
     await chatContainer.fill('Hello, this is a test message');
 
-    // Verify text was entered
     await expect(chatContainer).toHaveValue('Hello, this is a test message');
   });
 
@@ -49,17 +44,14 @@ test.describe('AI Chat', () => {
   });
 
   test('navigate to chat from home', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
+    await page.goto('/');
 
     // Chat is no longer in the header nav — it's a card in the home experiment grid
     const chatLink = page.getByTestId(TEST_IDS.HOME.EXPERIMENT_CHAT).first();
-    const count = await chatLink.count();
-
-    expect(count).toBe(1);
+    await expect(chatLink).toHaveCount(1);
 
     // UPageCard's <a> is zero-size; its inset-0 span is the real click target
     await chatLink.locator('span').first().click();
-    await page.waitForLoadState('networkidle');
 
     await expect(page).toHaveURL('/chat');
   });
@@ -128,10 +120,7 @@ test.describe('Chat History', () => {
 
 test.describe('Agent SDK Integration', () => {
   test('chat input accepts text for Agent SDK processing', async ({ page }) => {
-    await page.goto('/chat', { waitUntil: 'networkidle' });
-
-    const chatInput = page.getByTestId(TEST_IDS.CHAT.INPUT);
-    await chatInput.waitFor({ state: 'visible', timeout: 10000 });
+    const chatInput = await gotoChat(page);
 
     // Type a message that would trigger skill lookup
     await chatInput.fill('How do I write a blog post in your voice?');
@@ -139,20 +128,13 @@ test.describe('Agent SDK Integration', () => {
   });
 
   test('submit button is enabled when input has text', async ({ page }) => {
-    await page.goto('/chat', { waitUntil: 'networkidle' });
-
-    const chatInput = page.getByTestId(TEST_IDS.CHAT.INPUT);
-    await chatInput.waitFor({ state: 'visible', timeout: 10000 });
+    const chatInput = await gotoChat(page);
 
     // Type something
     await chatInput.fill('Test message');
 
-    // Check submit button is clickable
-    const submitButton = page.getByTestId(TEST_IDS.CHAT.SUBMIT);
-    const isDisabled = await submitButton.isDisabled();
-
     // Submit button should be enabled when there's text
-    expect(isDisabled).toBe(false);
+    await expect(page.getByTestId(TEST_IDS.CHAT.SUBMIT)).toBeEnabled();
   });
 
   test.skip('Agent SDK responds to tool-triggering queries', async ({ page }) => {

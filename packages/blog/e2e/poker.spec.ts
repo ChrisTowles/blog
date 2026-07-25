@@ -3,7 +3,9 @@ import { TEST_IDS } from '~~/shared/test-ids';
 
 test.describe('Poker page', () => {
   test('renders the page and reaches a fresh hand', async ({ page }) => {
-    await page.goto('/poker', { waitUntil: 'networkidle' });
+    // The PixiJS table keeps loading assets, so `networkidle` can outlast the
+    // timeout under parallel load. The assertions below auto-wait instead.
+    await page.goto('/poker');
 
     // Page container present
     const pokerPage = page.getByTestId(TEST_IDS.POKER.PAGE);
@@ -38,7 +40,9 @@ test.describe('Poker page', () => {
   });
 
   test('home page links to poker', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
+    // No `networkidle` — the home page lazy-loads every post image, so that
+    // heuristic is slow and racy here. The assertion below auto-waits.
+    await page.goto('/');
     const pokerLinks = page.getByTestId(TEST_IDS.HOME.EXPERIMENT_POKER);
     await expect(pokerLinks.first()).toBeAttached();
   });

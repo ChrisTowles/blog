@@ -169,27 +169,37 @@ test.describe('Workflow Builder', () => {
   });
 
   test('workflow list shows created workflows', async ({ page }) => {
-    // Create two workflows
-    await page.request.post('/api/workflows', { data: { name: 'Alpha Pipeline' } });
-    await page.request.post('/api/workflows', { data: { name: 'Beta Pipeline' } });
+    // Unique names, then cleanup — these rows are otherwise left in the database
+    // and pile up across runs.
+    const alpha = `Alpha Pipeline ${crypto.randomUUID()}`;
+    const beta = `Beta Pipeline ${crypto.randomUUID()}`;
 
-    await page.goto('/workflows', { waitUntil: 'networkidle' });
+    const created = await Promise.all([
+      page.request.post('/api/workflows', { data: { name: alpha } }),
+      page.request.post('/api/workflows', { data: { name: beta } }),
+    ]);
+    const ids = await Promise.all(created.map(async (res) => (await res.json()).id));
 
-    await expect(page.getByText('Alpha Pipeline').first()).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText('Beta Pipeline').first()).toBeVisible();
+    try {
+      await page.goto('/workflows', { waitUntil: 'networkidle' });
 
-    await page.screenshot({ path: '/tmp/workflow-list-populated.png', fullPage: true });
+      await expect(page.getByText(alpha)).toBeVisible({ timeout: 10000 });
+      await expect(page.getByText(beta)).toBeVisible();
+    } finally {
+      await Promise.all(ids.map((id) => page.request.delete(`/api/workflows/${id}`)));
+    }
   });
 
   test('can delete a workflow from the list', async ({ page }) => {
-    // Create a workflow to delete
-    const res = await page.request.post('/api/workflows', {
-      data: { name: 'Delete Me Workflow' },
-    });
+    // The name has to be unique per run. This used to be a fixed string, and
+    // the assertion below matches on text — so a single leftover row from an
+    // earlier run made this test fail forever.
+    const name = `Delete Me Workflow ${crypto.randomUUID()}`;
+    const res = await page.request.post('/api/workflows', { data: { name } });
     const { id } = await res.json();
 
     await page.goto('/workflows', { waitUntil: 'networkidle' });
-    await expect(page.getByText('Delete Me Workflow').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(name)).toBeVisible({ timeout: 10000 });
 
     // Delete via API directly to test the endpoint, since UI click propagation
     // through UPageCard is unreliable
@@ -198,8 +208,6 @@ test.describe('Workflow Builder', () => {
 
     // Reload and verify it's gone
     await page.goto('/workflows', { waitUntil: 'networkidle' });
-    await expect(page.getByText('Delete Me Workflow')).not.toBeVisible({ timeout: 5000 });
-
-    await page.screenshot({ path: '/tmp/workflow-after-delete.png', fullPage: true });
+    await expect(page.getByText(name)).not.toBeVisible({ timeout: 5000 });
   });
 });
