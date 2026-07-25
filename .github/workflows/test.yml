@@ -118,6 +118,42 @@ jobs:
       - name: Install Playwright browser
         run: pnpm --filter @chris-towles/blog exec playwright install --with-deps chromium
 
+      # Diagnostic: the Playwright webServer probe times out with no output,
+      # which looks identical whether the connection is refused, the response
+      # is a non-2xx (Playwright polls forever on those), or the request hangs.
+      # Start the same server ourselves and curl it so the log says which.
+      # Never fails the job — it exists to produce evidence, not a verdict.
+      - name: Probe dev server
+        continue-on-error: true
+        run: |
+          set -x
+          pnpm --filter @chris-towles/blog exec nuxt dev --host 127.0.0.1 \
+            > /tmp/devserver.log 2>&1 &
+          DEV_PID=$!
+
+          STATUS=""
+          for i in $(seq 1 60); do
+            STATUS=$(curl -sS -o /tmp/body -w '%{http_code}' --max-time 20 \
+              http://127.0.0.1:3000/ 2>/tmp/curlerr || echo "curl-failed")
+            echo "[attempt $i] status=${STATUS}"
+            case "$STATUS" in 2??|3??) break ;; esac
+            sleep 5
+          done
+
+          echo "===== final status: ${STATUS} ====="
+          echo "===== curl stderr ====="; cat /tmp/curlerr 2>/dev/null || true
+          echo "===== response body (first 800 bytes) ====="
+          head -c 800 /tmp/body 2>/dev/null || true; echo
+          echo "===== listening sockets ====="
+          ss -ltnp 2>/dev/null | grep -E ':3000' || echo "(nothing on :3000)"
+          echo "===== dev server log (last 60 lines) ====="
+          tail -60 /tmp/devserver.log || true
+
+          # Free the port — Playwright starts its own server next.
+          kill "$DEV_PID" 2>/dev/null || true
+          pkill -f 'nuxt.*dev' 2>/dev/null || true
+          sleep 3
+
       - name: E2E Tests
         run: pnpm test:e2e
 
