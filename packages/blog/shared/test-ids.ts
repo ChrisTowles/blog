@@ -62,9 +62,11 @@ export const TEST_IDS = {
     EXPERIMENT_WORKFLOWS: 'home-experiment-workflows',
     EXPERIMENT_POKER: 'home-experiment-poker',
     EXPERIMENT_APPS: 'home-experiment-apps',
+    EXPERIMENT_LANGUAGE: 'home-experiment-language',
   },
   ABOUT: {
     PAGE: 'about-page',
+    EXPERIMENT_LANGUAGE: 'about-experiment-language',
   },
   SEARCH: {
     PAGE: 'search-page',
