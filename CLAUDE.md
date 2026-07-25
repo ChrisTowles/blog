@@ -85,7 +85,17 @@ After implementing features, verify with the full stack — not just unit tests:
 
 Don't claim a feature works without steps 4-6. Automated tests miss rendering issues, broken layouts, and SSE streaming bugs that only surface in a real browser.
 
-**Always self-verify with Playwright screenshots.** After starting the dev server, use `npx playwright screenshot` to check pages yourself — don't rely on the user to confirm visually. If Nuxt Content shows no blog posts (`_content_posts` table missing), delete `.nuxt` and `.data` directories and restart.
+**Always self-verify with Playwright screenshots.** After starting the dev server, use `npx playwright screenshot` to check pages yourself — don't rely on the user to confirm visually.
+
+If Nuxt Content serves an empty page (`no such table: _content_index` / `_content_posts` in the dev log), clear the caches and regenerate types before restarting:
+
+```bash
+rm -rf packages/blog/.nuxt packages/blog/.data
+pnpm --filter @chris-towles/blog exec nuxt prepare  # regenerates .nuxt/tsconfig.app.json
+pnpm dev
+```
+
+The `nuxt prepare` step is not optional. `pnpm dev` runs `ui-bundle:build` first, and that Vite build reads `.nuxt/tsconfig.app.json` — which the `rm -rf` just deleted. Skip it and the dev server dies with `Tsconfig not found`, which looks unrelated to the cache clear that caused it.
 
 **Never accept pre-existing test failures.** When E2E, integration, or unit tests fail — even if the failures appear unrelated to your current work — fix them immediately. Every test in the suite must pass. Broken tests are not "pre-existing conditions" to work around; they are bugs to fix as soon as discovered.
 
