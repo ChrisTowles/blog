@@ -14,12 +14,6 @@
       "port": 8081
     },
     {
-      "name": "slides",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@chris-towles/slides", "dev"],
-      "port": 3030
-    },
-    {
       "name": "all",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["dev"],

@@ -133,8 +133,8 @@ test.describe('Agent SDK Integration', () => {
     await chatInput.waitFor({ state: 'visible', timeout: 10000 });
 
     // Type a message that would trigger skill lookup
-    await chatInput.fill('How do I create a presentation with slidev?');
-    await expect(chatInput).toHaveValue('How do I create a presentation with slidev?');
+    await chatInput.fill('How do I write a blog post in your voice?');
+    await expect(chatInput).toHaveValue('How do I write a blog post in your voice?');
   });
 
   test('submit button is enabled when input has text', async ({ page }) => {
@@ -183,17 +183,17 @@ test.describe('Agent SDK Integration', () => {
     await page.goto('/chat', { waitUntil: 'networkidle' });
 
     const chatInput = page.getByTestId(TEST_IDS.CHAT.INPUT);
-    // Query that should match the slidev skill
-    await chatInput.fill('Help me create a presentation about Vue.js');
+    // Query that should match the brand-voice / blog-content-architect skills
+    await chatInput.fill('Help me draft a blog post about Vue.js');
 
     const submitButton = page.getByTestId(TEST_IDS.CHAT.SUBMIT);
     await submitButton.click();
 
     await page.waitForURL(/\/chat\/[a-zA-Z0-9-]+/, { timeout: 15000 });
 
-    // Agent SDK should have loaded the slidev skill
+    // Agent SDK should have loaded the blog-writing skills
     // Check for skill-related content in response
     const response = page.getByTestId(TEST_IDS.CHAT.MESSAGE_LIST);
-    await expect(response).toContainText(/slidev|presentation|slides/i, { timeout: 60000 });
+    await expect(response).toContainText(/blog|post|draft|voice/i, { timeout: 60000 });
   });
 });

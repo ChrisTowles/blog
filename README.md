@@ -1,6 +1,6 @@
 # Chris Towles Blog
 
-![cicd badge](https://github.com/ChrisTowles/blog/actions/workflows/ci.yml/badge.svg?branch=main)
+![cicd badge](https://github.com/ChrisTowles/blog/actions/workflows/test.yml/badge.svg?branch=main)
 
 This is just my personal blog at <https://Chris.Towles.dev>
 
@@ -14,63 +14,6 @@ This is just my personal blog at <https://Chris.Towles.dev>
   - `aws configure sso`
 - [Claude Code Docs](https://code.claude.com/docs/en/claude_code_docs_map.md)
 - [Hosting & Deployment](docs/hosting.md)
-
--
-
-## Claude Code Plugin Marketplace
-
-This repo is also a [Claude Code](https://docs.anthropic.com/en/docs/claude-code) plugin marketplace.
-
-> These plugins used to live in a separate repo ([towles-tool](https://github.com/ChrisTowles/towles-tool)), but I got tired of updating two repos. Monorepo it is.
-
-### Available Plugins
-
-| Plugin          | Commands/Hooks             | Description                           |
-| --------------- | -------------------------- | ------------------------------------- |
-| `tt-core`       | `/tt:commit`, `/tt:refine` | Git commit generator, text refinement |
-| `notifications` | Stop hook                  | Audio notification when Claude stops  |
-
-### Adding a Marketplace
-
-```bash
-# From GitHub repo
-claude plugin marketplace add ChrisTowles/blog
-
-# From local directory
-claude plugin marketplace add ./
-
-# List marketplaces
-claude plugin marketplace list
-
-# Update
-claude plugin marketplace update towles-tool
-
-
-```
-
-### Adding a Plugin
-
-```bash
-
-# Example
-claude plugin install tt@towles-tool --scope user
-```
-
-Scopes: `user` (~/.claude/), `project` (.claude/), `local` (current dir)
-
-### Plugin Structure
-
-```
-.claude-plugin/
-└── marketplace.json          # Marketplace config
-packages/claude-plugins/
-├── tt-core/
-│   ├── .claude-plugin/plugin.json
-│   └── commands/             # Skill definitions
-└── notifications/
-    ├── .claude-plugin/plugin.json
-    └── hooks/                # Hook scripts
-```
 
 ## Blog Tech Stack
 

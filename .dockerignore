@@ -49,7 +49,6 @@ coverage
 tsconfig.json
 
 # Slides package (not needed for blog)
-packages/slides
 
 # Infrastructure
 infra
