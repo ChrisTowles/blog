@@ -176,8 +176,11 @@ jobs:
           # gcloud run services update returns when the revision is created,
           # not when it serves traffic; first request also pays cold start +
           # the boot DB migration. Retry instead of a single shot.
-          echo "Smoke testing ${URL} (retry up to ~4 min)..."
-          for i in $(seq 1 24); do
+          # Window must outlast the container's boot-migration retry budget
+          # (MIGRATE_MAX_ATTEMPTS * MIGRATE_RETRY_DELAY, default ~3 min in
+          # infra/container/entrypoint.sh) plus image pull and cold start.
+          echo "Smoke testing ${URL} (retry up to ~6 min)..."
+          for i in $(seq 1 36); do
             STATUS=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$URL" || echo 000)
             echo "  [attempt $i] HTTP ${STATUS}"
             if [ "$STATUS" -eq 200 ]; then
