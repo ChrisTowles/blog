@@ -51,6 +51,10 @@ export const TEST_IDS = {
     AVIATION_LINK: 'nav-aviation',
     POKER_LINK: 'nav-poker',
     APPS_LINK: 'nav-apps',
+    ABOUT_LINK: 'nav-about',
+  },
+  ABOUT: {
+    PAGE: 'about-page',
   },
   SEARCH: {
     PAGE: 'search-page',

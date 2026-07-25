@@ -4,6 +4,26 @@ import { TEST_IDS } from '~~/shared/test-ids';
 const route = useRoute();
 const { loggedIn } = useUserSession();
 
+// The nav carries 10 top-level items, which need ~1400px to sit on one line.
+// Nuxt UI collapses to the mobile menu at `lg` (1024px), so between 1024 and
+// that width the desktop nav overflowed and clipped the Sign in button. Move
+// the switch to `2xl` (1536px): below it the existing #body menu lists every
+// item vertically, so nothing is lost.
+//
+// Two constraints forced `2xl` specifically. These classes are *merged* with
+// the theme defaults rather than replacing them, so each must restate the
+// `lg:` variant to override it. And the override must use a named breakpoint —
+// an arbitrary `min-[1400px]:` variant sorts before the named ones in the
+// generated CSS, so `lg:hidden` would win at wide viewports and hide the nav
+// entirely (verified: it did).
+const headerUi = {
+  left: 'flex items-center gap-1.5 lg:flex-none 2xl:flex-1',
+  center: 'hidden lg:hidden 2xl:flex',
+  right: 'flex items-center justify-end gap-1.5 lg:flex-none 2xl:flex-1',
+  toggle: 'block lg:block 2xl:hidden',
+  content: 'block lg:block 2xl:hidden',
+  overlay: 'block lg:block 2xl:hidden',
+};
 const items = computed(() => [
   {
     label: 'Home',
@@ -18,6 +38,13 @@ const items = computed(() => [
     icon: 'i-lucide-notebook-text',
     active: route.path.startsWith('/blog'),
     'data-testid': TEST_IDS.NAVIGATION.BLOG_LINK,
+  },
+  {
+    label: 'About',
+    to: '/about',
+    icon: 'i-lucide-user',
+    active: route.path === '/about',
+    'data-testid': TEST_IDS.NAVIGATION.ABOUT_LINK,
   },
   {
     label: 'Apps',
@@ -82,7 +109,7 @@ const items = computed(() => [
 </script>
 
 <template>
-  <UHeader>
+  <UHeader :ui="headerUi">
     <template #left>
       <LogoAndHeader />
     </template>
