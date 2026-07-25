@@ -4,9 +4,8 @@
  *
  * Each test registers a fixture CSV, runs the pure transform against an
  * in-process DuckDB, then asserts row counts, column presence, types, and
- * key derivations. The 11 scenarios below trace back 1:1 to the Unit 1
- * Test Scenarios in docs/plans/2026-04-14-001-feat-mcp-ui-in-chat-plan.md
- * (lines 289-301).
+ * key derivations. See docs/aviation-schema.md for the column-level schema
+ * these assertions track.
  */
 
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';

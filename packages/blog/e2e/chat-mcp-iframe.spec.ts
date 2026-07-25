@@ -9,7 +9,7 @@
  * Full starter → MCP → iframe happy path requires a deployed sandbox proxy
  * (sandbox.towles.dev) + a real Anthropic LLM call for ask_aviation, both
  * of which are outside the hermetic dev-server surface. Those are verified
- * end-to-end in the cross-host matrix (docs/plans/2026-04-14-001-cross-host-test-matrix.md).
+ * end-to-end manually against the deployed sandbox.
  */
 
 import { test, expect } from '@playwright/test';

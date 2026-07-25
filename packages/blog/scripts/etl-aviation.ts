@@ -1,8 +1,8 @@
 /**
  * ETL: Aviation demo dataset → Parquet → GCS
  *
- * Unit 1 of the MCP UI-in-Chat aviation demo plan
- * (docs/plans/2026-04-14-001-feat-mcp-ui-in-chat-plan.md).
+ * Feeds the aviation MCP demo; see docs/aviation-schema.md for the
+ * column-level schema this produces.
  *
  * Downloads three public-domain sources, transforms CSVs to Parquet via DuckDB
  * in-process, then uploads to a private GCS bucket that the MCP server reads
@@ -440,7 +440,7 @@ MCP UI-in-Chat demo (github.com/ChrisTowles/blog).
                 public use of the OpenFlights subset of this bucket must
                 preserve this attribution.
 
-See docs/plans/2026-04-14-001-aviation-schema.md in the blog repo for the
+See docs/aviation-schema.md in the blog repo for the
 full column-level schema.
 `;
 
