@@ -125,6 +125,15 @@ jobs:
       AWS_ACCESS_KEY_ID: ci-placeholder
       AWS_SECRET_ACCESS_KEY: ci-placeholder
 
+      # requireAviationGcsCredentials (server/utils/mcp/aviation/duckdb.ts)
+      # throws without these, and that failure surfaces on *every* route — the
+      # probe caught `GET /` returning 500 with this exact message, not just
+      # the aviation pages. Presence is all the check tests, so placeholders
+      # get the server serving; the specs that actually query the private
+      # bucket over DuckDB httpfs still need real credentials.
+      GCS_HMAC_KEY_ID: ci-placeholder
+      GCS_HMAC_SECRET: ci-placeholder
+
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
