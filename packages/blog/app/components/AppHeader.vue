@@ -20,6 +20,13 @@ const items = computed(() => [
     'data-testid': TEST_IDS.NAVIGATION.BLOG_LINK,
   },
   {
+    label: 'Apps',
+    to: '/apps',
+    icon: 'i-lucide-layout-grid',
+    active: route.path.startsWith('/apps'),
+    'data-testid': TEST_IDS.NAVIGATION.APPS_LINK,
+  },
+  {
     label: 'Workflows',
     to: '/workflows',
     icon: 'i-lucide-workflow',
@@ -60,6 +67,13 @@ const items = computed(() => [
     icon: 'i-lucide-spade',
     active: route.path.startsWith('/poker'),
     'data-testid': TEST_IDS.NAVIGATION.POKER_LINK,
+  },
+  {
+    label: 'Loan Review',
+    to: '/loan',
+    icon: 'i-lucide-file-text',
+    active: route.path.startsWith('/loan'),
+    'data-testid': TEST_IDS.NAVIGATION.LOAN_LINK,
   },
   ...(loggedIn.value
     ? [

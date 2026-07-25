@@ -10,7 +10,7 @@ packages/
 │   ├── app/        # Client-side: components, composables, pages
 │   ├── server/     # Server-side: API routes, utils, database
 │   └── shared/     # Types shared between client and server
-├── slides/         # Slidev presentations
+├── layers/         # Nuxt layers (typing, workflows)
 mcp/                # MCP Apps (SEP-1865) iframe host — separate Cloud Run service at sandbox.towles.dev
 infra/              # infrastructure
     container/       # block docker files (blog.Dockerfile, mcp.Dockerfile)

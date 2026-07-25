@@ -13,7 +13,7 @@ dotenv.config({
 });
 
 export default defineNuxtConfig({
-  extends: ['../layers/workflows', '../layers/typing', '../layers/cog-playground'],
+  extends: ['../layers/workflows', '../layers/typing'],
 
   modules: [
     '@nuxt/image',
@@ -112,9 +112,6 @@ export default defineNuxtConfig({
     // to keep the route's initial chunk slim and avoid running PIXI on the server.
     '/poker': { ssr: false },
     '/poker/**': { ssr: false },
-    // Old /mini-cog URL — page moved under /cog-playground when the layer was renamed.
-    '/mini-cog': { redirect: { to: '/cog-playground/mini-cog', statusCode: 301 } },
-    '/mini-cog/**': { redirect: { to: '/cog-playground/mini-cog', statusCode: 301 } },
   },
 
   future: {
