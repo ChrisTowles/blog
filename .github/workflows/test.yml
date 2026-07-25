@@ -97,6 +97,34 @@ jobs:
       # green run.
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
+      # server/plugins/00-otel-sdk.ts throws when this is unset — deliberately,
+      # so misconfigured telemetry fails loudly rather than silently dropping
+      # spans. That check stays strict; CI just supplies a value. Without it
+      # the Nitro app never finishes starting, so Vite binds the port and logs
+      # "Local: http://..." while every request hangs unanswered — which reads
+      # as a Playwright webServer timeout with no output, not as a crash.
+      # Nothing listens on 4318 here; the exporter's failed sends are batched
+      # and swallowed, which is fine for a test run.
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://127.0.0.1:4318
+      OTEL_SERVICE_NAME: blog-ci
+      OTEL_DEPLOYMENT_ENV: ci
+
+      # nuxt-auth-utils rejects a session password under 32 characters.
+      NUXT_SESSION_PASSWORD: ci-e2e-session-password-not-a-real-secret
+
+      # server/utils/ai/anthropic.ts runs envSchema.parse(process.env) when it
+      # builds the client, so every one of these must be present or the AI
+      # routes throw. Placeholders: no spec performs a real OAuth round-trip,
+      # and Braintrust/Bedrock calls are not exercised by the specs that run.
+      BRAINTRUST_API_KEY: ci-placeholder
+      BRAINTRUST_PROJECT_NAME: blog-ci
+      NUXT_OAUTH_GITHUB_CLIENT_ID: ci-placeholder
+      NUXT_OAUTH_GITHUB_CLIENT_SECRET: ci-placeholder
+      NUXT_OAUTH_GOOGLE_CLIENT_ID: ci-placeholder
+      NUXT_OAUTH_GOOGLE_CLIENT_SECRET: ci-placeholder
+      AWS_ACCESS_KEY_ID: ci-placeholder
+      AWS_SECRET_ACCESS_KEY: ci-placeholder
+
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
