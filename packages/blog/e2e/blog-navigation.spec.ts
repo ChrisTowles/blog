@@ -3,7 +3,7 @@ import { TEST_IDS } from '~~/shared/test-ids';
 
 test.describe('Blog Navigation', () => {
   test('home page loads with blog posts', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
+    await page.goto('/');
 
     // Check that blog post list section is visible on home page
     const postListSection = page.getByTestId(TEST_IDS.BLOG.POST_LIST_SECTION);
@@ -15,7 +15,7 @@ test.describe('Blog Navigation', () => {
   });
 
   test('navigate from home to blog list via nav link', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
+    await page.goto('/');
 
     // Click blog link in navigation
     const blogLink = page.getByTestId(TEST_IDS.NAVIGATION.BLOG_LINK).first();
