@@ -97,6 +97,12 @@ pnpm dev
 
 The `nuxt prepare` step is not optional. `pnpm dev` runs `ui-bundle:build` first, and that Vite build reads `.nuxt/tsconfig.app.json` — which the `rm -rf` just deleted. Skip it and the dev server dies with `Tsconfig not found`, which looks unrelated to the cache clear that caused it.
 
+**What actually causes it: running `nuxt typecheck` while a dev server is up.** Typecheck regenerates `.nuxt`; the dev server reloads mid-write and a native addon (better-sqlite3 / duckdb) aborts the process — `terminate called after throwing an instance of 'Napi::Error'`, core dumped. It comes back missing the content tables, and because `index.vue` is wrapped in `v-if="page"` the home page renders blank, so it looks like a content bug rather than a crash.
+
+Pre-commit used to run `pnpm typecheck` on every commit, which killed the dev server routinely. It now runs `pnpm typecheck:precommit` (`scripts/typecheck-precommit.ts`), which skips typecheck when something is listening on `UI_PORT`. CI typechecks every push and PR, so this stays enforced. Two approaches were tried and rejected, both documented in that script: detecting the server by process name (`pgrep -f "nuxt.mjs dev"` matches the hook's own shell), and giving typecheck its own `buildDir` (a fresh build dir makes nuxt-og-image emit an empty template union, so `defineOgImage('SaaS', ...)` fails as `never`).
+
+So: don't run `pnpm typecheck` by hand with `pnpm dev` running. Stop the server first, or let CI do it.
+
 **Never accept pre-existing test failures.** When E2E, integration, or unit tests fail — even if the failures appear unrelated to your current work — fix them immediately. Every test in the suite must pass. Broken tests are not "pre-existing conditions" to work around; they are bugs to fix as soon as discovered.
 
 ## Pre-commit Hooks
