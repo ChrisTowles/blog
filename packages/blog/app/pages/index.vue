@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { TEST_IDS } from '~~/shared/test-ids';
+import { experiments } from '~/utils/experiments';
 
 const { data: page } = await useAsyncData('index', () => queryCollection('index').first());
 
@@ -13,7 +14,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <div v-if="page">
+  <div v-if="page" :data-testid="TEST_IDS.HOME.PAGE">
     <UPageHero :description="page.hero.description" :links="page.hero.links">
       <template #title>
         <span class="font-bold text-(--ui-text-highlighted)">
@@ -30,6 +31,28 @@ useSeoMeta({
 
     <USeparator />
 
+    <UPageSection
+      title="Things I've built"
+      description="Most of these run right here on this domain. Poke at any of them."
+      :data-testid="TEST_IDS.HOME.EXPERIMENTS"
+    >
+      <UPageGrid>
+        <UPageCard
+          v-for="item in experiments"
+          :key="item.to"
+          :title="item.title"
+          :description="item.description"
+          :icon="item.icon"
+          :to="item.to"
+          :target="item.external ? '_blank' : undefined"
+          :data-testid="item.testId"
+          spotlight
+        />
+      </UPageGrid>
+    </UPageSection>
+
+    <USeparator />
+
     <UContainer>
       <UPageHeader
         class="py-[50px]"
@@ -40,27 +63,5 @@ useSeoMeta({
         <BlogPostList />
       </UPageBody>
     </UContainer>
-
-    <USeparator />
-
-    <UPageSection :title="page.features.title" :description="page.features.description">
-      <UPageGrid>
-        <UPageCard
-          v-for="(item, index) in page.features.items"
-          :key="index"
-          v-bind="item"
-          spotlight
-        />
-      </UPageGrid>
-    </UPageSection>
-
-    <USeparator />
-
-    <UPageSection :title="page.logos.title" />
-    <UMarquee :repeat="6" pause-on-hover class="pb-8">
-      <ULink v-for="x in page.logos.links" :key="x.label" as="button" :to="x.to">
-        <UIcon :to="x.to" :name="x.icon" class="size-10 shrink-0" />
-      </ULink>
-    </UMarquee>
   </div>
 </template>

@@ -44,31 +44,16 @@ export default defineContentConfig({
     index: defineCollection({
       source: '0.index.yml',
       type: 'data',
+      // The home page is the hero plus the experiment grid, and that grid is
+      // code (app/utils/experiments.ts) rather than content — it needs test IDs
+      // and an external-link flag. So all this collection still carries is the
+      // hero copy.
       schema: z.object({
         title: z.string().nonempty(),
         description: z.string().nonempty(),
-        hero: sectionSchema.extend({
-          headline: z.object({
-            label: z.string().nonempty(),
-            to: z.string().nonempty(),
-            icon: z.string().nonempty(),
-          }),
+        hero: z.object({
+          ...baseSchema,
           links: z.array(linkSchema),
-        }),
-        logos: z.object({
-          title: z.string().nonempty(),
-
-          links: z.array(
-            z.object({
-              label: z.string().nonempty(),
-              icon: z.string().nonempty(),
-              to: z.string().nonempty(),
-            }),
-          ),
-        }),
-
-        features: sectionSchema.extend({
-          items: z.array(featureItemSchema),
         }),
       }),
     }),

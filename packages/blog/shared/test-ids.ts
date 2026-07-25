@@ -42,16 +42,26 @@ export const TEST_IDS = {
     FOOTER: 'app-footer',
     HOME_LINK: 'nav-home',
     BLOG_LINK: 'nav-blog',
-    WORKFLOWS_LINK: 'nav-workflows',
-    CHAT_LINK: 'nav-chat',
+    SEARCH_LINK: 'nav-search',
+    ABOUT_LINK: 'nav-about',
     USER_MENU: 'user-menu',
     LOGIN_BUTTON: 'login-button',
     THEME_TOGGLE: 'theme-toggle',
-    TYPING_LINK: 'nav-typing',
-    AVIATION_LINK: 'nav-aviation',
-    POKER_LINK: 'nav-poker',
-    APPS_LINK: 'nav-apps',
-    ABOUT_LINK: 'nav-about',
+  },
+  // The header nav is deliberately four items. Every other route is reached
+  // through the experiment grid on the home page, so these are the IDs tests
+  // use to prove a page is still discoverable.
+  HOME: {
+    PAGE: 'home-page',
+    EXPERIMENTS: 'home-experiments',
+    EXPERIMENT_TOWLES_TOOL: 'home-experiment-towles-tool',
+    EXPERIMENT_CHAT: 'home-experiment-chat',
+    EXPERIMENT_AVIATION: 'home-experiment-aviation',
+    EXPERIMENT_SEARCH: 'home-experiment-search',
+    EXPERIMENT_TYPING: 'home-experiment-typing',
+    EXPERIMENT_WORKFLOWS: 'home-experiment-workflows',
+    EXPERIMENT_POKER: 'home-experiment-poker',
+    EXPERIMENT_APPS: 'home-experiment-apps',
   },
   ABOUT: {
     PAGE: 'about-page',
@@ -116,6 +126,7 @@ export const TEST_IDS = {
     SIGN_IN_CTA: 'typing-sign-in-cta',
   },
   AVIATION: {
+    PAGE: 'aviation-page',
     STARTER_QUESTIONS: 'aviation-starter-questions',
     STARTER_QUESTION_BUTTON: 'aviation-starter-question',
     UI_RESOURCE: 'aviation-ui-resource',

@@ -21,9 +21,9 @@ test.describe('Typing app — anonymous flow', () => {
     const cards = page.getByTestId(TEST_IDS.TYPING.LESSON_CARD);
     await expect(cards.first()).toBeVisible();
 
-    // Pick the first stage 1 lesson.
-    const firstStartLink = cards.first().getByRole('link', { name: /start lesson/i });
-    await firstStartLink.click();
+    // Pick the first stage 1 lesson. The card itself is the NuxtLink — the
+    // "Start →" pill inside it is a span, not a nested link.
+    await cards.first().click();
 
     // Lesson runner visible.
     const runner = page.getByTestId(TEST_IDS.TYPING.LESSON_RUNNER);
@@ -60,7 +60,7 @@ test.describe('Typing app — anonymous flow', () => {
     // Lesson complete card appears.
     const complete = page.getByTestId(TEST_IDS.TYPING.LESSON_COMPLETE);
     await expect(complete).toBeVisible({ timeout: 10_000 });
-    await expect(complete).toContainText(/Nice work/i);
+    await expect(complete).toContainText(/Lesson cleared/i);
   });
 
   test('progress persists across reload via localStorage', async ({ page }) => {
