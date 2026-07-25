@@ -126,4 +126,3 @@ Run `pnpm install` to install dependencies including promptfoo CLI.
 
 - [Promptfoo Documentation](https://www.promptfoo.dev/)
 - [Anthropic API Docs](https://docs.anthropic.com/)
-- [Project Plan](../../docs/tasks/2026-01-03-promptfoo-integration/plan.md)

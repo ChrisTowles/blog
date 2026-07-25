@@ -1,8 +1,7 @@
 # MCP Aviation — Operational Notes
 
 Operational reference for `/mcp/aviation` co-hosted on the blog Cloud Run
-service. Complements the architectural plan at
-`docs/plans/2026-04-14-001-feat-mcp-ui-in-chat-plan.md`.
+service. See `docs/aviation-schema.md` for the dataset's column-level schema.
 
 ## Cloud Run posture
 

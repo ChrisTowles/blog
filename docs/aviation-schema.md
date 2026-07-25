@@ -3,7 +3,6 @@ title: 'Aviation Demo Dataset Schema'
 type: reference
 status: active
 date: 2026-04-14
-plan: docs/plans/2026-04-14-001-feat-mcp-ui-in-chat-plan.md
 ---
 
 # Aviation Demo Dataset Schema

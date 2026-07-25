@@ -2,7 +2,7 @@
  * LLM prompt + structured-output schema for ask_aviation.
  *
  * Scoping strategy: the schema described in
- *   docs/plans/2026-04-14-001-aviation-schema.md
+ *   docs/aviation-schema.md
  * is re-expressed here as a compact, instruction-tuned block. We deliberately
  * inline *every* column the LLM is allowed to reference and *every* Parquet URL
  * prefix. The sql-safety layer is the final enforcer, but the prompt aims for
