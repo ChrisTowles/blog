@@ -12,6 +12,8 @@ export type Experiment = {
    * actually serves.
    */
   external?: boolean;
+  /** Takes a wider cell in the home grid. Nothing else about the card changes. */
+  featured?: boolean;
 };
 
 /**
@@ -24,11 +26,12 @@ export const experiments: Experiment[] = [
   {
     title: 'Towles Tool',
     description:
-      'A CLI and Claude Code plugin for running several coding agents at once — git worktree tasks, a kanban board to see which agent needs input, and an autonomous loop that keeps going without me.',
+      "Where I test out interface ideas for working with coding agents. One git worktree per task, a kanban board instead of tabbing through terminals to find the one that's stuck, a loop that keeps going unattended. A CLI and a Claude Code plugin.",
     icon: 'i-lucide-terminal',
     to: 'https://github.com/ChrisTowles/towles-tool',
     testId: TEST_IDS.HOME.EXPERIMENT_TOWLES_TOOL,
     external: true,
+    featured: true,
   },
   {
     title: 'Agentic chat',

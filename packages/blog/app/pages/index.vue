@@ -37,6 +37,8 @@ useSeoMeta({
       :data-testid="TEST_IDS.HOME.EXPERIMENTS"
     >
       <UPageGrid>
+        <!-- UPageGrid is 1/2/3 columns. `sm:col-span-2` gives the featured card
+             the full row at sm and two of the three columns from lg up. -->
         <UPageCard
           v-for="item in experiments"
           :key="item.to"
@@ -46,6 +48,8 @@ useSeoMeta({
           :to="item.to"
           :target="item.external ? '_blank' : undefined"
           :data-testid="item.testId"
+          :class="item.featured ? 'sm:col-span-2' : undefined"
+          :ui="item.featured ? { title: 'text-xl', description: 'text-base' } : undefined"
           spotlight
         />
       </UPageGrid>
