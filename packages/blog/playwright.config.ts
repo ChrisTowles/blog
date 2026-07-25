@@ -17,7 +17,18 @@ if (packageEnv) {
 // became "http://localhost:undefined". Locally `tt` renders UI_PORT into .env
 // (3000-3019), which the dotenv load above picks up.
 const uiPort = process.env.UI_PORT || '3000';
-const baseURL = `http://localhost:${uiPort}`;
+
+// Nuxt's dev server binds the IPv6 loopback ([::1]) when given the default
+// host. On a GitHub runner `localhost` resolves to 127.0.0.1 first, so
+// Playwright polled IPv4, Nuxt listened on IPv6, and the two never met —
+// `Timed out waiting 300000ms from config.webServer` after five minutes with
+// no request ever reaching the (perfectly healthy) server.
+//
+// Pin both sides to IPv4 in CI: `--host 127.0.0.1` below binds it, and this
+// host is what Playwright dials. Locally, `localhost` is left alone so a
+// dev server started by hand is still reused.
+const uiHost = process.env.CI ? '127.0.0.1' : 'localhost';
+const baseURL = `http://${uiHost}:${uiPort}`;
 
 export default defineConfig({
   testDir: './e2e',
@@ -31,6 +42,11 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 1,
   // Unbounded local workers oversubscribe the on-demand-compiling dev server
   // and produce rotating timeout failures; 4 keeps runs reliable.
+  //
+  // If local runs start failing anyway, suspect accumulated data before
+  // parallelism: several specs create workflow rows and don't clean up, so
+  // repeated local runs degrade against a long-lived database. CI is immune —
+  // it gets a fresh Postgres service container per run.
   workers: process.env.CI ? 1 : 4,
   reporter: 'html',
   // The dev server compiles routes on demand, so the first hit on a route can
@@ -61,7 +77,7 @@ export default defineConfig({
     // build as their own steps. So there it starts Nuxt directly, which is
     // exactly the part `pnpm dev` would have contributed.
     command: process.env.CI
-      ? 'pnpm --filter @chris-towles/blog exec nuxt dev'
+      ? `pnpm --filter @chris-towles/blog exec nuxt dev --host ${uiHost}`
       : `UI_PORT=${uiPort} bun run dev`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
