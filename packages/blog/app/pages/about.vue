@@ -39,6 +39,12 @@ useSeoMeta({
           didn't. The failures are usually the more useful half.
         </p>
         <p>
+          Lately that's meant Rust. Towles Tool started as a TypeScript CLI and is being rewritten
+          as a Tauri desktop app, which turned out to be the good kind of hard — the borrow checker
+          rejects the sloppy version of the design before it reaches runtime, and I keep finding the
+          argument was right.
+        </p>
+        <p>
           This site is also where I test things. Everything listed below runs in production on this
           domain — the chat, the MCP server, the search, the typing app. If something here looks
           interesting,
@@ -68,7 +74,17 @@ useSeoMeta({
           :icon="item.icon"
           :to="item.to"
           spotlight
-        />
+        >
+          <template #footer>
+            <UBadge
+              :label="item.language"
+              color="neutral"
+              variant="subtle"
+              size="sm"
+              :data-testid="TEST_IDS.ABOUT.EXPERIMENT_LANGUAGE"
+            />
+          </template>
+        </UPageCard>
       </UPageGrid>
 
       <USeparator class="my-10" />

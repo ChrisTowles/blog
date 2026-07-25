@@ -51,7 +51,17 @@ useSeoMeta({
           :class="item.featured ? 'sm:col-span-2' : undefined"
           :ui="item.featured ? { title: 'text-xl', description: 'text-base' } : undefined"
           spotlight
-        />
+        >
+          <template #footer>
+            <UBadge
+              :label="item.language"
+              color="neutral"
+              variant="subtle"
+              size="sm"
+              :data-testid="TEST_IDS.HOME.EXPERIMENT_LANGUAGE"
+            />
+          </template>
+        </UPageCard>
       </UPageGrid>
     </UPageSection>
 

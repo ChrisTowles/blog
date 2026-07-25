@@ -7,6 +7,13 @@ export type Experiment = {
   to: string;
   testId: string;
   /**
+   * What it's actually written in. Shown as a badge on each card so the grid
+   * says something about the work, not just what it does. Where a second
+   * language does the interesting part (the SQL behind search, the Rust
+   * behind the Tauri shell), name both rather than only the host language.
+   */
+  language: string;
+  /**
    * Set for projects that live off this domain. The "What's running here" list
    * on /about filters these out — it only claims things this Cloud Run service
    * actually serves.
@@ -30,6 +37,7 @@ export const experiments: Experiment[] = [
     icon: 'i-lucide-terminal',
     to: 'https://github.com/ChrisTowles/towles-tool',
     testId: TEST_IDS.HOME.EXPERIMENT_TOWLES_TOOL,
+    language: 'Rust',
     external: true,
     featured: true,
   },
@@ -40,6 +48,7 @@ export const experiments: Experiment[] = [
     icon: 'i-heroicons-chat-bubble-left-right',
     to: '/chat',
     testId: TEST_IDS.HOME.EXPERIMENT_CHAT,
+    language: 'TypeScript',
   },
   {
     title: 'Aviation MCP server',
@@ -48,6 +57,7 @@ export const experiments: Experiment[] = [
     icon: 'i-heroicons-paper-airplane',
     to: '/aviation',
     testId: TEST_IDS.HOME.EXPERIMENT_AVIATION,
+    language: 'TypeScript + SQL',
   },
   {
     title: 'Hybrid RAG search',
@@ -56,6 +66,7 @@ export const experiments: Experiment[] = [
     icon: 'i-heroicons-magnifying-glass',
     to: '/search',
     testId: TEST_IDS.HOME.EXPERIMENT_SEARCH,
+    language: 'TypeScript + SQL',
   },
   {
     title: 'Typing tutor',
@@ -64,6 +75,7 @@ export const experiments: Experiment[] = [
     icon: 'i-lucide-keyboard',
     to: '/typing',
     testId: TEST_IDS.HOME.EXPERIMENT_TYPING,
+    language: 'TypeScript',
   },
   {
     title: 'Workflows',
@@ -72,6 +84,7 @@ export const experiments: Experiment[] = [
     icon: 'i-lucide-workflow',
     to: '/workflows',
     testId: TEST_IDS.HOME.EXPERIMENT_WORKFLOWS,
+    language: 'TypeScript',
   },
   {
     title: 'Poker',
@@ -80,6 +93,7 @@ export const experiments: Experiment[] = [
     icon: 'i-lucide-spade',
     to: '/poker',
     testId: TEST_IDS.HOME.EXPERIMENT_POKER,
+    language: 'TypeScript',
   },
   {
     title: 'Apps',
@@ -88,6 +102,7 @@ export const experiments: Experiment[] = [
     icon: 'i-lucide-layout-grid',
     to: '/apps',
     testId: TEST_IDS.HOME.EXPERIMENT_APPS,
+    language: 'Mixed',
   },
 ];
 
