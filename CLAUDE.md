@@ -103,6 +103,8 @@ Pre-commit used to run `pnpm typecheck` on every commit, which killed the dev se
 
 So: don't run `pnpm typecheck` by hand with `pnpm dev` running. Stop the server first, or let CI do it.
 
+**Run `pnpm prepare` from the main checkout, not a task worktree.** `simple-git-hooks` writes to `.git/hooks`, but inside a worktree `.git` is a file, so it fails with `ENOTDIR`. Git resolves hooks from the common `.git/hooks` anyway, so installing once from the main checkout covers every worktree.
+
 **Never accept pre-existing test failures.** When E2E, integration, or unit tests fail — even if the failures appear unrelated to your current work — fix them immediately. Every test in the suite must pass. Broken tests are not "pre-existing conditions" to work around; they are bugs to fix as soon as discovered.
 
 ## Pre-commit Hooks
