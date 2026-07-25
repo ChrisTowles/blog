@@ -7,12 +7,16 @@ export type Experiment = {
   to: string;
   testId: string;
   /**
-   * What it's actually written in. Shown as a badge on each card so the grid
-   * says something about the work, not just what it does. Where a second
-   * language does the interesting part (the SQL behind search, the Rust
-   * behind the Tauri shell), name both rather than only the host language.
+   * The language it's actually written in. Rendered as the lead badge on each
+   * card so the grid says something about the work, not just what it does.
    */
   language: string;
+  /**
+   * The notable tech behind it, beyond the language. Keep these to things
+   * that are load-bearing and checkable in the repo — the point is to be
+   * specific ("DuckDB", "pgvector") rather than to list every dependency.
+   */
+  stack: string[];
   /**
    * Set for projects that live off this domain. The "What's running here" list
    * on /about filters these out — it only claims things this Cloud Run service
@@ -38,6 +42,7 @@ export const experiments: Experiment[] = [
     to: 'https://github.com/ChrisTowles/towles-tool',
     testId: TEST_IDS.HOME.EXPERIMENT_TOWLES_TOOL,
     language: 'Rust',
+    stack: ['Tauri', 'TypeScript'],
     external: true,
     featured: true,
   },
@@ -49,6 +54,7 @@ export const experiments: Experiment[] = [
     to: '/chat',
     testId: TEST_IDS.HOME.EXPERIMENT_CHAT,
     language: 'TypeScript',
+    stack: ['Nuxt', 'Anthropic SDK', 'SSE'],
   },
   {
     title: 'Aviation MCP server',
@@ -57,7 +63,8 @@ export const experiments: Experiment[] = [
     icon: 'i-heroicons-paper-airplane',
     to: '/aviation',
     testId: TEST_IDS.HOME.EXPERIMENT_AVIATION,
-    language: 'TypeScript + SQL',
+    language: 'TypeScript',
+    stack: ['MCP', 'DuckDB', 'Parquet'],
   },
   {
     title: 'Hybrid RAG search',
@@ -66,7 +73,8 @@ export const experiments: Experiment[] = [
     icon: 'i-heroicons-magnifying-glass',
     to: '/search',
     testId: TEST_IDS.HOME.EXPERIMENT_SEARCH,
-    language: 'TypeScript + SQL',
+    language: 'TypeScript',
+    stack: ['Postgres', 'pgvector', 'Bedrock'],
   },
   {
     title: 'Typing tutor',
@@ -76,6 +84,7 @@ export const experiments: Experiment[] = [
     to: '/typing',
     testId: TEST_IDS.HOME.EXPERIMENT_TYPING,
     language: 'TypeScript',
+    stack: ['Vue', 'PixiJS', 'Cloud TTS'],
   },
   {
     title: 'Workflows',
@@ -85,6 +94,7 @@ export const experiments: Experiment[] = [
     to: '/workflows',
     testId: TEST_IDS.HOME.EXPERIMENT_WORKFLOWS,
     language: 'TypeScript',
+    stack: ['Vue Flow', 'Postgres'],
   },
   {
     title: 'Poker',
@@ -94,6 +104,7 @@ export const experiments: Experiment[] = [
     to: '/poker',
     testId: TEST_IDS.HOME.EXPERIMENT_POKER,
     language: 'TypeScript',
+    stack: ['PixiJS', 'Anthropic SDK'],
   },
   {
     title: 'Apps',
@@ -103,6 +114,7 @@ export const experiments: Experiment[] = [
     to: '/apps',
     testId: TEST_IDS.HOME.EXPERIMENT_APPS,
     language: 'Mixed',
+    stack: [],
   },
 ];
 

@@ -53,13 +53,17 @@ useSeoMeta({
           spotlight
         >
           <template #footer>
-            <UBadge
-              :label="item.language"
-              color="neutral"
-              variant="subtle"
-              size="sm"
-              :data-testid="TEST_IDS.HOME.EXPERIMENT_LANGUAGE"
-            />
+            <div class="flex flex-wrap gap-1.5" :data-testid="TEST_IDS.HOME.EXPERIMENT_LANGUAGE">
+              <UBadge :label="item.language" color="primary" variant="subtle" size="sm" />
+              <UBadge
+                v-for="tech in item.stack"
+                :key="tech"
+                :label="tech"
+                color="neutral"
+                variant="subtle"
+                size="sm"
+              />
+            </div>
           </template>
         </UPageCard>
       </UPageGrid>
