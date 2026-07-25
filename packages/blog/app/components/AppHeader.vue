@@ -68,13 +68,6 @@ const items = computed(() => [
     active: route.path.startsWith('/poker'),
     'data-testid': TEST_IDS.NAVIGATION.POKER_LINK,
   },
-  {
-    label: 'Loan Review',
-    to: '/loan',
-    icon: 'i-lucide-file-text',
-    active: route.path.startsWith('/loan'),
-    'data-testid': TEST_IDS.NAVIGATION.LOAN_LINK,
-  },
   ...(loggedIn.value
     ? [
         {
