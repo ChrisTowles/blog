@@ -61,3 +61,70 @@ jobs:
         run: pnpm test:integration -- --run
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+
+  e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+    # Pull requests only. Deploy calls this workflow via workflow_call, and
+    # `github.event_name` there is the deploy's own `push` — so this keeps a
+    # browser run (and a dependency on ANTHROPIC_API_KEY) off the deploy path.
+    # Everything reaches main through a PR, so this still gates every change.
+    if: github.event_name == 'pull_request'
+    # Separate job so a lint/type/unit failure reports in seconds instead of
+    # waiting on a browser run, and so the two use different service setups.
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      # playwright.config.ts falls back to 3000, but Nuxt reads UI_PORT
+      # directly via devServer.port, so it has to be set for both to agree.
+      UI_PORT: '3000'
+      # Chat, loan and aviation specs drive the real agent loop. Without the
+      # key those tests fail rather than skip, so the secret is required for a
+      # green run.
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # `pnpm dev` would normally build these; the Playwright webServer starts
+      # Nuxt on its own in CI, so the MCP UI bundles have to be built here or
+      # the aviation iframe specs load nothing.
+      - name: Build MCP UI bundles
+        run: pnpm ui-bundle:build
+
+      - name: Run Migrations
+        run: pnpm db:migrate
+
+      - name: Install Playwright browser
+        run: pnpm --filter @chris-towles/blog exec playwright install --with-deps chromium
+
+      - name: E2E Tests
+        run: pnpm test:e2e
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: packages/blog/playwright-report/
+          retention-days: 7
