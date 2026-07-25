@@ -2,6 +2,7 @@
 import dotenv from 'dotenv';
 import { findUpSync } from 'find-up';
 import 'zx/globals';
+import { consola } from 'consola';
 
 dotenv.config({
   path: findUpSync('.env')!,
@@ -19,7 +20,7 @@ const TEST_UI_PORT = parseInt(process.env.UI_PORT!) + 50; // Use a different por
 const MAX_WAIT = 60;
 
 function printUsage() {
-  console.log(`
+  consola.log(`
 Usage:
   build.ts test [environment] [--keep]    - Build and test container locally
   build.ts deploy <environment>           - Build, push and deploy to GCP Cloud Run
@@ -41,12 +42,12 @@ Examples:
 }
 
 async function cleanup() {
-  console.log(chalk.yellow('\n🧹 Stopping and removing container...'));
+  consola.start('Stopping and removing container...');
   await $`docker rm -f ${CONTAINER_NAME}`.quiet().nothrow();
 }
 
 async function waitForHealthy(): Promise<boolean> {
-  console.log(chalk.yellow('\n⏳ Waiting for container to be ready...'));
+  consola.start('Waiting for container to be ready...');
 
   const startTime = Date.now();
   let elapsed = 0;
@@ -57,7 +58,7 @@ async function waitForHealthy(): Promise<boolean> {
       .quiet()
       .nothrow();
     if (!psResult.stdout.includes(CONTAINER_NAME)) {
-      console.log(chalk.red('❌ Container stopped unexpectedly'));
+      consola.error('Container stopped unexpectedly');
       await $`docker logs ${CONTAINER_NAME}`;
       return false;
     }
@@ -69,12 +70,12 @@ async function waitForHealthy(): Promise<boolean> {
       });
 
       if (response.ok) {
-        console.log(chalk.green('✅ Container is ready and home page is accessible!'));
-        console.log(chalk.green(`✅ Home page returned HTTP ${response.status}`));
-        console.log(chalk.green('\n🎉 All tests passed!'));
+        consola.success('Container is ready and home page is accessible');
+        consola.success(`Home page returned HTTP ${response.status}`);
+        consola.success('All tests passed');
         return true;
       } else {
-        console.log(chalk.red(`❌ Home page returned HTTP ${response.status} (expected 200)`));
+        consola.error(`Home page returned HTTP ${response.status} (expected 200)`);
         return false;
       }
     } catch {
@@ -83,24 +84,24 @@ async function waitForHealthy(): Promise<boolean> {
 
     await sleep(2000);
     elapsed = Math.floor((Date.now() - startTime) / 1000);
-    console.log(`   Waiting... ${elapsed}s / ${MAX_WAIT}s`);
+    consola.info(`Waiting... ${elapsed}s / ${MAX_WAIT}s`);
   }
 
-  console.log(chalk.red('❌ Timeout waiting for container to respond'));
-  console.log(chalk.yellow('\nContainer logs:'));
+  consola.error('Timeout waiting for container to respond');
+  consola.info('Container logs:');
   await $`docker logs ${CONTAINER_NAME}`;
   return false;
 }
 
 async function testContainer() {
   try {
-    console.log(chalk.yellow('🔨 Building Docker image...'));
+    consola.start('Building Docker image...');
     await $`docker build -f infra/container/blog.Dockerfile -t ${IMAGE_NAME} .`;
 
-    console.log(chalk.yellow('\n🧹 Cleaning up any existing container...'));
+    consola.start('Cleaning up any existing container...');
     await $`docker rm -f ${CONTAINER_NAME}`.quiet().nothrow();
 
-    console.log(chalk.yellow(`\n🚀 Starting container on port ${TEST_UI_PORT}...`));
+    consola.start(`Starting container on port ${TEST_UI_PORT}...`);
     $.verbose = true;
     // --network="host" used so when it hits localdb it'll
     await $`docker run -d --network="host" --name ${CONTAINER_NAME} --env-file .env -p ${TEST_UI_PORT}:3000 ${IMAGE_NAME}`;
@@ -110,46 +111,46 @@ async function testContainer() {
     if (!argv.keep) {
       await cleanup();
     } else {
-      console.log(chalk.yellow('\nℹ️  Skipping cleanup as requested (--keep)'));
+      consola.info('Skipping cleanup as requested (--keep)');
     }
     process.exit(success ? 0 : 1);
   } catch (error) {
-    console.error(chalk.red('❌ Error:'), error);
+    consola.error('Error:', error);
     if (!argv.keep) {
       await cleanup();
     } else {
-      console.log(chalk.yellow('\nℹ️  Skipping cleanup as requested (--keep)'));
+      consola.info('Skipping cleanup as requested (--keep)');
     }
     process.exit(1);
   }
 }
 
 async function ensureSqlRunning(projectId: string, instanceName: string) {
-  console.log(chalk.yellow(`\n🔍 Checking Cloud SQL instance state...`));
+  consola.start('Checking Cloud SQL instance state...');
   const state = (
     await $`gcloud sql instances describe ${instanceName} --project=${projectId} --format='value(state)'`.quiet()
   ).stdout.trim();
 
   if (state === 'RUNNABLE') {
-    console.log(chalk.green(`   ✓ SQL instance is running`));
+    consola.success('SQL instance is running');
     return;
   }
 
-  console.log(chalk.yellow(`   SQL instance is ${state}, starting...`));
+  consola.start(`SQL instance is ${state}, starting...`);
   await $`gcloud sql instances patch ${instanceName} --activation-policy=ALWAYS --project=${projectId}`;
-  console.log(chalk.green(`   ✓ SQL instance started`));
+  consola.success('SQL instance started');
 }
 
 async function deployContainer() {
   if (!['staging', 'prod'].includes(environment)) {
-    console.error(chalk.red('❌ Invalid environment. Use "staging" or "prod"'));
+    consola.error('Invalid environment. Use "staging" or "prod"');
     process.exit(1);
   }
 
   const terraformDir = `infra/terraform/environments`;
 
   if (!fs.existsSync(terraformDir)) {
-    console.error(chalk.red(`❌ Terraform directory not found: ${terraformDir}`));
+    consola.error(`Terraform directory not found: ${terraformDir}`);
     process.exit(1);
   }
 
@@ -164,26 +165,26 @@ async function deployContainer() {
   ].join('-');
 
   const rootDir = process.cwd();
-  console.log(chalk.yellow(`🚀 Building and pushing container for ${environment}...`));
-  console.log(chalk.yellow(`   Tag: ${dateTag}`));
+  consola.start(`Building and pushing container for ${environment}...`);
+  consola.info(`Tag: ${dateTag}`);
 
   // Step 1: Get artifact registry URL from terraform output
-  console.log(chalk.yellow('\n📦 Getting registry URL from Terraform...'));
+  consola.start('Getting registry URL from Terraform...');
   cd(terraformDir);
   await $`terraform init -backend-config=${environment}.backend.tfvars -reconfigure`.quiet();
   let registry = '';
   try {
     registry = (await $`terraform output -raw container_image_base`).stdout.trim();
   } catch {
-    console.log(chalk.yellow('⚠️  Could not get registry URL. Bootstrapping shared module...'));
+    consola.warn('Could not get registry URL. Bootstrapping shared module...');
     await $`terraform apply -target=module.shared -auto-approve -var-file=${environment}.tfvars -lock=false`; // setting -lock=false to avoid lock issues every single time.
     registry = (await $`terraform output -raw container_image_base`).stdout.trim();
   }
   cd(rootDir);
-  console.log(`   Registry: ${registry}`);
+  consola.info(`Registry: ${registry}`);
 
   // Step 2: Authenticate Docker
-  console.log(chalk.yellow('\n🔐 Authenticating Docker...'));
+  consola.start('Authenticating Docker...');
   const registryHostname = registry.split('/')[0];
   await $`gcloud auth configure-docker ${registryHostname}`;
 
@@ -201,14 +202,14 @@ async function deployContainer() {
   // Step 4: Build the image with both date tag and latest
   const imageWithDateTag = `${registry}/blog:${dateTag}`;
   const imageWithLatest = `${registry}/blog:latest`;
-  console.log(chalk.yellow(`\n🔨 Building Docker image: ${imageWithDateTag}`));
-  console.log(chalk.gray(`   Git SHA: ${gitSha}`));
-  if (gtagId) console.log(chalk.gray(`   Gtag ID: ${gtagId}`));
-  if (mcpSandboxUrl) console.log(chalk.gray(`   MCP sandbox URL: ${mcpSandboxUrl}`));
+  consola.start(`Building Docker image: ${imageWithDateTag}`);
+  consola.info(`Git SHA: ${gitSha}`);
+  if (gtagId) consola.info(`Gtag ID: ${gtagId}`);
+  if (mcpSandboxUrl) consola.info(`MCP sandbox URL: ${mcpSandboxUrl}`);
   await $`docker build -f infra/container/blog.Dockerfile --build-arg GIT_SHA=${gitSha} --build-arg BUILD_TAG=${dateTag} --build-arg NUXT_PUBLIC_GTAG_ID=${gtagId} --build-arg NUXT_PUBLIC_MCP_SANDBOX_URL=${mcpSandboxUrl} -t ${imageWithDateTag} -t ${imageWithLatest} .`;
 
   // Step 5: Push both tags
-  console.log(chalk.yellow(`\n📤 Pushing images to registry...`));
+  consola.start('Pushing images to registry...');
   await $`docker push ${imageWithDateTag}`;
   await $`docker push ${imageWithLatest}`;
 
@@ -219,7 +220,7 @@ async function deployContainer() {
   await ensureSqlRunning(projectId, instanceName);
 
   // Step 7: Update Cloud Run with the dated image
-  console.log(chalk.yellow(`\n☁️  Updating Cloud Run with new image...`));
+  consola.start('Updating Cloud Run with new image...');
   cd(terraformDir);
   $.verbose = true;
   await $`terraform apply -auto-approve -var-file=${environment}.tfvars -var="container_image=${imageWithDateTag}"`;
@@ -230,8 +231,8 @@ async function deployContainer() {
   const publicUrl =
     environment === 'staging' ? 'https://stage-chris.towles.dev' : 'https://chris.towles.dev';
 
-  console.log(chalk.green(`\n✅ Successfully deployed ${imageWithDateTag} to ${environment}!`));
-  console.log(chalk.cyan(`\n🌐 ${publicUrl}`));
+  consola.success(`Successfully deployed ${imageWithDateTag} to ${environment}`);
+  consola.box(publicUrl);
 }
 
 async function main() {
@@ -248,13 +249,13 @@ async function main() {
       await deployContainer();
       break;
     default:
-      console.error(chalk.red(`❌ Unknown command: ${command}`));
+      consola.error(`Unknown command: ${command}`);
       printUsage();
       process.exit(1);
   }
 }
 
 main().catch((err) => {
-  console.error(chalk.red('❌ Error:'), err);
+  consola.error('Error:', err);
   process.exit(1);
 });

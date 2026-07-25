@@ -1,6 +1,7 @@
 #!/usr/bin/env -S pnpx tsx
 
 import { question, $, fs } from 'zx';
+import { consola } from 'consola';
 import path from 'node:path';
 
 $.verbose = true;
@@ -27,8 +28,7 @@ function getEnvConfig(env: 'staging' | 'production') {
     'infra',
     'terraform',
     'environments',
-    tfDir,
-    'terraform.tfvars',
+    `${tfDir}.tfvars`,
   );
   const vars = parseTfvars(tfvarsPath);
 
@@ -41,9 +41,9 @@ function getEnvConfig(env: 'staging' | 'production') {
 
 async function promptEnvironment() {
   if (!process.env.ENVIRONMENT) {
-    console.log('Select environment:');
-    console.log('1) staging');
-    console.log('2) production');
+    consola.log('Select environment:');
+    consola.log('1) staging');
+    consola.log('2) production');
 
     const choice = await question('Enter choice [1-2]: ');
 
@@ -55,14 +55,14 @@ async function promptEnvironment() {
         process.env.ENVIRONMENT = 'production';
         break;
       default:
-        console.error('Invalid choice');
+        consola.error('Invalid choice');
         process.exit(1);
     }
   }
 }
 
 function usage() {
-  console.log(`Usage: ${process.argv[1]} [OPTIONS]
+  consola.log(`Usage: ${process.argv[1]} [OPTIONS]
 
 Options:
   -e, --environment ENV Environment (staging/production)
@@ -79,17 +79,17 @@ async function getLogs(options = {}) {
 
   const env = process.env.ENVIRONMENT as 'staging' | 'production';
   if (env !== 'staging' && env !== 'production') {
-    console.error(`Invalid environment: ${process.env.ENVIRONMENT}`);
+    consola.error(`Invalid environment: ${process.env.ENVIRONMENT}`);
     process.exit(1);
   }
 
   const config = getEnvConfig(env);
 
-  console.log(`Fetching logs for ${process.env.ENVIRONMENT}:`);
-  console.log(`  Project: ${config.project}`);
-  console.log(`  Service: ${config.service}`);
-  console.log(`  Region: ${config.region}`);
-  console.log();
+  consola.log(`Fetching logs for ${process.env.ENVIRONMENT}:`);
+  consola.log(`  Project: ${config.project}`);
+  consola.log(`  Service: ${config.service}`);
+  consola.log(`  Region: ${config.region}`);
+  consola.log();
 
   // Use gcloud logging read instead of gcloud run services logs (which has bugs)
   const baseFilter = `resource.type="cloud_run_revision" resource.labels.service_name="${config.service}" resource.labels.location="${config.region}"`;
@@ -149,7 +149,7 @@ for (let i = 2; i < process.argv.length; i++) {
       } else if (arg.startsWith('--filter=')) {
         filter = arg.split('=')[1];
       } else if (arg.startsWith('-')) {
-        console.error(`Unknown option: ${arg}`);
+        consola.error(`Unknown option: ${arg}`);
         usage();
       }
   }
