@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { TEST_IDS } from '~~/shared/test-ids';
 
-// const { data: navigation } = await useAsyncData('navigation', () => queryCollectionNavigation('docs'))
-
 const { data: page } = await useAsyncData('index', () => queryCollection('index').first());
 
 useSeoMeta({

@@ -11,7 +11,6 @@ const colorEnum = z.enum([
   'info',
 ]);
 const sizeEnum = z.enum(['xs', 'sm', 'md', 'lg', 'xl']);
-// const orientationEnum = z.enum(['vertical', 'horizontal'])
 
 const baseSchema = {
   title: z.string().nonempty(),
@@ -28,13 +27,6 @@ const linkSchema = z.object({
   color: colorEnum.optional(),
   variant: variantEnum.optional(),
 });
-
-// const imageSchema = z.object({
-//   src: z.string().nonempty(),
-//   alt: z.string().optional(),
-//   loading: z.string().optional(),
-//   srcset: z.string().optional()
-// })
 
 const featureItemSchema = z.object({
   ...baseSchema,
@@ -80,17 +72,6 @@ export default defineContentConfig({
         }),
       }),
     }),
-    // landing: defineCollection({
-    //   type: 'page',
-    //   source: 'index.yml'
-    // }),
-
-    // apps: defineCollection({
-    //   type: 'page',
-    //   source: 'apps/**/*.md',
-    //   schema: AppEntrySchema,
-    // }),
-
     posts: defineCollection({
       type: 'page',
       source: '2.blog/**/*',
@@ -115,7 +96,6 @@ export default defineContentConfig({
       type: 'data',
       schema: sectionSchema,
     }),
-    // --- apps
     appEntry: defineCollection({
       type: 'page',
       source: '3.apps/**/index.md',
@@ -139,6 +119,5 @@ export default defineContentConfig({
       type: 'data',
       schema: sectionSchema,
     }),
-    // end apps
   },
 });
