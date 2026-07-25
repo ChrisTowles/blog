@@ -39,10 +39,10 @@ useSeoMeta({
           didn't. The failures are usually the more useful half.
         </p>
         <p>
-          Lately that's meant Rust. Towles Tool started as a TypeScript CLI and is being rewritten
-          as a Tauri desktop app, which turned out to be the good kind of hard — the borrow checker
-          rejects the sloppy version of the design before it reaches runtime, and I keep finding the
-          argument was right.
+          Lately that's meant Rust. Towles Tool began as a Bun CLI driving tmux — one pane per
+          agent, which stopped scaling about the time I started hunting for the pane that was stuck.
+          It's now a Tauri desktop app in Rust. The borrow checker rejects the sloppy version of the
+          design before it reaches runtime, and I keep finding the argument was right.
         </p>
         <p>
           This site is also where I test things. Everything listed below runs in production on this
@@ -76,13 +76,17 @@ useSeoMeta({
           spotlight
         >
           <template #footer>
-            <UBadge
-              :label="item.language"
-              color="neutral"
-              variant="subtle"
-              size="sm"
-              :data-testid="TEST_IDS.ABOUT.EXPERIMENT_LANGUAGE"
-            />
+            <div class="flex flex-wrap gap-1.5" :data-testid="TEST_IDS.ABOUT.EXPERIMENT_LANGUAGE">
+              <UBadge :label="item.language" color="primary" variant="subtle" size="sm" />
+              <UBadge
+                v-for="tech in item.stack"
+                :key="tech"
+                :label="tech"
+                color="neutral"
+                variant="subtle"
+                size="sm"
+              />
+            </div>
           </template>
         </UPageCard>
       </UPageGrid>
