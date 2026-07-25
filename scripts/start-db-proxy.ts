@@ -1,5 +1,6 @@
 #!/usr/bin/env -S pnpx tsx
-import { $, chalk, question } from 'zx';
+import { $, question } from 'zx';
+import { consola } from 'consola';
 
 const PROXY_PORT = parseInt(process.env.PROXY_PORT || '5433');
 
@@ -11,9 +12,9 @@ const ENV_CONFIG = {
 type Environment = keyof typeof ENV_CONFIG;
 
 async function promptEnvironment(): Promise<Environment> {
-  console.log('Select environment:');
-  console.log('  1) staging');
-  console.log('  2) production');
+  consola.log('Select environment:');
+  consola.log('  1) staging');
+  consola.log('  2) production');
 
   const choice = await question('Enter choice [1-2]: ');
 
@@ -23,7 +24,7 @@ async function promptEnvironment(): Promise<Environment> {
     case '2':
       return 'production';
     default:
-      console.error(chalk.red('Invalid choice'));
+      consola.error('Invalid choice');
       process.exit(1);
   }
 }
@@ -32,7 +33,7 @@ async function main() {
   const env = await promptEnvironment();
   const { project } = ENV_CONFIG[env];
 
-  console.log(chalk.yellow(`🔑 Fetching secrets for ${env} in project ${project}...`));
+  consola.start(`Fetching secrets for ${env} in project ${project}...`);
 
   const connectionString = (
     await $`gcloud secrets versions access latest --secret="db-connection-string" --project="${project}"`
@@ -42,8 +43,8 @@ async function main() {
     await $`gcloud secrets versions access latest --secret="db-connection-name" --project="${project}"`
   ).stdout.trim();
 
-  console.log(chalk.gray(`Connection name: ${connectionName}`));
-  console.log(chalk.gray(`Connection string: ${connectionString}`));
+  consola.info(`Connection name: ${connectionName}`);
+  consola.info(`Connection string: ${connectionString}`);
 
   // Build localhost proxy URL by replacing @localhost/db?host=... with @localhost:PORT/db
   const proxyConnectionString = connectionString.replace(
@@ -51,18 +52,15 @@ async function main() {
     `@localhost:${PROXY_PORT}/$1`,
   );
 
-  console.log();
-  console.log(
-    chalk.green(`Use this connection string locally (connects via proxy on port ${PROXY_PORT}):`),
+  consola.box(
+    `Use this connection string locally (connects via proxy on port ${PROXY_PORT}):\n\n${proxyConnectionString}`,
   );
-  console.log(chalk.cyan(`  ${proxyConnectionString}`));
 
-  console.log();
-  console.log(chalk.yellow(`🔌 Starting Cloud SQL Proxy on port ${PROXY_PORT}...`));
+  consola.start(`Starting Cloud SQL Proxy on port ${PROXY_PORT}...`);
   await $`cloud-sql-proxy --port ${PROXY_PORT} ${connectionName}`;
 }
 
 main().catch((err) => {
-  console.error(chalk.red('❌ Error:'), err);
+  consola.error('Error:', err);
   process.exit(1);
 });

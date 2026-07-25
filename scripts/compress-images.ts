@@ -1,10 +1,11 @@
 #!/usr/bin/env -S pnpx tsx
 import 'zx/globals';
+import { consola } from 'consola';
 
 const files = process.argv.slice(2);
 
 if (files.length === 0) {
-  console.log(chalk.green('✅ No PNG files to compress'));
+  consola.success('No PNG files to compress');
   process.exit(0);
 }
 
@@ -12,8 +13,7 @@ async function checkPngquant(): Promise<void> {
   try {
     await $`command -v pngquant`.quiet();
   } catch {
-    console.error(chalk.red('❌ pngquant not found. Please install it:'));
-    console.error('   sudo apt-get install pngquant -y');
+    consola.error('pngquant not found. Install it with: sudo apt-get install pngquant -y');
     process.exit(1);
   }
 }
@@ -28,15 +28,14 @@ function formatBytes(bytes: number): string {
 
 async function compressImage(filePath: string): Promise<boolean> {
   if (!fs.existsSync(filePath)) {
-    console.log(chalk.yellow(`⚠️  Skipping ${filePath} (file not found)`));
+    consola.warn(`Skipping ${filePath} (file not found)`);
     return false;
   }
 
   const tempFile = filePath.replace(/\.png$/, '_temp.png');
   const originalSize = fs.statSync(filePath).size;
 
-  console.log(chalk.blue(`🔄 Processing ${path.basename(filePath)}...`));
-  console.log(`   Original size: ${formatBytes(originalSize)}`);
+  consola.start(`Processing ${path.basename(filePath)} (${formatBytes(originalSize)})`);
 
   try {
     // speed = 1 slow
@@ -48,22 +47,19 @@ async function compressImage(filePath: string): Promise<boolean> {
       const savings = originalSize - compressedSize;
       const percentSaved = Math.round((savings * 100) / originalSize);
 
-      console.log(
-        chalk.green(`   ✅ Compressed: ${formatBytes(compressedSize)} (saved ${percentSaved}%)`),
-      );
+      consola.success(`Compressed to ${formatBytes(compressedSize)} (saved ${percentSaved}%)`);
 
       await $`mv ${tempFile} ${filePath}`;
       await $`git add ${filePath}`;
 
       return true;
     } else {
-      console.log(chalk.gray('   ⏭️  No size improvement, keeping original'));
+      consola.info('No size improvement, keeping original');
       fs.unlinkSync(tempFile);
       return false;
     }
   } catch (ex) {
-    console.error(chalk.red(`   ❌ Failed to compress ${path.basename(filePath)}`));
-    console.error(ex);
+    consola.error(`Failed to compress ${path.basename(filePath)}`, ex);
     if (fs.existsSync(tempFile)) {
       fs.unlinkSync(tempFile);
     }
@@ -72,17 +68,17 @@ async function compressImage(filePath: string): Promise<boolean> {
 }
 
 async function main() {
-  console.log(chalk.yellow('🖼️  Compressing PNG images...'));
+  consola.start('Compressing PNG images...');
   await checkPngquant();
 
   const pngFiles = files.filter((file) => file.endsWith('.png'));
 
   if (pngFiles.length === 0) {
-    console.log(chalk.green('✅ No PNG files to compress'));
+    consola.success('No PNG files to compress');
     process.exit(0);
   }
 
-  console.log(chalk.blue(`📦 Found ${pngFiles.length} PNG file(s) to process...`));
+  consola.info(`Found ${pngFiles.length} PNG file(s) to process`);
 
   let processedCount = 0;
   let compressedCount = 0;
@@ -94,10 +90,10 @@ async function main() {
     }
   }
 
-  console.log(chalk.green(`✅ Processed ${processedCount} files, compressed ${compressedCount}`));
+  consola.success(`Processed ${processedCount} files, compressed ${compressedCount}`);
 }
 
 main().catch((err) => {
-  console.error(chalk.red('❌ Error:'), err);
+  consola.error('Error:', err);
   process.exit(1);
 });

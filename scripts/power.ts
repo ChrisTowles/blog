@@ -1,6 +1,7 @@
 #!/usr/bin/env -S pnpx tsx
 
 import { $, fs } from 'zx';
+import { consola } from 'consola';
 import path from 'node:path';
 
 $.verbose = true;
@@ -27,8 +28,7 @@ function getEnvConfig(env: 'staging' | 'production') {
     'infra',
     'terraform',
     'environments',
-    tfDir,
-    'terraform.tfvars',
+    `${tfDir}.tfvars`,
   );
   const vars = parseTfvars(tfvarsPath);
 
@@ -42,7 +42,7 @@ function getEnvConfig(env: 'staging' | 'production') {
 }
 
 function usage() {
-  console.log(`Usage: ${process.argv[1]} <on|off> [OPTIONS]
+  consola.log(`Usage: ${process.argv[1]} <on|off> [OPTIONS]
 
 Commands:
   on     Start Cloud SQL (Cloud Run auto-starts on first request)
@@ -60,9 +60,9 @@ come from stopping Cloud SQL when not in use.
 
 async function callPowerFunction(config: ReturnType<typeof getEnvConfig>, action: 'on' | 'off') {
   const actionLabel = action === 'on' ? 'ON' : 'OFF';
-  console.log(`\nPowering ${actionLabel} ${config.project}...\n`);
+  consola.start(`Powering ${actionLabel} ${config.project}`);
 
-  console.log(`Calling Cloud Function to ${action === 'on' ? 'start' : 'stop'} Cloud SQL...`);
+  consola.info(`Calling Cloud Function to ${action === 'on' ? 'start' : 'stop'} Cloud SQL...`);
 
   const data = JSON.stringify({ action });
   await $`gcloud functions call ${config.functionName} \
@@ -72,16 +72,16 @@ async function callPowerFunction(config: ReturnType<typeof getEnvConfig>, action
         --data ${data}`;
 
   if (action === 'on') {
-    console.log('Cloud SQL starting. Waiting for it to become available...');
+    consola.start('Cloud SQL starting. Waiting for it to become available...');
     await $`sleep 30`;
-    console.log('Cloud SQL ready.');
-    console.log('Cloud Run will start automatically on first request.\n');
+    consola.success('Cloud SQL ready.');
+    consola.info('Cloud Run will start automatically on first request.');
   } else {
-    console.log('Cloud SQL stopped.');
-    console.log('Note: Cloud Run scales to zero automatically when idle.\n');
+    consola.success('Cloud SQL stopped.');
+    consola.info('Note: Cloud Run scales to zero automatically when idle.');
   }
 
-  console.log(`Environment powered ${actionLabel.toLowerCase()}.`);
+  consola.success(`Environment powered ${actionLabel.toLowerCase()}.`);
 }
 
 // Parse arguments
@@ -108,28 +108,28 @@ for (let i = 2; i < process.argv.length; i++) {
       if (arg.startsWith('--environment=')) {
         environment = arg.split('=')[1];
       } else if (arg.startsWith('-')) {
-        console.error(`Unknown option: ${arg}`);
+        consola.error(`Unknown option: ${arg}`);
         usage();
       }
   }
 }
 
 if (!action) {
-  console.error('Error: Must specify action (on or off)');
+  consola.error('Error: Must specify action (on or off)');
   usage();
 }
 
 if (environment !== 'staging') {
-  console.error('Error: Only staging environment is supported for power control (safety)');
+  consola.error('Error: Only staging environment is supported for power control (safety)');
   process.exit(1);
 }
 
 const config = getEnvConfig(environment as 'staging');
 
-console.log(`Environment: ${environment}`);
-console.log(`  Project: ${config.project}`);
-console.log(`  Region: ${config.region}`);
-console.log(`  Cloud Run: ${config.service}`);
-console.log(`  Cloud SQL: ${config.sqlInstance}`);
+consola.log(`Environment: ${environment}`);
+consola.log(`  Project: ${config.project}`);
+consola.log(`  Region: ${config.region}`);
+consola.log(`  Cloud Run: ${config.service}`);
+consola.log(`  Cloud SQL: ${config.sqlInstance}`);
 
 await callPowerFunction(config, action);
