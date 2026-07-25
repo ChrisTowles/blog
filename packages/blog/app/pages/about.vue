@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { TEST_IDS } from '~~/shared/test-ids';
+import { hostedExperiments } from '~/utils/experiments';
 
 const appConfig = useAppConfig() as {
   author: { name: string; github: string; twitter: string; bluesky: string };
@@ -15,52 +16,6 @@ useSeoMeta({
   description,
   ogDescription: description,
 });
-
-// Everything below is running in production on this site, not a screenshot reel.
-const builds = [
-  {
-    title: 'Agentic chat',
-    description:
-      'Streaming chat over SSE with tool use, sandboxed code execution, and document generation. The agent discovers MCP tools at runtime instead of hardcoding them.',
-    icon: 'i-heroicons-chat-bubble-left-right',
-    to: '/chat',
-  },
-  {
-    title: 'Aviation MCP server',
-    description:
-      'An MCP server co-hosted with the blog, answering questions over FAA registry and BTS flight data. Same iframe renders here and in Claude Desktop.',
-    icon: 'i-heroicons-paper-airplane',
-    to: '/aviation',
-  },
-  {
-    title: 'Hybrid RAG search',
-    description:
-      'Every post is chunked, contextualized, and embedded. Search runs pgvector cosine and BM25 in parallel, then fuses the rankings.',
-    icon: 'i-heroicons-magnifying-glass',
-    to: '/search',
-  },
-  {
-    title: 'Typing tutor',
-    description:
-      'A 20-stage typing curriculum for my kids, with PixiJS games, AI-generated lessons, and mastery gates that refuse to advance until the accuracy is real.',
-    icon: 'i-lucide-keyboard',
-    to: '/typing',
-  },
-  {
-    title: 'Workflows',
-    description:
-      'A node-based editor for chaining prompts into multi-step pipelines with typed schemas between the steps.',
-    icon: 'i-lucide-workflow',
-    to: '/workflows',
-  },
-  {
-    title: 'Apps',
-    description:
-      'Most of my work lives in private repos. These are the public ones I can point at.',
-    icon: 'i-lucide-layout-grid',
-    to: '/apps',
-  },
-];
 </script>
 
 <template>
@@ -106,7 +61,7 @@ const builds = [
 
       <UPageGrid class="mt-8">
         <UPageCard
-          v-for="item in builds"
+          v-for="item in hostedExperiments"
           :key="item.to"
           :title="item.title"
           :description="item.description"

@@ -51,14 +51,15 @@ test.describe('AI Chat', () => {
   test('navigate to chat from home', async ({ page }) => {
     await page.goto('/', { waitUntil: 'networkidle' });
 
-    // Look for chat link in navigation
-    const chatLink = page.getByTestId(TEST_IDS.NAVIGATION.CHAT_LINK).first();
+    // Chat is no longer in the header nav — it's a card in the home experiment grid
+    const chatLink = page.getByTestId(TEST_IDS.HOME.EXPERIMENT_CHAT).first();
     const count = await chatLink.count();
 
     expect(count).toBe(1);
 
-    // Click the link and verify navigation
-    await chatLink.click({ waitUntil: 'networkidle' });
+    // UPageCard's <a> is zero-size; its inset-0 span is the real click target
+    await chatLink.locator('span').first().click();
+    await page.waitForLoadState('networkidle');
 
     await expect(page).toHaveURL('/chat');
   });

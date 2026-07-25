@@ -78,7 +78,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <UContainer class="py-10 space-y-10" :data-testid="TEST_IDS.NAVIGATION.AVIATION_LINK">
+  <UContainer class="py-10 space-y-10" :data-testid="TEST_IDS.AVIATION.PAGE">
     <section class="space-y-3">
       <h1 class="text-3xl sm:text-4xl text-highlighted font-bold">Aviation MCP demo</h1>
       <p class="text-muted max-w-2xl">

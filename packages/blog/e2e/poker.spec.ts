@@ -37,9 +37,9 @@ test.describe('Poker page', () => {
     await expect(nextHand).toBeVisible();
   });
 
-  test('navigation includes the poker link', async ({ page }) => {
+  test('home page links to poker', async ({ page }) => {
     await page.goto('/', { waitUntil: 'networkidle' });
-    const pokerLinks = page.getByTestId(TEST_IDS.NAVIGATION.POKER_LINK);
+    const pokerLinks = page.getByTestId(TEST_IDS.HOME.EXPERIMENT_POKER);
     await expect(pokerLinks.first()).toBeAttached();
   });
 });
