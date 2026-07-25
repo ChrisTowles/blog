@@ -12,13 +12,5 @@
     "deny": [],
     "additionalDirectories": ["/home/ctowles/code/f"]
   },
-  "hooks": {
-    "WorktreeCreate": [
-      { "hooks": [{ "type": "command", "command": "tt slot hook-create" }] }
-    ],
-    "WorktreeRemove": [
-      { "hooks": [{ "type": "command", "command": "tt slot hook-remove" }] }
-    ]
-  },
   "enabledPlugins": {}
 }
