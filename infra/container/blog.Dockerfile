@@ -86,6 +86,13 @@ RUN --mount=type=cache,id=npm,target=/root/.npm npm install sharp pg
 # Copy built application (includes migrate.mjs and migrations/ from Nitro hook)
 COPY --from=builder /app/packages/blog/.output /app/.output
 
+# duckdb ships prebuilt bindings for both Linux libc flavours and Nitro traces
+# both into .output (~70 MB each). This image is node:24-slim — glibc — so the
+# musl copy can never be loaded. Dropping it halves the largest thing in the
+# bundle. Nitro's externals.traceOptions.ignore does not exclude it: the copy
+# happens per-package once anything in it is traced.
+RUN rm -rf /app/.output/server/node_modules/@duckdb/node-bindings-linux-x64-musl
+
 # Copy content directory for Nuxt Content (raw markdown files needed at runtime)
 COPY --from=builder /app/packages/blog/content /app/content
 

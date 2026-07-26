@@ -24,7 +24,6 @@ export default defineNuxtConfig({
     'nuxt-og-image',
     '@nuxtjs/mdc',
     'nuxt-auth-utils',
-    '@nuxt/test-utils/module',
     'evlog/nuxt',
   ],
 
@@ -101,6 +100,10 @@ export default defineNuxtConfig({
     '/': { prerender: true },
     // Auth routes must NOT be pre-rendered — they are server-side OAuth handlers
     '/auth/**': { prerender: false },
+    // Admin is behind the `auth` middleware and every panel loads its data from
+    // authenticated endpoints, so a prerendered copy is a build-time cost that
+    // ships an empty shell. The crawler reached these from links on `/`.
+    '/admin/**': { prerender: false },
     // Chat pages don't need SSR (no SEO benefit, authenticated feature)
     // Note: There's a pre-existing Vite 8 beta + debug ESM issue affecting chat pages
     '/chat': { ssr: false },
@@ -158,10 +161,29 @@ export default defineNuxtConfig({
         // Ensure database output dir exists
         await mkdir(join(outputDir, 'database'), { recursive: true });
 
-        // Bundle migrate script with rollup
+        // Bundle migrate script with rollup.
+        //
+        // The resolution options are overridden rather than inherited: the
+        // tsconfig resolves to `moduleResolution: node10`, which TypeScript
+        // deprecated, so every build printed a TS5107 warning. Dropping the
+        // tsconfig entirely is not the fix — without its `paths` and generated
+        // Nuxt types the same pass emits ~550 TS2304/TS2307 errors. Keep the
+        // tsconfig, override just the resolution; output is byte-identical.
         const bundle = await rollup({
           input: join(rootDir, 'scripts/migrate.ts'),
-          plugins: [rollupResolve(), typescript({ tsconfig: join(rootDir, 'tsconfig.json') })],
+          plugins: [
+            rollupResolve(),
+            typescript({
+              tsconfig: join(rootDir, 'tsconfig.json'),
+              module: 'esnext',
+              moduleResolution: 'bundler',
+              target: 'es2022',
+              skipLibCheck: true,
+              // Types are checked by `nuxt typecheck`; this pass only emits.
+              declaration: false,
+              sourceMap: false,
+            }),
+          ],
           external: ['pg', /^node:/],
         });
         await bundle.write({
@@ -185,6 +207,17 @@ export default defineNuxtConfig({
   typescript: {
     // Note: Test files are checked by vitest, not nuxt typecheck
     // The nuxt typecheck will show false positives for test files
+  },
+
+  ogImage: {
+    // OG images render through Satori (`defineOgImage('SaaS', ...)`), never by
+    // screenshotting a real browser. Left on, the browser binding statically
+    // imports `playwright` into the server bundle, which pulled playwright and
+    // playwright-core — a test dependency — into the production image.
+    compatibility: {
+      runtime: { browser: false },
+      prerender: { browser: false },
+    },
   },
 
   icon: {
