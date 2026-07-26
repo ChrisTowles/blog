@@ -162,13 +162,20 @@ jobs:
       - name: Run Migrations
         run: pnpm db:migrate
 
-      # Downloading Chromium was 56s of a 376s job. The binaries only change
+      # Downloading Chromium is 25-56s of this job. The binaries only change
       # when the Playwright version does, which is what the lockfile hash
       # tracks. Browsers live outside the workspace, so this can't be folded
       # into the pnpm store cache setup-node already keeps.
-      - name: Cache Playwright browsers
+      #
+      # Restore-only, deliberately. This job runs on pull_request, and a cache
+      # saved from a PR is scoped to refs/pull/N/merge — unreadable by any other
+      # PR. playwright-cache.yml writes the entry on main, which is the one
+      # scope every PR can read; saving here too would just pile up a ~260 MB
+      # copy per PR. A PR that bumps the Playwright version misses until it
+      # lands on main, and downloads each run until then.
+      - name: Restore Playwright browsers
         id: playwright-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}

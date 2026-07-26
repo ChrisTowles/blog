@@ -1,0 +1,62 @@
+name: Playwright Cache
+
+# Exists only to write the Chromium cache on main, where every PR can read it.
+#
+# GitHub scopes a cache to the ref that wrote it: a run may read caches from its
+# own ref or from the default branch, and nothing else. The E2E job in test.yml
+# runs on `pull_request` only, so it saved under refs/pull/N/merge — invisible to
+# every other PR — while main, which never runs that job, never wrote one. Each
+# PR's first run therefore paid the full download no matter how many had already
+# cached it.
+#
+# test.yml restores this and never saves, so PRs don't each store a separate
+# ~260 MB copy against the repo's 10 GB cache budget.
+
+on:
+  push:
+    branches: [main]
+    # The cache key is the lockfile hash, so nothing else can invalidate it.
+    paths:
+      - pnpm-lock.yaml
+      - .github/workflows/playwright-cache.yml
+  # An unused cache is evicted after 7 days. Pushes that don't touch the
+  # lockfile won't re-warm it, so this keeps the entry alive through a quiet
+  # stretch — otherwise the first PR after a slow month pays the download.
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: playwright-cache
+  cancel-in-progress: true
+
+jobs:
+  warm:
+    name: Warm Playwright cache
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Cache Playwright browsers
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      # Both skipped on a hit: the entry is already current, and actions/cache
+      # won't re-save an exact key match anyway.
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: pnpm install --frozen-lockfile
+
+      # No --with-deps: apt libraries aren't cacheable and don't belong in the
+      # cached path. The E2E job installs those itself.
+      - name: Download Chromium
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: pnpm --filter @chris-towles/blog exec playwright install chromium
