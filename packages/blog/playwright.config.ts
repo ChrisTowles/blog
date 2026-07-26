@@ -18,17 +18,26 @@ if (packageEnv) {
 // (3000-3019), which the dotenv load above picks up.
 const uiPort = process.env.UI_PORT || '3000';
 
-// Nuxt's dev server binds the IPv6 loopback ([::1]) when given the default
-// host. On a GitHub runner `localhost` resolves to 127.0.0.1 first, so
-// Playwright polled IPv4, Nuxt listened on IPv6, and the two never met —
-// `Timed out waiting 300000ms from config.webServer` after five minutes with
-// no request ever reaching the (perfectly healthy) server.
+// Always `localhost`, never `127.0.0.1`, and that is load-bearing: the session
+// cookie is flagged Secure (h3's useSession hard-codes it), and Playwright's
+// request context only sends a Secure cookie over plain http when the host is
+// literally "localhost". Dialing the IP instead silently dropped the cookie, so
+// every authenticated request got a fresh anonymous session and the workflow
+// specs failed with 401s that looked like a broken sign-in endpoint.
 //
-// Pin both sides to IPv4 in CI: `--host 127.0.0.1` below binds it, and this
-// host is what Playwright dials. Locally, `localhost` is left alone so a
-// dev server started by hand is still reused.
-const uiHost = process.env.CI ? '127.0.0.1' : 'localhost';
+// CI used to pin 127.0.0.1 because Nuxt's *dev* server binds the IPv6 loopback
+// and a runner resolves localhost to IPv4 first, so the two never met. The
+// built server below binds every interface, which covers both stacks and makes
+// the pin unnecessary.
+const uiHost = 'localhost';
 const baseURL = `http://${uiHost}:${uiPort}`;
+
+// Unlocks POST /api/_dev/session (see e2e/support/session.ts). CI sets this in
+// the job env; locally it comes from .env. The fallback is the same value
+// .env.example ships, so a dev server started from .env and a server started by
+// webServer below agree on it — otherwise sign-in would 404 against a reused
+// dev server. Both the server and the test process need it, hence the assign.
+const devSessionSecret = (process.env.NUXT_DEV_SESSION_SECRET ||= 'local-e2e-dev-session-secret');
 
 export default defineConfig({
   testDir: './e2e',
@@ -72,22 +81,25 @@ export default defineConfig({
     // Locally, `bun run dev` from the repo root brings up docker, migrations
     // and the mcp/ui-bundle watchers alongside Nuxt.
     //
-    // CI can't use that: bun isn't installed, and the workflow already
-    // provides Postgres as a service and runs migrations + the ui-bundle
-    // build as their own steps. So there it starts Nuxt directly, which is
-    // exactly the part `pnpm dev` would have contributed.
-    command: process.env.CI
-      ? `pnpm --filter @chris-towles/blog exec nuxt dev --host ${uiHost}`
-      : `UI_PORT=${uiPort} bun run dev`,
+    // CI serves the *built* app instead of running `nuxt dev`. The dev server
+    // compiles routes on demand, and in CI that compile lands inside whatever
+    // assertion first touches the route — which produced a long tail of
+    // timeouts (the editor canvas at /workflows/{id} was the last one) that
+    // could only be fixed by warming each route or raising each timeout, one
+    // uncovered route at a time. A built server has nothing left to compile,
+    // so the whole class of failure goes away, and it exercises the same
+    // output that actually ships. The workflow runs `pnpm build` first.
+    command: process.env.CI ? 'node .output/server/index.mjs' : `UI_PORT=${uiPort} bun run dev`,
+    // HOST is deliberately left unset so Nitro binds every interface; pinning it
+    // to one loopback address is what made the stack mismatch possible before.
+    env: {
+      NUXT_DEV_SESSION_SECRET: devSessionSecret,
+      ...(process.env.CI ? { PORT: uiPort, NITRO_PORT: uiPort } : {}),
+    },
     url: baseURL,
     reuseExistingServer: !process.env.CI,
-    // Nuxt compiles routes on demand, and CI starts with no build cache on a
-    // slower machine — the readiness probe's first request to `/` is still
-    // compiling long after the server reports "Local: http://...". Nuxt only
-    // logs a request once it completes, so this shows up as a webServer
-    // timeout with zero request lines, which reads like a connection failure
-    // rather than a slow one. 5 min was not enough; give it 15.
-    timeout: (process.env.CI ? 900 : 120) * 1000,
+    // The built server boots in seconds; only a dev server needed minutes.
+    timeout: 120 * 1000,
     stdout: 'pipe',
     stderr: 'pipe',
   },

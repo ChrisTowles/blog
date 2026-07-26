@@ -1,20 +1,17 @@
 import { test } from '@playwright/test';
+import { signIn } from './support/session';
 
 test('run workflow and check UI updates', async ({ context }) => {
   // Auth
   const authPage = await context.newPage();
-  await authPage.request.post('/api/_dev/session', {
-    data: {
-      user: {
-        id: 'run-test',
-        email: 'run@test.com',
-        name: 'Run Tester',
-        avatar: '',
-        username: 'runtester',
-        provider: 'github',
-        providerId: 'run-1',
-      },
-    },
+  await signIn(authPage.request, {
+    id: 'run-test',
+    email: 'run@test.com',
+    name: 'Run Tester',
+    avatar: '',
+    username: 'runtester',
+    provider: 'github',
+    providerId: 'run-1',
   });
 
   // Seed + clone a template

@@ -14,6 +14,10 @@ import { request, type FullConfig } from '@playwright/test';
  * moves the compile out of the tests, so assertion timeouts measure the app
  * rather than the bundler.
  *
+ * This is a no-op against a built server (nothing left to compile), so it only
+ * earns its keep on local runs — CI serves `.output` instead. It stays because
+ * local runs are where the flakiness it fixes actually happens.
+ *
  * Failures are deliberately ignored: a route that errors under warmup is the
  * tests' business to report, not this hook's.
  */

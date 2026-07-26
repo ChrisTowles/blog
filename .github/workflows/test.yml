@@ -89,8 +89,8 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
-      # playwright.config.ts falls back to 3000, but Nuxt reads UI_PORT
-      # directly via devServer.port, so it has to be set for both to agree.
+      # playwright.config.ts builds baseURL from this and passes it to the
+      # built server as PORT/NITRO_PORT via webServer.env.
       UI_PORT: '3000'
       # Chat, loan and aviation specs drive the real agent loop. Without the
       # key those tests fail rather than skip, so the secret is required for a
@@ -111,6 +111,13 @@ jobs:
 
       # nuxt-auth-utils rejects a session password under 32 characters.
       NUXT_SESSION_PASSWORD: ci-e2e-session-password-not-a-real-secret
+
+      # Unlocks POST /api/_dev/session so the workflow specs can sign in without
+      # a real OAuth round-trip. That route 404s unless this is set and the
+      # request presents the same value, so it stays inert in deployed
+      # environments, which never set it. Both the built server and the test
+      # process read it from this job-level env.
+      NUXT_DEV_SESSION_SECRET: ci-e2e-dev-session-secret
 
       # server/utils/ai/anthropic.ts runs envSchema.parse(process.env) when it
       # builds the client, so every one of these must be present or the AI
@@ -143,53 +150,23 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
 
-      # `pnpm dev` would normally build these; the Playwright webServer starts
-      # Nuxt on its own in CI, so the MCP UI bundles have to be built here or
-      # the aviation iframe specs load nothing.
-      - name: Build MCP UI bundles
-        run: pnpm ui-bundle:build
+      # Playwright serves the built output in CI rather than running a dev
+      # server, so the app has to be built here. The blog package's `build`
+      # script runs build:ui-bundle first, which also covers the MCP UI
+      # bundles the aviation iframe specs need.
+      - name: Build app
+        run: pnpm build
+        env:
+          # Same heap the production image uses (infra/container/blog.Dockerfile).
+          # The default ceiling isn't enough for this build — it aborts with
+          # `node::OOMErrorHandler` and exit 134 partway through Nitro's bundle.
+          NODE_OPTIONS: --max-old-space-size=8192
 
       - name: Run Migrations
         run: pnpm db:migrate
 
       - name: Install Playwright browser
         run: pnpm --filter @chris-towles/blog exec playwright install --with-deps chromium
-
-      # Diagnostic: the Playwright webServer probe times out with no output,
-      # which looks identical whether the connection is refused, the response
-      # is a non-2xx (Playwright polls forever on those), or the request hangs.
-      # Start the same server ourselves and curl it so the log says which.
-      # Never fails the job — it exists to produce evidence, not a verdict.
-      - name: Probe dev server
-        continue-on-error: true
-        run: |
-          set -x
-          pnpm --filter @chris-towles/blog exec nuxt dev --host 127.0.0.1 \
-            > /tmp/devserver.log 2>&1 &
-          DEV_PID=$!
-
-          STATUS=""
-          for i in $(seq 1 60); do
-            STATUS=$(curl -sS -o /tmp/body -w '%{http_code}' --max-time 20 \
-              http://127.0.0.1:3000/ 2>/tmp/curlerr || echo "curl-failed")
-            echo "[attempt $i] status=${STATUS}"
-            case "$STATUS" in 2??|3??) break ;; esac
-            sleep 5
-          done
-
-          echo "===== final status: ${STATUS} ====="
-          echo "===== curl stderr ====="; cat /tmp/curlerr 2>/dev/null || true
-          echo "===== response body (first 800 bytes) ====="
-          head -c 800 /tmp/body 2>/dev/null || true; echo
-          echo "===== listening sockets ====="
-          ss -ltnp 2>/dev/null | grep -E ':3000' || echo "(nothing on :3000)"
-          echo "===== dev server log (last 60 lines) ====="
-          tail -60 /tmp/devserver.log || true
-
-          # Free the port — Playwright starts its own server next.
-          kill "$DEV_PID" 2>/dev/null || true
-          pkill -f 'nuxt.*dev' 2>/dev/null || true
-          sleep 3
 
       - name: E2E Tests
         run: pnpm test:e2e
