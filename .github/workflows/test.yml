@@ -154,13 +154,10 @@ jobs:
       # server, so the app has to be built here. The blog package's `build`
       # script runs build:ui-bundle first, which also covers the MCP UI
       # bundles the aviation iframe specs need.
+      # The heap ceiling this needs lives in the package's own build script, so
+      # a bare `pnpm build` works the same here, in Docker, and on a laptop.
       - name: Build app
         run: pnpm build
-        env:
-          # Same heap the production image uses (infra/container/blog.Dockerfile).
-          # The default ceiling isn't enough for this build — it aborts with
-          # `node::OOMErrorHandler` and exit 134 partway through Nitro's bundle.
-          NODE_OPTIONS: --max-old-space-size=8192
 
       - name: Run Migrations
         run: pnpm db:migrate

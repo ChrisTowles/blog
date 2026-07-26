@@ -8,7 +8,7 @@
   ],
   "type": "module",
   "scripts": {
-    "build": "pnpm run build:ui-bundle && nuxt build",
+    "build": "pnpm run build:ui-bundle && NODE_OPTIONS=--max-old-space-size=8192 nuxt build",
     "build:ui-bundle": "vite build --config mcp-ui/aviation-answer/vite.config.ts && vite build --config mcp-ui/echo/vite.config.ts",
     "build:ui-bundle:watch": "bash -c 'vite build --watch --config mcp-ui/aviation-answer/vite.config.ts & vite build --watch --config mcp-ui/echo/vite.config.ts & wait'",
     "dev": "docker compose up -d && nuxt dev --dotenv ../../.env",

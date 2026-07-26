@@ -54,7 +54,8 @@ ENV NUXT_PUBLIC_MCP_SANDBOX_URL=$NUXT_PUBLIC_MCP_SANDBOX_URL
 # mcp-ui/*/dist) before `nuxt build`. Using `exec nuxt build` here skipped
 # that prelude, which left mcp-ui/aviation-answer/dist absent and broke the
 # COPY steps in the runner stage.
-ENV NODE_OPTIONS="--max-old-space-size=8192"
+# The 8 GB heap this build needs is set inside that same script — peak RSS is
+# ~7.8 GB, so the default ceiling aborts with exit 134 partway through Nitro.
 RUN cd /app && pnpm --filter @chris-towles/blog run build
 
 # Production stage - use Node for runtime stability
