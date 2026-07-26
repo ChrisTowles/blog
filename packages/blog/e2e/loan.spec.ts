@@ -3,9 +3,15 @@ import { TEST_IDS } from '~~/shared/test-ids';
 
 test.describe('Loan Page', () => {
   test('redirects unauthenticated users', async ({ page }) => {
-    await page.goto('/loan', { waitUntil: 'networkidle' });
+    // /loan is ssr:false, so the auth middleware only redirects after the
+    // client bundle hydrates. `networkidle` can resolve before that, and on a
+    // cold compile the redirect lands after the default assertion timeout —
+    // which made the old `not.toHaveURL(/\/loan/)` fail cold and pass warm.
+    // Waiting for the destination the middleware actually navigates to ('/')
+    // is both the stronger assertion and the stable one.
+    await page.goto('/loan');
 
-    // Auth middleware redirects unauthenticated users away from /loan
+    await page.waitForURL('/', { timeout: 30000 });
     await expect(page).not.toHaveURL(/\/loan/);
   });
 

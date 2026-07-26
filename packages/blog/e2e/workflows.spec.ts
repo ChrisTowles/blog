@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { signIn } from './support/session';
 
 /**
  * E2E tests for the Workflow Builder feature.
@@ -10,20 +11,15 @@ test.describe('Workflow Builder', () => {
   // Authenticate before each test by hitting the dev session endpoint
   test.beforeEach(async ({ context }) => {
     const page = await context.newPage();
-    const response = await page.request.post('/api/_dev/session', {
-      data: {
-        user: {
-          id: 'e2e-workflow-user',
-          email: 'e2e@test.com',
-          name: 'E2E Tester',
-          avatar: '',
-          username: 'e2etester',
-          provider: 'github',
-          providerId: 'e2e-99999',
-        },
-      },
+    await signIn(page.request, {
+      id: 'e2e-workflow-user',
+      email: 'e2e@test.com',
+      name: 'E2E Tester',
+      avatar: '',
+      username: 'e2etester',
+      provider: 'github',
+      providerId: 'e2e-99999',
     });
-    expect(response.ok()).toBeTruthy();
     await page.close();
   });
 

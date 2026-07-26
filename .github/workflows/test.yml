@@ -61,3 +61,120 @@ jobs:
         run: pnpm test:integration -- --run
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+
+  e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+    # Pull requests only. Deploy calls this workflow via workflow_call, and
+    # `github.event_name` there is the deploy's own `push` — so this keeps a
+    # browser run (and a dependency on ANTHROPIC_API_KEY) off the deploy path.
+    # Everything reaches main through a PR, so this still gates every change.
+    if: github.event_name == 'pull_request'
+    # Separate job so a lint/type/unit failure reports in seconds instead of
+    # waiting on a browser run, and so the two use different service setups.
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      # playwright.config.ts builds baseURL from this and passes it to the
+      # built server as PORT/NITRO_PORT via webServer.env.
+      UI_PORT: '3000'
+      # Chat, loan and aviation specs drive the real agent loop. Without the
+      # key those tests fail rather than skip, so the secret is required for a
+      # green run.
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      # server/plugins/00-otel-sdk.ts throws when this is unset — deliberately,
+      # so misconfigured telemetry fails loudly rather than silently dropping
+      # spans. That check stays strict; CI just supplies a value. Without it
+      # the Nitro app never finishes starting, so Vite binds the port and logs
+      # "Local: http://..." while every request hangs unanswered — which reads
+      # as a Playwright webServer timeout with no output, not as a crash.
+      # Nothing listens on 4318 here; the exporter's failed sends are batched
+      # and swallowed, which is fine for a test run.
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://127.0.0.1:4318
+      OTEL_SERVICE_NAME: blog-ci
+      OTEL_DEPLOYMENT_ENV: ci
+
+      # nuxt-auth-utils rejects a session password under 32 characters.
+      NUXT_SESSION_PASSWORD: ci-e2e-session-password-not-a-real-secret
+
+      # Unlocks POST /api/_dev/session so the workflow specs can sign in without
+      # a real OAuth round-trip. That route 404s unless this is set and the
+      # request presents the same value, so it stays inert in deployed
+      # environments, which never set it. Both the built server and the test
+      # process read it from this job-level env.
+      NUXT_DEV_SESSION_SECRET: ci-e2e-dev-session-secret
+
+      # server/utils/ai/anthropic.ts runs envSchema.parse(process.env) when it
+      # builds the client, so every one of these must be present or the AI
+      # routes throw. Placeholders: no spec performs a real OAuth round-trip,
+      # and Braintrust/Bedrock calls are not exercised by the specs that run.
+      BRAINTRUST_API_KEY: ci-placeholder
+      BRAINTRUST_PROJECT_NAME: blog-ci
+      NUXT_OAUTH_GITHUB_CLIENT_ID: ci-placeholder
+      NUXT_OAUTH_GITHUB_CLIENT_SECRET: ci-placeholder
+      NUXT_OAUTH_GOOGLE_CLIENT_ID: ci-placeholder
+      NUXT_OAUTH_GOOGLE_CLIENT_SECRET: ci-placeholder
+      AWS_ACCESS_KEY_ID: ci-placeholder
+      AWS_SECRET_ACCESS_KEY: ci-placeholder
+
+      # requireAviationGcsCredentials (server/utils/mcp/aviation/duckdb.ts)
+      # throws without these, and that failure surfaces on *every* route — the
+      # probe caught `GET /` returning 500 with this exact message, not just
+      # the aviation pages. Presence is all the check tests, so placeholders
+      # get the server serving; the specs that actually query the private
+      # bucket over DuckDB httpfs still need real credentials.
+      GCS_HMAC_KEY_ID: ci-placeholder
+      GCS_HMAC_SECRET: ci-placeholder
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # Playwright serves the built output in CI rather than running a dev
+      # server, so the app has to be built here. The blog package's `build`
+      # script runs build:ui-bundle first, which also covers the MCP UI
+      # bundles the aviation iframe specs need.
+      - name: Build app
+        run: pnpm build
+        env:
+          # Same heap the production image uses (infra/container/blog.Dockerfile).
+          # The default ceiling isn't enough for this build — it aborts with
+          # `node::OOMErrorHandler` and exit 134 partway through Nitro's bundle.
+          NODE_OPTIONS: --max-old-space-size=8192
+
+      - name: Run Migrations
+        run: pnpm db:migrate
+
+      - name: Install Playwright browser
+        run: pnpm --filter @chris-towles/blog exec playwright install --with-deps chromium
+
+      - name: E2E Tests
+        run: pnpm test:e2e
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: packages/blog/playwright-report/
+          retention-days: 7
