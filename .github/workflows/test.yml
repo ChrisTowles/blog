@@ -162,8 +162,27 @@ jobs:
       - name: Run Migrations
         run: pnpm db:migrate
 
+      # Downloading Chromium was 56s of a 376s job. The binaries only change
+      # when the Playwright version does, which is what the lockfile hash
+      # tracks. Browsers live outside the workspace, so this can't be folded
+      # into the pnpm store cache setup-node already keeps.
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      # On a hit the binaries are restored but the apt libraries they link
+      # against are not, and those are not guaranteed to be on the runner
+      # image — so the deps half still runs, just without the download.
       - name: Install Playwright browser
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm --filter @chris-towles/blog exec playwright install --with-deps chromium
+
+      - name: Install Playwright system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm --filter @chris-towles/blog exec playwright install-deps chromium
 
       - name: E2E Tests
         run: pnpm test:e2e
