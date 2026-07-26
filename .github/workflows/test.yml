@@ -154,19 +154,42 @@ jobs:
       # server, so the app has to be built here. The blog package's `build`
       # script runs build:ui-bundle first, which also covers the MCP UI
       # bundles the aviation iframe specs need.
+      # The heap ceiling this needs lives in the package's own build script, so
+      # a bare `pnpm build` works the same here, in Docker, and on a laptop.
       - name: Build app
         run: pnpm build
-        env:
-          # Same heap the production image uses (infra/container/blog.Dockerfile).
-          # The default ceiling isn't enough for this build — it aborts with
-          # `node::OOMErrorHandler` and exit 134 partway through Nitro's bundle.
-          NODE_OPTIONS: --max-old-space-size=8192
 
       - name: Run Migrations
         run: pnpm db:migrate
 
+      # Downloading Chromium is 25-56s of this job. The binaries only change
+      # when the Playwright version does, which is what the lockfile hash
+      # tracks. Browsers live outside the workspace, so this can't be folded
+      # into the pnpm store cache setup-node already keeps.
+      #
+      # Restore-only, deliberately. This job runs on pull_request, and a cache
+      # saved from a PR is scoped to refs/pull/N/merge — unreadable by any other
+      # PR. playwright-cache.yml writes the entry on main, which is the one
+      # scope every PR can read; saving here too would just pile up a ~260 MB
+      # copy per PR. A PR that bumps the Playwright version misses until it
+      # lands on main, and downloads each run until then.
+      - name: Restore Playwright browsers
+        id: playwright-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      # On a hit the binaries are restored but the apt libraries they link
+      # against are not, and those are not guaranteed to be on the runner
+      # image — so the deps half still runs, just without the download.
       - name: Install Playwright browser
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm --filter @chris-towles/blog exec playwright install --with-deps chromium
+
+      - name: Install Playwright system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm --filter @chris-towles/blog exec playwright install-deps chromium
 
       - name: E2E Tests
         run: pnpm test:e2e
