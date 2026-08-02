@@ -1,16 +1,8 @@
 /**
  * ask_aviation / list_questions / schema — the three aviation MCP tools.
- *
- * ask_aviation shape (split architecture, SEP-1865 iframe loading):
- *   - `executeAskAviation` returns FAST with `{ question, pending: true, queryUrl }`
- *     so Claude Desktop / Claude.ai / any compliant host can mount the iframe
- *     immediately. The embedded resource carries the iframe bundle.
- *   - The actual pipeline (Anthropic SQL emit → validate → DuckDB) lives in
- *     `runAviationPipeline`. The iframe POSTs the question to the streaming
- *     `/mcp/aviation/query` endpoint and receives progress + result over SSE.
- *
- * Progress steps emitted by `runAviationPipeline`:
- *   planning → validating → querying → rendering
+ * `executeAskAviation` returns fast with `{ question, pending: true, queryUrl }` so
+ * a compliant host can mount the iframe immediately; the real pipeline (SQL emit →
+ * validate → DuckDB) runs in `runAviationPipeline` and streams from /query.
  */
 
 import { z } from 'zod';
@@ -63,17 +55,10 @@ interface LlmStructuredOutput {
 // ---------------- ask_aviation (fast return) ----------------
 
 /**
- * Returns a small pending pointer. Compliant MCP hosts (Claude Desktop,
- * Claude.ai, the blog chat harness) fetch `ui://aviation-answer` via
- * `resources/read` using the `_meta.ui.resourceUri` declared on the tool;
- * the iframe bundle and its CSP live on the registered resource itself
- * (see `registerAviationUiResource` in `./ui-resource.ts`). Inlining the
- * ~726 KB bundle here caused Claude.ai to truncate results mid-JSON.
- *
- * @param args - parsed tool arguments ({ question })
- * @param queryUrl - absolute URL of the /mcp/aviation/query SSE endpoint the
- *        iframe will POST to. The server resolves this from runtime config at
- *        tool-call time (different per deploy).
+ * Returns a small pending pointer; hosts fetch `ui://aviation-answer` themselves via
+ * `resources/read` off the tool's `_meta.ui.resourceUri`. Inlining the ~726 KB bundle
+ * here made Claude.ai truncate results mid-JSON. `queryUrl` is resolved from runtime
+ * config at call time because it differs per deploy.
  */
 export function executeAskAviation(
   args: AskAviationArgs,

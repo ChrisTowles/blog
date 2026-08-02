@@ -1,10 +1,7 @@
 /**
- * THREAD SAFETY WARNING: This module handles tool execution in a server context where multiple
- * requests may be processed concurrently. ALL STATE MUST BE REQUEST-SCOPED, never module-level.
- *
- * - Do NOT create module-level mutable state (e.g., currentFilters variables)
- * - Pass filters and context as parameters through function calls
- * - See Issue #8 for context on request isolation requirements
+ * THREAD SAFETY: tool execution runs concurrently across requests, so ALL STATE MUST BE
+ * REQUEST-SCOPED. Never add module-level mutable state (a `currentFilters` variable and
+ * the like) — thread filters and context through as parameters instead. See Issue #8.
  */
 
 import type Anthropic from '@anthropic-ai/sdk';

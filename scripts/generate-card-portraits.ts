@@ -1,20 +1,8 @@
 /**
- * Generate AI portrait images for face cards (J/Q/K) of every deck theme.
- *
- * Strategy:
- *   - SVG cards keep the precise frame, corner indices, suit pip layouts.
- *   - For face cards we replace the silhouette with a Gemini-generated
- *     portrait image that the SVG embeds via <image href="..."/>.
- *   - 12 portraits per deck (J/Q/K × 4 suits) — affordable and consistent.
- *
- * Output:
- *   packages/blog/public/poker/decks/{deckId}/portraits/{cardCode}.png
- *
- * Usage:
- *   pnpm tsx scripts/generate-card-portraits.ts                 # generate all
- *   pnpm tsx scripts/generate-card-portraits.ts --deck classic  # one deck
- *   pnpm tsx scripts/generate-card-portraits.ts --cards hK,sQ   # specific cards
- *   pnpm tsx scripts/generate-card-portraits.ts --dry-run       # print prompts only
+ * Generates Gemini portraits for the face cards (J/Q/K × 4 suits = 12 per deck) of
+ * every deck theme, into `packages/blog/public/poker/decks/{deckId}/portraits/`. Only
+ * the silhouette is generated: the SVG keeps the frame, corner indices and pip layout
+ * and embeds the portrait via `<image href="..."/>`. Run with `--help` for flags.
  */
 import 'dotenv/config';
 import { GoogleGenAI, Modality } from '@google/genai';

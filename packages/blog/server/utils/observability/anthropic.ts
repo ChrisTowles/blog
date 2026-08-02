@@ -1,15 +1,9 @@
 /**
- * OpenTelemetry span wrappers for Anthropic SDK calls.
- *
- * Two wrappers exist because a stream's lifetime extends past its factory's
- * synchronous return (the caller iterates events; `finalMessage()` resolves
- * later) — the non-streaming case can use try/finally, the streaming case
- * must hook into stream events. Unifying them turns call sites into a state
- * machine.
- *
- * Content capture (prompts/completions on spans) is opt-in via
- * `OTEL_GENAI_CAPTURE_CONTENT=1`. Off by default to avoid PII drift and the
- * 4095-char NR attribute cap.
+ * OpenTelemetry span wrappers for Anthropic SDK calls. There are two because a
+ * stream outlives its factory's synchronous return: try/finally covers the
+ * non-streaming case, streaming has to hook stream events, and unifying them turns
+ * call sites into a state machine. Content capture is opt-in via
+ * `OTEL_GENAI_CAPTURE_CONTENT=1` — PII drift, plus the 4095-char NR attribute cap.
  */
 
 import { SpanKind, trace, type Span, type Tracer } from '@opentelemetry/api';

@@ -1,19 +1,8 @@
 /**
  * /mcp/aviation — Streamable HTTP MCP endpoint for the aviation demo.
- *
- * Session model: `Mcp-Session-Id` lives in-process per the SDK's
- * StreamableHTTPServerTransport. With min_instances=1 + session-affinity
- * (plan Key Decisions) this is good enough; clients silently reconnect on 404
- * when a pod rotates.
- *
- * Tools registered:
- *   - ask_aviation     — returns an iframe + pending pointer; the iframe
- *                        streams the answer from /mcp/aviation/query
- *   - list_questions   — curated starter questions
- *   - schema           — dataset schema surface for LLMs
- *
- * UI resources:
- *   - ui://aviation-answer  — the iframe bundle
+ * `Mcp-Session-Id` lives in-process per the SDK's StreamableHTTPServerTransport;
+ * `min_instances=1` + session affinity make that good enough, and clients silently
+ * reconnect on the 404 they get when a pod rotates.
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';

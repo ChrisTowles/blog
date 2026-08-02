@@ -1,17 +1,8 @@
 /**
- * Strict CSP parsing for the sandbox proxy's `?csp=<url-encoded-json>` query param.
- *
- * Security design (plan line 774):
- *  - Whitelist the allowed directive KEYS (connectDomains, resourceDomains,
- *    frameDomains, baseUriDomains). Unknown keys are silently dropped — this is
- *    stronger than the ext-apps reference impl, which would character-strip
- *    arbitrary directives.
- *  - Inside a whitelisted key, require each entry to be an http(s) URL with no
- *    injection characters. This is BOTH the structured check (is it a URL?) AND
- *    the character strip (does it contain `;`, quotes, spaces, control chars?).
- *  - Cap the raw query-param length before JSON.parse so a 10MB `?csp=...` can't
- *    stall the CPU or bloat memory.
- *  - Header output MUST NOT contain CR/LF — enforced by the tests.
+ * Strict CSP parsing for the sandbox proxy's `?csp=<url-encoded-json>` param.
+ * Directive keys are whitelisted and unknown ones dropped — stricter than the
+ * ext-apps reference impl, which character-strips arbitrary directives instead.
+ * The length cap runs before JSON.parse so a 10MB `?csp=` can't stall the CPU.
  */
 
 export const MAX_CSP_PARAM_LENGTH = 4096;

@@ -1,46 +1,7 @@
 /**
- * ETL: Aviation demo dataset → Parquet → GCS
- *
- * Feeds the aviation MCP demo; see docs/aviation-schema.md for the
- * column-level schema this produces.
- *
- * Downloads three public-domain sources, transforms CSVs to Parquet via DuckDB
- * in-process, then uploads to a private GCS bucket that the MCP server reads
- * via HMAC-authenticated httpfs.
- *
- *   - FAA Aircraft Registry (US public domain)   → dims/aircraft.parquet
- *                                                 → dims/aircraft_types.parquet
- *     (auto-downloaded from registry.faa.gov; requires `unzip` on PATH)
- *   - BTS T-100 Market (US public domain)        → facts/bts_t100_<yyyymm>.parquet
- *     (BTS only serves T-100 via an ASP.NET form — the script drives it
- *     headlessly via Playwright, one download per month, skipping periods
- *     with no published data)
- *   - OpenFlights (ODbL w/ attribution)          → dims/airports.parquet
- *                                                 → dims/airlines.parquet
- *                                                 → dims/routes.parquet
- *   - Curated carrier → operator lookup           → ref/carrier_to_operator.parquet
- *   - Pre-warm Parquet (1 row)                    → pre-warm.parquet
- *   - License attribution                         → LICENSE.txt
- *
- * Design:
- *   - Pure transform functions (run* exports) take a DuckDB connection +
- *     an input CSV path + an output Parquet path. They are unit-tested
- *     against small fixture CSVs checked into the repo at
- *     `packages/blog/scripts/__fixtures__/aviation/`.
- *   - Impure I/O (download, upload) is isolated in top-level functions that
- *     compose the pure transforms with network + GCS side effects.
- *
- * Usage:
- *   pnpm --filter @chris-towles/blog etl:aviation
- *
- * Env vars:
- *   - MCP_DATA_BUCKET         (required when uploading; e.g. blog-mcp-data-staging).
- *                             Aviation data is uploaded under the `aviation/` prefix
- *                             inside this shared MCP dataset bucket.
- *   - AVIATION_ETL_SKIP_UPLOAD  truthy → transform locally only, skip GCS upload
- *   - AVIATION_ETL_FIXTURE_DIR  if set, use fixture CSVs instead of network downloads
- *   - AVIATION_ETL_WORK_DIR    local scratch dir (defaults to os.tmpdir()/aviation-etl)
- *   - AVIATION_ETL_YEARS      number of recent years of BTS T-100 to pull (default 12)
+ * ETL: aviation demo dataset → Parquet → GCS. Run via `pnpm etl:aviation`
+ * (`--help` for flags). Schema: docs/aviation-schema.md. Ops: docs/mcp-aviation-ops.md.
+ * OpenFlights is ODbL — the LICENSE.txt emitted here is that attribution.
  */
 
 import { createWriteStream, existsSync, mkdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -58,10 +19,8 @@ import { chromium, type Page } from 'playwright-chromium';
 import { consola } from 'consola';
 import { config as loadDotenv } from 'dotenv';
 
-// Load repo-root .env, but do NOT clobber vars already set in the shell.
-// This lets `MCP_DATA_BUCKET=blog-mcp-data-prod pnpm etl:aviation` point at
-// prod even when the dev bucket is pinned in .env. dotenv defaults to
-// override=false, which is exactly the precedence we want.
+// dotenv's override=false is the precedence we want: a shell var wins, so
+// `MCP_DATA_BUCKET=blog-mcp-data-prod pnpm etl:aviation` beats the dev bucket in .env.
 loadDotenv({
   path: join(dirname(fileURLToPath(import.meta.url)), '../../../.env'),
   quiet: true,
@@ -78,16 +37,10 @@ function elapsed(sinceMs?: number): string {
   return `${m}m ${s}s`;
 }
 
-/* --------------------------------------------------------------------------
- * Pure transform functions (testable without network / GCS)
- * -------------------------------------------------------------------------- */
-
 /**
- * Transform the FAA Aircraft Registry MASTER.txt into dims/aircraft.parquet.
- *
- * Applies the "latest wins" rule for duplicate N-numbers by keeping the row
- * with the max LAST_ACTION_DATE per N-NUMBER. Strips trailing whitespace from
- * CSV text columns (the FAA files pad fixed-width fields inside CSV cells).
+ * FAA Aircraft Registry MASTER.txt → dims/aircraft.parquet. Duplicate N-numbers resolve
+ * latest-wins on LAST_ACTION_DATE, and text columns are right-trimmed because the FAA
+ * pads its fixed-width fields inside the CSV cells.
  */
 export async function transformFaaMaster(
   conn: DuckDBConnection,
@@ -95,9 +48,8 @@ export async function transformFaaMaster(
   outputParquetPath: string,
   acftrefCsvPath: string,
 ): Promise<void> {
-  // Register the MASTER.txt file as a view so we can reference it below.
-  // MASTER.txt is comma-separated and quoted; some columns have trailing
-  // whitespace from the underlying fixed-width format.
+  // MASTER.txt is comma-separated and quoted, with trailing whitespace on some
+  // columns left over from the underlying fixed-width format.
   await conn.run(`CREATE OR REPLACE TEMP VIEW faa_master_raw AS
     SELECT * FROM read_csv(
       '${inputCsvPath}',
@@ -121,9 +73,8 @@ export async function transformFaaMaster(
       ignore_errors = true
     )`);
 
-  // Latest-wins dedup: pick the row with max LAST_ACTION_DATE per N-NUMBER.
-  // Join with ACFTREF (aircraft-type reference) on MFR_MDL_CODE → CODE so
-  // downstream queries can group by manufacturer/model without a second join.
+  // Joining ACFTREF on MFR_MDL_CODE → CODE here lets downstream queries group by
+  // manufacturer/model without a second join.
   await conn.run(`COPY (
     WITH deduped AS (
       SELECT
@@ -168,10 +119,7 @@ export async function transformFaaMaster(
   ) TO '${outputParquetPath}' (FORMAT PARQUET, COMPRESSION ZSTD)`);
 }
 
-/**
- * Transform the FAA ACFTREF.txt into dims/aircraft_types.parquet.
- * This is the aircraft-model reference table (manufacturer + model + seats).
- */
+/** FAA ACFTREF.txt → dims/aircraft_types.parquet (manufacturer + model + seats). */
 export async function transformFaaAcftref(
   conn: DuckDBConnection,
   inputCsvPath: string,
@@ -198,11 +146,9 @@ export async function transformFaaAcftref(
 }
 
 /**
- * Transform one month of BTS T-100 Market CSV → facts/bts_t100_<yyyymm>.parquet.
- *
- * The BTS file is already per-month, so partitioning is a naming convention
- * rather than a Hive-style directory layout. This keeps DuckDB httpfs happy
- * (predicate pushdown on yearmonth from the filename).
+ * One month of BTS T-100 Market CSV → facts/bts_t100_<yyyymm>.parquet. Partitioning is a
+ * filename convention, not a Hive layout, which is what lets DuckDB httpfs push the
+ * yearmonth predicate down to the filename.
  */
 export async function transformBtsT100(
   conn: DuckDBConnection,
@@ -237,9 +183,8 @@ export async function transformBtsT100(
 }
 
 /**
- * OpenFlights airports.dat → dims/airports.parquet.
- * The file is a headerless CSV; we declare the schema explicitly.
- * OpenFlights uses literal "\N" for nulls; we translate that here.
+ * OpenFlights airports.dat → dims/airports.parquet. Headerless, so the schema is declared
+ * explicitly, and OpenFlights writes a literal "\N" for null, translated here.
  */
 export async function transformOpenFlightsAirports(
   conn: DuckDBConnection,
@@ -273,9 +218,6 @@ export async function transformOpenFlightsAirports(
   ) TO '${outputParquetPath}' (FORMAT PARQUET, COMPRESSION ZSTD)`);
 }
 
-/**
- * OpenFlights airlines.dat → dims/airlines.parquet.
- */
 export async function transformOpenFlightsAirlines(
   conn: DuckDBConnection,
   inputCsvPath: string,
@@ -301,9 +243,6 @@ export async function transformOpenFlightsAirlines(
   ) TO '${outputParquetPath}' (FORMAT PARQUET, COMPRESSION ZSTD)`);
 }
 
-/**
- * OpenFlights routes.dat → dims/routes.parquet.
- */
 export async function transformOpenFlightsRoutes(
   conn: DuckDBConnection,
   inputCsvPath: string,
@@ -331,9 +270,9 @@ export async function transformOpenFlightsRoutes(
 }
 
 /**
- * Convert a curated carrier → operator lookup CSV into Parquet as-is.
- * Used by the integration test suite to exercise join logic against a
- * fixture CSV. Production uses generateCarrierToOperator below.
+ * Passes a curated carrier → operator CSV through to Parquet as-is. Only the integration
+ * suite uses it, to exercise join logic against a fixture; production generates the
+ * lookup below.
  */
 export async function transformCarrierToOperator(
   conn: DuckDBConnection,
@@ -351,9 +290,8 @@ export async function transformCarrierToOperator(
 }
 
 /**
- * Auto-generate the carrier-to-operator lookup by joining distinct BTS
- * carrier codes against FAA registrant names. Replaces the old hand-curated
- * CSV — no manual curation needed.
+ * Builds the carrier → operator lookup by joining distinct BTS carrier codes against FAA
+ * registrant names, so nothing here needs hand-curating.
  */
 export async function generateCarrierToOperator(
   conn: DuckDBConnection,
@@ -399,10 +337,8 @@ export async function generateCarrierToOperator(
 }
 
 /**
- * Emit a 1-row Parquet file used by the MCP server to pre-warm DuckDB httpfs
- * on cold start. The row content itself is arbitrary — it exists so that a
- * successful read_parquet('gs://.../pre-warm.parquet') amortizes cold-load
- * latency before the first real query.
+ * A 1-row Parquet the MCP server reads at boot. The content is arbitrary — the point is
+ * that one successful `read_parquet('gs://…')` absorbs the httpfs cold start.
  */
 export async function writePreWarmParquet(
   conn: DuckDBConnection,
@@ -413,10 +349,8 @@ export async function writePreWarmParquet(
   ) TO '${outputParquetPath}' (FORMAT PARQUET, COMPRESSION ZSTD)`);
 }
 
-/* --------------------------------------------------------------------------
- * License text (co-hosted with the Parquet so the OpenFlights attribution
- * requirement is visibly honored in the bucket root).
- * -------------------------------------------------------------------------- */
+// Co-hosted with the Parquet so OpenFlights' attribution requirement is visibly
+// honored in the bucket root.
 
 export const LICENSE_TEXT = `Aviation demo dataset — license + attribution
 ================================================
@@ -444,10 +378,6 @@ See docs/aviation-schema.md in the blog repo for the
 full column-level schema.
 `;
 
-/* --------------------------------------------------------------------------
- * Impure orchestration: download, transform, upload
- * -------------------------------------------------------------------------- */
-
 const SOURCE_URLS = {
   faaRegistryZip: 'https://registry.faa.gov/database/ReleasableAircraft.zip',
   openFlightsAirports:
@@ -456,9 +386,8 @@ const SOURCE_URLS = {
     'https://raw.githubusercontent.com/jpatokal/openflights/master/data/airlines.dat',
   openFlightsRoutes:
     'https://raw.githubusercontent.com/jpatokal/openflights/master/data/routes.dat',
-  // BTS T-100 Market: the transtats.bts.gov download flow requires a POST with
-  // a form payload that varies per month; the ETL runner should resolve the
-  // exact URL at run time or stage files manually in AVIATION_ETL_FIXTURE_DIR.
+  // BTS needs a POST whose form payload varies per month, so the URL is resolved at run
+  // time — or the files are staged by hand in AVIATION_ETL_FIXTURE_DIR.
   btsT100Note:
     'See https://transtats.bts.gov/DL_SelectFields.aspx?Table_ID=292 — stage CSVs in AVIATION_ETL_FIXTURE_DIR if the form POST breaks.',
 };
@@ -475,9 +404,8 @@ async function downloadToFile(url: string, destPath: string): Promise<void> {
 }
 
 /**
- * Download the FAA ReleasableAircraft zip and extract MASTER.txt + ACFTREF.txt
- * into `destDir`. Relies on the `unzip` binary (pre-installed on Linux/macOS).
- * The zip is ~100MB, extracts to ~400MB — stream the download to disk first.
+ * Extracts MASTER.txt + ACFTREF.txt from the FAA ReleasableAircraft zip via the `unzip`
+ * binary. ~100MB in, ~400MB out, hence streaming to disk rather than buffering.
  */
 async function downloadAndExtractFaaRegistry(destDir: string): Promise<void> {
   const zipPath = join(destDir, 'ReleasableAircraft.zip');
@@ -499,21 +427,14 @@ async function downloadAndExtractFaaRegistry(destDir: string): Promise<void> {
 }
 
 /**
- * BTS T-100 Market (All Carriers) download via headless Playwright.
- *
- * BTS exposes T-100 only through an ASP.NET form (DL_SelectFields.asp) — no
- * direct-download API, no PREZIP per-month files. The form uses __doPostBack
- * for both chkAllVars (select all fields) and chkDownloadZip (return a zip).
- * Each postback navigates, so we must re-select year + period afterward.
- *
- * The `FMF` table ID corresponds to "T-100 Market (All Carriers)"; see the
- * output of Tables.asp?QO_VQ=EEE if BTS ever renames it.
+ * BTS serves T-100 only via an ASP.NET form (no download API, no PREZIP), hence the
+ * headless Playwright below; each __doPostBack navigates, so year + period must be
+ * re-selected after one. `FMF` = "T-100 Market (All Carriers)", per Tables.asp?QO_VQ=EEE.
  */
 const BTS_T100_FORM_URL =
   'https://www.transtats.bts.gov/DL_SelectFields.asp?gnoyr_VQ=FMF&QO_fu146_anzr=Nv4%20Pn44vr45';
 
-// Months with no published data return a zip where the inner CSV is a header
-// row only. 50 KB is comfortably below real months (~7 MB) and above empty.
+// An unpublished month returns a header-only CSV; real ones run ~7 MB.
 const BTS_MIN_VALID_CSV_BYTES = 50_000;
 
 async function postBackCheckbox(page: Page, id: string): Promise<void> {
@@ -537,20 +458,16 @@ async function postBackCheckbox(page: Page, id: string): Promise<void> {
 }
 
 /**
- * Download one full year of T-100 Market data (cboPeriod="All") and split
- * the resulting CSV by MONTH column into per-month `bts-t100-YYYYMM.csv`
- * files — preserves the downstream per-month Parquet partitioning while
- * cutting BTS round-trips from 12 to 1 per year. Returns the yyyymm
- * stamps for every month actually present in the year's data (e.g. the
- * current year returns only published months).
+ * Pulls a full year (cboPeriod="All") and splits it by MONTH into per-month CSVs: same
+ * downstream partitioning, but one BTS round-trip per year instead of twelve. Returns
+ * only the months actually published.
  */
 async function downloadOneBtsYear(
   page: Page,
   year: number,
   destDir: string,
 ): Promise<Array<{ yyyymm: string; csvPath: string }>> {
-  // Resumability: if per-month CSVs for this year already exist on disk
-  // (from a prior interrupted run), reuse them instead of re-downloading.
+  // Reuse per-month CSVs left by an interrupted run rather than re-downloading.
   const { readdirSync } = await import('node:fs');
   const existing = readdirSync(destDir)
     .filter((name) => new RegExp(`^bts-t100-${year}\\d{2}\\.csv$`).test(name))
@@ -565,26 +482,22 @@ async function downloadOneBtsYear(
     return existing;
   }
 
-  // Refresh the session cookie before each year — BTS's session can expire
-  // between downloads, causing the form to redirect to the homepage.
+  // BTS sessions expire between downloads, redirecting the form to the homepage.
   await page.goto('https://www.transtats.bts.gov/Homepage.asp', {
     waitUntil: 'domcontentloaded',
     timeout: 60_000,
   });
   await page.goto(BTS_T100_FORM_URL, { waitUntil: 'domcontentloaded', timeout: 60_000 });
   await page.selectOption('#cboYear', String(year));
-  // cboPeriod defaults to "All"; we explicitly set it in case a postback
-  // flipped the default.
+  // Set explicitly in case a postback flipped the "All" default.
   await page.selectOption('#cboPeriod', 'All');
   await postBackCheckbox(page, 'chkAllVars');
   await postBackCheckbox(page, 'chkDownloadZip');
   await page.selectOption('#cboYear', String(year));
   await page.selectOption('#cboPeriod', 'All');
 
-  // Clicking Download triggers a form POST. BTS generates the zip server-side
-  // before responding — for a full year (~86MB CSV) this takes 30-90s. The
-  // click timeout must be long enough for the server to finish, and we use
-  // waitForEvent('download') to catch the file when it arrives.
+  // BTS builds the zip server-side before responding — 30-90s for a full year's ~86MB
+  // CSV — so the click timeout has to outlast the server, not the network.
   const zipPath = join(destDir, `bts-t100-${year}.zip`);
   let download;
   try {
@@ -612,9 +525,8 @@ async function downloadOneBtsYear(
     return [];
   }
 
-  // Split the year CSV into one CSV per month. DuckDB's COPY with an
-  // expression filter is orders of magnitude faster than Node string
-  // parsing; the MONTH column is an integer per BTS spec.
+  // DuckDB's COPY with an expression filter beats Node string parsing by orders of
+  // magnitude here; MONTH is an integer per the BTS spec.
   const db = await DuckDBInstance.create(':memory:');
   const conn = await db.connect();
   const produced: Array<{ yyyymm: string; csvPath: string }> = [];
@@ -651,17 +563,15 @@ export async function downloadBtsT100ViaPlaywright(
     const ctx = await browser.newContext({ acceptDownloads: true });
     const page = await ctx.newPage();
 
-    // BTS requires a session cookie before serving the download form.
-    // Without this, direct navigation to DL_SelectFields.asp redirects to
-    // Homepage.asp. Hitting the homepage first establishes the session.
+    // Without a session cookie, DL_SelectFields.asp just redirects to Homepage.asp —
+    // so visit the homepage first to get one.
     await page.goto('https://www.transtats.bts.gov/Homepage.asp', {
       waitUntil: 'domcontentloaded',
       timeout: 60_000,
     });
 
-    // One download per year (period="All"), newest year first. Each year
-    // yields up to 12 per-month CSVs after the split step. The current year
-    // returns only published months.
+    // Newest year first, one download each; the current year yields only its
+    // published months.
     let year = new Date().getUTCFullYear();
     const stopYear = 1989;
     let yearsCollected = 0;
@@ -753,9 +663,8 @@ function readConfig(): EtlConfig {
 }
 
 /**
- * Source CSVs → local Parquet. Writes to `outDir` (a flat dir — the caller
- * maps to the eventual bucket prefixes). Returns the list of local files
- * produced so the caller can upload them.
+ * Source CSVs → local Parquet in a flat `outDir`; the caller maps those onto bucket
+ * prefixes and uploads the returned list.
  */
 export async function runAllTransforms(
   conn: DuckDBConnection,
@@ -772,8 +681,7 @@ export async function runAllTransforms(
   mkdirSync(outDir, { recursive: true });
   const produced: Array<{ localPath: string; remoteName: string; contentType: string }> = [];
 
-  // All aviation assets live under `aviation/` inside the shared MCP data
-  // bucket so other future MCP tools can co-host their own prefixes.
+  // The `aviation/` prefix leaves room for other MCP tools in the shared bucket.
   const aircraftParquet = join(outDir, 'aircraft.parquet');
   await transformFaaMaster(conn, inputs.faaMaster, aircraftParquet, inputs.faaAcftref);
   produced.push({
@@ -859,13 +767,11 @@ async function runEtl(): Promise<void> {
     style: { borderColor: 'cyan' },
   });
 
-  // Reuse work dir for resumability — BTS downloads are slow, so we keep
-  // already-downloaded CSVs from prior runs. The transform + upload steps
-  // are idempotent and will overwrite stale Parquet / GCS objects.
+  // The work dir is reused for resumability: BTS downloads are slow, and transform +
+  // upload are idempotent, so stale Parquet and GCS objects just get overwritten.
   mkdirSync(config.workDir, { recursive: true });
 
-  // Resolve inputs. Fixture mode is for CI / smoke tests; network mode is
-  // the real run.
+  // Fixture mode is for CI / smoke tests; network mode is the real run.
   const useFixtures = Boolean(config.fixtureDir);
   const sourceDir = useFixtures ? resolve(config.fixtureDir!) : join(config.workDir, 'downloads');
   if (!useFixtures) {
@@ -892,8 +798,7 @@ async function runEtl(): Promise<void> {
     await downloadBtsT100ViaPlaywright(sourceDir, config.btsYears);
     consola.success(`BTS T-100 download done  ${elapsed(phaseStart)}`);
 
-    // The script intentionally fails fast if the required files aren't present,
-    // rather than quietly shipping a partial bucket.
+    // Fail fast rather than quietly shipping a partial bucket.
     const requiredLarge = ['MASTER.txt', 'ACFTREF.txt'];
     for (const f of requiredLarge) {
       if (!existsSync(join(sourceDir, f))) {
@@ -929,7 +834,6 @@ async function runEtl(): Promise<void> {
     throw new Error(`No BTS T-100 CSVs found in ${sourceDir} (expected bts-t100-<yyyymm>.csv)`);
   }
 
-  // One DuckDB instance + connection is plenty for the sequential transforms.
   const db = await DuckDBInstance.create(':memory:');
   const conn = await db.connect();
 
@@ -980,7 +884,6 @@ async function runEtl(): Promise<void> {
   });
 }
 
-// CLI entrypoint via citty
 import { defineCommand, runMain } from 'citty';
 
 const main = defineCommand({

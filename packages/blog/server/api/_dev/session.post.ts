@@ -1,19 +1,10 @@
 import { timingSafeEqual } from 'node:crypto';
 
 /**
- * TEST-ONLY: mint a session so E2E specs can exercise authenticated routes
- * without driving a real OAuth round-trip.
- *
- * Gated on NUXT_DEV_SESSION_SECRET: unless that variable is set *and* the
- * request presents the same value in `x-dev-session-secret`, this route 404s
- * exactly as if it did not exist. Nothing sets it outside `.env` and the E2E
- * job in .github/workflows/test.yml, so it stays inert where it is deployed.
- *
- * It used to gate on `NODE_ENV !== 'production'` instead — the secret was
- * described in this comment but never actually checked. That broke once CI
- * started serving the *built* app rather than a dev server: a production build
- * is production, so every spec's beforeEach got a 404. A secret is both the
- * stronger check and the one that survives running against real output.
+ * TEST-ONLY: mint a session so E2E specs can hit authenticated routes without a
+ * real OAuth round-trip. Unless NUXT_DEV_SESSION_SECRET is set *and* matches the
+ * request's `x-dev-session-secret`, this 404s as if it did not exist — only `.env`
+ * and the E2E job set it. Gating on NODE_ENV instead breaks CI, which builds prod.
  */
 export default defineEventHandler(async (event) => {
   const secret = process.env.NUXT_DEV_SESSION_SECRET;

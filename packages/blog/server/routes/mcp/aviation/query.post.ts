@@ -1,25 +1,8 @@
 /**
- * POST /mcp/aviation/query — SSE endpoint the aviation iframe POSTs to.
- *
- * This exists because MCP tool calls are synchronous: the host can't mount the
- * iframe until the tool returns. We split the slow pipeline out of the
- * `ask_aviation` tool so the tool returns near-instant with just the iframe +
- * a pending pointer, and the iframe streams progress + the final result from
- * here. That's the only way to show a live loading state in Claude Desktop /
- * Claude.ai (SEP-1865 hosts don't expose an iframe until tool completion).
- *
- * Protocol:
- *   Request: JSON body `{ question: string }` (≤2000 chars).
- *   Response: `text/event-stream` with `data: <json>\n\n` events, where each
- *             payload matches `AviationQueryEvent`:
- *               { type: 'progress', step: 'planning'|'validating'|'querying'|'rendering' }
- *               { type: 'result', result: AviationToolResult }
- *               { type: 'error',  message: string }
- *
- * CORS: the iframe runs in the MCP host's sandbox origin (`sandbox.towles.dev`
- * locally, `*.claudemcpcontent.com` in Claude) — always cross-origin. We reply
- * with `Access-Control-Allow-Origin: *` since the endpoint is anonymous and
- * never reads cookies. The companion `query.options.ts` handles preflight.
+ * POST /mcp/aviation/query — the SSE endpoint the aviation iframe POSTs to. MCP
+ * tool calls are synchronous and no SEP-1865 host mounts an iframe before the tool
+ * returns, so `ask_aviation` answers instantly with a pending pointer and the slow
+ * pipeline streams from here. Anonymous and cookie-free, hence `Allow-Origin: *`.
  */
 
 import { defineEventHandler, readBody, setResponseHeader, setResponseStatus } from 'h3';

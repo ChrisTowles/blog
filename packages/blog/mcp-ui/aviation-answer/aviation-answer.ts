@@ -1,31 +1,8 @@
 /**
- * `ui://aviation-answer` iframe bundle entry.
- *
- * Frameworkless vanilla TS. Mirrors the ext-apps reference at
+ * `ui://aviation-answer` iframe bundle entry — frameworkless vanilla TS mirroring
  * `@modelcontextprotocol/ext-apps/examples/basic-server-vanillajs/src/mcp-app.ts`.
- *
- * Responsibilities:
- *   1. Connect to the host via `App` (AppBridge + PostMessageTransport).
- *   2. Receive `sendToolInput` + `sendToolResult`; render the answer + chart/table.
- *   3. Route between ECharts chart and HTML table based on `chart_option` shape.
- *   4. Dispatch `ui/message` upward when a follow-up chip is clicked.
- *   5. Re-render with dark/light ECharts palette when HostContext theme changes.
- *   6. Forward-compatible streaming-disable: chips disable if HostContext carries
- *      a `status: 'streaming'` field (local extension defined in Unit 6). Unknown
- *      status values are ignored.
- *
- * TODO(Unit 4 follow-ups, punted per prompt):
- *   - SQL syntax highlighter (currently plain <pre><code>).
- *   - axe-core a11y audit integration.
- *   - `ui/notifications/tool-cancelled` cancellation state with retry affordance.
- *   - `ui/initialize` >5s timeout fallback ("host not responding").
- *   - Additional e2e scenarios: line/scatter/treemap/table, theme toggle, streaming.
- *
- * The chart_option is passed through to `chart.setOption(...)` verbatim — the
- * server is the authority on chart shape. Two routing hints:
- *   - If `chart_option.__table === true` OR `chart_option.series` is missing /
- *     empty, render a table instead of a chart.
- *   - All other shapes: ECharts.
+ * `chart_option` reaches `chart.setOption(...)` verbatim; the server is the
+ * authority on shape. `__table === true` or missing/empty `series` → HTML table.
  */
 
 import {

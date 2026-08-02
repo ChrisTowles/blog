@@ -1,15 +1,7 @@
 /**
- * `requireGuardian(event, target)` — guardian-only auth helper.
- *
- * Validates:
- *   1. There is a logged-in session (otherwise 401).
- *   2. The session user is a guardian of the target group (or the group
- *      that owns the target learner).
- *
- * Returns `{ userId, groupId }` on success, throws an HTTP error otherwise.
- *
- * Public typing routes (lessons list, anonymous progress writes to
- * localStorage) bypass this helper entirely.
+ * `requireGuardian(event, target)` — throws without a session, and again unless the
+ * session user is a guardian of the target group (or of the group owning the target
+ * learner). Public typing routes — lesson lists, anonymous localStorage — skip it.
  */
 import type { H3Event } from 'h3';
 import { isGuardianOfGroup, isGuardianOfLearner, findLearnerById } from './groups';

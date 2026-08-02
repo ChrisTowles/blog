@@ -1,18 +1,8 @@
 /**
- * POST /api/chats/:id/messages — persist a single message into the chat's
- * parts column WITHOUT running the Anthropic agent loop.
- *
- * This is the bypass path documented in the plan (Unit 6, line 114):
- *   "Blog runs its own MCP client; aviation queries bypass the Anthropic
- *    agent loop entirely."
- *
- * The aviation surface uses this to persist a UiResourcePart (plus optional
- * synthetic user text) against the same `messages` table the agent uses.
- * The existing `parts` JSON column tolerates arbitrary MessagePart shapes.
- *
- * Contract (intentionally minimal):
- *   body = { role: 'user' | 'assistant', parts: MessagePart[] }
- *   response = { id: string }
+ * POST /api/chats/:id/messages — persist one message into the chat's `parts`
+ * column *without* running the Anthropic agent loop. The aviation surface takes
+ * this bypass to store a UiResourcePart (plus optional synthetic user text) in
+ * the same table the agent uses; `parts` tolerates arbitrary MessagePart shapes.
  */
 
 import { z } from 'zod';

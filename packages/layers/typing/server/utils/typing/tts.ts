@@ -1,14 +1,8 @@
 /**
- * Google Cloud TTS (Chirp3) client + on-disk cache.
- *
- * Cache strategy: hash `(phrase, voice)` -> filesystem path under
- * `packages/blog/public/audio/typing/<hash>.mp3`. Once a phrase is
- * generated, future requests hit the file directly (the public/
- * directory is served by Nuxt as a static asset).
- *
- * If `GOOGLE_TTS_KEY` (or `TYPING_TTS_PROVIDER`) is unset, the synth
- * function returns `null` and callers should fall back to the Web
- * Speech API client-side.
+ * Google Cloud TTS (Chirp3) client over an on-disk cache: `(phrase, voice)` hashes to
+ * `packages/blog/public/audio/typing/<hash>.mp3`, which Nuxt then serves as a static
+ * asset, so a generated phrase never round-trips again. Synth returns `null` when
+ * `GOOGLE_TTS_KEY` / `TYPING_TTS_PROVIDER` is unset — callers fall back to Web Speech.
  */
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';

@@ -1,21 +1,8 @@
 /**
- * Unit tests for the iframe client logic.
- *
- * Scope (narrowed per Unit 4 plan):
- *   - Bar fixture renders hero, chart container, chips, collapsed SQL.
- *   - Table fixture renders a table (and NOT a chart container).
- *   - Empty rows renders the empty-state copy.
- *   - Truncated banner appears when `truncated: true`.
- *   - Broken chart_option falls back to answer-as-text.
- *   - SQL toggle flips aria-expanded.
- *   - Chip click calls the stubbed App.sendMessage with correct params.
- *   - HostContext with status: 'streaming' disables chips; 'idle' re-enables.
- *   - Unknown status values do not toggle streaming.
- *
- * We mock `App` with a minimal object: the bootstrap module assigns
- * `ontoolinput`, `ontoolresult`, `onhostcontextchanged`, `ontoolcancelled`,
- * `onerror` as properties, and calls `app.connect()` (only when not under test).
- * Our fake App exposes those as writable fields.
+ * Unit tests for the iframe client logic. `App` is mocked as a plain object: the
+ * bootstrap module assigns `ontoolinput`, `ontoolresult`, `onhostcontextchanged`,
+ * `ontoolcancelled` and `onerror` as properties and calls `app.connect()` only
+ * when not under test, so the fake just exposes those as writable fields.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';

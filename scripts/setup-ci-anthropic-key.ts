@@ -5,18 +5,10 @@ import { consola } from 'consola';
 import { defineCommand, runMain } from 'citty';
 
 /**
- * Store an Anthropic API key as the ANTHROPIC_API_KEY repo secret, so the E2E
- * job in .github/workflows/test.yml can run the chat, loan and aviation specs.
- *
- * This script deliberately does NOT create the key. The Admin API has no
- * create endpoint — `/v1/organizations/api_keys` supports list, get, and
- * update (name/status) only, and the Admin API FAQ states plainly that "new
- * API keys can only be created through the Claude Console for security
- * reasons." Create it there first, then run this.
- *
- * The key is read from a hidden prompt and handed to `gh` over stdin rather
- * than as an argv flag, so it never lands in shell history or in the process
- * list where any other user on the box could read it.
+ * Stores an Anthropic API key as the ANTHROPIC_API_KEY repo secret so the E2E job can
+ * run the chat, loan and aviation specs. It cannot mint the key: the Admin API only
+ * lists, gets and updates — new keys come from the Console. The key is read from a
+ * hidden prompt and piped to `gh` over stdin, never argv, so it stays out of `ps`.
  */
 
 const REPO = 'ChrisTowles/blog';

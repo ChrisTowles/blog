@@ -1,30 +1,21 @@
 /**
- * useTypingAudio — preloads and plays per-key + encouragement audio.
- *
- * Strategy:
- *   1. Server route returns a cached MP3 URL when GOOGLE_TTS_KEY is set.
- *   2. If the server returns 404 with `fallback: 'web-speech'`, fall
- *      back to the Web Speech API with rate=0.9 for clarity.
- *   3. The `audioOn` toggle is per-stage default in `useState`:
- *      ON for stages 1-5, OFF after.
+ * useTypingAudio — preloads and plays per-key and encouragement audio. The server
+ * hands back a cached MP3 when GOOGLE_TTS_KEY is set, or 404s with
+ * `fallback: 'web-speech'`, in which case Web Speech takes over at rate 0.9.
  */
 const ENCOURAGEMENT = ['good job', 'nice work', 'keep going', 'almost there'] as const;
 
 type CacheEntry = HTMLAudioElement | { kind: 'web-speech' };
 
-// Module-scope so every play* helper (and every component that uses
-// useTypingAudio) shares one AudioContext. Browsers cap the number of
-// active contexts (~6 in Safari) so creating one per tone causes
-// failures during long sessions.
+// One shared context: browsers cap active contexts (~6 in Safari), so one per tone
+// fails partway through a long session.
 let sharedAudioCtx: AudioContext | null = null;
 
 export function useTypingAudio() {
   const audioOn = useState<boolean>('typing:audio-on', () => true);
   const cache = useState<Record<string, CacheEntry>>('typing:audio-cache', () => ({}));
 
-  // Per-instance tracker for oscillators that this composable scheduled.
-  // We use a per-instance Set (not module-scope) so each consumer gets
-  // its own stopAll() — a game restart should silence its own pending
+  // Per-instance rather than module-scope, so a game restart silences its own pending
   // chimes without nuking audio for other mounted consumers.
   const activeOscillators = new Set<OscillatorNode>();
 
@@ -64,8 +55,7 @@ export function useTypingAudio() {
   function getAudioCtx(): AudioContext | null {
     if (!audioOn.value || !import.meta.client) return null;
     if (sharedAudioCtx) {
-      // Browsers suspend the context after periods of inactivity or
-      // tab-switching. Resume on demand so the next tone actually plays.
+      // Browsers suspend the context on inactivity or a tab switch.
       if (sharedAudioCtx.state === 'suspended') void sharedAudioCtx.resume();
       return sharedAudioCtx;
     }
@@ -106,19 +96,13 @@ export function useTypingAudio() {
       };
       osc.start(startAt);
       osc.stop(startAt + durationMs / 1000 + 0.01);
-      // Don't close the shared context on tone end; reuse it for the
-      // next tone. The osc itself disconnects when it ends.
+      // Never close the shared context here — the oscillator disconnects itself.
     } catch {
       // best-effort
     }
   }
 
-  /**
-   * Stop and disconnect every oscillator this composable scheduled.
-   * Components key-bump on restart (LessonRunner runnerKey, game runId)
-   * which unmounts the old subtree — we call this from onScopeDispose
-   * so pending fanfare / streak chimes don't bleed across runs.
-   */
+  /** Called from onScopeDispose, so a key-bumped restart doesn't bleed chimes across runs. */
   function stopAll() {
     for (const osc of activeOscillators) {
       try {
@@ -145,10 +129,7 @@ export function useTypingAudio() {
     playTone(880, 50, { type: 'sine', gain: 0.04 });
   }
 
-  /**
-   * Ascending chime that pairs with the streak burst. Higher tier =
-   * higher final note, so 15-in-a-row genuinely sounds better than 3.
-   */
+  /** Higher tier ends on a higher note, so 15-in-a-row sounds better than 3. */
   function playStreakDing(tier: number) {
     const t = Math.max(1, Math.min(tier, 5));
     const base = 523.25; // C5
@@ -164,11 +145,7 @@ export function useTypingAudio() {
     });
   }
 
-  /**
-   * Four-note "ta-da" arpeggio on lesson completion. The initial 200 ms
-   * offset lets the final-keystroke playClick (and a possible streak
-   * tier-up ding) settle so the fanfare doesn't muddy into them.
-   */
+  /** The 200 ms offset lets the final click and any tier-up ding settle first. */
   function playFanfare() {
     const baseDelayMs = 200;
     [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {

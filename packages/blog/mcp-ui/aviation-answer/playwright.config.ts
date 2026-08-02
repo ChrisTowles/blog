@@ -1,12 +1,8 @@
 /**
- * Playwright config scoped to the aviation-answer iframe bundle tests.
- *
- * Runs against the bundle directory's local static server (e2e/server.mjs),
- * not the blog's Nuxt dev server. This keeps Unit 4 tests independent of a
- * live dev server and deterministic against the built bundle.
- *
- * Invoke via `pnpm --filter @chris-towles/blog test:ui-bundle:e2e` (added in
- * package.json).
+ * Playwright config scoped to the aviation-answer iframe bundle tests, run via
+ * `pnpm --filter @chris-towles/blog test:ui-bundle:e2e`. It serves the built bundle
+ * from `e2e/server.mjs` rather than the blog's Nuxt dev server, so these stay
+ * deterministic and need no live dev server.
  */
 import { defineConfig } from '@playwright/test';
 

@@ -115,14 +115,7 @@ describe('useTypingEngine', () => {
     const clock = makeClock();
     const eng = useTypingEngine({ text: 'abcde', clock: clock.fn });
     eng.feed({ key: 'a', at: clock.fn() });
-    // Spread the remaining 4 keys evenly so the final keystroke lands at
-    // start + 30s; that gives 5 correct chars in 30s = (5/5)/(0.5) = 2 WPM.
-    // Wait — 5 chars / 5 = 1 word in 30s = 1 / 0.5 = 2 WPM. Spec asked for
-    // "5 chars in 30s = 24 WPM" which is the *gross* formula treating
-    // 5 chars / 5 = 1 word per 30s and scaling per minute. (5/5)/0.5 = 2.
-    // The 24 WPM figure in the spec assumes (chars*60/duration_s)/5 with
-    // chars=60 — that doesn't match the rest of the test setup. Stick with
-    // the canonical formula and assert 2 WPM.
+    // Spread the remaining 4 keys so the last lands at start + 30s: 5 chars in 30s.
     clock.advance(30_000);
     eng.feed({ key: 'b', at: clock.fn() });
     eng.feed({ key: 'c', at: clock.fn() });
@@ -143,8 +136,7 @@ describe('useTypingEngine', () => {
     expect(Number.isFinite(eng.wpm.value)).toBe(true);
     expect(Number.isFinite(eng.netWpm.value)).toBe(true);
 
-    // Even after a single keystroke at t=startedAt, duration is 0 until
-    // time advances. WPM must stay 0 rather than divide by zero.
+    // One keystroke at t=startedAt leaves duration 0 — WPM must not divide by it.
     eng.feed({ key: 'a', at: clock.fn() });
     expect(eng.durationMs.value).toBe(0);
     expect(eng.wpm.value).toBe(0);
@@ -171,8 +163,7 @@ describe('useTypingEngine', () => {
   it('netWpm floors at zero when errors exceed correct chars per minute', () => {
     const clock = makeClock();
     const eng = useTypingEngine({ text: 'abcde', clock: clock.fn });
-    // 1 correct char, then 10 errors, over 60s: gross = 0.2 WPM,
-    // errors/min = 10. 0.2 - 10 = -9.8 -> floor to 0.
+    // 0.2 gross minus 10 errors/min is -9.8, which must floor at 0.
     eng.feed({ key: 'a', at: clock.fn() });
     clock.advance(60_000);
     for (let i = 0; i < 10; i++) eng.feed({ key: 'X', at: clock.fn() });
@@ -234,8 +225,7 @@ describe('useTypingEngine', () => {
     eng.feed({ key: 'Backspace', at: clock.fn() });
     expect(eng.cursor.value).toBe(0);
     expect(eng.correctTyped.value).toBe(0);
-    // totalTyped is the historical count of keystrokes, not the current
-    // cursor — backspace doesn't undo it.
+    // totalTyped counts keystrokes historically, so backspace doesn't undo it.
     expect(eng.totalTyped.value).toBe(1);
 
     eng.feed({ key: 'a', at: clock.fn() });
@@ -410,10 +400,8 @@ describe('useTypingEngine', () => {
     });
 
     it('re-evaluates durationMs/wpm as wall-clock time advances', async () => {
-      // Use the default real-clock path so the engine starts a setInterval
-      // ticker. Fake timers let us drive both `Date.now()` and the interval
-      // deterministically. `effectScope` gives `onScopeDispose` something
-      // to attach to so the interval is cleaned up at the end.
+      // The real-clock path starts the ticker, which fake timers then drive along with
+      // `Date.now()`; `effectScope` gives `onScopeDispose` something to clean up.
       const startEpoch = 1_700_000_000_000;
       vi.setSystemTime(startEpoch);
 

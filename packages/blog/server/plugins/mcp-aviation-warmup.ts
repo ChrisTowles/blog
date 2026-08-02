@@ -1,17 +1,8 @@
 /**
- * Nitro startup plugin — pre-warm DuckDB + httpfs for the aviation MCP tool.
- *
- * Runs once at container boot. Reads the 1-row pre-warm.parquet file to amortize
- * httpfs cold-start (2-5s) before the first real tool call arrives. See plan
- * Key Decisions — "Pre-warm DuckDB on cold start".
- *
- * Expected duration: <2s on a cold container (plan verification bar, line 453).
- *
- * Two failure modes, handled differently:
- *   - Missing HMAC creds → hard fail at startup. The tool is structurally broken
- *     without them, so crash loudly with an actionable message.
- *   - Prewarm network error → logged, non-fatal. The first real request will
- *     re-await the same singleton promise and pay the cold-start latency.
+ * Nitro startup plugin — reads the 1-row pre-warm.parquet at container boot to
+ * amortize httpfs cold-start (2-5s, budgeted <2s) before the first aviation tool
+ * call. Missing HMAC creds hard-fail here: the tool is structurally broken without
+ * them. A prewarm network error is not fatal — the first request re-awaits it.
  */
 
 import { defineNitroPlugin } from 'nitropack/runtime';
