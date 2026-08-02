@@ -1,26 +1,8 @@
 /**
- * Resolve `$rows.*` placeholders inside a chart_option returned by the LLM.
- *
- * The LLM can't know actual SQL row values at emit time, so it leaves chart
- * data arrays as placeholders referring to column names. We substitute in the
- * real values after the SQL executes.
- *
- * Supported placeholder shapes (anywhere inside chart_option):
- *
- *   1. String — simple array of values from one column:
- *        "data": "$rows.avg_age_years"
- *      → rows.map(r => r.avg_age_years)
- *
- *   2. Object { $rows: {...tmpl} } — array of objects (pie, bar with labels):
- *        "data": { "$rows": { "name": "operator_name", "value": "fleet_size" } }
- *      → rows.map(r => ({ name: r.operator_name, value: r.fleet_size }))
- *
- *   3. Object { $rows: [colA, colB] } — array of pairs (scatter, heatmap):
- *        "data": { "$rows": ["year", "passengers"] }
- *      → rows.map(r => [r.year, r.passengers])
- *
- * String values referencing unknown columns resolve to null entries; the chart
- * will render blanks rather than crash. Walks arrays and objects recursively.
+ * Resolves `$rows.*` placeholders in an LLM-emitted chart_option: the model can't
+ * know row values at emit time, so it names columns and these are substituted once
+ * the SQL runs. Three shapes — `"$rows.col"`, `{ $rows: { key: col } }` and
+ * `{ $rows: [colA, colB] }`. Unknown columns resolve to null, so charts blank out.
  */
 
 export type Row = Record<string, unknown>;

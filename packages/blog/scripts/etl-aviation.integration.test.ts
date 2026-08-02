@@ -65,7 +65,6 @@ async function allRows(c: DuckDBConnection, sql: string): Promise<Array<Record<s
 }
 
 describe('aviation ETL — pure transforms', () => {
-  // Scenario 1: happy path — FAA MASTER CSV → Parquet with manufacturer counts
   test('FAA MASTER CSV → aircraft Parquet with manufacturer join', async () => {
     const out = join(tmpDir, 'aircraft.parquet');
     await transformFaaMaster(conn, FAA_MASTER, out, FAA_ACFTREF);
@@ -88,7 +87,6 @@ describe('aviation ETL — pure transforms', () => {
     expect(byName.AIRBUS).toBeGreaterThanOrEqual(1);
   });
 
-  // Scenario 2: happy path — BTS T-100 → Parquet with partition-by-yyyymm
   test('BTS T-100 CSV → Parquet preserves partition column values', async () => {
     const out = join(tmpDir, 'bts_t100_202501.parquet');
     await transformBtsT100(conn, BTS_T100, out);
@@ -108,7 +106,6 @@ describe('aviation ETL — pure transforms', () => {
     expect(out).toMatch(/bts_t100_202501\.parquet$/);
   });
 
-  // Scenario 3: happy path — OpenFlights airports → Parquet, referenceable from routes
   test('OpenFlights airports + routes → Parquet with referential integrity', async () => {
     const airportsOut = join(tmpDir, 'airports.parquet');
     const routesOut = join(tmpDir, 'routes.parquet');
@@ -125,7 +122,6 @@ describe('aviation ETL — pure transforms', () => {
     expect(orphans).toHaveLength(0);
   });
 
-  // Scenario 4: three-way join via carrier_to_operator
   test('three-way join FAA × BTS × OpenFlights aggregates passengers by manufacturer', async () => {
     const aircraftOut = join(tmpDir, 'aircraft-join.parquet');
     const btsOut = join(tmpDir, 'bts-join.parquet');
@@ -163,7 +159,6 @@ describe('aviation ETL — pure transforms', () => {
     expect(Number(boeing!.total_pax)).toBeGreaterThan(0);
   });
 
-  // Scenario 5: NULL home-base airport in FAA registry row — preserved
   test('FAA row with NULL city/state is preserved (no filter drop)', async () => {
     const out = join(tmpDir, 'aircraft-null-city.parquet');
     await transformFaaMaster(conn, FAA_MASTER, out, FAA_ACFTREF);
@@ -179,7 +174,6 @@ describe('aviation ETL — pure transforms', () => {
     expect(nullCity.map((r) => r.n_number)).toContain('N999EX');
   });
 
-  // Scenario 6: unmatched BTS carrier → NULL operator, row preserved
   test('BTS row with carrier not in lookup survives left join with NULL operator', async () => {
     const btsOut = join(tmpDir, 'bts-unmatched.parquet');
     const lookupOut = join(tmpDir, 'carrier-unmatched.parquet');
@@ -198,7 +192,6 @@ describe('aviation ETL — pure transforms', () => {
     expect(rows[0]!.faa_registrant_name).toBeNull();
   });
 
-  // Scenario 7: OpenFlights airport with NULL lat/lon → preserved
   test('OpenFlights airport with \\N lat/lon preserved as NULL', async () => {
     const out = join(tmpDir, 'airports-nullgeo.parquet');
     await transformOpenFlightsAirports(conn, OF_AIRPORTS, out);
@@ -212,11 +205,8 @@ describe('aviation ETL — pure transforms', () => {
     expect(rows[0]!.longitude).toBeNull();
   });
 
-  // Scenario 8: BTS T-100 preserves negative values (not clamped)
-  // The fixture doesn't include negative delays by default (T-100 market has
-  // no delay column — delay is in the On-Time tables). We assert the
-  // non-clamping policy on freight, a signed-ish field, by checking that small
-  // values survive exactly.
+  // T-100 Market carries no delay column (that lives in the On-Time tables), so the
+  // no-clamping policy is asserted on freight — small values must survive exactly.
   test('BTS T-100 preserves exact integer values (no clamping)', async () => {
     const out = join(tmpDir, 'bts-preserve.parquet');
     await transformBtsT100(conn, BTS_T100, out);
@@ -232,7 +222,6 @@ describe('aviation ETL — pure transforms', () => {
     expect(Number(rows[0]!.mail_lbs)).toBe(150);
   });
 
-  // Scenario 9: duplicate N-numbers — latest-wins dedup
   test('duplicate N-numbers in FAA MASTER deduped by latest LAST_ACTION_DATE', async () => {
     const out = join(tmpDir, 'aircraft-dedup.parquet');
     await transformFaaMaster(conn, FAA_MASTER, out, FAA_ACFTREF);
@@ -246,7 +235,6 @@ describe('aviation ETL — pure transforms', () => {
     expect(rows[0]!.registrant_state).toBe('TX');
   });
 
-  // Scenario 10: error path — transform against a missing file throws
   test('transform with a missing input throws a clear error', async () => {
     const out = join(tmpDir, 'error.parquet');
     await expect(
@@ -254,8 +242,6 @@ describe('aviation ETL — pure transforms', () => {
     ).rejects.toThrow();
   });
 
-  // Scenario 11: integration — every transform emits a readable Parquet,
-  // and the pre-warm Parquet is tiny and round-trips.
   test('runAllTransforms emits all expected Parquet files and pre-warm is tiny', async () => {
     const outDir = join(tmpDir, 'all-transforms');
     const produced = await runAllTransforms(
@@ -298,8 +284,6 @@ describe('aviation ETL — pure transforms', () => {
     expect(preWarmRows[0]!.sentinel).toBe('aviation-pre-warm');
   });
 
-  // Supplemental coverage for the airlines-only transform that isn't exercised
-  // in any other test path.
   test('OpenFlights airlines → Parquet with IATA + ICAO preserved', async () => {
     const out = join(tmpDir, 'airlines.parquet');
     await transformOpenFlightsAirlines(conn, OF_AIRLINES, out);
@@ -313,7 +297,6 @@ describe('aviation ETL — pure transforms', () => {
     expect(rows[0]!.icao).toBe('AAL');
   });
 
-  // Supplemental coverage for the ACFTREF-only transform output.
   test('FAA ACFTREF → aircraft_types Parquet with seat counts', async () => {
     const out = join(tmpDir, 'aircraft_types.parquet');
     await transformFaaAcftref(conn, FAA_ACFTREF, out);
@@ -328,7 +311,6 @@ describe('aviation ETL — pure transforms', () => {
     expect(Number(rows[0]!.number_of_seats)).toBe(220);
   });
 
-  // Supplemental coverage: pre-warm Parquet writes even without inputs.
   test('writePreWarmParquet creates a tiny file with a known sentinel', async () => {
     const out = join(tmpDir, 'pre-warm-standalone.parquet');
     await writePreWarmParquet(conn, out);

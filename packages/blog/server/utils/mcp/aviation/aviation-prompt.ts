@@ -225,18 +225,9 @@ ALIAS EXAMPLES (follow exactly; bare aliases will break the parser)
 }
 
 /**
- * Starter-question catalog. 10 curated questions; each one produces a
- * schema-compatible SQL query against the dataset. Documented as the source of
- * truth for Unit 5's `list_questions` tool.
- *
- * Verified: each question can be answered via SELECT against
- *   - dims/aircraft.parquet
- *   - dims/aircraft_types.parquet
- *   - dims/airports.parquet
- *   - dims/airlines.parquet
- *   - facts/bts_t100_*.parquet
- *   - ref/carrier_to_operator.parquet
- * No geo/map charts — covered by bar/line/scatter/treemap/table.
+ * Starter-question catalog, and the source of truth for the `list_questions` tool.
+ * Every entry is verified answerable by a plain SELECT over the dims/facts/ref
+ * parquets and renderable as bar/line/scatter/treemap/table — no geo or map charts.
  */
 export const AVIATION_STARTER_QUESTIONS: readonly string[] = [
   'Which operators have the oldest Boeing 737 fleets?',

@@ -1,28 +1,8 @@
 /**
- * Per-IP in-process rate limit for `/mcp/*` routes (plan Unit 7 line 622).
- *
- * Shape: simple fixed-window bucket. Each IP gets `limit` tokens per
- * `windowMs`. Requests that exceed the bucket get 429 with `Retry-After`.
- *
- * Scope & lifecycle: module-level `Map<ip, Bucket>`. This is process-local by
- * design — we pair it with Cloud Run `min_instances=1` + session-affinity
- * (plan Key Decisions lines 122-124) so a single IP's traffic usually lands on
- * the same instance. For a personal-blog traffic profile this is "good
- * enough"; a distributed store (Redis) is a later-plan decision (plan risk
- * table line 779 / Alternative Approaches line 794).
- *
- * Config: `MCP_RATE_LIMIT_RPM` env var controls the per-5-minute limit.
- * Default **60 requests / 5 min / IP** per plan line 633. The `RPM` naming is
- * legacy — it's actually "requests per 5-minute window" — kept for terraform
- * consistency.
- *
- * Routes covered: every request whose path starts with `/mcp/`. That includes
- * the Streamable HTTP endpoint `/mcp/aviation`, the replay-fetch endpoint
- * `/mcp/aviation/resource`, and any future co-hosted MCP server.
- *
- * Design note on pure logic: `consumeToken()` is a pure function so unit
- * tests drive it directly without standing up Nitro/h3. The event handler is
- * a thin adapter.
+ * Per-IP fixed-window rate limit for `/mcp/*`. The bucket map is process-local by
+ * design: Cloud Run `min_instances=1` + session affinity keep an IP mostly on one
+ * instance, which is enough for a personal blog — Redis is a later decision.
+ * `MCP_RATE_LIMIT_RPM` is misnamed for terraform consistency; it is per 5 minutes.
  */
 
 import { defineEventHandler, getRequestIP, setResponseStatus, setResponseHeader } from 'h3';

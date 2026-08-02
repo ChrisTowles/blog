@@ -1,15 +1,7 @@
 /**
- * POST /api/typing/groups/:slug/join
- *
- * Accepts a single-use invite token and adds the calling user as a guardian
- * of the group. The :slug here is actually the invite token (we use this
- * shape for symmetry with other group routes — `groupId` is read from the
- * invite row, not the URL).
- *
- * Token must:
- *   - exist
- *   - not be expired
- *   - not already accepted
+ * POST /api/typing/groups/:slug/join — adds the caller as a guardian of the group.
+ * The `:slug` is really the single-use invite token, shaped this way for symmetry
+ * with the other group routes; `groupId` is read off the invite row, not the URL.
  */
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';

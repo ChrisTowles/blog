@@ -1,14 +1,8 @@
 /**
- * useTypingProgress — per-learner progress storage.
- *
- * Each active learner gets their own localStorage namespace so switching
- * between siblings shows distinct WPM, PRs, and current stage. The
- * anonymous "Acting as You" user keeps the legacy unsuffixed key so any
- * pre-existing local progress stays attached to them.
- *
- * When the active learner is a real DB row, attempts are also POSTed to
- * `/api/typing/progress` (best-effort; localStorage is the source of
- * truth for the UI even when logged in so we never block on the network).
+ * useTypingProgress — per-learner progress storage. Each learner gets its own localStorage
+ * namespace so siblings show distinct WPM, PRs and stage, while the anonymous user keeps the
+ * legacy unsuffixed key. DB-backed learners also POST attempts, best-effort — localStorage
+ * stays the UI's source of truth.
  */
 import {
   MAX_STAGE,
@@ -70,8 +64,7 @@ function readBests(id: ActiveLearnerId): LessonBestMap {
     if (raw && typeof raw === 'string') {
       const parsed: unknown = JSON.parse(raw);
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        // Drop any entries that don't match the LessonBest shape — guards
-        // against half-written rows or older schema leaking in.
+        // Drops half-written rows and any older schema leaking in.
         for (const [slug, entry] of Object.entries(parsed as Record<string, unknown>)) {
           if (isLessonBest(entry)) out[slug] = entry;
         }
@@ -159,10 +152,7 @@ export type UseTypingProgress = {
   ) => RecordAttemptResult;
   /** Read the personal best for a lesson slug, or null if none yet. */
   getLessonBest: (slug: string) => LessonBest | null;
-  /**
-   * Save a new best if `wpm` beats the existing one. Returns whether it
-   * was a new best plus the previous record (or null when first attempt).
-   */
+  /** Saves only if `wpm` beats the existing best; returns the previous record too. */
   recordLessonBest: (
     slug: string,
     attempt: { wpm: number; accuracy: number; durationMs: number },
@@ -178,11 +168,8 @@ export function useTypingProgress(): UseTypingProgress {
     readStorage(activeLearnerId.value),
   );
 
-  // Re-read whenever the active learner changes so switching siblings
-  // shows that learner's distinct attempts and current stage. For a
-  // real learner we also seed currentStage from the server-tracked
-  // value so a fresh device respects progress made elsewhere; the kid
-  // is never demoted (local may be ahead from offline practice).
+  // A real learner also seeds currentStage from the server so a fresh device respects
+  // progress made elsewhere — taking the max, since the kid is never demoted.
   if (import.meta.client) {
     watch(
       activeLearnerId,
@@ -197,10 +184,7 @@ export function useTypingProgress(): UseTypingProgress {
     );
   }
 
-  // Cross-tab sync — when another tab writes to either keyed slot for
-  // the current learner, invalidate our caches and refresh reactive
-  // state so the kid sees their PR / current-stage update without a
-  // reload.
+  // Cross-tab sync, so a PR set in another tab shows up here without a reload.
   if (import.meta.client) {
     const onStorage = (e: StorageEvent) => {
       const id = activeLearnerId.value;
@@ -263,10 +247,8 @@ export function useTypingProgress(): UseTypingProgress {
     const previousStage = progress.value.currentStage;
     let nextStage = previousStage;
 
-    // Mastery gating — advance the stage when the latest attempt clears
-    // 95% accuracy + the stage's target WPM. The lesson runner reports
-    // gross WPM in `attempt.wpm`. We apply this only to drill / sentence
-    // attempts; game attempts use their own pacing rules.
+    // Mastery gate: 95% accuracy + the stage's target WPM (gross, as the runner reports
+    // it) advances the stage. Drill and sentence attempts only — games pace themselves.
     if (attempt.gameSlug === null && attempt.lessonId !== null) {
       const target = stageTargetWpm(previousStage);
       if (attempt.accuracy >= 0.95 && attempt.wpm >= target) {
@@ -291,8 +273,7 @@ export function useTypingProgress(): UseTypingProgress {
         method: 'PUT',
         body: { currentStage: nextStage },
       }).catch(() => {
-        // Network failure: localStorage still has the new stage. The
-        // next stage advance or explicit setCurrentStage will retry.
+        // localStorage still holds the new stage; the next advance retries the write.
       });
     }
 

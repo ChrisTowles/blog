@@ -1,14 +1,8 @@
 /**
- * Shared loader for MCP iframe bundles (aviation, echo).
- *
- * Bundles live at `<packages/blog>/mcp-ui/<subdir>/dist/index.html` and are
- * ~100KB-1MB of HTML. In prod we cache once (immutable per deploy). In dev we
- * cache by mtime so `build:ui-bundle:watch` rebuilds reflect live without
- * re-reading the file on every MCP tool call.
- *
- * Bundle path is resolved from `process.cwd()` rather than `__dirname` because
- * Nitro dev bundles server code into `.nuxt/dev/`, which breaks relative
- * walks up from the source file.
+ * Shared loader for MCP iframe bundles (aviation, echo). Prod caches once — a bundle
+ * is immutable per deploy — while dev keys the cache by mtime so `build:ui-bundle:watch`
+ * rebuilds land live. Paths resolve from `process.cwd()` rather than `__dirname`: Nitro
+ * dev bundles server code into `.nuxt/dev/`, which breaks relative walks up from source.
  */
 
 import { existsSync, readFileSync, statSync } from 'node:fs';

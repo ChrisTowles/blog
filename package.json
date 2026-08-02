@@ -42,6 +42,8 @@
     "docker:reset": "docker compose down --volumes --remove-orphans && pnpm clean",
     "lint": "oxlint --ignore-pattern '.claude/worktrees/**' .",
     "lint:fix": "oxlint --ignore-pattern '.claude/worktrees/**' --fix-dangerously .",
+    "lint:comments": "comment-budget",
+    "lint:comments:all": "comment-budget --all --report",
     "format": "oxfmt --write",
     "format:check": "oxfmt --check",
     "typecheck": "pnpm --filter @chris-towles/blog typecheck",
@@ -62,6 +64,7 @@
     "youtube-transcript": "^1.3.1"
   },
   "devDependencies": {
+    "@third-option/comment-budget": "^0.1.0",
     "@types/node": "^24.13.2",
     "citty": "^0.2.2",
     "cli-table3": "^0.6.5",
@@ -100,6 +103,7 @@
       "@parcel/watcher",
       "@playwright/browser-chromium",
       "@swc/core",
+      "@third-option/comment-budget",
       "better-sqlite3",
       "esbuild",
       "playwright-chromium",

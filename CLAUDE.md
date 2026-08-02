@@ -34,6 +34,7 @@ pnpm build        # Build all packages
 pnpm test         # Vitest
 pnpm test:integration  # Integration tests (requires running PostgreSQL)
 pnpm lint         # oxlint
+pnpm lint:comments # comment-budget gate: comment volume in the lines this branch adds
 pnpm typecheck    # TypeScript checks
 pnpm gcp:prod:deploy   # Build container + deploy to GCP prod (needs terraform & gcloud)
 pnpm gcp:staging:deploy # Build container + deploy to GCP staging
@@ -47,6 +48,16 @@ Scripts in `packages/blog/scripts/` use **citty** for CLI structure (args, help,
 - Wrap the entrypoint with `defineCommand` + `runMain` from `citty`
 - Use `consola.start()`, `consola.success()`, `consola.warn()`, `consola.error()`, `consola.info()`, `consola.box()` instead of raw `console.log`
 - Both are unjs ecosystem packages — citty for structure, consola for output
+
+## Comment Budget
+
+`@third-option/comment-budget` gates comment volume on TypeScript (`comment-budget.toml` at the root). It runs in CI as its own step and locally as `pnpm lint:comments`.
+
+The default judges only the lines a branch adds over `main`, so the repo's existing backlog (`pnpm lint:comments:all` — 37 errors, mostly long comment runs) never fails a build. Two surfaces: `tests` and a `code` catch-all, both at an 8% target. `tests` is listed first because matching is first-match-wins, so a `*.test.ts` under `app/` is judged as a test rather than as code.
+
+Fix findings by deleting, not reflowing. A file may opt out with a top-of-file `comment-budget: allow(<reason>)`; the reason is required.
+
+CI needs `fetch-depth: 0` on checkout — the gate resolves a merge-base, which a shallow clone cannot do.
 
 ## AI Features
 
@@ -77,7 +88,7 @@ google-chrome --headless=new --screenshot=output.png --window-size=1200,800 --de
 After implementing features, verify with the full stack — not just unit tests:
 
 1. `pnpm test` — unit tests pass
-2. `pnpm lint` + `pnpm typecheck` — no errors
+2. `pnpm lint` + `pnpm lint:comments` + `pnpm typecheck` — no errors
 3. `pnpm test:integration` — integration tests pass (needs `DATABASE_URL`)
 4. **Start dev server** (`pnpm dev`) and verify the feature works in a real browser
 5. `pnpm test:e2e` — E2E Playwright tests pass against the running dev server (uses `UI_PORT` from `.env`)
@@ -99,7 +110,7 @@ The `nuxt prepare` step is not optional. `pnpm dev` runs `ui-bundle:build` first
 
 **What actually causes it: running `nuxt typecheck` while a dev server is up.** Typecheck regenerates `.nuxt`; the dev server reloads mid-write and a native addon (better-sqlite3 / duckdb) aborts the process — `terminate called after throwing an instance of 'Napi::Error'`, core dumped. It comes back missing the content tables, and because `index.vue` is wrapped in `v-if="page"` the home page renders blank, so it looks like a content bug rather than a crash.
 
-Pre-commit used to run `pnpm typecheck` on every commit, which killed the dev server routinely. It now runs `pnpm typecheck:precommit` (`scripts/typecheck-precommit.ts`), which skips typecheck when something is listening on `UI_PORT`. CI typechecks every push and PR, so this stays enforced. Two approaches were tried and rejected, both documented in that script: detecting the server by process name (`pgrep -f "nuxt.mjs dev"` matches the hook's own shell), and giving typecheck its own `buildDir` (a fresh build dir makes nuxt-og-image emit an empty template union, so `defineOgImage('SaaS', ...)` fails as `never`).
+Pre-commit used to run `pnpm typecheck` on every commit, which killed the dev server routinely. It now runs `pnpm typecheck:precommit` (`scripts/typecheck-precommit.ts`), which skips typecheck when something is listening on `UI_PORT`. CI typechecks every push and PR, so this stays enforced. Two approaches were tried and rejected: detecting the server by process name (`pgrep -f "nuxt.mjs dev"` matches the hook's own shell), and giving typecheck its own `buildDir` (a fresh build dir makes nuxt-og-image emit an empty template union, so `defineOgImage('SaaS', ...)` fails as `never`).
 
 So: don't run `pnpm typecheck` by hand with `pnpm dev` running. Stop the server first, or let CI do it.
 

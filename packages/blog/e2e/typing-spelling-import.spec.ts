@@ -1,21 +1,8 @@
 /**
- * Spelling-import E2E (mocked).
- *
- * Auth in the typing app is a real session cookie + DB-backed group/learner
- * relationships. Wiring all of that up against the dev DB just to exercise
- * the import UI would be a lot of yak-shaving, so this test mocks the
- * network layer and verifies the screens render and link the right way.
- *
- * Coverage:
- *
- *   1. /typing/spelling/new without an active learner shows a friendly
- *      "switch to a learner" prompt — verified.
- *   2. /typing/spelling without an active learner shows the same prompt —
- *      verified.
- *   3. With Playwright route mocking, hitting /typing/spelling renders a
- *      mastery card with a Lake Leap CTA that contains
- *      `mode=spelling&list=<id>&words=...` so the spelling-mastery hook
- *      on the server side can resolve the list id.
+ * Spelling-import E2E (mocked). Typing auth is a real session cookie plus
+ * DB-backed group/learner rows; wiring that against the dev DB just to exercise
+ * the import UI is more yak-shaving than it buys, so these mock the network
+ * layer and assert the screens render and link the right way.
  */
 import { test, expect } from '@playwright/test';
 import { TEST_IDS } from '~~/shared/test-ids';

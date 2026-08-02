@@ -47,13 +47,10 @@ export type LessonKind =
   | 'topic'
   | 'spelling-drill'
   | 'spelling-sentence'
-  // Mixed real-word practice using every key learned so far. Inserted at
-  // odd stages from 5 onward so a kid blends prior keys into fluid skill
-  // instead of always drilling the newest two in isolation.
+  // Mixed practice over every key learned so far, so a kid blends prior keys
+  // rather than always drilling the newest two in isolation.
   | 'accumulation'
-  // Mandatory "use all keys from the row block" passage that gates
-  // moving into the next row (stages 5 -> 6, 10 -> 11). Mirrors Peter's
-  // Online Typing Course row-boundary review structure.
+  // Row-boundary passage gating the move into the next row (5 → 6, 10 → 11).
   | 'consolidation';
 
 export type LessonRow = {
@@ -134,36 +131,18 @@ export type StageDefinition = {
 export const TYPING_PROGRESS_LOCAL_STORAGE_KEY = 'typing:progress:v1';
 export const TYPING_MERGED_LOCAL_STORAGE_KEY = 'typing:merged:v1';
 
-/**
- * Stages 1-9 don't unlock enough letters to spell most kid-friendly
- * topics (no t/y until stage 10). Both the topic-game form and the
- * generate API gate on this minimum.
- */
+/** Below this, too few letters are unlocked to spell most kid-friendly topics. */
 export const MIN_TOPIC_STAGE = 10;
 export const MAX_STAGE = 20;
 
-/**
- * The first stage where capital letters become part of the curriculum.
- * Stages before this run case-insensitive (kids fumble shift / leave
- * caps lock on). Stage 16 onward requires correct capitalization
- * because capitals practice is the point of the stage.
- */
+/** Earlier stages accept either case — kids fumble shift; from 16 capitals are the point. */
 export const CAPITALS_STAGE = 16;
 
-/**
- * Returns true when the engine should accept either case for this stage's
- * lesson. Callers (pages, AI lesson generator) thread this through to
- * `useTypingEngine`'s `caseInsensitive` option.
- */
 export function isCaseInsensitiveStage(stage: number): boolean {
   return stage < CAPITALS_STAGE;
 }
 
-/**
- * Per-stage target WPM, mirrored on server (curriculum.ts) and client
- * (useTypingProgress mastery gate). Kept as a single source of truth in
- * shared so the two can't drift.
- */
+/** Lives in shared so the server curriculum and the client mastery gate can't drift. */
 export function stageTargetWpm(stage: number): number {
   if (stage <= 3) return 5;
   if (stage <= 6) return 8;
@@ -218,12 +197,7 @@ export type LessonCompleteResult = {
   accuracy: number;
   durationMs: number;
   errorsByKey: ErrorsByKeyMap;
-  /**
-   * True when the lesson was cancelled (e.g. Escape pressed) rather than
-   * typed to completion. Callers should treat cancelled results as
-   * informational only — don't record attempts, don't update PRs, don't
-   * auto-advance.
-   */
+  /** Cancelled results are informational: no attempt recorded, no PR, no auto-advance. */
   cancelled: boolean;
 };
 

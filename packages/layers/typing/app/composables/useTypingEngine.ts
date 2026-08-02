@@ -1,28 +1,8 @@
 /**
- * useTypingEngine — pure-TS typing-input state machine.
- *
- * The engine is consumed by a Vue component (LessonRunner) which feeds it
- * keystroke events. The engine itself does NOT touch the DOM. This makes
- * it trivial to unit test without a browser environment.
- *
- * State machine: idle -> running -> done
- * - First valid keypress transitions idle -> running and starts the clock.
- * - cursor reaching the end of `text` transitions running -> done.
- * - `cancel()` transitions running -> done early.
- *
- * Wrong-key behavior: the cursor does NOT advance on a mismatch. The
- * lesson is kid-friendly — a learner keeps trying until they hit the
- * expected key. We still count the wrong attempt in totalTyped, errors,
- * errorsByKey, and perKeyErrorAttempts so the heatmap and accuracy
- * metrics reflect reality.
- *
- * WPM definitions:
- *   gross WPM = (chars typed / 5) / minutes elapsed
- *   net WPM   = gross - (errors / minutes)
- *
- * Accuracy = correctChars / totalCharsTyped (NOT lesson length).
- *
- * Backspace rewinds a previously correct character by one position.
+ * useTypingEngine — an `idle → running → done` state machine for typing input. It never
+ * touches the DOM, so LessonRunner feeds it keystrokes and tests need no browser. A wrong
+ * key doesn't advance the cursor (kid-friendly: keep trying) but still counts toward
+ * errors and accuracy, which is measured over chars typed rather than lesson length.
  */
 import type { ErrorsByKeyMap, LessonCompleteResult } from '~~/shared/typing-types';
 
@@ -30,7 +10,7 @@ export type EngineState = 'idle' | 'running' | 'done';
 
 export type EngineKeyEvent = {
   key: string;
-  /** ms since UNIX epoch — caller passes Date.now() */
+  /** ms since UNIX epoch. */
   at: number;
 };
 
@@ -40,20 +20,13 @@ export type UseTypingEngineOptions = {
   /** Inject a clock for tests; defaults to Date.now */
   clock?: () => number;
   /**
-   * When the default clock is in use the engine starts a setInterval ticker
-   * (250ms) so that `durationMs`/`wpm`/`netWpm` re-evaluate as wall-clock
-   * time passes. Tests that inject `clock` opt out automatically — their
-   * fake clock only advances when the test advances it, and a real-time
-   * ticker would race with fake timers. Pass `ticker: false` to disable the
-   * ticker even when using the default clock.
+   * A 250ms ticker re-evaluates `durationMs`/`wpm`/`netWpm` as wall-clock time passes.
+   * Injecting `clock` opts out automatically — a real ticker races fake timers.
    */
   ticker?: boolean;
   /**
-   * When true, key comparison is case-insensitive — typing 'D' counts as
-   * 'd' and vice versa. The lesson page enables this for stages 1-15
-   * because capitals aren't introduced until stage 16 and kids fumble
-   * shift / leave caps lock on. Defaults to false so any caller that
-   * needs strict case (capitals stage, capital drills) gets it.
+   * The lesson page sets this for stages 1-15, where capitals aren't taught yet and
+   * kids leave caps lock on. Off by default so capital drills stay strict.
    */
   caseInsensitive?: boolean;
 };
@@ -61,9 +34,8 @@ export type UseTypingEngineOptions = {
 export type UseTypingEngine = {
   state: Ref<EngineState>;
   cursor: Ref<number>;
-  /** chars typed (correct + incorrect). */
   totalTyped: Ref<number>;
-  /** correct chars typed (not lesson chars covered). */
+  /** Correct chars *typed*, not lesson chars covered. */
   correctTyped: Ref<number>;
   errors: Ref<number>;
   errorsByKey: Ref<ErrorsByKeyMap>;
@@ -72,7 +44,6 @@ export type UseTypingEngine = {
   perKeyAvgMs: Ref<Record<string, number>>;
   startedAt: Ref<number | null>;
   endedAt: Ref<number | null>;
-  /** Current gross WPM (live). */
   wpm: ComputedRef<number>;
   netWpm: ComputedRef<number>;
   accuracy: ComputedRef<number>;
@@ -87,8 +58,6 @@ export type UseTypingEngine = {
 export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngine {
   const usingDefaultClock = options.clock === undefined;
   const clock = options.clock ?? (() => Date.now());
-  // Default ticker behavior: only on when using the default (real) clock.
-  // Tests with injected clocks would otherwise race the ticker vs. fake timers.
   const tickerEnabled = options.ticker ?? usingDefaultClock;
 
   const state = ref<EngineState>('idle');
@@ -103,11 +72,8 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
   const lastKeyAt = ref<number | null>(null);
   const startedAt = ref<number | null>(null);
   const endedAt = ref<number | null>(null);
-  // Reactive "now" used by `durationMs` so that the WPM computed re-evaluates
-  // while the lesson is running. Without this, `durationMs` only recomputes
-  // when one of its reactive deps (state/startedAt/endedAt) changes — which
-  // means WPM stays frozen at the value it had at the first keystroke,
-  // producing absurd numbers like 120000 WPM.
+  // Without a reactive "now", `durationMs` only recomputes when state/startedAt/endedAt
+  // change, freezing WPM at its first-keystroke value — think 120000 WPM.
   const nowRef = ref<number>(clock());
   let tickerHandle: ReturnType<typeof setInterval> | null = null;
 
@@ -192,10 +158,8 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
       ? e.key.toLowerCase() === expected.toLowerCase()
       : e.key === expected;
     if (matches) {
-      // Attribute attempt count + inter-press time only to correct keys.
-      // Wrong-key inter-press deltas should not pollute the expected
-      // key's avgMs (we'd otherwise count "kid pauses, then mistypes"
-      // toward the heatmap as fast time on the correct letter).
+      // Timing only from correct keys: otherwise "kid pauses, then mistypes" lands in
+      // the heatmap as fast time on the letter they never hit.
       const attemptsForKey = perKeyAttempts.value[expected] ?? 0;
       perKeyAttempts.value[expected] = attemptsForKey + 1;
 
@@ -213,8 +177,7 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
         complete(e.at);
       }
     } else {
-      // Wrong key: don't advance. Kid keeps trying until they hit
-      // the expected character.
+      // No advance — the kid keeps trying until they hit the expected character.
       errors.value++;
       errorsByKey.value[expected] = (errorsByKey.value[expected] ?? 0) + 1;
       perKeyErrorAttempts.value[expected] = (perKeyErrorAttempts.value[expected] ?? 0) + 1;
@@ -228,10 +191,8 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
 
   const durationMs = computed(() => {
     const start = startedAt.value;
-    // Reference nowRef.value so the computed re-evaluates when the ticker
-    // updates it. We still call `clock()` to get the freshest reading, but
-    // the reactive dep on `nowRef` is what triggers recomputation. When
-    // `state` is 'done' we use `endedAt`; when idle we have no duration.
+    // `clock()` gives the freshest reading, but the reactive dep on `nowRef` is what
+    // makes this recompute at all — reading it here is load-bearing, not redundant.
     const tick = nowRef.value;
     const end = endedAt.value ?? (state.value === 'running' ? Math.max(tick, clock()) : start);
     if (start === null || end === null) return 0;
@@ -260,11 +221,8 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
     return text[cursor.value] ?? '';
   });
 
-  // Ensure we never leak the interval if the consuming component is
-  // unmounted mid-lesson. Guard with `getCurrentScope` so calling the
-  // composable outside a setup/effectScope context (bare unit tests)
-  // doesn't trigger Vue's "onScopeDispose() is called when there is no
-  // active effect scope" warning.
+  // Guarded on `getCurrentScope` so bare unit tests, which have no effect scope, don't
+  // trip Vue's "onScopeDispose() is called when there is no active effect scope".
   if (getCurrentScope()) {
     onScopeDispose(() => {
       stopTicker();

@@ -1,26 +1,8 @@
 /**
- * SQL safety layer — the security boundary for ask_aviation.
- *
- * Why DuckDB's own parser: a JS-side parser like `pg-query-emscripten` doesn't
- * understand DuckDB dialect (e.g. `read_parquet(...)` as table function,
- * `EXPORT DATABASE`, Hive-style partitions), so it would either accept unsafe
- * queries or reject safe ones. `extractStatements` + `getTableNames` use the
- * authoritative DuckDB parser, so dialect quirks and future syntax changes are
- * handled for us.
- *
- * Layers:
- *   1. Banned top-level keyword scan on raw SQL (fail fast, catches multi-statement
- *      injection the parser may otherwise accept).
- *   2. Exactly one statement must parse cleanly.
- *   3. Banned table-valued function scan on raw SQL (read_csv/read_json/etc).
- *      Done textually because the function name doesn't reliably surface via
- *      `getTableNames` (which returns file paths for read_parquet but nothing
- *      for read_csv).
- *   4. Every referenced relation must be either a CTE name or a read_parquet URL
- *      pointing at the aviation bucket prefix. `getTableNames(qualified=true)`
- *      surfaces the URL string for `read_parquet('gs://...')`, which is how
- *      we detect SSRF attempts.
- *   5. If no trailing LIMIT, wrap in `SELECT * FROM (<sql>) LIMIT 10000`.
+ * SQL safety layer — the security boundary for ask_aviation. It validates on DuckDB's
+ * own parser because a JS one (`pg-query-emscripten`) misreads the dialect and would
+ * accept unsafe queries or reject safe ones, and it scans banned table functions
+ * textually since `getTableNames` reports nothing at all for read_csv.
  */
 
 import { openAviationConnection, AVIATION_BUCKET_URL_PREFIX } from './duckdb';

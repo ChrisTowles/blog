@@ -6,34 +6,11 @@ import dotenv from 'dotenv';
 import { findUpSync } from 'find-up';
 
 /**
- * Pre-commit wrapper around `pnpm typecheck`.
- *
- * `nuxt typecheck` regenerates the build dir. When a `nuxt dev` server is
- * running against that same `.nuxt`, the dev server reloads mid-write and a
- * native addon (better-sqlite3 / duckdb) throws a Napi::Error that aborts the
- * process outright:
- *
- *     terminate called after throwing an instance of 'Napi::Error'
- *     Aborted (core dumped)
- *
- * The dev server then usually restarts without its Nuxt Content tables
- * ("no such table: _content_index"), which renders the home page blank because
- * index.vue is wrapped in `v-if="page"` — so it surfaces as "the site is
- * broken" rather than "typecheck killed my server".
- *
- * Since pre-commit runs on every commit, this killed the dev server routinely.
- * Skip typecheck when a dev server is up; CI runs `pnpm typecheck` on every
- * push and pull request, so types stay enforced either way.
- *
- * Detection is by port, not process name. `pgrep -f "nuxt.mjs dev"` was tried
- * first and matched any shell whose command line merely contained that string
- * — including the pre-commit hook itself — which would have silently skipped
- * typecheck forever.
- *
- * Isolating typecheck into its own build dir was also tried and rejected: a
- * fresh build dir makes nuxt-og-image generate an empty template union, so
- * `defineOgImage('SaaS', ...)` fails with "not assignable to type 'never'" —
- * false errors that would block every commit.
+ * Pre-commit wrapper around `pnpm typecheck`. Regenerating `.nuxt` while a dev server
+ * runs against it makes that server reload mid-write and abort on a native addon's
+ * `Napi::Error`, coming back without its Content tables — so typecheck is skipped
+ * whenever UI_PORT is listening, and CI typechecks every push instead. Detection is by
+ * port, not process name; CLAUDE.md records why that and a separate buildDir failed.
  */
 
 const envPath = findUpSync('.env');
