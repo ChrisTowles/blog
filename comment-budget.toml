@@ -1,0 +1,42 @@
+skip = [
+  "node_modules",
+  ".nuxt",
+  ".output",
+  ".nitro",
+  ".data",
+  "dist",
+  ".claude/worktrees",
+]
+
+[kinds.typescript]
+grammar    = "typescript"
+extensions = ["ts", "mts", "cts", "tsx"]
+exempt     = ["// eslint-", "// oxlint-", "// @ts-", "/// <reference"]
+counted    = ["///", "//", "/*", "/**"]
+
+[[surface]]
+name   = "tests"
+paths  = ["**/*.test.ts", "**/*.spec.ts", "**/e2e/**/*.ts", "**/test/**/*.ts", "**/tests/**/*.ts"]
+goal   = "A test name is the comment; prose belongs only on the setup a reader cannot infer."
+target = 0.08
+[surface.file]
+warn  = { ratio = 0.10, lines = 40 }
+error = { ratio = 0.16, lines = 80 }
+[surface.run]
+warn  = 8
+error = 14
+
+[[surface]]
+name   = "code"
+paths  = ["**/*.ts", "**/*.mts", "**/*.cts", "**/*.tsx"]
+goal   = "Keep the why; the code says the what. Delete narration rather than reflow it."
+target = 0.08
+[surface.file]
+warn  = { ratio = 0.10, lines = 40 }
+error = { ratio = 0.16, lines = 80 }
+[surface.run]
+warn  = 6
+error = 12
+
+[escape]
+directive = "comment-budget: allow(<reason>)"
