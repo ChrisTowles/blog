@@ -1,10 +1,7 @@
 /**
- * Compile-time mirror of the server's `list_questions` tool output.
- *
- * Per plan line 563 (product-lens): avoid a page-load round-trip just to
- * render the pill grid. The authoritative list lives in
- * `packages/blog/server/utils/mcp/aviation/aviation-prompt.ts` — keep this
- * mirror in sync by hand when the server list changes.
+ * Compile-time mirror of the server's `list_questions` output, so rendering the pill grid
+ * costs no page-load round-trip. `server/utils/mcp/aviation/aviation-prompt.ts` is
+ * authoritative — keep this in sync by hand when the server list changes.
  */
 
 export const AVIATION_STARTER_QUESTIONS: readonly string[] = [

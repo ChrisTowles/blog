@@ -166,7 +166,7 @@ describe('aviation-answer iframe bundle', () => {
       expect(c.getAttribute('aria-disabled')).toBeNull();
     }
 
-    // Host sends streaming=streaming (Unit 6 extension).
+    // Host sends streaming=streaming (local extension).
     boot.handleHostContextChanged({ status: 'streaming' } as never);
     for (const c of mount.querySelectorAll<HTMLButtonElement>('.chip')) {
       expect(c.getAttribute('aria-disabled')).toBe('true');

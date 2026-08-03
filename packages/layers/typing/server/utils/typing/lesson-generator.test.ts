@@ -1,10 +1,6 @@
 /**
- * Unit tests for lesson-generator. The Anthropic client is passed in as
- * an injection parameter so tests don't depend on Vitest's vi.mock path
- * resolution (which can be flaky inside the Nuxt test environment).
- *
- * The integration test (`lesson-generator.integration.test.ts`) covers
- * the live model behind a `RUN_INTEGRATION` gate.
+ * The Anthropic client is injected rather than vi.mock'd — mock path resolution is flaky
+ * inside the Nuxt test environment.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { unlockedKeysForStage } from './curriculum';

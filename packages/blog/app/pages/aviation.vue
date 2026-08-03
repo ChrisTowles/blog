@@ -2,13 +2,12 @@
 /**
  * Aviation MCP demo landing page — "Add to Claude Desktop" onboarding.
  *
- * Per plan Unit 7 line 624, the page file is `aviation.vue` (not `mcp.vue`)
- * because Nuxt Content would map `/mcp` onto the `/mcp/aviation` route
- * namespace and fight the server MCP endpoint.
+ * The file is `aviation.vue` and not `mcp.vue` because Nuxt Content would map `/mcp`
+ * onto the `/mcp/aviation` route namespace and fight the server MCP endpoint.
  *
  * Claude Desktop config format:
- *   Plan line 776 flagged the native remote-HTTP shape as unverified at
- *   ship time. We ship the `mcp-remote` wrapper variant because:
+ *   The native remote-HTTP shape was unverified at ship time, so we lead with the
+ *   `mcp-remote` wrapper variant because:
  *     1. It works on every Claude Desktop version that supports MCP
  *        (stdio-first, which is all of them).
  *     2. Native remote Streamable HTTP support in claude_desktop_config
@@ -18,10 +17,8 @@
  *   We show both shapes so a reader on a Claude Desktop version that
  *   already supports native remote HTTP can pick the cleaner one.
  *
- * Screenshots: 2-3 product shots of the iframe rendering in Claude Desktop
- * are TODO (plan line 654) — captured post-deploy. We reference
- * `/images/mcp-ui-in-chat/*.png` as placeholders; ops report flags the
- * missing assets.
+ * Screenshots: the `/images/mcp-ui-in-chat/*.png` references are placeholders until the
+ * product shots of the iframe in Claude Desktop are captured post-deploy.
  */
 
 import { TEST_IDS } from '~~/shared/test-ids';
@@ -166,9 +163,7 @@ useSeoMeta({
 
     <section class="space-y-4">
       <h2 class="text-xl font-semibold text-highlighted">How it looks</h2>
-      <p class="text-sm text-muted">
-        Screenshots to be captured post-deploy (tracked in the Unit 7 report).
-      </p>
+      <p class="text-sm text-muted">Screenshots to be captured post-deploy.</p>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <img
           src="/images/mcp-ui-in-chat/claude-desktop-chart.png"
@@ -194,7 +189,7 @@ useSeoMeta({
     <section class="space-y-3">
       <h2 class="text-xl font-semibold text-highlighted">Architecture</h2>
       <p class="text-muted max-w-2xl">
-        Companion blog post walkthrough: <em>link TBD</em> (Unit 8). The MCP server lives at
+        Companion blog post walkthrough: <em>link TBD</em>. The MCP server lives at
         <code>{{ mcpEndpoint }}</code> and speaks JSON-RPC over Streamable HTTP. DuckDB reads
         Parquet from a private GCS bucket via HMAC-authenticated httpfs; chart options are generated
         by Claude Sonnet with defense-in-depth SQL safety (AST allowlist + row cap + query timeout).

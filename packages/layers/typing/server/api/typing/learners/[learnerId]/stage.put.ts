@@ -1,12 +1,6 @@
 /**
- * PUT /api/typing/learners/:learnerId/stage
- *
- * Pushes the kid's currentStage back to typingLearners so progress is
- * durable across devices. Caller must be a guardian of the learner.
- *
- * Direct path (vs PUT /api/typing/groups/:slug/learners/:learnerId) so the
- * client doesn't need to know the group's slug — useTypingProgress only
- * has the learnerId in hand.
+ * Duplicates the stage write on `groups/:slug/learners/:learnerId` under a slug-free path,
+ * because useTypingProgress only has the learnerId in hand.
  */
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';

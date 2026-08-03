@@ -1,10 +1,6 @@
 /**
- * Vitest for <ToolUiResource>. Emphasizes the origin-validation security
- * property (plan line 569) and the unreachable-sandbox fallback.
- *
- * Per project rules: no vi.mock. The component reads the sandbox URL from
- * runtime config and attaches a `message` listener; we drive it directly
- * via the DOM + the exposed `isOriginAllowed` helper.
+ * No vi.mock, per project rules — the component is driven through the DOM and the exposed
+ * `isOriginAllowed` helper instead of stubbing its runtime config and `message` listener.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -30,7 +26,7 @@ const STUB_PART: UiResourcePart = {
   csp: { connectDomains: [], resourceDomains: ['self'], frameDomains: [] },
 };
 
-describe('ToolUiResource — origin validation (plan line 569)', () => {
+describe('ToolUiResource — origin validation', () => {
   it('treats event.origin === sandbox origin as allowed', async () => {
     const wrapper = await mountSuspended(UiResource, {
       props: { part: STUB_PART, html: '<!doctype html><html></html>' },

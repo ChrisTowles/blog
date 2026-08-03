@@ -1,9 +1,3 @@
-/**
- * PUT /api/typing/spelling/:id
- *
- * Update the words in a spelling list. Caller must be a guardian of the
- * learner. Re-generates the auto-derived lessons.
- */
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { requireGuardian } from '../../../utils/typing/require-guardian';

@@ -10,7 +10,7 @@ import type { MessagePart } from '~~/shared/chat-types';
 
 const bodySchema = z.object({
   role: z.enum(['user', 'assistant']),
-  /** Opaque array of parts; shape-widened (plan line 553): we trust the client. */
+  /** Opaque array of parts, deliberately shape-widened: we trust the client here. */
   parts: z.array(z.record(z.string(), z.unknown())).min(0),
 });
 

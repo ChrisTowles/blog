@@ -1,14 +1,4 @@
-/**
- * POST /api/typing/spelling/extract
- *
- * Multipart image upload. Caller must be a guardian of the target
- * learner. Returns the extracted words for guardian confirmation
- * before saving — does NOT persist anything.
- *
- * Body shape (multipart/form-data):
- *   - learnerId: text field (number)
- *   - image: file field
- */
+/** Persists nothing: the extracted words go back for guardian confirmation first. */
 import { extractSpellingWords } from '../../../utils/typing/spelling-extractor';
 import { requireGuardian } from '../../../utils/typing/require-guardian';
 

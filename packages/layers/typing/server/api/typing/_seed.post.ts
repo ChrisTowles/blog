@@ -1,11 +1,4 @@
-/**
- * Admin-only seed endpoint for the typing curriculum.
- *
- * Idempotent: upserts each built-in lesson by `slug`. Re-running has no
- * effect beyond ensuring the curriculum is in sync with the code.
- *
- * Auth: requires `x-admin-token` header to match `ADMIN_SEED_TOKEN` env.
- */
+/** Idempotent: upserts by `slug`, so re-running only re-syncs the curriculum with the code. */
 import { sql } from 'drizzle-orm';
 import { getBuiltInLessons } from '../../utils/typing/curriculum';
 

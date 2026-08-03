@@ -1,13 +1,6 @@
 /**
- * GET /api/typing/audio/:phrase
- *
- * Content-addressed audio endpoint. Returns either:
- *   - a redirect to the cached static audio file (after synthesis), or
- *   - 404 with `{ fallback: 'web-speech' }` if the provider is unset.
- *
- * The phrase is the URL-encoded text. The voice is taken from `?voice=`
- * with a default. Phrases are short ("a", "good job", "try again", etc.)
- * so query-encoding is fine.
+ * The phrase travels in the path rather than a body because phrases are short
+ * ("a", "good job", "try again") and the response is a redirect to a cached static file.
  */
 import { z } from 'zod';
 import { configuredProvider, ensureAudio } from '../../../utils/typing/tts';

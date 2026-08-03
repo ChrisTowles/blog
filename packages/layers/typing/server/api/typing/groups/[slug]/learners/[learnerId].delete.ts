@@ -1,12 +1,6 @@
 /**
- * DELETE /api/typing/groups/:slug/learners/:learnerId
- *
- * Permanently removes a learner from the group. Caller must be a guardian.
- * The client gates this behind a type-the-name confirm prompt — we still
- * verify guardianship server-side.
- *
- * Cascades to attempts/progress via the FK ON DELETE CASCADE rules on
- * typing_attempts and friends.
+ * Type-the-name confirm is enforced client-side only, so guardianship is re-verified here.
+ * Attempts and progress go with the learner via FK ON DELETE CASCADE.
  */
 import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';

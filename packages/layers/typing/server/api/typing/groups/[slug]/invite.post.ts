@@ -1,9 +1,3 @@
-/**
- * POST /api/typing/groups/:slug/invite
- *
- * Generates a single-use invite token (7-day TTL). Caller must be a guardian.
- * Returns `{ token, url, expiresAt }` so the client can copy or send.
- */
 import { z } from 'zod';
 import { requireGuardian } from '../../../../utils/typing/require-guardian';
 import { findGroupBySlug, generateInviteToken } from '../../../../utils/typing/groups';

@@ -1,11 +1,4 @@
-/**
- * End-to-end integration tests for the workflow execution engine.
- * Each test creates a multi-node workflow (4+ nodes), saves it to the DB,
- * executes the full pipeline (topological sort → template resolution → Anthropic API),
- * and validates results in the database.
- *
- * Requires: DATABASE_URL and ANTHROPIC_API_KEY environment variables.
- */
+/** Needs DATABASE_URL and ANTHROPIC_API_KEY — these drive the real pipeline, not a mock. */
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { tables, useDrizzle } from '../../utils/drizzle';

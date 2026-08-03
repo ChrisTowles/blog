@@ -1,11 +1,6 @@
 /**
- * DELETE /api/typing/groups/:slug
- *
- * Permanently removes a group and all of its learners, members, invites,
- * attempts (via FK ON DELETE CASCADE). Caller must be a guardian.
- *
- * Type-the-name confirm is enforced client-side. Server still verifies
- * guardianship so the delete is safe even if the confirm is bypassed.
+ * Type-the-name confirm is enforced client-side only, so guardianship is re-verified here.
+ * Learners, members, invites and attempts go with the group via FK ON DELETE CASCADE.
  */
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';

@@ -1,13 +1,6 @@
 /**
- * Vitest + @vue/test-utils for StarterQuestions.vue.
- *
- * Covers:
- *   - Renders a pill for each curated aviation question.
- *   - Emits `click` with the exact question text on button click.
- *   - Mirror integrity: the compile-time list matches the server's
- *     `AVIATION_STARTER_QUESTIONS` constant (caught at compile time if
- *     contents diverge, enforced as runtime equality here as a belt-and-
- *     suspenders guard).
+ * The client list is a hand-maintained mirror of the server's, so the last case asserts
+ * runtime equality — types alone won't catch two lists whose contents drift apart.
  */
 
 import { describe, it, expect } from 'vitest';

@@ -1,10 +1,4 @@
-/**
- * GET /api/typing/groups
- *
- * Returns every group the calling user is a guardian of, with the group's
- * learners pre-fetched so the client can render a learner switcher
- * without a second round-trip.
- */
+/** Learners are pre-fetched so the client can render a learner switcher without a second round-trip. */
 import type {
   Learner,
   TypingGroup,

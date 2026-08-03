@@ -1,11 +1,4 @@
-/**
- * GET /api/typing/spelling?learnerId=&weekOf=
- *
- * Lists this learner's spelling lists, optionally filtered to a single
- * weekOf. The response also includes per-word mastery progress keyed by
- * list id so the UI can render mastery counts in one round-trip. Caller
- * must be a guardian.
- */
+/** Per-word mastery ships with the lists so the UI renders mastery counts in one round-trip. */
 import { z } from 'zod';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import type { SpellingList, SpellingProgress } from '../../../../../../blog/shared/typing-types';

@@ -1,10 +1,4 @@
-/**
- * Public lesson list endpoint.
- *
- * Returns the union of built-in curriculum lessons and any AI-generated
- * lessons stored in the database. Optional `?stage=` filter narrows to a
- * single stage. No auth required — lessons are public content.
- */
+/** No auth — lessons are public content. */
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import type { LessonRow } from '../../../../../../blog/shared/typing-types';

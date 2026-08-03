@@ -1,8 +1,6 @@
 /**
- * Tests for CSP parsing and header construction in the sandbox proxy.
- *
- * Security-critical: the plan mandates directive-name allowlist + structured JSON
- * parsing (not character-stripping) + length capping. See plan line 774.
+ * Security-critical: these lock in the directive-name allowlist, structured JSON parsing
+ * (not character-stripping), and the length cap.
  */
 
 import { describe, expect, it } from 'vitest';
