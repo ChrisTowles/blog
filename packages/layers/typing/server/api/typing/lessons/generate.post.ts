@@ -1,11 +1,6 @@
 /**
- * POST /api/typing/lessons/generate
- *
- * Public AI topic-game endpoint. Rate-limited per IP for anonymous users
- * (10/day) and per session user for authed callers (30/day). The rate
- * counter is best-effort in-memory — Cloud Run instances reset on cold
- * start but the cap holds within an instance, which is sufficient to
- * blunt abuse without a Redis/KV dependency.
+ * Public, so the AI call is rate-limited. The counter is best-effort in-memory: Cloud Run
+ * resets it on cold start, but a per-instance cap blunts abuse without a Redis/KV dependency.
  */
 import { z } from 'zod';
 import {

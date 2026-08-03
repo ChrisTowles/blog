@@ -1,14 +1,6 @@
 /**
- * Unit tests for the `/mcp/*` rate-limit middleware.
- *
- * Covers plan Unit 7 test scenarios (lines 669-672):
- *   - 61 requests in window → 61st returns 429 (default limit 60/5min).
- *   - Different IPs don't interfere.
- *   - 429 response JSON has `error.code = "rate_limited"` shape.
- *   - Non-`/mcp/*` paths are skipped.
- *
- * We drive the pure token-bucket logic directly (not the h3 event handler)
- * because the middleware is a thin adapter around `consumeToken()`.
+ * Drives `consumeToken()` directly rather than the h3 handler — the middleware is a thin
+ * adapter around it, so the token bucket is where the behavior actually lives.
  */
 
 import { describe, expect, it, beforeEach } from 'vitest';

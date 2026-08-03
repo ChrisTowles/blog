@@ -1,10 +1,6 @@
 /**
- * Tests for the replay-fetch endpoint GET `/mcp/aviation/resource`.
- *
- * The handler is a thin h3 wrapper around a fixed allowlist + a bundle read.
- * We drive it with a minimal IncomingMessage/ServerResponse pair built from
- * scratch. This avoids pulling in a mocks-http dep and keeps the surface
- * (allowlist, cache headers, body) exercised end-to-end.
+ * The IncomingMessage/ServerResponse pair is hand-built rather than pulled from a mocks-http
+ * dep, which keeps allowlist, cache headers and body exercised through the real handler.
  */
 
 import { describe, it, expect } from 'vitest';

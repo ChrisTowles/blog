@@ -995,8 +995,8 @@ function handleHostContextChanged(ctx: McpUiHostContext): void {
   if (ctx.styles?.variables) applyHostStyleVariables(ctx.styles.variables);
   if (ctx.styles?.css?.fonts) applyHostFonts(ctx.styles.css.fonts);
 
-  // Forward-compatible streaming-disable signal (Unit 6 defines the exact
-  // extension shape). Accept ctx.status === 'streaming'; ignore unknown values.
+  // Forward-compatible streaming-disable signal: `status` is a local extension the host
+  // sends (see <ToolUiResource>), so accept 'streaming' and ignore unknown values.
   const status = (ctx as { status?: unknown }).status;
   const nextStreaming = status === 'streaming';
   if (nextStreaming !== state.streaming) {
@@ -1041,7 +1041,7 @@ export function createBootstrap(deps: BootstrapDeps = {}): {
 
   function onFollowup(text: string): void {
     // Optimistic: chip click already disabled the grid; the streaming signal
-    // from host (Unit 6) will keep them disabled until the next result.
+    // from the host will keep them disabled until the next result.
     void app.sendMessage({
       role: 'user',
       content: [{ type: 'text', text }],

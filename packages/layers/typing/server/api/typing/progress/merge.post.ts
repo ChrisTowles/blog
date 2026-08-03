@@ -1,11 +1,4 @@
-/**
- * POST /api/typing/progress/merge
- *
- * One-shot localStorage -> DB merge for the moment a guardian signs in
- * with anonymous progress queued client-side.
- *
- * Body: { learnerId, attempts: LocalAttempt[], keyStats: Record<key, LocalKeyStat> }
- */
+/** One-shot localStorage -> DB merge for the moment a guardian signs in with anonymous progress. */
 import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import { requireGuardian } from '../../../utils/typing/require-guardian';

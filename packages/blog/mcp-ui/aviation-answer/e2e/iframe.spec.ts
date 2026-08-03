@@ -1,13 +1,6 @@
 /**
- * Playwright happy-path for the aviation-answer bundle (Unit 4).
- *
- * Drives the built single-file HTML against the real browser, pokes the
- * test-exposed hook with a canned bar-chart fixture, and asserts the DOM.
- *
- * Scope (narrowed per Unit 4 execution plan): bar-chart happy path only.
- * Additional fixtures (line, scatter, treemap, table, theme toggle,
- * tool-cancelled, initialize-timeout, streaming-disable, axe-core) are
- * follow-ups punted to subsequent commits.
+ * Bar-chart happy path only. Line, scatter, treemap, table, theme toggle, tool-cancelled,
+ * initialize-timeout, streaming-disable and axe-core fixtures are still to come.
  */
 import { test, expect } from '@playwright/test';
 

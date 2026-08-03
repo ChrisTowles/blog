@@ -1,12 +1,6 @@
 /**
- * Typing groups + learners + progress integration tests.
- *
- * Exercises the DB-touching helpers (`groups.ts`, progress merge/update
- * logic) against a real PostgreSQL instance. The HTTP routes themselves
- * compose these helpers + auth + Zod validation, which is exercised via
- * Playwright.
- *
- * Run with: pnpm test:integration -- --run typing
+ * Covers the DB-touching helpers only; the routes that compose them with auth and Zod
+ * are exercised via Playwright. Needs DATABASE_URL pointing at a running PostgreSQL instance.
  */
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { useDrizzle, tables, and, eq } from '../../utils/drizzle';

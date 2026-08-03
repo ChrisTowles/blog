@@ -1,17 +1,11 @@
 // @vitest-environment nuxt
 //
-// Note on environment: useTypingAudio reads `import.meta.client` and
-// calls the auto-imported `useState` — both of which only resolve under
-// the Nuxt test environment. The task suggested `@vitest-environment
-// node` with a stubbed AudioContext, but stubbing AudioContext is
-// orthogonal to the env, and running under `nuxt` lets the composable
-// use its real auto-imports instead of re-implementing them here.
+// The `nuxt` env is required, not preference: useTypingAudio reads `import.meta.client`
+// and the auto-imported `useState`, neither of which resolves under `node`.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// ---------------------------------------------------------------------------
 // Fake AudioContext that records every node/oscillator interaction.
-// ---------------------------------------------------------------------------
 
 type FakeOscillator = {
   type: OscillatorType;

@@ -1,14 +1,6 @@
-/**
- * RAG Integration Tests
- *
- * These tests require:
- * - AWS credentials configured (for Bedrock embeddings/reranking)
- *
- * Run with: pnpm test -- --run rag.integration
- */
+/** Needs AWS credentials — Bedrock does the embedding and reranking. */
 import { describe, it, expect } from 'vitest';
 
-// Check if AWS is configured
 const hasAWSConfig = !!(process.env.AWS_REGION || process.env.AWS_ACCESS_KEY_ID);
 
 describe.skipIf(!hasAWSConfig)('Bedrock Embeddings Integration', () => {

@@ -1,21 +1,13 @@
 /**
- * Playwright e2e for Unit 6 aviation MCP-in-chat flow.
- *
- * Scope (narrow slice per Unit 6 prompt):
- *   - Starter-question pill grid renders on the /chat home page.
- *   - Clicking a starter pill creates a chat and lets the agent loop pick
- *     `ask_aviation` from the discovered MCP tools.
- *
- * Full starter → MCP → iframe happy path requires a deployed sandbox proxy
- * (sandbox.towles.dev) + a real Anthropic LLM call for ask_aviation, both
- * of which are outside the hermetic dev-server surface. Those are verified
- * end-to-end manually against the deployed sandbox.
+ * Stops short of the iframe: the full starter → MCP → iframe path needs the deployed sandbox
+ * proxy and a real Anthropic call, neither of which is hermetic against the dev server.
+ * That remainder is verified by hand against the deployed sandbox.
  */
 
 import { test, expect } from '@playwright/test';
 import { TEST_IDS } from '~~/shared/test-ids';
 
-test.describe('Aviation MCP in-chat (Unit 6)', () => {
+test.describe('Aviation MCP in-chat', () => {
   test('starter-question pill grid renders on /chat home', async ({ page }) => {
     await page.goto('/chat', { waitUntil: 'networkidle' });
 

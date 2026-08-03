@@ -1,9 +1,3 @@
-/**
- * GET /api/typing/progress?learnerId=
- *
- * Returns the learner's attempts and per-key stats. Caller must be a
- * guardian of the learner.
- */
 import { z } from 'zod';
 import { desc, eq } from 'drizzle-orm';
 import type { AttemptRow, KeyStat } from '../../../../../../blog/shared/typing-types';

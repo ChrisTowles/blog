@@ -278,11 +278,8 @@ export function useChat(options: UseChatOptions) {
   }
 
   /**
-   * Append an externally-sourced message (e.g. from the aviation MCP surface)
-   * to the chat list and persist it via the agent-loop-bypass endpoint.
-   *
-   * This is the seam that starter-question clicks + iframe follow-up chips
-   * use: the Anthropic agent loop is NOT invoked (plan line 114).
+   * The seam starter-question clicks and iframe follow-up chips use: persists through the
+   * agent-loop-bypass endpoint, so the Anthropic agent loop is NOT invoked.
    */
   async function appendMessage(
     message: Omit<ChatMessage, 'id' | 'createdAt'> & { id?: string },

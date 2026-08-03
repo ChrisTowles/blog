@@ -1,12 +1,5 @@
 // @vitest-environment node
-/**
- * Integration tests for the aviation ETL.
- *
- * Each test registers a fixture CSV, runs the pure transform against an
- * in-process DuckDB, then asserts row counts, column presence, types, and
- * key derivations. See docs/aviation-schema.md for the column-level schema
- * these assertions track.
- */
+/** These assertions track the column-level schema in docs/aviation-schema.md. */
 
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';

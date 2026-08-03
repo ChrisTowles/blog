@@ -1,9 +1,3 @@
-/**
- * PUT /api/typing/groups/:slug/learners/:learnerId
- *
- * Updates a learner's display name, avatar, birth year, current stage, or
- * preferred voice. Caller must be a guardian of the group.
- */
 import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import type { Learner } from '../../../../../../../../blog/shared/typing-types';

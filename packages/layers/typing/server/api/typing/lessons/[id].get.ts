@@ -1,9 +1,4 @@
-/**
- * Public single-lesson endpoint.
- *
- * Accepts either a numeric id (DB row) or a string slug. Built-in lessons
- * are matched by slug; AI lessons match by id or slug.
- */
+/** No auth — lessons are public content. */
 import { z } from 'zod';
 import { eq, or } from 'drizzle-orm';
 import type { LessonRow } from '../../../../../../blog/shared/typing-types';

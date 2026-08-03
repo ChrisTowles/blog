@@ -70,7 +70,7 @@ export function __resetRateLimitForTests(): void {
   callsSinceSweep = 0;
 }
 
-/** Reads `MCP_RATE_LIMIT_RPM` with a default of 60/5min per plan line 633. */
+/** Reads `MCP_RATE_LIMIT_RPM` with a default of 60/5min. */
 function readLimit(): number {
   const raw = process.env.MCP_RATE_LIMIT_RPM;
   const parsed = raw ? Number.parseInt(raw, 10) : Number.NaN;

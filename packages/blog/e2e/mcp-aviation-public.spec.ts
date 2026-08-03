@@ -1,13 +1,6 @@
 /**
- * Playwright e2e: the public MCP endpoint is reachable without auth.
- *
- * Plan Unit 7 test scenarios (lines 667-674):
- *   - POST /mcp/aviation (unauthenticated) + JSON-RPC tools/list → valid response.
- *   - GET /mcp/aviation/resource?uri=ui://aviation-answer returns the bundle.
- *   - A spray of requests past the default 60/5min cap yields 429 + JSON error shape.
- *
- * This test is hermetic against the Nuxt dev server (no deployed staging
- * required) because the MCP Streamable HTTP route is a plain Nitro handler.
+ * Hermetic against the Nuxt dev server — no deployed staging needed, because the MCP
+ * Streamable HTTP route is a plain Nitro handler.
  */
 
 import { test, expect } from '@playwright/test';

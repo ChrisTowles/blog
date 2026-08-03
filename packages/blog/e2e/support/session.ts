@@ -1,16 +1,10 @@
 import { expect, type APIRequestContext } from '@playwright/test';
 
 /**
- * Sign a spec in through the test-only session endpoint.
- *
- * `/api/_dev/session` 404s unless the request presents NUXT_DEV_SESSION_SECRET
- * (see server/api/_dev/session.post.ts), so the header goes on every call from
- * one place rather than being repeated per spec.
- *
- * The response is asserted here on purpose: an unauthenticated run doesn't fail
- * at sign-in, it fails several steps later as "element not found" on a page
- * that quietly redirected — which reads as a UI bug rather than a missing
- * session.
+ * `/api/_dev/session` 404s without NUXT_DEV_SESSION_SECRET, so the header goes on every
+ * call from here rather than per spec. The response is asserted on purpose: an
+ * unauthenticated run fails several steps later as "element not found" on a page that
+ * quietly redirected, which reads as a UI bug rather than a missing session.
  */
 export async function signIn(
   request: APIRequestContext,

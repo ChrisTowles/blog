@@ -1,9 +1,4 @@
-/**
- * POST /api/typing/groups
- *
- * Creates a new group with the caller as its sole guardian. Optionally
- * seeds an initial learner so the user lands on a usable home immediately.
- */
+/** Seeds an optional initial learner so the user lands on a usable home immediately. */
 import { z } from 'zod';
 import type {
   TypingGroup,

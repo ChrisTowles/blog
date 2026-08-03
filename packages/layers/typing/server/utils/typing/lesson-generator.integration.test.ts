@@ -1,13 +1,4 @@
-/**
- * Live integration test for the AI lesson generator.
- *
- * Skipped unless `RUN_INTEGRATION=1` and `ANTHROPIC_API_KEY` are both set.
- * The unit test (`lesson-generator.test.ts`) covers the happy path and
- * retry logic with the SDK mocked.
- *
- * Run with:
- *   RUN_INTEGRATION=1 ANTHROPIC_API_KEY=... pnpm test --run lesson-generator.integration
- */
+/** Hits the live model, so it stays skipped unless RUN_INTEGRATION=1 and ANTHROPIC_API_KEY are set. */
 import { describe, it, expect } from 'vitest';
 import { generateLesson, validateGeneratedText } from './lesson-generator';
 import { unlockedKeysForStage } from './curriculum';

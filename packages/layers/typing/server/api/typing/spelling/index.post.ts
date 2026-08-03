@@ -1,9 +1,3 @@
-/**
- * POST /api/typing/spelling
- *
- * Creates a spelling list and auto-generates its drill + sentence
- * lessons. Caller must be a guardian of the learner.
- */
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import type { SpellingList } from '../../../../../../blog/shared/typing-types';

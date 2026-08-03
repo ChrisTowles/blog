@@ -1,9 +1,3 @@
-/**
- * POST /api/typing/progress
- *
- * Records an attempt for a learner and updates the key-stat heatmap. Caller
- * must be a guardian of the learner.
- */
 import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import type { AttemptRow } from '../../../../../../blog/shared/typing-types';

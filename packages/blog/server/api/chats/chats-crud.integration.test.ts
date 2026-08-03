@@ -1,11 +1,4 @@
-/**
- * Chat CRUD Integration Tests
- *
- * Tests chat database operations against a real PostgreSQL database.
- * Requires DATABASE_URL environment variable pointing to a running PostgreSQL instance.
- *
- * Run with: pnpm test:integration -- --run chats-crud
- */
+/** Needs DATABASE_URL pointing at a running PostgreSQL instance. */
 import { describe, it, expect, beforeEach, beforeAll, afterAll } from 'vitest';
 import { useDrizzle, tables, eq, and, desc } from '../../utils/drizzle';
 import {

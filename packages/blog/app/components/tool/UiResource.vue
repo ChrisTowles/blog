@@ -76,7 +76,7 @@ const fallbackText = computed(() => fallbackDisplayText(structured.value));
 
 /**
  * Wait for the sandbox-proxy-ready notification from the iframe, enforcing
- * origin validation. Rejects after 5s (plan line 568, fallback trigger).
+ * origin validation. Rejecting after 5s is what triggers the fallback render.
  */
 function waitForSandboxReady(iframe: HTMLIFrameElement, allowedOrigin: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -89,7 +89,7 @@ function waitForSandboxReady(iframe: HTMLIFrameElement, allowedOrigin: string): 
     }, 5_000);
 
     const listener = (event: MessageEvent) => {
-      // Origin validation — drop silently on mismatch (plan line 569).
+      // Origin validation — drop silently on mismatch.
       if (event.origin !== allowedOrigin) return;
       if (event.source !== iframe.contentWindow) return;
       const data = event.data as { method?: string } | undefined;
@@ -172,7 +172,7 @@ async function boot(iframe: HTMLIFrameElement): Promise<void> {
         containerDimensions: { maxHeight: 6000 },
         displayMode: 'inline',
         availableDisplayModes: ['inline', 'fullscreen'],
-        // Local extension frozen in Unit 6:
+        // Local extension, not part of the SEP-1865 host context:
         status: props.streaming ? 'streaming' : ('idle' satisfies HostContextStatus),
       },
     },
@@ -230,7 +230,7 @@ async function boot(iframe: HTMLIFrameElement): Promise<void> {
     return;
   }
 
-  // Replay is inert (plan line 567): persisted structuredContent drives both
+  // Replay is inert: persisted structuredContent drives both
   // fresh and reload renders. toRaw strips Vue's Proxy so postMessage's
   // structured-clone algorithm doesn't choke.
   appBridge.sendToolInput({ arguments: {} });
@@ -261,7 +261,7 @@ watch(
   (next) => {
     if (!appBridge) return;
     appBridge.sendHostContextChange({
-      // biome-ignore lint: local extension keyed under `status` (frozen in Unit 6).
+      // biome-ignore lint: local extension keyed under `status`, not in the SEP-1865 shape.
       status: next ? 'streaming' : 'idle',
     } as Parameters<AppBridge['sendHostContextChange']>[0]);
   },
