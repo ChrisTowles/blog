@@ -73,3 +73,50 @@ resource "google_service_account_iam_member" "wif_binding" {
   role               = "roles/iam.workloadIdentityUser"
   member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.repository/${var.github_repo}"
 }
+
+# Read-only identity for the scheduled drift check (.github/workflows/terraform-drift.yml).
+# Kept separate from the deploy SA because plan must read secret payloads.
+resource "google_service_account" "terraform_plan" {
+  project      = var.project_id
+  account_id   = "terraform-plan"
+  display_name = "Terraform drift check"
+  description  = "Runs terraform plan from GitHub Actions on main"
+}
+
+locals {
+  plan_roles = ["roles/viewer", "roles/iam.securityReviewer", "roles/secretmanager.secretAccessor"]
+  plan_bindings = {
+    for pair in setproduct(var.plan_project_ids, local.plan_roles) : "${pair[0]}/${pair[1]}" => {
+      project = pair[0]
+      role    = pair[1]
+    }
+  }
+}
+
+resource "google_project_iam_member" "plan_read" {
+  for_each = local.plan_bindings
+  project  = each.value.project
+  role     = each.value.role
+  member   = "serviceAccount:${google_service_account.terraform_plan.email}"
+}
+
+# Staging Cloud SQL is stopped nightly; plan has to start it first (infra/terraform/scripts/wake-sql.sh).
+resource "google_project_iam_member" "plan_sql_wake" {
+  for_each = toset(var.sql_wake_project_ids)
+  project  = each.value
+  role     = "roles/cloudsql.editor"
+  member   = "serviceAccount:${google_service_account.terraform_plan.email}"
+}
+
+resource "google_storage_bucket_iam_member" "plan_state_reader" {
+  for_each = toset(var.tfstate_buckets)
+  bucket   = each.value
+  role     = "roles/storage.objectViewer"
+  member   = "serviceAccount:${google_service_account.terraform_plan.email}"
+}
+
+resource "google_service_account_iam_member" "plan_wif_binding" {
+  service_account_id = google_service_account.terraform_plan.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principal://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/subject/repo:${var.github_repo}:ref:refs/heads/main"
+}

@@ -1,0 +1,128 @@
+name: Terraform Drift
+
+# Terraform is applied by hand, so a committed change can sit unapplied for months
+# (staging ran always-on CPU from April to September 2026 this way). This plans
+# every stack and keeps one open issue per stack while it differs from live.
+
+on:
+  schedule:
+    - cron: '0 14 * * 1'
+  push:
+    branches:
+      - main
+    paths:
+      - 'infra/terraform/**'
+      - 'infra/gcp-billing/**'
+  workflow_dispatch:
+
+concurrency:
+  group: terraform-drift
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+
+jobs:
+  plan:
+    name: Plan ${{ matrix.stack.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        stack:
+          - {
+              name: staging,
+              dir: infra/terraform/environments,
+              backend: staging.backend.tfvars,
+              vars: staging.tfvars,
+              wake_sql: blog-towles-staging,
+            }
+          - {
+              name: prod,
+              dir: infra/terraform/environments,
+              backend: prod.backend.tfvars,
+              vars: prod.tfvars,
+            }
+          - {
+              name: gcp-billing,
+              dir: infra/gcp-billing,
+              backend: backend.tfvars,
+              vars: terraform.tfvars,
+            }
+    env:
+      TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      ISSUE_TITLE: 'Terraform drift: ${{ matrix.stack.name }}'
+      GH_TOKEN: ${{ github.token }}
+    defaults:
+      run:
+        working-directory: ${{ matrix.stack.dir }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_PLAN_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.5
+          terraform_wrapper: false
+
+      - name: Wake Cloud SQL
+        if: matrix.stack.wake_sql
+        run: ${{ github.workspace }}/infra/terraform/scripts/wake-sql.sh ${{ matrix.stack.wake_sql }}
+
+      - name: Terraform init
+        run: terraform init -input=false -backend-config=${{ matrix.stack.backend }}
+
+      - name: Terraform plan
+        id: plan
+        run: |
+          set +e
+          terraform plan -input=false -lock=false -no-color -detailed-exitcode \
+            -var-file=${{ matrix.stack.vars }} > plan.txt 2>&1
+          code=$?
+          set -e
+          cat plan.txt
+          echo "exitcode=${code}" >> "$GITHUB_OUTPUT"
+          if [ "$code" = 1 ]; then exit 1; fi
+
+      - name: Open or update drift issue
+        if: steps.plan.outputs.exitcode == '2'
+        run: |
+          # Public repo: the issue lists resource addresses only; values stay in the run log.
+          {
+            echo "\`terraform plan\` for **${{ matrix.stack.name }}** does not match the live infrastructure."
+            echo
+            echo '```'
+            grep -E '^  # |^Plan:' plan.txt
+            echo '```'
+            echo
+            echo "Full plan: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo
+            echo "Review the plan locally, apply it, and this issue closes itself on the next clean run."
+          } > body.md
+          gh label create infra-drift --color D93F0B --description 'Terraform plan differs from live infra' 2>/dev/null || true
+          NUMBER=$(gh issue list --state open --label infra-drift --search "in:title \"${ISSUE_TITLE}\"" --json number -q '.[0].number')
+          if [ -n "$NUMBER" ]; then
+            gh issue comment "$NUMBER" --body-file body.md
+          else
+            gh issue create --title "$ISSUE_TITLE" --label infra-drift --body-file body.md
+          fi
+
+      - name: Close resolved drift issue
+        if: steps.plan.outputs.exitcode == '0'
+        run: |
+          NUMBER=$(gh issue list --state open --label infra-drift --search "in:title \"${ISSUE_TITLE}\"" --json number -q '.[0].number')
+          if [ -n "$NUMBER" ]; then
+            gh issue close "$NUMBER" --comment "Plan is clean as of ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          fi

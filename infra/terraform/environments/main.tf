@@ -96,6 +96,9 @@ module "github_oidc" {
   github_repo                     = "ChrisTowles/blog"
   cloud_run_service_account_email = module.shared.service_account_email
   artifact_registry_repository    = module.shared.artifact_registry_repository
+  plan_project_ids                = ["blog-towles-production", "blog-towles-staging"]
+  sql_wake_project_ids            = ["blog-towles-staging"]
+  tfstate_buckets                 = ["blog-towles-production-tfstate", "blog-towles-staging-tfstate"]
 
   depends_on = [module.shared]
 }

@@ -7,3 +7,8 @@ output "workload_identity_provider" {
   description = "Workload Identity Provider resource name for GitHub Actions auth"
   value       = google_iam_workload_identity_pool_provider.github.name
 }
+
+output "plan_service_account_email" {
+  description = "Drift-check service account email for GitHub Actions"
+  value       = google_service_account.terraform_plan.email
+}
