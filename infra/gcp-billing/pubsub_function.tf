@@ -74,6 +74,8 @@ data "archive_file" "kill_switch_source" {
   type        = "zip"
   source_dir  = "${path.module}/function"
   output_path = "${path.module}/function.zip"
+  # Same zip hash on every checkout (git 0644 vs local umask); otherwise the drift check flags a re-upload.
+  output_file_mode = "0644"
 }
 
 resource "google_storage_bucket_object" "kill_switch_source" {
