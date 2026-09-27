@@ -36,6 +36,8 @@ data "archive_file" "stop_sql_function" {
   type        = "zip"
   source_dir  = "${path.module}/functions/stage-power-settings"
   output_path = "${path.module}/functions/stage-power-settings.zip"
+  # Same zip hash on every checkout (git 0644 vs local umask); otherwise the drift check flags a re-upload.
+  output_file_mode = "0644"
 }
 
 resource "google_storage_bucket_object" "stop_sql_source" {
