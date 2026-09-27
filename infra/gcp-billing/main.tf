@@ -21,6 +21,9 @@ terraform {
 provider "google" {
   project = var.host_project_id
   region  = var.region
+  # The Budgets API rejects user credentials without a quota project.
+  user_project_override = true
+  billing_project       = var.host_project_id
 }
 
 # ---- APIs on the host project ----

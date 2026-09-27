@@ -59,4 +59,4 @@ Google Analytics 4 via `nuxt-gtag`. Measurement ID set per environment via Terra
 
 ## Cost
 
-~$20-30/month for both environments (Cloud SQL db-f1-micro + Cloud Run scales to zero).
+~$50/month for both environments: prod ~$35 (warm Cloud Run instance + Cloud SQL), staging ~$15 (Cloud SQL; Cloud Run scales to zero). Alerts and caps: [GCP Spend-Cap Kill-Switch](../infra/gcp-billing/README.md).
