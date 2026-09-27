@@ -23,3 +23,18 @@ variable "artifact_registry_repository" {
   description = "Artifact Registry repository name (e.g., 'containers')"
   type        = string
 }
+
+variable "plan_project_ids" {
+  description = "Projects the drift-check SA can read"
+  type        = list(string)
+}
+
+variable "sql_wake_project_ids" {
+  description = "Projects whose stopped Cloud SQL the drift-check SA may start"
+  type        = list(string)
+}
+
+variable "tfstate_buckets" {
+  description = "GCS buckets holding terraform state"
+  type        = list(string)
+}

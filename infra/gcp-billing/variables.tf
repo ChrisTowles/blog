@@ -26,25 +26,14 @@ variable "bigquery_dataset_id" {
   default     = "billing_export"
 }
 
+variable "project_alerts" {
+  description = "project_id => expected monthly USD. Emails billing admins at 50/90/100% actual and 100% forecast. Never touches billing."
+  type        = map(number)
+  default     = {}
+}
+
 variable "project_caps" {
-  description = <<EOT
-Map of project_id => monthly USD cap (integer). Each entry creates a Cloud Billing budget
-scoped to that project with threshold notifications at 50/90/100%. When costAmount >= budgetAmount,
-the kill-switch function disables billing on that specific project.
-
-Leave empty to provision the kill-switch infrastructure without any budgets yet. Add entries
-after you have spend visibility from the BigQuery export.
-
-Example:
-  project_caps = {
-    "blog-towles-production"     = 50
-    "blog-towles-staging"        = 15
-    "blog-chris-towles"          = 15
-    "jarvis-home-487516"         = 10
-    "progression-labs-stage"     = 10
-    "gen-lang-client-0238175572" = 10
-  }
-EOT
+  description = "project_id => hard monthly USD cap. At 100% the kill-switch disables billing on that project. Set well above project_alerts."
   type        = map(number)
   default     = {}
 }
@@ -65,4 +54,9 @@ variable "function_sa_id" {
   description = "Account ID (prefix) for the kill-switch service account."
   type        = string
   default     = "billing-kill-switch"
+}
+
+variable "drift_check_service_account" {
+  description = "SA that runs terraform plan in .github/workflows/terraform-drift.yml (created by infra/terraform github-oidc)"
+  type        = string
 }

@@ -162,7 +162,7 @@ terraform apply -var-file=prod.tfvars
 
 ### Deploy to staging
 
-**Always use the deploy script** (builds container + applies terraform):
+**Always use the deploy script** (builds and pushes the container, then `gcloud run services update`):
 
 ```bash
 pnpm gcp:staging:deploy
@@ -176,7 +176,7 @@ pnpm gcp:staging:apply
 
 ### Deploy to prod
 
-**Always use the deploy script** (builds container + applies terraform):
+**Always use the deploy script** (builds and pushes the container, then `gcloud run services update`):
 
 ```bash
 pnpm gcp:prod:deploy
@@ -194,6 +194,14 @@ pnpm gcp:prod:apply
 pnpm gcp:staging:plan
 pnpm gcp:prod:plan
 ```
+
+Terraform does not own the blog image: the Cloud Run module ignores `image` because deploys set it with `gcloud`. Everything else in the service (scaling, CPU, env) is terraform's.
+
+The staging scripts run `scripts/wake-sql.sh` first. The nightly cost scheduler stops staging Cloud SQL, and a plan against a stopped instance errors on the SQL user and silently skips everything that depends on it, including the blog Cloud Run service.
+
+### Drift check
+
+`.github/workflows/terraform-drift.yml` plans staging, prod and `infra/gcp-billing` every Monday and on pushes to `main` that touch infra. A stack whose plan is not empty gets an open `infra-drift` issue, closed automatically on the next clean run. It runs as the read-only `terraform-plan` SA (created in `modules/github-oidc`), which can only be used from `main`. Needs the `CLOUDFLARE_API_TOKEN` repo secret and `GCP_PLAN_SERVICE_ACCOUNT` repo variable.
 
 ### View outputs
 
@@ -227,13 +235,12 @@ The `gtag_id` variable sets `NUXT_PUBLIC_GTAG_ID` on Cloud Run. See [Analytics d
 
 ## Cost Estimates
 
-Both environments use same resource tiers to minimize costs:
+Actual spend is in the BigQuery billing export (see `infra/gcp-billing/README.md`). Expected after the September 2026 scale-to-zero fix:
 
-- Cloud SQL: ~$10/month (db-f1-micro, zonal, public IP)
-- Cloud Run: ~$0-5/month (scales to zero)
-- **Total per environment: ~$10-15/month**
+- Prod: ~$35/month (Cloud Run `min_instances=1` ~$20, Cloud SQL ~$10)
+- Staging: ~$15/month (Cloud SQL, stopped nightly; Cloud Run scales to zero)
 
-**Both staging + prod: ~$20-30/month**
+Email alerts and kill-switch caps for both live in `infra/gcp-billing/terraform.tfvars`.
 
 ## Security
 

@@ -134,5 +134,7 @@ So: don't run `pnpm typecheck` by hand with `pnpm dev` running. Stop the server 
 
 ## Terraform
 
-- Terraform state lives in GCS bucket `blog-towles-production-tfstate`, keyed per stack via `prefix` (e.g., `terraform/state` for blog hosting, `terraform/gcp-billing` for the kill-switch). New stacks should pick a new unique prefix rather than creating another bucket.
+- Terraform state lives in GCS bucket `blog-towles-production-tfstate`, keyed per stack via `prefix` (e.g., `terraform/state` for blog hosting, `terraform/gcp-billing` for the kill-switch). Staging hosting is the exception: `blog-towles-staging-tfstate`. New stacks should pick a new unique prefix rather than creating another bucket.
+- Terraform is applied by hand; merging does not apply it. `terraform-drift.yml` opens an `infra-drift` issue per stack whose plan is not empty. A new stack must be added to its matrix, and the `terraform-plan` SA needs read access to it.
+- Staging Cloud SQL is stopped nightly. A plan against it errors and silently skips the Cloud Run service, so always plan staging via `pnpm gcp:staging:plan` (runs `infra/terraform/scripts/wake-sql.sh`).
 - Cloud Function source convention: upload zips to `${project_id}-functions` GCS bucket (each stack creates its own objects keyed by content hash). See `infra/terraform/modules/cost-scheduler/` and `infra/gcp-billing/pubsub_function.tf` for examples.

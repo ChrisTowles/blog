@@ -127,41 +127,9 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Wake up Cloud SQL instance
-        run: |
-          INSTANCE="blog-towles-staging-db"
-          PROJECT="${{ steps.tfvars.outputs.project_id }}"
-          STATE=$(gcloud sql instances describe "$INSTANCE" --project="$PROJECT" --format='value(state)')
-          echo "Cloud SQL state: ${STATE}"
-          if [ "$STATE" != "RUNNABLE" ]; then
-            # --async: a cold start after the cost kill-switch stop can take
-            # well over gcloud's ~10 min built-in operation-wait, which would
-            # fail this step and abort the pipeline. Dispatch and poll state
-            # ourselves instead. A patch may already be in flight from a
-            # prior run, so a non-zero exit here is non-fatal.
-            echo "Requesting Cloud SQL start (async)..."
-            gcloud sql instances patch "$INSTANCE" --activation-policy=ALWAYS \
-              --project="$PROJECT" --async \
-              || echo "patch dispatch non-zero (likely already starting) — will poll state"
-          fi
-          echo "Waiting for Cloud SQL to reach RUNNABLE (up to 25 min)..."
-          for i in $(seq 1 100); do
-            STATE=$(gcloud sql instances describe "$INSTANCE" --project="$PROJECT" --format='value(state)' 2>/dev/null || echo UNKNOWN)
-            if [ "$STATE" = "RUNNABLE" ]; then
-              echo "Cloud SQL RUNNABLE after ~$((i * 15))s"
-              break
-            fi
-            echo "  [$((i * 15))s] state=${STATE}"
-            sleep 15
-          done
-          if [ "$STATE" != "RUNNABLE" ]; then
-            echo "::error::Cloud SQL did not reach RUNNABLE in time (state=${STATE})"
-            exit 1
-          fi
-          # RUNNABLE precedes actually accepting connections. The container
-          # runs DB migrations on boot and exits(1) on ECONNREFUSED, so give
-          # Postgres time to start serving before the Cloud Run rollout.
-          echo "Cloud SQL RUNNABLE; allowing Postgres to accept connections..."
-          sleep 60
+        # The container runs DB migrations on boot and exits(1) on ECONNREFUSED,
+        # so wait until Postgres accepts connections before the rollout.
+        run: infra/terraform/scripts/wake-sql.sh ${{ steps.tfvars.outputs.project_id }}
 
       - name: Deploy to Cloud Run
         run: |

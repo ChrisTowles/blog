@@ -34,11 +34,11 @@ Billing disabled on that project. Most services stop within minutes.
 | -------------------- | ------------------------------------------------------------------ |
 | `main.tf`            | Provider, backend, API enablement                                  |
 | `variables.tf`       | Input variables                                                    |
-| `terraform.tfvars`   | Billing account + host project + `project_caps` map                |
+| `terraform.tfvars`   | Billing account + host project + `project_alerts` / `project_caps` |
 | `backend.tfvars`     | GCS backend bucket                                                 |
 | `bigquery_export.tf` | BigQuery dataset for billing export                                |
 | `pubsub_function.tf` | Pub/Sub topic, service account, Cloud Function                     |
-| `budgets.tf`         | Per-project `google_billing_budget` (for_each over `project_caps`) |
+| `budgets.tf`         | Per-project alert budgets and kill-switch cap budgets              |
 | `outputs.tf`         | Topic, function, dataset names                                     |
 | `function/`          | Node.js 20 Cloud Function source                                   |
 
@@ -75,22 +75,14 @@ GROUP BY project.id
 ORDER BY cost DESC;
 ```
 
-### Phase 2 — Flip on the caps (later)
+### Phase 2 — Alerts and caps (live since 2026-09-26)
 
-Edit `terraform.tfvars` and set real numbers:
+Two budgets per project, set in `terraform.tfvars`:
 
-```hcl
-project_caps = {
-  "blog-towles-production"     = 50
-  "blog-towles-staging"        = 15
-  "blog-chris-towles"          = 15
-  "jarvis-home-487516"         = 10
-  "progression-labs-stage"     = 10
-  "gen-lang-client-0238175572" = 10
-}
-```
+- `project_alerts` → `spend-alert-<id>`: emails billing admins at 50/90/100% of expected spend and when the month is forecast to exceed it. Never touches billing.
+- `project_caps` → `spend-cap-<id>`: publishes to the kill-switch topic; at 100% billing is disabled on that project. Keep these well above the alerts.
 
-Then:
+Before lowering a cap, check the current month's spend in the BigQuery export. A cap below month-to-date spend trips the kill-switch within hours.
 
 ```bash
 terraform apply -var-file=terraform.tfvars

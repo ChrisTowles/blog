@@ -22,3 +22,8 @@ output "configured_caps" {
   description = "Per-project caps currently provisioned."
   value       = var.project_caps
 }
+
+output "configured_alerts" {
+  description = "Per-project email-only alert amounts currently provisioned."
+  value       = var.project_alerts
+}

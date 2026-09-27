@@ -27,3 +27,8 @@ output "ci_service_account_email" {
   description = "CI service account email for GitHub Actions"
   value       = var.environment == "prod" ? module.github_oidc[0].ci_service_account_email : null
 }
+
+output "plan_service_account_email" {
+  description = "Drift-check service account email for GitHub Actions"
+  value       = var.environment == "prod" ? module.github_oidc[0].plan_service_account_email : null
+}

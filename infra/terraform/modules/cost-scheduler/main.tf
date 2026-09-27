@@ -101,6 +101,8 @@ resource "google_cloud_scheduler_job" "stop_sql_nightly" {
     http_method = "POST"
     oidc_token {
       service_account_email = var.service_account_email
+      # Scheduler stores "<uri>/" when unset, which reads as a diff on every plan.
+      audience = "${google_cloudfunctions2_function.stop_sql.service_config[0].uri}/"
     }
   }
 
