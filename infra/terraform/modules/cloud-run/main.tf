@@ -325,6 +325,16 @@ resource "google_cloud_run_v2_service" "main" {
     type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
     percent = 100
   }
+
+  # Deploys (CI and scripts/build.ts) own the image via `gcloud run services update`;
+  # without this every deploy reads as drift in terraform-drift.yml.
+  lifecycle {
+    ignore_changes = [
+      client,
+      client_version,
+      template[0].containers[0].image,
+    ]
+  }
 }
 
 resource "google_cloud_run_service_iam_member" "public_access" {

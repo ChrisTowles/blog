@@ -125,22 +125,6 @@ async function testContainer() {
   }
 }
 
-async function ensureSqlRunning(projectId: string, instanceName: string) {
-  consola.start('Checking Cloud SQL instance state...');
-  const state = (
-    await $`gcloud sql instances describe ${instanceName} --project=${projectId} --format='value(state)'`.quiet()
-  ).stdout.trim();
-
-  if (state === 'RUNNABLE') {
-    consola.success('SQL instance is running');
-    return;
-  }
-
-  consola.start(`SQL instance is ${state}, starting...`);
-  await $`gcloud sql instances patch ${instanceName} --activation-policy=ALWAYS --project=${projectId}`;
-  consola.success('SQL instance started');
-}
-
 async function deployContainer() {
   if (!['staging', 'prod'].includes(environment)) {
     consola.error('Invalid environment. Use "staging" or "prod"');
@@ -213,19 +197,15 @@ async function deployContainer() {
   await $`docker push ${imageWithDateTag}`;
   await $`docker push ${imageWithLatest}`;
 
-  // Step 6: Ensure Cloud SQL is running before terraform apply
+  // Step 6: The container migrates the DB on boot, so Postgres must be accepting connections
   const projectId = environment === 'staging' ? 'blog-towles-staging' : 'blog-towles-production';
-  const envSuffix = environment === 'prod' ? 'production' : environment;
-  const instanceName = `blog-towles-${envSuffix}-db`;
-  await ensureSqlRunning(projectId, instanceName);
+  await $`infra/terraform/scripts/wake-sql.sh ${projectId}`;
 
-  // Step 7: Update Cloud Run with the dated image
+  // Step 7: Terraform ignores the image (lifecycle), so deploys go through gcloud like CI
   consola.start('Updating Cloud Run with new image...');
-  cd(terraformDir);
   $.verbose = true;
-  await $`terraform apply -auto-approve -var-file=${environment}.tfvars -var="container_image=${imageWithDateTag}"`;
+  await $`gcloud run services update blog --image=${imageWithDateTag} --region=us-central1 --project=${projectId}`;
   $.verbose = false;
-  cd(rootDir);
 
   // Output the public URL
   const publicUrl =
