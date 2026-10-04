@@ -9,5 +9,12 @@
   "rules": {
     "no-underscore-dangle": "off"
   },
-  "ignorePatterns": ["node_modules", ".nuxt", ".output", "dist", "*.d.ts"]
+  "ignorePatterns": [
+    "node_modules",
+    ".nuxt",
+    ".output",
+    "dist",
+    "*.d.ts",
+    "packages/blog/public/demos"
+  ]
 }
