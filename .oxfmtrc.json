@@ -1,5 +1,12 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "singleQuote": true,
-  "ignorePatterns": ["node_modules", ".nuxt", ".output", "dist", "*.d.ts"]
+  "ignorePatterns": [
+    "node_modules",
+    ".nuxt",
+    ".output",
+    "dist",
+    "*.d.ts",
+    "packages/blog/public/demos"
+  ]
 }

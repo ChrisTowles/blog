@@ -90,10 +90,10 @@
   "lint-staged": {
     "*.png": "pnpm tsx scripts/compress-images.ts",
     "*.{ts,tsx,mts,cts,js,cjs,mjs}": [
-      "oxlint --fix"
+      "oxlint --fix --no-error-on-unmatched-pattern"
     ],
     "*.{ts,tsx,mts,cts,js,cjs,mjs,json,css,html,vue}": [
-      "oxfmt --write"
+      "oxfmt --write --no-error-on-unmatched-pattern"
     ]
   },
   "packageManager": "pnpm@10.28.1",
