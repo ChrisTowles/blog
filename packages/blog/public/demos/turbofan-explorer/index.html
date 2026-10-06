@@ -183,7 +183,7 @@
       <button id="next-part" class="btn dark">Next ›</button>
     </div>
   </aside>
-  <div class="hint" id="hint">Click any part to zoom in · drag to orbit · Space play · [ ] speed · 1–4 phases · R reset view</div>
+  <div class="hint" id="hint">Click any part to zoom in · drag to orbit · Space play · [ ] speed (stop–3×) · 1–4 phases · R reset view</div>
 
   <!-- Tour mode transport -->
   <footer class="panel transport tour-only">
@@ -193,8 +193,9 @@
       <span id="clock" class="clock">0.0 / 36 s</span>
       <button id="stop" class="btn dark square" aria-label="Stop">■</button>
       <button id="follow" class="btn outline active">Follow<span class="wide-only"> camera</span></button>
-      <div class="speeds" id="speeds"></div>
-      <button id="speed-cycle" class="btn dark square" aria-label="Tour speed">1×</button>
+      <label class="slider speed">Speed
+        <input class="speed-range" type="range" min="-2.15" max="0.48" step="0.01" value="0" /><output class="speed-out">1×</output></label>
+      <button id="speed-cycle" class="btn dark square" aria-label="Speed">1×</button>
     </div>
     <div class="scrub">
       <input id="scrub" type="range" min="0" max="36" step="0.01" value="0" />
@@ -208,6 +209,8 @@
       <button id="overview" class="btn dark">⤢ Overview</button>
       <label class="slider">Explode
         <input id="explode" type="range" min="0" max="1" step="0.01" value="0" /></label>
+      <label class="slider speed">Speed
+        <input class="speed-range" type="range" min="-2.15" max="0.48" step="0.01" value="0" /><output class="speed-out">1×</output></label>
       <div class="nacelle" role="group" aria-label="Nacelle">Nacelle
         <div class="seg" id="ex-nacelle"><button data-nacelle="closed">Closed</button><button data-nacelle="opened">Opened</button><button data-nacelle="cut" class="active">Cut</button></div></div>
       <label class="check"><input id="ex-flow" type="checkbox" checked /> Airflow</label>
