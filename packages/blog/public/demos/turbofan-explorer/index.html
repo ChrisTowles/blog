@@ -17,7 +17,7 @@
     <div class="disclaimer-card panel">
       <p class="disclaimer-kicker">Disclaimer</p>
       <h2 id="disclaimer-title">A personal side project, built from public data</h2>
-      <p>Turbofan Explorer is a personal side project, built entirely with Claude Code on a mobile phone. It uses only publicly available information: Wikipedia, manufacturer press pages, trade press and NASA educational material, each linked where it is used.</p>
+      <p>Turbofan Explorer is a personal side project, started on a mobile phone and built primarily from one with Claude Code. It uses only publicly available information: Wikipedia, manufacturer press pages, trade press and NASA educational material, each linked where it is used.</p>
       <ul>
         <li><b>Not official.</b> It is not a product of, affiliated with, or endorsed by GE Aerospace, CFM International, Safran, Rolls-Royce, Boeing, Airbus or any other company named here.</li>
         <li><b>No proprietary or internal information</b> was used.</li>
@@ -29,11 +29,12 @@
 
   <header class="topbar">
     <div class="brand panel"><b>TURBOFAN</b> EXPLORER</div>
-    <button id="disclaimer-badge" class="panel badge" title="Read the disclaimer" aria-haspopup="dialog">&#9432; Disclaimer · personal project, public data only</button>
+    <button id="disclaimer-badge" class="panel badge" title="Read the disclaimer" aria-label="Disclaimer: personal project, public data only" aria-haspopup="dialog">&#9432;<span class="badge-text"> Disclaimer · personal project, public data only</span></button>
     <div class="panel modes" role="tablist" aria-label="Mode">
       <button data-mode="tour" role="tab" class="active">Tour</button>
       <button data-mode="explore" role="tab">Explore</button>
     </div>
+    <div id="engine-picker" class="engine-picker"></div>
   </header>
 
   <nav id="phases" class="panel phases">
@@ -59,7 +60,12 @@
             <option value="wedge" selected>Wedge (quarter cutaway)</option>
             <option value="half">Half section</option>
           </select></label>
-        <label class="check"><input id="rotors-whole" type="checkbox" checked /> Keep rotating parts whole</label>
+        <label>Cut depth
+          <select id="cut-depth">
+            <option value="nacelle">Nacelle only</option>
+            <option value="cases" selected>Through the cases</option>
+            <option value="all">Through everything</option>
+          </select></label>
         <label class="check"><input id="reverser" type="checkbox" /> Deploy thrust reverser</label>
       <label class="check"><input id="chevrons" type="checkbox" checked /> Nozzle chevrons (A/B with sound on)</label>
         <label class="check"><input id="show-labels" type="checkbox" checked /> Labels</label>
@@ -67,13 +73,17 @@
       </div>
     </aside>
 
+    <!-- On a phone the dock is the bottom sheet's tab row; the data-sheet tabs exist only there (ui/sheet.ts). -->
     <nav class="panel dock" aria-label="Tools">
+      <button data-sheet="explore" class="phone-only explore-only" title="Explode, cutaway, airflow, isolate">Explore</button>
+      <button data-sheet="parts" class="phone-only explore-only" title="Parts list, front to back">Parts</button>
       <button data-tool="flight" title="Flight phases and engine gauges">Flight</button>
       <button data-tool="view" title="Thermal and pressure views, station chart">View</button>
       <button data-tool="events" title="Failure and event scenarios">Events</button>
       <button data-tool="maint" title="Borescope and teardown">Maint</button>
       <button data-tool="data" title="Digital twin trend data">Data</button>
       <button data-tool="compare" title="Swap and compare engines">Engines</button>
+      <button data-sheet="controls" class="phone-only" title="Throttle, sun, cut style, labels, aircraft">Controls</button>
       <button id="sound-toggle" class="sound" aria-pressed="false" title="Engine sound">Sound off</button>
     </nav>
 
@@ -95,11 +105,14 @@
       </div>
       <div id="legend" class="legend"></div>
       <div id="stations" class="stations"></div>
+      <h4>Flow path</h4>
+      <div id="section" class="section"></div>
     </section>
 
     <section id="tool-events" class="panel tool" hidden>
       <h4>Events</h4>
       <div class="stack" id="event-buttons">
+        <button data-event="start" class="btn dark">Engine start (ground)</button>
         <button data-event="surge" class="btn dark">Compressor surge</button>
         <button data-event="bird" class="btn dark">Bird strike</button>
         <button data-event="bladeoff" class="btn dark">Fan blade-off (containment)</button>
@@ -147,7 +160,10 @@
     <ol id="parts-list"></ol>
   </aside>
 
-  <div id="caption" class="panel caption"></div>
+  <div class="story">
+    <aside id="fact" class="panel fact" aria-live="polite"></aside>
+    <div id="caption" class="panel caption"></div>
+  </div>
 
   <aside id="inspector" class="panel inspector" hidden>
     <button id="inspector-close" class="icon" aria-label="Close">×</button>
@@ -167,7 +183,7 @@
       <button id="next-part" class="btn dark">Next ›</button>
     </div>
   </aside>
-  <div class="hint" id="hint">Click any part to zoom in · drag to orbit · Space play · 1–4 phases · R reset view</div>
+  <div class="hint" id="hint">Click any part to zoom in · drag to orbit · Space play · [ ] speed · 1–4 phases · R reset view</div>
 
   <!-- Tour mode transport -->
   <footer class="panel transport tour-only">
@@ -176,12 +192,9 @@
       <span class="spacer"></span>
       <span id="clock" class="clock">0.0 / 36 s</span>
       <button id="stop" class="btn dark square" aria-label="Stop">■</button>
-      <button id="follow" class="btn outline active">Follow camera</button>
-      <div class="speeds">
-        <button data-speed="0.5">0.5×</button>
-        <button data-speed="1" class="active">1×</button>
-        <button data-speed="1.5">1.5×</button>
-      </div>
+      <button id="follow" class="btn outline active">Follow<span class="wide-only"> camera</span></button>
+      <div class="speeds" id="speeds"></div>
+      <button id="speed-cycle" class="btn dark square" aria-label="Tour speed">1×</button>
     </div>
     <div class="scrub">
       <input id="scrub" type="range" min="0" max="36" step="0.01" value="0" />
@@ -195,7 +208,8 @@
       <button id="overview" class="btn dark">⤢ Overview</button>
       <label class="slider">Explode
         <input id="explode" type="range" min="0" max="1" step="0.01" value="0" /></label>
-      <label class="check"><input id="ex-cut" type="checkbox" checked /> Cutaway</label>
+      <div class="nacelle" role="group" aria-label="Nacelle">Nacelle
+        <div class="seg" id="ex-nacelle"><button data-nacelle="closed">Closed</button><button data-nacelle="opened">Opened</button><button data-nacelle="cut" class="active">Cut</button></div></div>
       <label class="check"><input id="ex-flow" type="checkbox" checked /> Airflow</label>
       <label class="check"><input id="ex-isolate" type="checkbox" /> Isolate</label>
       <button id="back-to-tour" class="btn outline">▶ Play tour</button>
