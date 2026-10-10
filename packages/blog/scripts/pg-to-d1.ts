@@ -46,6 +46,8 @@ export interface TableSpec {
   columns: Record<string, ColumnKind>;
   /** RAG tables are re-ingested on Cloudflare, so they are skipped unless asked for. */
   rag?: boolean;
+  /** Columns new in the D1 schema with no Postgres source; left NULL by the copy. */
+  destinationOnly?: readonly string[];
 }
 
 /**
@@ -109,6 +111,7 @@ export const TABLES: readonly TableSpec[] = [
     name: 'document_chunks',
     primaryKey: ['id'],
     rag: true,
+    destinationOnly: ['embeddedAt'],
     columns: {
       id: 'text',
       documentId: 'text',

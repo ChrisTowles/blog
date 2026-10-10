@@ -40,7 +40,9 @@ describe('TABLES', () => {
   test.each(drizzleTables.map((table) => [table.name, table] as const))(
     '%s lists every destination column and nothing else',
     (name, config) => {
-      expect(Object.keys(tableByName(name).columns).toSorted()).toEqual(
+      const spec = tableByName(name);
+
+      expect([...Object.keys(spec.columns), ...(spec.destinationOnly ?? [])].toSorted()).toEqual(
         config.columns.map((column) => column.name).toSorted(),
       );
     },
