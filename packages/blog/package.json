@@ -37,8 +37,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.109.1",
-    "@duckdb/node-api": "1.5.2-r.2",
-    "@google-cloud/storage": "^7.21.0",
+    "@cloudflare/containers": "0.3.7",
     "@iconify-json/simple-icons": "^1.2.88",
     "@modelcontextprotocol/ext-apps": "^1.7.4",
     "@modelcontextprotocol/sdk": "^1.29.0",
@@ -77,6 +76,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@duckdb/node-api": "1.5.2-r.2",
     "@iconify-json/heroicons": "^1.2.3",
     "@iconify-json/heroicons-outline": "^1.2.1",
     "@iconify-json/logos": "^1.2.11",

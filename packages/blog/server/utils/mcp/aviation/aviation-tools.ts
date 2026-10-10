@@ -25,12 +25,7 @@ import {
   AVIATION_STRUCTURED_OUTPUT_SCHEMA,
   buildAviationSystemPrompt,
 } from './aviation-prompt';
-import {
-  AVIATION_BUCKET_URL_PREFIX,
-  openAviationConnection,
-  runWithTimeout,
-  DEFAULT_QUERY_TIMEOUT_MS,
-} from './duckdb';
+import { AVIATION_BUCKET_URL_PREFIX, DEFAULT_QUERY_TIMEOUT_MS, getAviationClient } from './duckdb';
 import { resolveChartOptionObject } from './chart-bindings';
 import { validateSql } from './sql-safety';
 
@@ -199,19 +194,9 @@ async function callAnthropicForStructuredOutput(question: string): Promise<LlmSt
 }
 
 async function runSelect(sql: string): Promise<JsonObject[]> {
-  const conn = await openAviationConnection();
+  const result = await getAviationClient().query(sql, DEFAULT_QUERY_TIMEOUT_MS);
 
-  try {
-    const reader = await runWithTimeout(
-      conn,
-      (c) => c.runAndReadAll(sql),
-      DEFAULT_QUERY_TIMEOUT_MS,
-    );
-
-    return reader.getRowObjectsJson();
-  } finally {
-    conn.closeSync();
-  }
+  return result.rows;
 }
 
 function emptyAnswer(message: string): AviationToolResult {

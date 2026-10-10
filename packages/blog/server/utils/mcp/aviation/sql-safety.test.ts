@@ -1,14 +1,34 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import { validateSql, type SqlValidationResult } from './sql-safety';
-import { getAviationDuckDb, AVIATION_BUCKET_URL_PREFIX } from './duckdb';
+import { describe, it, expect } from 'vitest';
+import { validateSql as validateWith, type SqlValidationResult } from './sql-safety';
+import {
+  AVIATION_BUCKET_URL_PREFIX,
+  AviationQueryError,
+  type AviationClient,
+  type AviationParse,
+} from './duckdb';
+
+// Statement count and syntax errors come from DuckDB's parser inside the container; this
+// stand-in covers only the cases below, and services/aviation/src/smoke.test.ts covers the real one.
+const fakeParser: AviationClient = {
+  async parse(sql): Promise<AviationParse> {
+    if (/SELECT\s+FROM/i.test(sql)) throw new AviationQueryError('Parser Error', 422);
+
+    return {
+      statementCount: sql.split(';').filter((part) => part.trim()).length,
+      tableNames: [...sql.matchAll(/FROM\s+'([^']+)'/gi)].map((match) => match[1]!),
+    };
+  },
+  async query() {
+    throw new Error('not used by validation');
+  },
+  async health() {},
+};
+
+function validateSql(sql: string): Promise<SqlValidationResult> {
+  return validateWith(sql, fakeParser);
+}
 
 describe('sql-safety validateSql', () => {
-  // DuckDB's own parser is used via a singleton read-only instance for AST parsing.
-  beforeAll(async () => {
-    // Warm the instance so the first test doesn't pay httpfs load cost.
-    await getAviationDuckDb();
-  });
-
   describe('happy path', () => {
     it('accepts a plain SELECT', async () => {
       const result = await validateSql(`SELECT 1`);
@@ -94,6 +114,23 @@ describe('sql-safety validateSql', () => {
       );
 
       expectOk(result);
+    });
+  });
+
+  describe('container failures', () => {
+    it('rethrows when the container itself is unavailable', async () => {
+      const down: AviationClient = {
+        ...fakeParser,
+        async parse() {
+          throw new AviationQueryError('container unavailable', 503);
+        },
+      };
+
+      await expect(validateWith('SELECT 1', down)).rejects.toThrow('container unavailable');
+    });
+
+    it('rejects duckdb_secrets()', async () => {
+      expectErr(await validateSql(`SELECT * FROM duckdb_secrets()`));
     });
   });
 
