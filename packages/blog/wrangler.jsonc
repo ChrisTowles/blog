@@ -34,7 +34,14 @@
       "simple": { "limit": 60, "period": 60 },
     },
   ],
-  "vars": { "R2_ACCOUNT_ID": "baf9cdac6eb4d8c477d85ceccae6679d", "R2_BUCKET": "towles-blog-media" },
+  "vars": {
+    "R2_ACCOUNT_ID": "baf9cdac6eb4d8c477d85ceccae6679d",
+    "R2_BUCKET": "towles-blog-media",
+    "BRAINTRUST_PROJECT_NAME": "blog-prod",
+    "NUXT_PUBLIC_SITE_URL": "https://chris.towles.dev",
+    "NUXT_PUBLIC_GTAG_ID": "G-PH525YF11W",
+    "NUXT_PUBLIC_MCP_SANDBOX_URL": "https://sandbox.towles.dev/sandbox.html",
+  },
   "containers": [
     {
       "class_name": "AviationContainer",
@@ -72,6 +79,10 @@
       "vars": {
         "R2_ACCOUNT_ID": "baf9cdac6eb4d8c477d85ceccae6679d",
         "R2_BUCKET": "towles-blog-media-staging",
+        "BRAINTRUST_PROJECT_NAME": "blog-stage",
+        "NUXT_PUBLIC_SITE_URL": "https://stage-chris.towles.dev",
+        "NUXT_PUBLIC_GTAG_ID": "G-KNKR69G927",
+        "NUXT_PUBLIC_MCP_SANDBOX_URL": "https://stage-sandbox.towles.dev/sandbox.html",
       },
       "containers": [
         {
