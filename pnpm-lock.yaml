@@ -4,7 +4,7 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-packageExtensionsChecksum: sha256-g7nbq71+9KUSNVGMLYAiHgBCnAMNize67uDkVh9ah0I=
+packageExtensionsChecksum: sha256-0LS6Ok//jKEvk0Wnrb3KPtbLYso6htVjzpYAG0IH5jA=
 
 importers:
 
@@ -11018,6 +11018,7 @@ snapshots:
       defu: 6.1.7
       destr: 2.0.5
       git-url-parse: 16.1.0
+      h3: 1.15.11
       hookable: 5.5.3
       isomorphic-git: 1.38.6
       jiti: 2.7.0

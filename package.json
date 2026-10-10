@@ -101,6 +101,11 @@
       "workerd"
     ],
     "packageExtensions": {
+      "@nuxt/content": {
+        "dependencies": {
+          "h3": "1.15.11"
+        }
+      },
       "vue-router": {
         "peerDependencies": {
           "@vue/language-core": "*"
