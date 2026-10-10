@@ -1,7 +1,7 @@
 // @vitest-environment node
 /** These assertions track the column-level schema in docs/aviation-schema.md. */
 
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
@@ -16,7 +16,6 @@ import {
   transformOpenFlightsAirlines,
   transformOpenFlightsAirports,
   transformOpenFlightsRoutes,
-  writePreWarmParquet,
 } from './etl-aviation';
 
 const FIXTURE_DIR = join(__dirname, '__fixtures__', 'aviation');
@@ -258,7 +257,7 @@ describe('aviation ETL — pure transforms', () => {
     ).rejects.toThrow();
   });
 
-  test('runAllTransforms emits all expected Parquet files and pre-warm is tiny', async () => {
+  test('runAllTransforms emits all expected Parquet files', async () => {
     const outDir = join(tmpDir, 'all-transforms');
 
     const produced = await runAllTransforms(
@@ -270,7 +269,6 @@ describe('aviation ETL — pure transforms', () => {
         ofAirports: OF_AIRPORTS,
         ofAirlines: OF_AIRLINES,
         ofRoutes: OF_ROUTES,
-        carrierToOperator: CARRIER_LOOKUP,
       },
       outDir,
     );
@@ -284,23 +282,9 @@ describe('aviation ETL — pure transforms', () => {
         'aviation/dims/airports.parquet',
         'aviation/dims/routes.parquet',
         'aviation/facts/bts_t100_202501.parquet',
-        'aviation/pre-warm.parquet',
         'aviation/ref/carrier_to_operator.parquet',
       ].sort(),
     );
-
-    const preWarm = produced.find((p) => p.remoteName === 'aviation/pre-warm.parquet')!;
-    const bytes = readFileSync(preWarm.localPath);
-    expect(bytes.byteLength).toBeLessThan(10_000);
-
-    // Round-trip read of the pre-warm file.
-    const preWarmRows = await allRows(
-      conn,
-      `SELECT sentinel FROM read_parquet('${preWarm.localPath}')`,
-    );
-
-    expect(preWarmRows).toHaveLength(1);
-    expect(preWarmRows[0]!.sentinel).toBe('aviation-pre-warm');
   });
 
   test('OpenFlights airlines → Parquet with IATA + ICAO preserved', async () => {
@@ -330,13 +314,5 @@ describe('aviation ETL — pure transforms', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]!.manufacturer_name).toBe('AIRBUS');
     expect(Number(rows[0]!.number_of_seats)).toBe(220);
-  });
-
-  test('writePreWarmParquet creates a tiny file with a known sentinel', async () => {
-    const out = join(tmpDir, 'pre-warm-standalone.parquet');
-    await writePreWarmParquet(conn, out);
-    const bytes = readFileSync(out);
-    expect(bytes.byteLength).toBeGreaterThan(0);
-    expect(bytes.byteLength).toBeLessThan(10_000);
   });
 });

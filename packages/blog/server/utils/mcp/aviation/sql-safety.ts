@@ -5,7 +5,13 @@
  * textually since `getTableNames` reports nothing at all for read_csv.
  */
 
-import { openAviationConnection, AVIATION_BUCKET_URL_PREFIX } from './duckdb';
+import {
+  getAviationClient,
+  AviationQueryError,
+  AVIATION_BUCKET_URL_PREFIX,
+  type AviationClient,
+  type AviationParse,
+} from './duckdb';
 import { extractErrorMessage } from '../../../../shared/error-util';
 
 export type SqlValidationResult =
@@ -62,6 +68,7 @@ const BANNED_TABLE_FNS = [
   'glob',
   'sniff_csv',
   'load_aws_credentials',
+  'duckdb_secrets',
   'duckdb_settings',
   'duckdb_functions',
   'duckdb_extensions',
@@ -74,7 +81,10 @@ const BANNED_KEYWORDS_RE = new RegExp(`\\b(${BANNED_KEYWORDS.join('|')})\\b`, 'i
 
 const BANNED_TABLE_FNS_RE = new RegExp(`\\b(${BANNED_TABLE_FNS.join('|')})\\s*\\(`, 'i');
 
-export async function validateSql(sql: string): Promise<SqlValidationResult> {
+export async function validateSql(
+  sql: string,
+  client: AviationClient = getAviationClient(),
+): Promise<SqlValidationResult> {
   if (!sql || !sql.trim()) {
     return { ok: false, error: 'SQL is empty' };
   }
@@ -88,87 +98,66 @@ export async function validateSql(sql: string): Promise<SqlValidationResult> {
     return { ok: false, error: `statement type not allowed (found: ${kwMatch[1]})` };
   }
 
-  // Parse with DuckDB's own parser.
-  const conn = await openAviationConnection();
+  // DuckDB's own parser runs in the aviation container.
+  let parsed: AviationParse;
 
   try {
-    let statementCount: number;
-
-    try {
-      const extracted = await conn.extractStatements(trimmed);
-      statementCount = extracted.count;
-
-      if (statementCount !== 1) {
-        return {
-          ok: false,
-          error: `expected a single SELECT statement, got ${statementCount}`,
-        };
-      }
-    } catch (e) {
+    parsed = await client.parse(trimmed);
+  } catch (e) {
+    if (e instanceof AviationQueryError && e.status === 422) {
       return { ok: false, error: `SQL failed to parse: ${extractErrorMessage(e)}` };
     }
 
-    // getTableNames surfaces every table reference (CTE names + physical/functional relations).
-    let tableNames: readonly string[];
+    throw e;
+  }
 
-    try {
-      tableNames = conn.getTableNames(trimmed, true);
-    } catch (e) {
-      return { ok: false, error: `SQL failed to parse: ${extractErrorMessage(e)}` };
-    }
+  if (parsed.statementCount !== 1) {
+    return {
+      ok: false,
+      error: `expected a single SELECT statement, got ${parsed.statementCount}`,
+    };
+  }
 
-    // DuckDB parses `read_csv('...')` as a table function call but the name
-    // doesn't surface via getTableNames (it returns a file path for read_parquet,
-    // nothing for read_csv). Scan textually instead.
-    const fnMatch = BANNED_TABLE_FNS_RE.exec(trimmed);
+  // DuckDB parses `read_csv('...')` as a table function call but the name
+  // doesn't surface via getTableNames (nothing for read_parquet or read_csv in
+  // current builds). Scan textually instead.
+  const fnMatch = BANNED_TABLE_FNS_RE.exec(trimmed);
 
-    if (fnMatch) {
+  if (fnMatch) {
+    return {
+      ok: false,
+      error: `table function not allowlisted: ${fnMatch[1]}() — only read_parquet against the aviation bucket is permitted`,
+    };
+  }
+
+  // Every URL-shaped relation must sit under the aviation prefix. Bare identifiers (CTEs, or a
+  // missing table) fail at execute time with a clear error.
+  for (const name of parsed.tableNames) {
+    if (looksLikeUrl(name) && !name.startsWith(AVIATION_BUCKET_URL_PREFIX)) {
       return {
         ok: false,
-        error: `table function not allowlisted: ${fnMatch[1]}() — only read_parquet against the aviation bucket is permitted`,
+        error: `external URL not allowed in read_parquet: ${name}. Only ${AVIATION_BUCKET_URL_PREFIX}* is permitted`,
       };
     }
-
-    // Every referenced relation must be either a CTE name or a read_parquet URL pointing
-    // at the aviation bucket. Physical table references (e.g. `FROM my_table`) are rejected
-    // because the in-memory READ_ONLY db has no tables.
-    for (const name of tableNames) {
-      if (looksLikeUrl(name)) {
-        if (!name.startsWith(AVIATION_BUCKET_URL_PREFIX)) {
-          return {
-            ok: false,
-            error: `external URL not allowed in read_parquet: ${name}. Only ${AVIATION_BUCKET_URL_PREFIX}* is permitted`,
-          };
-        }
-
-        continue; // allowlisted
-      }
-      // Any other entry is a bare identifier (CTE, or — if you forgot to use read_parquet —
-      // a missing table). The latter will fail at execute time with a clear error.
-    }
-
-    // Extra belt check: if any read_parquet(...) appears textually, confirm its URL is
-    // allowlisted. Catches the case where getTableNames collapses a URL differently.
-    const rpMatches = trimmed.matchAll(/read_parquet\s*\(\s*(['"])([^'"]+)\1/gi);
-
-    for (const match of rpMatches) {
-      const url = match[2]!;
-
-      if (!url.startsWith(AVIATION_BUCKET_URL_PREFIX)) {
-        return {
-          ok: false,
-          error: `external URL not allowed in read_parquet: ${url}. Only ${AVIATION_BUCKET_URL_PREFIX}* is permitted`,
-        };
-      }
-    }
-
-    // Layer 4: LIMIT injection.
-    const { sql: withLimit, limitInjected } = injectLimit(trimmed);
-
-    return { ok: true, sql: withLimit, limitInjected };
-  } finally {
-    conn.closeSync();
   }
+
+  // The textual read_parquet(...) scan is the check that holds when getTableNames reports nothing.
+  const rpMatches = trimmed.matchAll(/read_parquet\s*\(\s*(['"])([^'"]+)\1/gi);
+
+  for (const match of rpMatches) {
+    const url = match[2]!;
+
+    if (!url.startsWith(AVIATION_BUCKET_URL_PREFIX)) {
+      return {
+        ok: false,
+        error: `external URL not allowed in read_parquet: ${url}. Only ${AVIATION_BUCKET_URL_PREFIX}* is permitted`,
+      };
+    }
+  }
+
+  const { sql: withLimit, limitInjected } = injectLimit(trimmed);
+
+  return { ok: true, sql: withLimit, limitInjected };
 }
 
 function looksLikeUrl(name: string): boolean {

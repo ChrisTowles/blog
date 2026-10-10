@@ -24,6 +24,8 @@ import {
   executeSchemaTool,
   AVIATION_TOOL_DESCRIPTIONS,
 } from '../../../utils/mcp/aviation/aviation-tools';
+import { extractErrorMessage } from '../../../../shared/error-util';
+import { warmAviationContainer } from '../../../utils/mcp/aviation/duckdb';
 import { registerAviationUiResource } from '../../../utils/mcp/aviation/ui-resource';
 
 type SessionRecord = {
@@ -110,6 +112,15 @@ async function createSession(serverOrigin: string): Promise<SessionRecord> {
 
   const server = createMcpServer(serverOrigin);
   await server.connect(transport);
+
+  // A new session means a client is about to list tools; wake the container while it does.
+  warmAviationContainer().catch((e) => {
+    log.warn({
+      tag: 'mcp-aviation',
+      message: 'container warm-up failed',
+      error: extractErrorMessage(e),
+    });
+  });
 
   return { server, transport };
 }
