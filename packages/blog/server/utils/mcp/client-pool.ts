@@ -1,14 +1,14 @@
 /**
- * Server-side MCP client pool — maintains connections to internal MCP servers
- * and exposes a high-level `callMcpTool` that extracts any `ui://` resource +
- * text content from a tool call.
+ * Server-side MCP client for the co-hosted MCP servers. It talks to them in-process over a linked
+ * in-memory transport, so there is no HTTP hop to the Worker's own public hostname and no session
+ * to keep. Exposes a high-level `callMcpTool` that extracts any `ui://` resource + text content
+ * from a tool call.
  *
  * The Anthropic SDK's `mcpTools()` helper drops `EmbeddedResource` blocks, so
  * the chat streaming handler dispatches through `callMcpTool` instead.
  */
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import type { BetaTool } from '@anthropic-ai/sdk/resources/beta/messages/messages';
 import {
   CallToolResultSchema,
@@ -18,6 +18,7 @@ import {
   type Tool,
 } from '@modelcontextprotocol/sdk/types.js';
 import { log } from 'evlog';
+import { connectInProcess } from './in-process';
 import { z } from 'zod';
 import type { McpUiResourceCsp, McpUiResourcePermissions } from '../../../shared/chat-types';
 import type { JsonObject } from '../../../shared/json-types';
@@ -45,13 +46,10 @@ const uiMetaSchema = z
 
 const toolUiMetaSchema = z.object({ ui: z.object({ resourceUri: z.string() }) });
 
-interface CachedMcpClient {
+interface McpSession {
   client: Client;
   rawTools: Tool[];
-  resources: Map<string, ExtractedUiResource>;
 }
-
-const pool = new Map<string, CachedMcpClient>();
 
 async function callToolParsed(
   client: Client,
@@ -60,32 +58,14 @@ async function callToolParsed(
   return CallToolResultSchema.parse(await client.callTool(params));
 }
 
-async function connect(endpointPath: string, baseUrl?: string): Promise<CachedMcpClient | null> {
-  const cached = pool.get(endpointPath);
-
-  if (cached) return cached;
-
-  const origin = baseUrl || `http://localhost:${process.env.PORT || 3000}`;
-  const url = new URL(endpointPath, origin);
+async function withSession<T>(
+  endpointPath: string,
+  fn: (session: McpSession) => Promise<T>,
+): Promise<T | null> {
+  let client: Client;
 
   try {
-    const client = new Client({ name: 'blog-chat-mcp-pool', version: '0.1.0' });
-    await client.connect(new StreamableHTTPClientTransport(url));
-    const { tools: mcpToolList } = await client.listTools();
-
-    const entry: CachedMcpClient = {
-      client,
-      rawTools: mcpToolList,
-      resources: new Map(),
-    };
-
-    pool.set(endpointPath, entry);
-    log.info({
-      tag: 'mcp-pool',
-      message: `Connected to ${endpointPath}, discovered ${mcpToolList.length} tool(s)`,
-    });
-
-    return entry;
+    client = await connectInProcess(endpointPath);
   } catch (err) {
     log.warn({
       tag: 'mcp-pool',
@@ -95,12 +75,20 @@ async function connect(endpointPath: string, baseUrl?: string): Promise<CachedMc
 
     return null;
   }
+
+  try {
+    const { tools: rawTools } = await client.listTools();
+
+    return await fn({ client, rawTools });
+  } finally {
+    await client.close().catch(() => {});
+  }
 }
 
-export async function getMcpTools(endpointPath: string, baseUrl?: string): Promise<BetaTool[]> {
-  const entry = await connect(endpointPath, baseUrl);
+export async function getMcpTools(endpointPath: string): Promise<BetaTool[]> {
+  const rawTools = (await withSession(endpointPath, async (session) => session.rawTools)) ?? [];
 
-  return (entry?.rawTools ?? []).map((tool) => ({
+  return rawTools.map((tool) => ({
     name: tool.name,
     description: tool.description,
     input_schema: tool.inputSchema,
@@ -165,7 +153,7 @@ export function extractUiResourceFromRead(
 }
 
 async function resolveUiResource(
-  entry: CachedMcpClient,
+  entry: McpSession,
   toolName: string,
   inline: ExtractedUiResource | undefined,
 ): Promise<ExtractedUiResource | undefined> {
@@ -174,17 +162,11 @@ async function resolveUiResource(
   const uri = toolUiResourceUri(tool);
 
   if (!uri) return undefined;
-  const cached = entry.resources.get(uri);
-
-  if (cached) return cached;
 
   try {
     const read = await entry.client.readResource({ uri });
-    const resolved = extractUiResourceFromRead(uri, read);
 
-    if (resolved) entry.resources.set(uri, resolved);
-
-    return resolved;
+    return extractUiResourceFromRead(uri, read);
   } catch (err) {
     log.warn({
       tag: 'mcp-pool',
@@ -217,57 +199,29 @@ export async function callMcpTool(
   endpointPath: string,
   name: string,
   args: JsonObject,
-  baseUrl?: string,
 ): Promise<McpToolCallOutcome> {
-  // No dedicated span here — the chat handler wraps every tool dispatch in
-  // a `tool ${name}` span with `tool.kind=mcp`, `mcp.endpoint`, and `chat.id`,
-  // and the OTLP HTTP exporter's auto-instrumented undici span covers the
-  // actual hop. Adding a span here just double-counts in NRQL.
-  const entry = await connect(endpointPath, baseUrl);
+  const outcome = await withSession(endpointPath, async (entry) => {
+    try {
+      const result = await callToolParsed(entry.client, { name, arguments: args });
+      const uiResource = await resolveUiResource(entry, name, extractUiResource(result));
 
-  if (!entry) {
-    return errorOutcome(`MCP endpoint ${endpointPath} is unavailable`);
-  }
+      return {
+        text: extractText(result),
+        structuredContent: jsonObjectSchema.catch({}).parse(result.structuredContent),
+        uiResource,
+        isError: Boolean(result.isError),
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      log.warn({ tag: 'mcp-pool', message: `MCP tool ${name} threw: ${message}` });
 
-  try {
-    const result = await callToolParsed(entry.client, { name, arguments: args });
-    const uiResource = await resolveUiResource(entry, name, extractUiResource(result));
+      return errorOutcome(`MCP tool ${name} failed: ${message}`);
+    }
+  });
 
-    return {
-      text: extractText(result),
-      structuredContent: jsonObjectSchema.catch({}).parse(result.structuredContent),
-      uiResource,
-      isError: Boolean(result.isError),
-    };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    log.warn({ tag: 'mcp-pool', message: `MCP tool ${name} threw: ${message}` });
-
-    return errorOutcome(`MCP tool ${name} failed: ${message}`);
-  }
+  return outcome ?? errorOutcome(`MCP endpoint ${endpointPath} is unavailable`);
 }
 
 function errorOutcome(text: string): McpToolCallOutcome {
   return { text, structuredContent: {}, isError: true };
-}
-
-export async function disposeMcpClients(): Promise<void> {
-  for (const [path, { client }] of pool.entries()) {
-    try {
-      await client.close();
-    } catch {
-      // swallow
-    }
-
-    pool.delete(path);
-  }
-}
-
-export function invalidateMcpClient(endpointPath: string): void {
-  const cached = pool.get(endpointPath);
-
-  if (cached) {
-    void cached.client.close().catch(() => {});
-    pool.delete(endpointPath);
-  }
 }

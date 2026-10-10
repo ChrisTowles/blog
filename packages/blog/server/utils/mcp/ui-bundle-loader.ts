@@ -1,17 +1,15 @@
 /**
- * Shared loader for MCP iframe bundles (aviation, echo). Prod caches once — a bundle
- * is immutable per deploy — while dev keys the cache by mtime so `build:ui-bundle:watch`
- * rebuilds land live. Paths resolve from `process.cwd()` rather than `__dirname`: Nitro
- * dev bundles server code into `.nuxt/dev/`, which breaks relative walks up from source.
+ * Shared loader for MCP iframe bundles (aviation, echo). The built `dist/index.html` files ship
+ * in the Worker via `nitro.serverAssets` (base `mcp-ui`), so `pnpm build:ui-bundle` has to run
+ * before the Nuxt build. In dev the assets storage reads from disk, so watch rebuilds land live.
  */
 
-import { existsSync, readFileSync, statSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { extractErrorMessage } from '../../../shared/error-util';
+import { readServerAssetText } from '../server-assets';
 
 export interface BundleLoaderOptions {
-  /** Relative path inside packages/blog, e.g. 'mcp-ui/aviation-answer/dist/index.html'. */
-  relPath: string;
+  /** Path inside `mcp-ui/`, e.g. 'aviation-answer/dist/index.html'. */
+  assetKey: string;
   /** Label used in placeholder HTML when the bundle is missing. */
   label: string;
   /** URI shown in the placeholder for the user-facing error. */
@@ -19,62 +17,30 @@ export interface BundleLoaderOptions {
 }
 
 export interface BundleLoader {
-  read(): string;
-  /** Test-only cache reset. */
-  reset(): void;
-  /** Absolute path the loader reads from (mainly for debugging). */
-  path: string;
+  read(): Promise<string>;
 }
 
-const IS_PROD = process.env.NODE_ENV === 'production';
-
-function resolveBundlePath(relPath: string): string {
-  const candidates = [
-    resolve(process.cwd(), relPath),
-    resolve(process.cwd(), 'packages/blog', relPath),
-  ];
-
-  return candidates.find((p) => existsSync(p)) ?? candidates[0]!;
-}
-
-export function createBundleLoader({ relPath, label, uri }: BundleLoaderOptions): BundleLoader {
-  const path = resolveBundlePath(relPath);
-
+export function createBundleLoader({ assetKey, label, uri }: BundleLoaderOptions): BundleLoader {
   const placeholder = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>${label} (bundle missing)</title></head>
 <body><p>${uri} bundle not built — run <code>pnpm build:ui-bundle</code>.</p></body></html>`;
 
-  let cached: string | undefined;
-  let cachedMtimeMs = -1;
-
-  function read(): string {
-    if (IS_PROD && cached !== undefined) return cached;
-
+  async function read(): Promise<string> {
     try {
-      // Stat BEFORE read so the mtime we record matches the bytes we cache,
-      // even if the watcher rewrites the file between calls.
-      const mtime = IS_PROD ? 0 : statSync(path).mtimeMs;
+      const html = await readServerAssetText('mcp-ui', assetKey);
 
-      if (!IS_PROD && cached !== undefined && mtime === cachedMtimeMs) return cached;
-      const html = readFileSync(path, 'utf8');
-      cached = html;
-      cachedMtimeMs = mtime;
+      if (html !== null) return html;
 
-      return html;
+      console.warn(`[ui-bundle] ${label} bundle ${assetKey} not found; serving placeholder.`);
     } catch (err) {
       console.warn(
-        `[ui-bundle] failed to read ${label} bundle at ${path}; serving placeholder.`,
+        `[ui-bundle] failed to read ${label} bundle ${assetKey}; serving placeholder.`,
         extractErrorMessage(err),
       );
-
-      return placeholder;
     }
+
+    return placeholder;
   }
 
-  function reset(): void {
-    cached = undefined;
-    cachedMtimeMs = -1;
-  }
-
-  return { read, reset, path };
+  return { read };
 }

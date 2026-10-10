@@ -1,37 +1,36 @@
 /**
- * Google Cloud TTS (Chirp3) client over an on-disk cache: `(phrase, voice)` hashes to
- * `packages/blog/public/audio/typing/<hash>.mp3`, which Nuxt then serves as a static
- * asset, so a generated phrase never round-trips again. Synth returns `null` when
- * `GOOGLE_TTS_KEY` / `TYPING_TTS_PROVIDER` is unset — callers fall back to Web Speech.
+ * Google Cloud TTS (Chirp3) client over an R2 cache: `(phrase, voice)` hashes to
+ * `audio/typing/<sha256>.mp3` in the `MEDIA` bucket, so a generated phrase never round-trips to
+ * Google again. Synthesis is unavailable when `GOOGLE_TTS_KEY` / `TYPING_TTS_PROVIDER` is
+ * unset — the route then answers 404 and callers fall back to Web Speech.
  */
-import { createHash } from 'node:crypto';
-import { existsSync } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
 import { z } from 'zod';
 
 const synthesizeResponseSchema = z.object({ audioContent: z.string().optional() });
 
-const PUBLIC_DIR = (() => {
-  // Resolve packages/blog/public/audio/typing relative to this file.
-  // This file is at packages/layers/typing/server/utils/typing/tts.ts.
-  const here = new URL('.', import.meta.url).pathname;
-
-  return join(here, '..', '..', '..', '..', '..', 'blog', 'public', 'audio', 'typing');
-})();
+/** The slice of an R2 bucket the cache needs. */
+export interface AudioBucket {
+  get(key: string): Promise<{ arrayBuffer(): Promise<ArrayBuffer> } | null>;
+  put(
+    key: string,
+    value: ArrayBuffer,
+    options: { httpMetadata: { contentType: string } },
+  ): Promise<object | null>;
+}
 
 export type TTSVoice = string; // e.g. 'chirp3-en-us-Aoede'
 
-export function hashPhrase(phrase: string, voice: TTSVoice): string {
-  return createHash('sha256').update(`${voice}::${phrase}`).digest('hex').slice(0, 32);
-}
+export const AUDIO_CONTENT_TYPE = 'audio/mpeg';
 
-export function audioCachePath(phrase: string, voice: TTSVoice): string {
-  return join(PUBLIC_DIR, `${hashPhrase(phrase, voice)}.mp3`);
-}
+export async function audioObjectKey(phrase: string, voice: TTSVoice): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(`${voice}::${phrase}`),
+  );
 
-export function audioPublicUrl(phrase: string, voice: TTSVoice): string {
-  return `/audio/typing/${hashPhrase(phrase, voice)}.mp3`;
+  const hex = Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
+
+  return `audio/typing/${hex}.mp3`;
 }
 
 export type TTSProvider = 'google' | null;
@@ -44,7 +43,7 @@ export function configuredProvider(): TTSProvider {
   return null;
 }
 
-async function googleSynthesize(phrase: string, voice: TTSVoice): Promise<Buffer | null> {
+async function googleSynthesize(phrase: string, voice: TTSVoice): Promise<ArrayBuffer | null> {
   const apiKey = process.env.GOOGLE_TTS_KEY;
 
   if (!apiKey) return null;
@@ -76,28 +75,27 @@ async function googleSynthesize(phrase: string, voice: TTSVoice): Promise<Buffer
 
   if (!data.audioContent) return null;
 
-  return Buffer.from(data.audioContent, 'base64');
+  const bytes = Uint8Array.from(atob(data.audioContent), (c) => c.charCodeAt(0));
+
+  return bytes.buffer;
 }
 
+/** The cached clip, synthesized and stored on first use. `null` when synthesis fails. */
 export async function ensureAudio(
+  bucket: AudioBucket,
   phrase: string,
   voice: TTSVoice,
-): Promise<{ url: string; cached: boolean } | null> {
-  const provider = configuredProvider();
+): Promise<ArrayBuffer | null> {
+  const key = await audioObjectKey(phrase, voice);
+  const cached = await bucket.get(key);
 
-  if (!provider) return null;
-
-  const path = audioCachePath(phrase, voice);
-  const url = audioPublicUrl(phrase, voice);
-
-  if (existsSync(path)) return { url, cached: true };
+  if (cached) return cached.arrayBuffer();
 
   const audio = await googleSynthesize(phrase, voice);
 
   if (!audio) return null;
 
-  await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, audio);
+  await bucket.put(key, audio, { httpMetadata: { contentType: AUDIO_CONTENT_TYPE } });
 
-  return { url, cached: false };
+  return audio;
 }

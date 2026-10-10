@@ -65,6 +65,11 @@ export default defineNuxtConfig({
   },
   css: ['~/assets/css/main.css'],
 
+  // Cloudflare Images transformations in production; originals as-is in dev. No IPX/sharp.
+  image: {
+    provider: process.env.NODE_ENV === 'production' ? 'cloudflare' : 'none',
+  },
+
   colorMode: {
     preference: 'dark', // default value of $colorMode.preference
   },
@@ -80,7 +85,6 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    anthropicApiKey: process.env.ANTHROPIC_API_KEY!,
     awsRegion: process.env.AWS_REGION || 'us-east-1',
     public: {
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://chris.towles.dev',
@@ -154,6 +158,16 @@ export default defineNuxtConfig({
         },
       ],
     },
+    // Workers have no filesystem: these ship inside the bundle and are read via
+    // `useStorage('assets:<baseName>')` (see server/utils/server-assets.ts).
+    serverAssets: [
+      {
+        baseName: 'skills',
+        dir: resolve(__dirname, '../../.claude/skills'),
+        pattern: '**/SKILL.md',
+      },
+      { baseName: 'mcp-ui', dir: resolve(__dirname, 'mcp-ui'), pattern: '*/dist/index.html' },
+    ],
     ignore: ['**/*.test.ts', '**/*.spec.ts', '**/*.test.js', '**/*.spec.js'],
     experimental: {
       openAPI: true,
