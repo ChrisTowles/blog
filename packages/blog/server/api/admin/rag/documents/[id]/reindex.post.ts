@@ -1,10 +1,9 @@
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
-import { readFile } from 'node:fs/promises';
 
 defineRouteMeta({
   openAPI: {
-    description: 'Force re-index a specific document',
+    description: 'Force re-index a specific document from Nuxt Content',
     tags: ['admin', 'rag'],
   },
 });
@@ -25,7 +24,6 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle();
 
-  // Get existing document
   const existingDoc = await db.query.documents.findFirst({
     where: (doc) => eq(doc.id, id),
   });
@@ -34,71 +32,23 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Document not found' });
   }
 
-  // Read file from disk
-  let content: string;
+  const result = await withRagErrors(() => ingestDocument(existingDoc.slug, true));
 
-  try {
-    content = await readFile(existingDoc.path, 'utf-8');
-  } catch {
-    throw createError({ statusCode: 404, statusMessage: 'Source file not found on disk' });
+  if (result.errors.length > 0) {
+    throw createError({ statusCode: 502, statusMessage: result.errors.join('; ') });
   }
 
-  const contentHash = await hashContent(content);
-  const parsed = parseBlogMarkdown(content, existingDoc.path);
-
-  // Delete existing chunks
-  await db.delete(tables.documentChunks).where(eq(tables.documentChunks.documentId, id));
-
-  // Update document with new hash
-  await db
-    .update(tables.documents)
-    .set({
-      title: parsed.title,
-      contentHash,
-      updatedAt: new Date(),
-    })
-    .where(eq(tables.documents.id, id));
-
-  // Chunk and re-embed
-  const chunks = chunkText(parsed.content);
-  let chunksCreated = 0;
-
-  for (const chunk of chunks) {
-    const contextualContent = await generateContextualDescription(
-      parsed.title,
-      existingDoc.url,
-      parsed.content,
-      chunk.content,
-    );
-
-    const textToEmbed = `${chunk.content}\n\nContext: ${contextualContent}`;
-    const embeddings = await embedTexts([textToEmbed]);
-    const embeddingResult = embeddings[0];
-
-    if (!embeddingResult) {
-      throw new Error(`Failed to generate embedding for chunk ${chunk.index}`);
-    }
-
-    // TODO(cloudflare-rag): upsert embeddingResult.embedding into Vectorize; D1 keeps text only
-    await db.insert(tables.documentChunks).values({
-      documentId: id,
-      chunkIndex: chunk.index,
-      content: chunk.content,
-      contextualContent,
-    });
-
-    chunksCreated++;
-  }
+  const updated = await db.query.documents.findFirst({ where: (doc) => eq(doc.id, id) });
 
   return {
     success: true,
     document: {
       id,
       slug: existingDoc.slug,
-      title: parsed.title,
-      contentHash: contentHash.slice(0, 12) + '...',
+      title: updated?.title ?? existingDoc.title,
+      contentHash: (updated?.contentHash ?? existingDoc.contentHash).slice(0, 12) + '...',
     },
-    chunksCreated,
-    message: `Re-indexed ${chunksCreated} chunks`,
+    chunksCreated: result.chunksCreated,
+    message: `Re-indexed ${result.chunksCreated} chunks`,
   };
 });

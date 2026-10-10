@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 
 defineRouteMeta({
   openAPI: {
-    description: 'Delete a document and its chunks from the index',
+    description: 'Delete a document, its chunks and its vectors from the index',
     tags: ['admin', 'rag'],
   },
 });
@@ -24,7 +24,6 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle();
 
-  // Check document exists
   const document = await db.query.documents.findFirst({
     where: (doc) => eq(doc.id, id),
   });
@@ -33,11 +32,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Document not found' });
   }
 
-  // Delete chunks first (cascade should handle this, but be explicit)
-  await db.delete(tables.documentChunks).where(eq(tables.documentChunks.documentId, id));
-
-  // Delete document
-  await db.delete(tables.documents).where(eq(tables.documents.id, id));
+  await withRagErrors(() => deleteDocument(useRagRuntime(), id));
 
   return {
     success: true,

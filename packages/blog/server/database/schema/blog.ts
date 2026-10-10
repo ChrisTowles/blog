@@ -103,6 +103,7 @@ export const documentChunks = sqliteTable(
     chunkIndex: integer().notNull(),
     content: text().notNull(), // original chunk text
     contextualContent: text().notNull(), // Claude-generated situating context
+    embeddedAt: integer({ mode: 'timestamp_ms' }), // set once the chunk's vector is upserted to Vectorize
     ...timestamps,
   },
   (table) => [

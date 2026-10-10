@@ -26,6 +26,7 @@ export default defineEventHandler(async (event) => {
     createdAt: number;
     updatedAt: number;
     chunkCount: number | null;
+    embeddedChunks: number | null;
     contentSize: number | null;
   }>(sql`
     SELECT
@@ -38,6 +39,7 @@ export default defineEventHandler(async (event) => {
       d."createdAt",
       d."updatedAt",
       COUNT(dc.id) as "chunkCount",
+      COUNT(dc."embeddedAt") as "embeddedChunks",
       SUM(LENGTH(dc.content)) as "contentSize"
     FROM documents d
     LEFT JOIN document_chunks dc ON d.id = dc."documentId"
@@ -57,9 +59,10 @@ export default defineEventHandler(async (event) => {
       updatedAt: new Date(doc.updatedAt),
       chunkCount: Number(doc.chunkCount || 0),
       contentSize: Number(doc.contentSize || 0),
-      // TODO(cloudflare-rag): count vectors in Vectorize once embeddings move there
-      embeddedChunks: 0,
-      isFullyEmbedded: false,
+      embeddedChunks: Number(doc.embeddedChunks || 0),
+      isFullyEmbedded:
+        Number(doc.chunkCount || 0) > 0 &&
+        Number(doc.embeddedChunks || 0) === Number(doc.chunkCount),
     })),
     total: documents.length,
   };

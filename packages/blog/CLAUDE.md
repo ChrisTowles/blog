@@ -119,10 +119,11 @@ pnpm cf:types     # Regenerate server/worker-configuration.d.ts after editing wr
 Contextual hybrid search system in `server/utils/rag/`:
 
 - **chunker.ts** — Splits markdown into ~2000-char chunks with 400-char overlap, preserves paragraph boundaries
-- **ingest.ts** — Reads `content/2.blog/*.md`, hashes for change detection, generates contextual descriptions via Claude Haiku (with prompt caching), embeds via AWS Bedrock Titan Text v2 (1024 dims)
-- **retrieve.ts** — Hybrid search: parallel pgvector cosine + BM25 tsvector, Reciprocal Rank Fusion (0.7 semantic / 0.3 BM25), optional Cohere v3 reranking
+- **runtime.ts / workers-ai.ts / vectors.ts / store.ts** — Workers AI embeddings (`@cf/qwen/qwen3-embedding-0.6b`, 1024-d) and rerank (`@cf/baai/bge-reranker-base`), Vectorize upsert/query/delete, all via an injectable `RagRuntime`
+- **ingest.ts / content-ingest.ts** — Reads published posts from Nuxt Content (`posts`, needs `rawbody`), hashes for change detection, generates contextual descriptions via Claude Haiku (with prompt caching), embeds, upserts vectors, stamps `embeddedAt`
+- **retrieve.ts** — Hybrid search: Vectorize cosine + D1 FTS5 (trigram, bm25), Reciprocal Rank Fusion (0.7 semantic / 0.3 BM25), optional rerank
 
-Database: `documents` + `document_chunks` tables with pgvector HNSW index and GIN tsvector index.
+Database: `documents` + `document_chunks` tables, `document_chunks_fts` virtual table kept in sync by triggers; vectors live in Vectorize keyed by chunk id.
 
 ### Search Endpoints
 

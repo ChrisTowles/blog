@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { chunkText, parseBlogMarkdown, hashContent, type Chunk } from './chunker';
+import { chunkText, stripFrontmatter, hashContent, type Chunk } from './chunker';
 
 describe('chunkText', () => {
   it('returns empty array for empty string', () => {
@@ -87,89 +87,38 @@ describe('chunkText', () => {
   });
 });
 
-describe('parseBlogMarkdown', () => {
-  it('extracts frontmatter and content', () => {
+describe('stripFrontmatter', () => {
+  it('removes the frontmatter block and keeps the body', () => {
     const markdown = `---
 title: Test Post
 description: A test description
-date: 2025-01-15
 ---
 
 # Heading
 
 Some content here.`;
 
-    const result = parseBlogMarkdown(markdown, '/path/to/20250115.test-post.md');
+    const body = stripFrontmatter(markdown);
 
-    expect(result.title).toBe('Test Post');
-    expect(result.frontmatter.description).toBe('A test description');
-    expect(result.content).toContain('# Heading');
-    expect(result.content).toContain('Some content here.');
+    expect(body).not.toContain('title: Test Post');
+    expect(body.startsWith('# Heading')).toBe(true);
+    expect(body).toContain('Some content here.');
   });
 
-  it('extracts slug from filename', () => {
-    const markdown = '---\ntitle: Test\n---\nContent';
-
-    const result = parseBlogMarkdown(markdown, '/blog/content/20250115.my-blog-slug.md');
-    expect(result.slug).toBe('my-blog-slug');
+  it('handles CRLF line endings', () => {
+    expect(stripFrontmatter('---\r\ntitle: Test\r\n---\r\nContent')).toBe('Content');
   });
 
-  it('keeps hyphenated prefix in slug to match Nuxt Content paths', () => {
-    const markdown = '---\ntitle: Test\n---\nContent';
-
-    // Nuxt Content only strips pure numeric prefixes, not "20250803-1."
-    const result = parseBlogMarkdown(markdown, '20250803-1.my-context-engineering-journey.md');
-    expect(result.slug).toBe('20250803-1.my-context-engineering-journey');
-  });
-
-  it('lowercases slug to match Nuxt Content paths', () => {
-    const markdown = '---\ntitle: Test\n---\nContent';
-
-    const result = parseBlogMarkdown(
-      markdown,
-      '20240630.Why-you-should-make-a-toolbox-repository.md',
-    );
-
-    expect(result.slug).toBe('why-you-should-make-a-toolbox-repository');
-  });
-
-  it('replaces spaces with hyphens in slug', () => {
-    const markdown = '---\ntitle: Test\n---\nContent';
-
-    const result = parseBlogMarkdown(
-      markdown,
-      '20250422.debugging local-packages-with-pnpm-link.md',
-    );
-
-    expect(result.slug).toBe('debugging-local-packages-with-pnpm-link');
-  });
-
-  it('handles markdown without frontmatter', () => {
+  it('returns markdown without frontmatter unchanged', () => {
     const markdown = '# Just a heading\n\nSome content';
-    const result = parseBlogMarkdown(markdown, 'simple.md');
 
-    expect(result.content).toBe(markdown);
-    expect(result.slug).toBe('simple');
+    expect(stripFrontmatter(markdown)).toBe(markdown);
   });
 
-  it('handles quoted title in frontmatter', () => {
-    const markdown = `---
-title: "Quoted Title"
----
-Content`;
+  it('keeps a horizontal rule that is not frontmatter', () => {
+    const markdown = 'Intro\n\n---\n\nAfter the rule';
 
-    const result = parseBlogMarkdown(markdown, 'post.md');
-    expect(result.title).toBe('Quoted Title');
-  });
-
-  it('uses slug as title if no title in frontmatter', () => {
-    const markdown = `---
-description: no title here
----
-Content`;
-
-    const result = parseBlogMarkdown(markdown, '20250115.fallback-title.md');
-    expect(result.title).toBe('fallback-title');
+    expect(stripFrontmatter(markdown)).toBe(markdown);
   });
 });
 

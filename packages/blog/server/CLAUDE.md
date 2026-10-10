@@ -78,9 +78,9 @@ Never hand-edit anything under `migrations/meta/` (journal or snapshots). For SQ
 
 ## RAG (Retrieval-Augmented Generation)
 
-- **Ingest**: `utils/rag/ingest.ts` — chunks blog content, generates contextual summaries with Claude, embeds with AWS Titan
-- **Retrieve**: `utils/rag/retrieve.ts` — hybrid search, RRF fusion. TODO(cloudflare-rag): semantic search is stubbed until Vectorize lands; keyword search is a LIKE scan until FTS5
-- **Embeddings**: AWS Bedrock Titan Text v2, 1024 dimensions
+- **Ingest**: `utils/rag/ingest.ts` (injectable) and `content-ingest.ts` (reads Nuxt Content `posts`); contextual summaries from Claude, embeddings from Workers AI, vectors in Vectorize
+- **Retrieve**: `utils/rag/retrieve.ts` — Vectorize + D1 FTS5 trigram/bm25, RRF fusion, Workers AI rerank
+- **Bindings**: `AI` and `VECTORIZE` are absent in `env.dev`; RAG throws `RagUnavailableError` and routes answer 503. Full design: `docs/rag-implementation.md`
 
 ## Adding a New API Route
 

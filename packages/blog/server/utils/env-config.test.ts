@@ -12,8 +12,6 @@ describe('envSchema', () => {
     NUXT_OAUTH_GOOGLE_CLIENT_ID: 'google-client-id',
     NUXT_OAUTH_GOOGLE_CLIENT_SECRET: 'google-secret',
     GCS_BUCKET_NAME: 'blog-towles-test-media',
-    AWS_ACCESS_KEY_ID: 'AKIAIOSFODNN7EXAMPLE',
-    AWS_SECRET_ACCESS_KEY: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
   };
 
   it('parses valid env', () => {
@@ -53,7 +51,6 @@ describe('maskValue', () => {
     expect(maskValue('NUXT_SESSION_PASSWORD', 'supersecretpassword123')).toBe('su***d123');
     expect(maskValue('ANTHROPIC_API_KEY', 'sk-ant-api03-xxxxx')).toBe('sk***xxxx');
     expect(maskValue('NUXT_OAUTH_GITHUB_CLIENT_SECRET', 'ghsecret123')).toBe('gh***t123');
-    expect(maskValue('AWS_SECRET_ACCESS_KEY', 'wJalrXUtnFEMI')).toBe('wJ***FEMI');
   });
 
   it('returns *** for short sensitive values', () => {
@@ -62,7 +59,6 @@ describe('maskValue', () => {
   });
 
   it('does not mask non-sensitive keys', () => {
-    expect(maskValue('AWS_REGION', 'us-east-1')).toBe('us-east-1');
     expect(maskValue('NUXT_OAUTH_GITHUB_CLIENT_ID', 'my-client-id')).toBe('my-client-id');
   });
 });
@@ -83,9 +79,6 @@ describe('getMaskedConfig', () => {
       NUXT_OG_IMAGE_SECRET: '',
       GOOGLE_AI_API_KEY: '',
       GCS_BUCKET_NAME: 'blog-towles-test-media',
-      AWS_REGION: 'us-east-1',
-      AWS_ACCESS_KEY_ID: 'AKIAIOSFODNN7EXAMPLE',
-      AWS_SECRET_ACCESS_KEY: 'wJalrXUtnFEMI/K7MDENG',
     };
 
     const masked = getMaskedConfig(config);
@@ -98,7 +91,6 @@ describe('getMaskedConfig', () => {
     expect(masked.ANTHROPIC_API_KEY).toBe('sk***-key');
 
     // Verify non-sensitive values are not masked
-    expect(masked.AWS_REGION).toBe('us-east-1');
     expect(masked.NUXT_OAUTH_GITHUB_CLIENT_ID).toBe('github-client-id');
     expect(masked.GIT_SHA).toBe('abc1234');
     expect(masked.BUILD_TAG).toBe('2025-01-15-12-30');

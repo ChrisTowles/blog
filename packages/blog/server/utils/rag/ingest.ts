@@ -1,13 +1,14 @@
-import { readdir, readFile } from 'node:fs/promises';
-import { join } from 'node:path';
-import { eq } from 'drizzle-orm';
+import { and, count, eq, isNull, notInArray } from 'drizzle-orm';
 import { log } from 'evlog';
-import { chunkText, parseBlogMarkdown, hashContent } from './chunker';
-import { embedTexts } from '../ai/bedrock';
+import { documentChunks, documents } from '../../database/schema';
+import { insertChunked } from '../drizzle';
+import { chunkText, hashContent, stripFrontmatter } from './chunker';
 import { getAnthropicClient } from '../ai/anthropic';
 import { withAnthropicSpan } from '../observability/anthropic';
-
-const BLOG_CONTENT_PATH = 'content/2.blog';
+import type { RagRuntime } from './runtime';
+import { deleteChunksOf, deleteDocument } from './store';
+import { embedTexts } from './workers-ai';
+import { upsertChunkVectors } from './vectors';
 
 // Prompt for generating contextual descriptions
 const DOCUMENT_CONTEXT_PROMPT = `<document title="{title}" url="{url}">
@@ -24,8 +25,42 @@ Generate 1-2 sentences situating this chunk within the overall document for impr
 export interface IngestResult {
   documentsProcessed: number;
   documentsSkipped: number;
+  documentsRemoved: number;
   chunksCreated: number;
   errors: string[];
+}
+
+export interface BlogSource {
+  slug: string;
+  title: string;
+  url: string;
+  path: string;
+  /** Whole file as Nuxt Content stores it: frontmatter included. */
+  rawbody: string;
+}
+
+export type DescribeChunk = (
+  title: string,
+  url: string,
+  docContent: string,
+  chunkContent: string,
+) => Promise<string>;
+
+export interface IngestOptions {
+  /** Re-embed even when the content hash is unchanged. */
+  force?: boolean;
+  /** Stop after this many documents were (re)processed, so one request stays within limits. */
+  limit?: number;
+}
+
+function emptyResult(): IngestResult {
+  return {
+    documentsProcessed: 0,
+    documentsSkipped: 0,
+    documentsRemoved: 0,
+    chunksCreated: 0,
+    errors: [],
+  };
 }
 
 /**
@@ -81,157 +116,151 @@ export async function generateContextualDescription(
   return textBlock?.text ?? '';
 }
 
-/**
- * Ingest all blog posts into the RAG database
- */
-export async function ingestBlogPosts(): Promise<IngestResult> {
-  const db = useDrizzle();
+async function isUpToDate(
+  { db }: RagRuntime,
+  existing: { id: string; contentHash: string },
+  contentHash: string,
+) {
+  if (existing.contentHash !== contentHash) return false;
 
-  const result: IngestResult = {
-    documentsProcessed: 0,
-    documentsSkipped: 0,
-    chunksCreated: 0,
-    errors: [],
-  };
+  const [row] = await db
+    .select({ total: count() })
+    .from(documentChunks)
+    .where(eq(documentChunks.documentId, existing.id));
 
-  // Get all markdown files from blog content
-  const blogDir = join(process.cwd(), BLOG_CONTENT_PATH);
-  let files: string[];
+  const [pending] = await db
+    .select({ total: count() })
+    .from(documentChunks)
+    .where(and(eq(documentChunks.documentId, existing.id), isNull(documentChunks.embeddedAt)));
 
-  try {
-    files = (await readdir(blogDir)).filter((f) => f.endsWith('.md'));
-  } catch (error) {
-    result.errors.push(`Failed to read blog directory: ${error}`);
+  return (row?.total ?? 0) > 0 && (pending?.total ?? 0) === 0;
+}
 
-    return result;
+async function ingestSource(
+  runtime: RagRuntime,
+  source: BlogSource,
+  describe: DescribeChunk,
+  force: boolean,
+): Promise<{ status: 'skipped' } | { status: 'processed'; chunks: number }> {
+  const { db, ai, vectorize } = runtime;
+  const contentHash = await hashContent(source.rawbody);
+
+  const existing = await db.query.documents.findFirst({
+    where: (doc) => eq(doc.slug, source.slug),
+  });
+
+  if (existing && !force && (await isUpToDate(runtime, existing, contentHash))) {
+    return { status: 'skipped' };
   }
 
-  for (const file of files) {
-    try {
-      const filePath = join(blogDir, file);
-      const content = await readFile(filePath, 'utf-8');
-      const contentHash = await hashContent(content);
+  const body = stripFrontmatter(source.rawbody);
+  const chunks = chunkText(body);
+  const described: string[] = [];
 
-      const parsed = parseBlogMarkdown(content, file);
-      const url = `/blog/${parsed.slug}`;
+  for (const chunk of chunks) {
+    described.push(await describe(source.title, source.url, body, chunk.content));
+  }
 
-      // Check if document exists and is unchanged
-      const existingDoc = await db.query.documents.findFirst({
-        where: (doc) => eq(doc.slug, parsed.slug),
-      });
+  const embeddings = await embedTexts(
+    ai,
+    chunks.map((chunk, i) => `${chunk.content}\n\nContext: ${described[i]}`),
+  );
 
-      if (existingDoc && existingDoc.contentHash === contentHash) {
-        result.documentsSkipped++;
-        continue;
-      }
+  if (existing) await deleteChunksOf(runtime, existing.id);
 
-      // Delete existing chunks if document changed
-      if (existingDoc) {
-        await db
-          .delete(tables.documentChunks)
-          .where(eq(tables.documentChunks.documentId, existingDoc.id));
-        await db.delete(tables.documents).where(eq(tables.documents.id, existingDoc.id));
-      }
+  const fields = {
+    title: source.title,
+    path: source.path,
+    url: source.url,
+    contentHash,
+  };
 
-      // Create document record
-      const insertedDocs = await db
-        .insert(tables.documents)
-        .values({
-          slug: parsed.slug,
-          title: parsed.title,
-          path: filePath,
-          url,
-          contentHash,
-        })
+  const [doc] = existing
+    ? await db.update(documents).set(fields).where(eq(documents.id, existing.id)).returning()
+    : await db
+        .insert(documents)
+        .values({ slug: source.slug, ...fields })
         .returning();
 
-      const doc = insertedDocs[0];
+  if (!doc) throw new Error(`Failed to write document: ${source.slug}`);
 
-      if (!doc) {
-        throw new Error(`Failed to insert document: ${parsed.slug}`);
+  const rows = chunks.map((chunk, i) => ({
+    id: crypto.randomUUID(),
+    documentId: doc.id,
+    chunkIndex: chunk.index,
+    content: chunk.content,
+    contextualContent: described[i] ?? '',
+  }));
+
+  const [firstInsert, ...otherInserts] = insertChunked(db, documentChunks, rows);
+
+  if (firstInsert) {
+    await db.batch([firstInsert, ...otherInserts]);
+    await upsertChunkVectors(
+      vectorize,
+      rows.map((row, i) => ({
+        chunkId: row.id,
+        values: embeddings[i] ?? [],
+        documentId: doc.id,
+        slug: doc.slug,
+        url: doc.url,
+        title: doc.title,
+      })),
+    );
+    await db
+      .update(documentChunks)
+      .set({ embeddedAt: new Date() })
+      .where(eq(documentChunks.documentId, doc.id));
+  }
+
+  return { status: 'processed', chunks: rows.length };
+}
+
+/**
+ * Ingest the given sources. Unchanged, fully embedded documents are skipped, so a run that
+ * stopped early (error or `limit`) resumes where it left off.
+ */
+export async function ingestSources(
+  runtime: RagRuntime,
+  sources: BlogSource[],
+  describe: DescribeChunk,
+  options: IngestOptions = {},
+): Promise<IngestResult> {
+  const result = emptyResult();
+
+  for (const source of sources) {
+    if (options.limit !== undefined && result.documentsProcessed >= options.limit) break;
+
+    try {
+      const outcome = await ingestSource(runtime, source, describe, options.force ?? false);
+
+      if (outcome.status === 'skipped') {
+        result.documentsSkipped++;
+      } else {
+        result.documentsProcessed++;
+        result.chunksCreated += outcome.chunks;
+        log.info('rag', `Ingested: ${source.title} (${outcome.chunks} chunks)`);
       }
-
-      // Chunk the content
-      const chunks = chunkText(parsed.content);
-
-      // Process chunks: generate context, embed, store
-      for (const chunk of chunks) {
-        // Generate contextual description
-        const contextualContent = await generateContextualDescription(
-          parsed.title,
-          url,
-          parsed.content,
-          chunk.content,
-        );
-
-        // Generate embedding for combined content
-        const textToEmbed = `${chunk.content}\n\nContext: ${contextualContent}`;
-        const embeddings = await embedTexts([textToEmbed]);
-        const embeddingResult = embeddings[0];
-
-        if (!embeddingResult) {
-          throw new Error(`Failed to generate embedding for chunk ${chunk.index}`);
-        }
-
-        // TODO(cloudflare-rag): upsert embeddingResult.embedding into Vectorize; D1 keeps text only
-        await db.insert(tables.documentChunks).values({
-          documentId: doc.id,
-          chunkIndex: chunk.index,
-          content: chunk.content,
-          contextualContent,
-        });
-
-        result.chunksCreated++;
-      }
-
-      result.documentsProcessed++;
-      log.info('rag', `Ingested: ${parsed.title} (${chunks.length} chunks)`);
     } catch (error) {
-      const errorMsg = `Failed to process ${file}: ${error}`;
-      result.errors.push(errorMsg);
-      log.error('rag', errorMsg);
+      const message = `Failed to process ${source.slug}: ${error}`;
+      result.errors.push(message);
+      log.error('rag', message);
     }
   }
 
   return result;
 }
 
-/**
- * Ingest a single document by slug
- */
-export async function ingestDocument(slug: string): Promise<IngestResult> {
-  const result: IngestResult = {
-    documentsProcessed: 0,
-    documentsSkipped: 0,
-    chunksCreated: 0,
-    errors: [],
-  };
+/** Deletes indexed documents whose post no longer exists (or became a draft). */
+export async function pruneRemovedDocuments(runtime: RagRuntime, sources: BlogSource[]) {
+  const slugs = sources.map((s) => s.slug);
 
-  const blogDir = join(process.cwd(), BLOG_CONTENT_PATH);
-  let files: string[];
+  const stale = await runtime.db
+    .select({ id: documents.id })
+    .from(documents)
+    .where(slugs.length > 0 ? notInArray(documents.slug, slugs) : undefined);
 
-  try {
-    files = (await readdir(blogDir)).filter((f) => f.endsWith('.md'));
-  } catch (error) {
-    result.errors.push(`Failed to read blog directory: ${error}`);
+  for (const doc of stale) await deleteDocument(runtime, doc.id);
 
-    return result;
-  }
-
-  // Find file matching slug
-  const file = files.find((f) => {
-    const parsed = parseBlogMarkdown('', f);
-
-    return parsed.slug === slug;
-  });
-
-  if (!file) {
-    result.errors.push(`Document not found: ${slug}`);
-
-    return result;
-  }
-
-  // For now, just re-run full ingestion (incremental by hash)
-  // TODO: Implement single-document re-ingestion
-  return ingestBlogPosts();
+  return stale.length;
 }
