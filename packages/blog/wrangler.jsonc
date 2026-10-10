@@ -1,6 +1,7 @@
 // Worker config for the blog. Top level is production; `env.staging` repeats every
 // binding because Wrangler does not inherit bindings across environments.
-// `main` and `assets` point at the Nitro `cloudflare_module` output (`pnpm build`).
+// `main` and `assets` point at the Nitro `cloudflare_module` output (`pnpm build`), which also
+// exports the AviationContainer Durable Object class (see nuxt.config.ts).
 // Deploy: wrangler deploy [--env staging]. Migrations: pnpm db:migrate:prod|staging.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
@@ -33,10 +34,17 @@
       "simple": { "limit": 60, "period": 60 },
     },
   ],
-  // The aviation Container service is added by the aviation wave:
-  // "containers": [{ "class_name": "AviationContainer", "image": "<dockerfile>", "max_instances": 2 }],
-  // "durable_objects": { "bindings": [{ "name": "AVIATION", "class_name": "AviationContainer" }] },
-  // "migrations": [{ "tag": "v1", "new_sqlite_classes": ["AviationContainer"] }],
+  "vars": { "R2_ACCOUNT_ID": "baf9cdac6eb4d8c477d85ceccae6679d", "R2_BUCKET": "towles-blog-media" },
+  "containers": [
+    {
+      "class_name": "AviationContainer",
+      "image": "../../services/aviation/Dockerfile",
+      "instance_type": "standard-1",
+      "max_instances": 1,
+    },
+  ],
+  "durable_objects": { "bindings": [{ "name": "AVIATION", "class_name": "AviationContainer" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["AviationContainer"] }],
   "env": {
     // Local-only: `nuxt dev` and `wrangler dev --env dev` cannot open the remote sessions that
     // AI and Vectorize need, so those bindings are left out here.
@@ -61,6 +69,22 @@
     },
     "staging": {
       "name": "towles-blog-staging",
+      "vars": {
+        "R2_ACCOUNT_ID": "baf9cdac6eb4d8c477d85ceccae6679d",
+        "R2_BUCKET": "towles-blog-media-staging",
+      },
+      "containers": [
+        {
+          "class_name": "AviationContainer",
+          "image": "../../services/aviation/Dockerfile",
+          "instance_type": "standard-1",
+          "max_instances": 1,
+        },
+      ],
+      "durable_objects": {
+        "bindings": [{ "name": "AVIATION", "class_name": "AviationContainer" }],
+      },
+      "migrations": [{ "tag": "v1", "new_sqlite_classes": ["AviationContainer"] }],
       "observability": { "enabled": true },
       "routes": [{ "pattern": "stage-chris.towles.dev", "custom_domain": true }],
       "assets": {

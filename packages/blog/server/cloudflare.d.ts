@@ -10,6 +10,11 @@ declare global {
   type RateLimit = CF.RateLimit;
   type Ai = CF.Ai;
   type Fetcher = CF.Fetcher;
+  // Narrowed to the one call the server makes, typed with DOM `Request`/`Response` like the
+  // rest of the server code rather than the workers-types variants.
+  type DurableObjectNamespace = {
+    getByName(name: string): { fetch(input: string, init?: RequestInit): Promise<Response> };
+  };
   type ExecutionContext = CF.ExecutionContext;
   type IncomingRequestCfProperties = CF.IncomingRequestCfProperties;
 }

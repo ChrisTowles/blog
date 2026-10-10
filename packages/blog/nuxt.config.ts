@@ -141,12 +141,16 @@ export default defineNuxtConfig({
     rollupConfig: {
       plugins: [
         {
-          // A rollup-level swap keeps the real package's types for typecheck, unlike `alias`.
-          name: 'stub-duckdb-node-api',
-          resolveId: (id) =>
-            id === '@duckdb/node-api'
-              ? resolve(__dirname, 'server/stubs/duckdb-node-api.ts')
-              : null,
+          // A Durable Object class must be a named export of the Worker's main module, and
+          // Nitro's cloudflare_module entry only exports the fetch handler.
+          name: 'export-aviation-container',
+          transform(code, id) {
+            if (!id.endsWith('presets/cloudflare/runtime/cloudflare-module.mjs')) return null;
+
+            const source = resolve(__dirname, 'server/utils/aviation-container.ts');
+
+            return `${code}\nexport { AviationContainer } from ${JSON.stringify(source)};\n`;
+          },
         },
       ],
     },
