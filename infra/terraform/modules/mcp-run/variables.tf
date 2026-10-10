@@ -19,12 +19,6 @@ variable "service_account_email" {
   type        = string
 }
 
-variable "custom_domain" {
-  description = "Custom hostname to map to this Cloud Run service (e.g. sandbox.towles.dev). Empty to skip domain mapping."
-  type        = string
-  default     = ""
-}
-
 variable "min_instances" {
   description = "Minimum Cloud Run instances (scale-to-zero safe)"
   type        = number

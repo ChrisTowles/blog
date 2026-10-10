@@ -11,20 +11,20 @@ packages/
 │   ├── server/     # Server-side: API routes, utils, database
 │   └── shared/     # Types shared between client and server
 ├── layers/         # Nuxt layers (typing, workflows)
-mcp/                # MCP Apps (SEP-1865) iframe host — separate Cloud Run service at sandbox.towles.dev
+mcp/                # MCP Apps (SEP-1865) iframe host — separate Cloudflare Worker at sandbox.towles.dev
 infra/              # infrastructure
-    container/       # block docker files (blog.Dockerfile, mcp.Dockerfile)
     aws_cloudformation/ # AWS Bedrock and IAM
-    terraform/          # GCP Cloud Run, Cloud SQL, and Cloudflare DNS (blog hosting stack)
+    terraform-cloudflare/ # Cloudflare DNS (no resources; wrangler owns Worker domains)
+    terraform/          # legacy GCP Cloud Run + Cloud SQL, deleted at decommission
     gcp-billing/        # GCP spend-cap kill-switch + BigQuery export (separate stack)
 ```
 
 ## Hosting
 
-- **GCP Cloud Run** — production hosting, Cloud SQL (PostgreSQL)
-- **Cloudflare** — DNS only (no longer used for Workers/hosting)
-- **CI deploys automatically** on merge to `main` — no manual deploy needed
-- Manual deploy (if needed): `pnpm gcp:prod:deploy` / `pnpm gcp:staging:deploy`
+- **Cloudflare Workers** — blog (`towles-blog`) and sandbox (`towles-sandbox`) Workers, D1, R2, Vectorize, Workers AI, AI Gateway, aviation Container. Config in `packages/blog/wrangler.jsonc` and `mcp/wrangler.jsonc`
+- **CI deploys automatically** on merge to `main` (staging, then production) — no manual deploy needed
+- Manual deploy (if needed): `pnpm cf:deploy` / `pnpm cf:deploy:staging` (needs Docker)
+- GCP is the rollback target during the soak only; see `docs/cloudflare-cutover.md`
 
 ## Commands
 
@@ -36,8 +36,9 @@ pnpm test:integration  # Integration tests (local in-memory D1, no services need
 pnpm lint         # oxlint
 pnpm lint:comments # comment-budget gate: comment volume in the lines this branch adds
 pnpm typecheck    # TypeScript checks
-pnpm gcp:prod:deploy   # Build container + deploy to GCP prod (needs terraform & gcloud)
-pnpm gcp:staging:deploy # Build container + deploy to GCP staging
+pnpm cf:deploy / cf:deploy:staging   # Build + wrangler deploy blog and sandbox Workers
+pnpm cf:migrate / cf:migrate:staging # Apply remote D1 migrations
+pnpm cf:tail / cf:tail:staging       # Live Worker logs
 pnpm etl:aviation      # Download aviation datasets → Parquet → GCS (loads .env)
 ```
 
@@ -128,13 +129,15 @@ So: don't run `pnpm typecheck` by hand with `pnpm dev` running. Stop the server 
 
 ## References
 
-- [GCP: Hosting](docs/hosting.md)
-- [Terraform Details](infra/terraform/README.md)
+- [Hosting](docs/hosting.md)
+- [Cloudflare cutover runbook](docs/cloudflare-cutover.md)
+- [Terraform Details (legacy GCP)](infra/terraform/README.md)
+- [Cloudflare DNS stack](infra/terraform-cloudflare/README.md)
 - [GCP Spend-Cap Kill-Switch](infra/gcp-billing/README.md)
 
 ## Terraform
 
-- Terraform state lives in GCS bucket `blog-towles-production-tfstate`, keyed per stack via `prefix` (e.g., `terraform/state` for blog hosting, `terraform/gcp-billing` for the kill-switch). Staging hosting is the exception: `blog-towles-staging-tfstate`. New stacks should pick a new unique prefix rather than creating another bucket.
+- Terraform state lives in GCS bucket `blog-towles-production-tfstate`, keyed per stack via `prefix` (e.g., `terraform/state` for legacy GCP hosting, `terraform/gcp-billing` for the kill-switch, `terraform/cloudflare` for DNS; all move off GCS at decommission). Staging hosting is the exception: `blog-towles-staging-tfstate`. New stacks should pick a new unique prefix rather than creating another bucket.
 - Terraform is applied by hand; merging does not apply it. `terraform-drift.yml` opens an `infra-drift` issue per stack whose plan is not empty. A new stack must be added to its matrix, and the `terraform-plan` SA needs read access to it.
-- Staging Cloud SQL is stopped nightly. A plan against it errors and silently skips the Cloud Run service, so always plan staging via `pnpm gcp:staging:plan` (runs `infra/terraform/scripts/wake-sql.sh`).
+- Staging Cloud SQL is stopped nightly. A plan against it errors and silently skips the Cloud Run service, so run `infra/terraform/scripts/wake-sql.sh blog-towles-staging` before planning staging (legacy stack, removed at decommission).
 - Cloud Function source convention: upload zips to `${project_id}-functions` GCS bucket (each stack creates its own objects keyed by content hash). See `infra/terraform/modules/cost-scheduler/` and `infra/gcp-billing/pubsub_function.tf` for examples.
