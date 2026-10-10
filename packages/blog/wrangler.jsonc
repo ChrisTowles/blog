@@ -95,7 +95,7 @@
         {
           "binding": "DB",
           "database_name": "towles-blog-staging",
-          "database_id": "00000000-0000-0000-0000-000000000000",
+          "database_id": "fc9e2b14-dd8c-448e-9dd0-84d60b48771f",
           "migrations_dir": "server/database/migrations",
         },
       ],
