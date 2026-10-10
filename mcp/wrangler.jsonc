@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "towles-sandbox",
+  "main": "worker.ts",
+  "compatibility_date": "2026-10-01",
+  // Every request runs through the Worker so each response gets the baseline
+  // headers and the per-request CSP; the Worker reads files via env.ASSETS.
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "html_handling": "none",
+    "not_found_handling": "none",
+    "run_worker_first": true,
+  },
+  // Custom domains need the hostname's DNS record free: delete the old Cloud
+  // Run CNAME for sandbox.towles.dev before the first deploy.
+  "routes": [{ "pattern": "sandbox.towles.dev", "custom_domain": true }],
+  "env": {
+    "staging": {
+      "name": "towles-sandbox-staging",
+      "assets": {
+        "directory": "./public",
+        "binding": "ASSETS",
+        "html_handling": "none",
+        "not_found_handling": "none",
+        "run_worker_first": true,
+      },
+      "routes": [{ "pattern": "stage-sandbox.towles.dev", "custom_domain": true }],
+    },
+  },
+}

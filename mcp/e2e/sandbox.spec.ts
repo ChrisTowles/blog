@@ -63,6 +63,17 @@ test.describe('mcp sandbox e2e', () => {
     expect(csp).toContain("frame-src 'none'");
   });
 
+  test('every response carries the baseline hardening headers', async ({ request }) => {
+    for (const path of ['/', '/sandbox.html', '/sandbox.js', '/relay.js', '/missing']) {
+      const r = await request.get(`${SANDBOX_URL}${path}`);
+      const headers = r.headers();
+
+      expect(headers['x-content-type-options']).toBe('nosniff');
+      expect(headers['strict-transport-security']).toBe('max-age=31536000; includeSubDomains');
+      expect(headers['cross-origin-opener-policy']).toBe('same-origin');
+    }
+  });
+
   test('CSP ?csp=... injection attempt yields safe header', async ({ request }) => {
     const malicious = encodeURIComponent(
       JSON.stringify({

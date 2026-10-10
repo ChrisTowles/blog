@@ -7,7 +7,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { createSandboxRelay, RESOURCE_READY_METHOD } from './relay.js';
+import { createSandboxRelay, RESOURCE_READY_METHOD } from './public/relay.js';
 
 type RelayedMessage = { method?: string; params?: { html?: string } };
 
@@ -143,29 +143,29 @@ describe('createSandboxRelay', () => {
 
 describe('validateReferrer', () => {
   it('allows the production blog origin', async () => {
-    const { validateReferrer } = await import('./relay.js');
+    const { validateReferrer } = await import('./public/relay.js');
     expect(validateReferrer('https://towles.dev/chat')).toBe('https://towles.dev');
   });
 
   it('allows staging', async () => {
-    const { validateReferrer } = await import('./relay.js');
+    const { validateReferrer } = await import('./public/relay.js');
     expect(validateReferrer('https://stage-chris.towles.dev/chat')).toBe(
       'https://stage-chris.towles.dev',
     );
   });
 
   it('allows localhost for dev', async () => {
-    const { validateReferrer } = await import('./relay.js');
+    const { validateReferrer } = await import('./public/relay.js');
     expect(validateReferrer('http://localhost:3000/chat')).toBe('http://localhost:3000');
   });
 
   it('rejects unknown origins', async () => {
-    const { validateReferrer } = await import('./relay.js');
+    const { validateReferrer } = await import('./public/relay.js');
     expect(() => validateReferrer('https://attacker.example.com/')).toThrow();
   });
 
   it('rejects empty referrer', async () => {
-    const { validateReferrer } = await import('./relay.js');
+    const { validateReferrer } = await import('./public/relay.js');
     expect(() => validateReferrer('')).toThrow();
   });
 });
