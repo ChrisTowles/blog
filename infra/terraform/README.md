@@ -1,6 +1,8 @@
 # Terraform Infrastructure
 
-Infrastructure as code for blog deployment on Google Cloud Platform.
+> **Legacy.** The site now runs on Cloudflare Workers (see `docs/hosting.md`). This GCP stack keeps serving only as the rollback target during the 14-day soak and is deleted at decommission (`docs/cloudflare-cutover.md`). Cloudflare DNS is managed in `infra/terraform-cloudflare/`. Do not apply this stack during the soak: its pending changes remove the sandbox Cloud Run domain mappings.
+
+Infrastructure as code for the legacy blog deployment on Google Cloud Platform.
 
 Uses simplified architecture with Cloud SQL public IP + Auth Proxy (no VPC) to minimize costs (~$20-30/mo for both environments).
 
@@ -160,48 +162,28 @@ terraform apply -var-file=prod.tfvars
 
 ## Common Operations
 
-### Deploy to staging
+Container deploys no longer exist for this stack; only infrastructure changes remain. Run from `infra/terraform/environments`.
 
-**Always use the deploy script** (builds and pushes the container, then `gcloud run services update`):
-
-```bash
-pnpm gcp:staging:deploy
-```
-
-To apply infrastructure changes only (no container build):
+### Plan or apply
 
 ```bash
-pnpm gcp:staging:apply
+# Staging: wake Cloud SQL first, the nightly scheduler stops it
+../scripts/wake-sql.sh blog-towles-staging
+terraform init -backend-config=staging.backend.tfvars -reconfigure
+terraform plan -var-file=staging.tfvars -lock-timeout=5m
+
+# Prod
+terraform init -backend-config=prod.backend.tfvars -reconfigure
+terraform plan -var-file=prod.tfvars -lock-timeout=5m
 ```
 
-### Deploy to prod
+Replace `plan` with `apply` to apply. A plan against a stopped staging Cloud SQL instance errors on the SQL user and silently skips everything that depends on it, including the blog Cloud Run service, hence the wake script.
 
-**Always use the deploy script** (builds and pushes the container, then `gcloud run services update`):
-
-```bash
-pnpm gcp:prod:deploy
-```
-
-To apply infrastructure changes only (no container build):
-
-```bash
-pnpm gcp:prod:apply
-```
-
-### Plan changes
-
-```bash
-pnpm gcp:staging:plan
-pnpm gcp:prod:plan
-```
-
-Terraform does not own the blog image: the Cloud Run module ignores `image` because deploys set it with `gcloud`. Everything else in the service (scaling, CPU, env) is terraform's.
-
-The staging scripts run `scripts/wake-sql.sh` first. The nightly cost scheduler stops staging Cloud SQL, and a plan against a stopped instance errors on the SQL user and silently skips everything that depends on it, including the blog Cloud Run service.
+Terraform does not own the blog image: the Cloud Run module ignores `image`.
 
 ### Drift check
 
-`.github/workflows/terraform-drift.yml` plans staging, prod and `infra/gcp-billing` every Monday and on pushes to `main` that touch infra. A stack whose plan is not empty gets an open `infra-drift` issue, closed automatically on the next clean run. It runs as the read-only `terraform-plan` SA (created in `modules/github-oidc`), which can only be used from `main`. Needs the `CLOUDFLARE_API_TOKEN` repo secret and `GCP_PLAN_SERVICE_ACCOUNT` repo variable.
+`.github/workflows/terraform-drift.yml` plans staging, prod, `infra/gcp-billing` and `infra/terraform-cloudflare` every Monday and on pushes to `main` that touch infra. A stack whose plan is not empty gets an open `infra-drift` issue, closed automatically on the next clean run. It runs as the read-only `terraform-plan` SA (created in `modules/github-oidc`), which can only be used from `main`. Needs the `CLOUDFLARE_API_TOKEN` repo secret (Cloudflare stack) and `GCP_PLAN_SERVICE_ACCOUNT` repo variable (all stacks; they share the GCS state bucket).
 
 ### View outputs
 
@@ -214,7 +196,9 @@ terraform output
 ### Destroy staging (careful!)
 
 ```bash
-pnpm gcp:staging:destroy
+../scripts/wake-sql.sh blog-towles-staging
+terraform init -backend-config=staging.backend.tfvars -reconfigure
+terraform destroy -var-file=staging.tfvars -lock-timeout=5m
 ```
 
 ## Environment Differences
@@ -252,32 +236,7 @@ Email alerts and kill-switch caps for both live in `infra/gcp-billing/terraform.
 
 ## CI/CD Integration
 
-GitHub Actions deploys automatically on push to `main` using Workload Identity Federation (no long-lived keys).
-
-The `github_oidc` Terraform module creates:
-
-- Workload Identity Pool + OIDC Provider for GitHub Actions
-- `github-actions-ci` service account with Cloud Run, Artifact Registry, and actAs permissions
-- WIF binding scoped to the `ChrisTowles/blog` repository
-
-### Setup
-
-1. Apply Terraform for prod:
-
-   ```bash
-   pnpm gcp:prod:apply
-   ```
-
-2. Set GitHub repo variables from terraform output:
-
-   ```bash
-   cd infra/terraform/environments
-   terraform init -backend-config=prod.backend.tfvars -reconfigure
-   gh variable set GCP_WIF_PROVIDER --body "$(terraform output -raw wif_provider)"
-   gh variable set GCP_WIF_SERVICE_ACCOUNT --body "$(terraform output -raw ci_service_account_email)"
-   ```
-
-3. Push to `main` — the Deploy workflow triggers automatically.
+Deploys moved to Cloudflare (`.github/workflows/deploy.yml`, wrangler with an API token). What remains of the `github_oidc` module is Workload Identity Federation for the read-only `terraform-plan` service account that the drift check uses to read Terraform state. The `github-actions-ci` deploy service account is unused and goes away with the stack.
 
 ## Troubleshooting
 

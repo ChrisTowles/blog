@@ -1,62 +1,124 @@
 # Hosting & Deployment
 
-GCP via Terraform. Migrated from Cloudflare Workers/NuxtHub.
+Cloudflare Workers. Moved from GCP Cloud Run + Cloud SQL (see [cloudflare-migration.md](cloudflare-migration.md) for the decisions and [cloudflare-cutover.md](cloudflare-cutover.md) for the runbook).
 
 ## Architecture
 
-- **Cloud Run `blog`**: Main app container (scales to zero in staging, `min_instances=1` in prod)
-- **Cloud Run `mcp`**: MCP Apps iframe host on `sandbox.towles.dev` / `stage-sandbox.towles.dev` — isolated origin required by SEP-1865, separate service so a bug in the blog cannot reach the iframe surface
-- **Cloud SQL**: PostgreSQL (public IP + Auth Proxy)
-- **Artifact Registry**: Docker images (`blog`, `mcp`)
-- **Secret Manager**: API keys, DB credentials, session passwords
-- **Cloudflare DNS**: `towles.dev` zone — managed via the `cloudflare_record` resources in `infra/terraform/environments/main.tf`. Cloudflare hosts DNS only (no Workers/Pages)
+- **Blog Worker** (`towles-blog`): Nuxt 4 on Nitro `cloudflare_module` with Workers Static Assets and `nodejs_compat`. Config: `packages/blog/wrangler.jsonc`.
+- **Sandbox Worker** (`towles-sandbox`): MCP Apps iframe host on `sandbox.towles.dev` / `stage-sandbox.towles.dev`. Isolated origin is required by SEP-1865, and a separate Worker keeps a blog bug away from the iframe surface. Config: `mcp/wrangler.jsonc`.
+- **D1**: SQLite database for everything, including FTS5 keyword search.
+- **Vectorize**: 1024-dim cosine index for RAG.
+- **Workers AI**: embeddings and reranking.
+- **AI Gateway** (`towles-blog`): Claude calls go through it (BYOK).
+- **R2**: `towles-blog-media` for TTS audio and aviation Parquet.
+- **Container** (`AviationContainer`, built from `services/aviation/Dockerfile`): DuckDB reading Parquet from R2 over the S3 API.
+- **Rate Limiting binding**: replaces the in-memory MCP limiter.
+- **DNS**: Cloudflare zone `towles.dev`. Wrangler creates the custom-domain records when a Worker deploys. Terraform (`infra/terraform-cloudflare`) manages no records today.
 
-## GCP Projects
+## Environments
 
-- Production: `blog-towles-production` - [Console](https://console.cloud.google.com/welcome?project=blog-towles-production)
-- Staging: `blog-towles-staging` - [Console](https://console.cloud.google.com/welcome?project=blog-towles-staging)
+| Env        | Blog Worker           | Hostname                  | Sandbox host                |
+| ---------- | --------------------- | ------------------------- | --------------------------- |
+| production | `towles-blog`         | `chris.towles.dev`        | `sandbox.towles.dev`        |
+| staging    | `towles-blog-staging` | `stage-chris.towles.dev`  | `stage-sandbox.towles.dev`  |
+| dev        | `towles-blog-dev`     | `localhost` (local state) | `sandbox.localhost:8081`    |
 
-## Deploy Commands
+Staging has its own D1 (`towles-blog-staging`), R2 bucket (`towles-blog-media-staging`) and Vectorize index (`towles-blog-rag-staging`). The `dev` env is local only: it omits AI and Vectorize because wrangler cannot open remote sessions for them offline.
+
+Account `baf9cdac6eb4d8c477d85ceccae6679d` also holds legacy `blog` / `blog-preview` Workers and D1 databases from 2025. Leave them alone.
+
+## Deploy
+
+CI deploys on every merge to `main` (`.github/workflows/deploy.yml`): test, build once, then staging (D1 migrations, blog Worker, sandbox Worker, smoke test), then production the same way. Staging and production are GitHub environments, so production can carry protection rules.
+
+Manual deploy needs Docker running (the container image builds locally) and `CLOUDFLARE_API_TOKEN` in the environment:
 
 ```bash
-# Staging
-nr gcp:staging:init      # terraform init
-nr gcp:staging:plan      # terraform plan
-nr gcp:staging:apply     # terraform apply
-nr gcp:staging:deploy    # build & push container, deploy
-nr gcp:staging:logs      # tail logs
-
-# Production
-nr gcp:prod:init         # terraform init
-nr gcp:prod:apply        # terraform apply
-nr gcp:prod:deploy       # build & push container, deploy
-nr gcp:prod:logs         # tail logs
+pnpm cf:deploy:staging   # build, blog + sandbox Workers to staging
+pnpm cf:deploy           # build, blog + sandbox Workers to production
+pnpm cf:migrate:staging  # D1 migrations, remote staging
+pnpm cf:migrate          # D1 migrations, remote production
+pnpm cf:tail:staging     # live logs
+pnpm cf:tail             # live logs
 ```
 
-## Terraform Structure
+`cf:deploy*` does not run migrations. Run `cf:migrate*` first when a migration is part of the change.
 
-```
-infra/terraform/
-├── modules/
-│   ├── cloud-run/       # Blog container hosting
-│   ├── mcp-run/         # MCP Apps iframe host (sandbox.towles.dev)
-│   ├── cloud-sql/       # PostgreSQL database
-│   ├── shared/          # IAM, service accounts, registry
-│   ├── github-oidc/     # Workload Identity Federation (prod only)
-│   └── cost-scheduler/  # Cloud Function to stop SQL nightly (staging only)
-└── environments/
-    ├── main.tf               # Unified config with conditional modules
-    ├── variables.tf          # Variable definitions
-    ├── staging.tfvars        # Staging values
-    └── prod.tfvars           # Production values
+## CI credentials
+
+Repo secrets used by `deploy.yml`:
+
+| Secret                  | Used for                                   |
+| ----------------------- | ------------------------------------------ |
+| `CLOUDFLARE_API_TOKEN`  | wrangler deploy, D1 migrations, Terraform  |
+| `CLOUDFLARE_ACCOUNT_ID` | wrangler account selection                 |
+
+```bash
+gh secret set CLOUDFLARE_ACCOUNT_ID --body baf9cdac6eb4d8c477d85ceccae6679d
 ```
 
-Full terraform docs: [infra/terraform/README.md](../infra/terraform/README.md)
+The API token needs these permissions (create at dash.cloudflare.com > My Profile > API Tokens):
+
+- Account: Workers Scripts (Edit)
+- Account: D1 (Edit)
+- Account: Workers R2 Storage (Edit)
+- Account: Vectorize (Edit)
+- Account: Cloudchamber (Edit), required for Containers
+- Account: Workers AI (Read)
+- Account: AI Gateway (Edit)
+- Account: Account Settings (Read)
+- Zone `towles.dev`: DNS (Edit), Workers Routes (Edit), Zone (Read). Custom domains write DNS records, and the Terraform stack reads the zone.
+
+## Worker secrets
+
+Secrets are per environment and live in Cloudflare, not in CI. Set them once, from `packages/blog`, with `--env staging` for staging and no flag for production:
+
+```bash
+cd packages/blog
+for name in ANTHROPIC_API_KEY NUXT_SESSION_PASSWORD NUXT_OG_IMAGE_SECRET \
+  NUXT_OAUTH_GITHUB_CLIENT_ID NUXT_OAUTH_GITHUB_CLIENT_SECRET \
+  NUXT_OAUTH_GOOGLE_CLIENT_ID NUXT_OAUTH_GOOGLE_CLIENT_SECRET \
+  BRAINTRUST_API_KEY OTEL_EXPORTER_OTLP_HEADERS \
+  R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY GOOGLE_TTS_KEY ADMIN_SEED_TOKEN; do
+  pnpm exec wrangler secret put "$name" --env staging
+done
+pnpm exec wrangler secret list --env staging
+```
+
+| Secret                                                | Notes                                                                 |
+| ----------------------------------------------------- | --------------------------------------------------------------------- |
+| `ANTHROPIC_API_KEY`                                   | Direct fallback if AI Gateway streaming misbehaves                    |
+| `NUXT_SESSION_PASSWORD`                               | 32+ characters; `openssl rand -base64 32`                             |
+| `NUXT_OG_IMAGE_SECRET`                                | `npx nuxt-og-image generate-secret`                                   |
+| `NUXT_OAUTH_GITHUB_*`, `NUXT_OAUTH_GOOGLE_*`          | One OAuth app per environment; callback `https://<host>/api/auth/...` |
+| `BRAINTRUST_API_KEY`                                  | `BRAINTRUST_PROJECT_NAME` is a plain var                              |
+| `OTEL_EXPORTER_OTLP_HEADERS`                          | `api-key=<New Relic license key>`                                     |
+| `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`            | R2 API token for the aviation container ([ops](mcp-aviation-ops.md)) |
+| `GOOGLE_TTS_KEY`                                      | Chirp3 REST key for typing audio                                      |
+| `ADMIN_SEED_TOKEN`                                    | Guards admin seed/ingest endpoints                                    |
+
+The Anthropic key can also live in AI Gateway as a BYOK provider key; the Worker secret remains the fallback path. Non-secret values (`R2_ACCOUNT_ID`, `R2_BUCKET`, public config) are `vars` in `wrangler.jsonc`.
+
+Local dev reads `.env` (see `.env.example`). `wrangler dev --env dev` reads `packages/blog/.dev.vars.dev`, which replaces `.dev.vars` when it exists.
+
+## Rollback
+
+During the 14-day soak the GCP stack keeps running and is the rollback target:
+
+1. Remove the Worker custom domain (dashboard: Workers > `towles-blog` > Settings > Domains, or remove the `routes` entry and redeploy).
+2. Re-create the CNAME `chris` -> `ghs.googlehosted.com` (DNS only, not proxied). Same for `stage-chris`, `sandbox`, `stage-sandbox`.
+3. Cloud Run domain mappings and Cloud SQL stay in place until decommission, so the old service answers again once DNS resolves.
+
+Writes made on Cloudflare during the soak do not flow back to Cloud SQL. For code-only regressions prefer `wrangler rollback` (previous Worker version) over a DNS rollback.
+
+## Terraform
+
+DNS only: `infra/terraform-cloudflare`. It has no resources today because Wrangler owns the Worker custom-domain records. The GCP stacks (`infra/terraform/environments`, `infra/gcp-billing`) remain until decommission. Details: [infra/terraform/README.md](../infra/terraform/README.md).
 
 ## Analytics
 
-Google Analytics 4 via `nuxt-gtag`. Measurement ID set per environment via Terraform `gtag_id` variable. See [Analytics docs](analytics.md) for property/stream details and custom events.
+Google Analytics 4 via `nuxt-gtag`. The measurement ID is a build-time value (`NUXT_PUBLIC_GTAG_ID` in `deploy.yml`). See [Analytics docs](analytics.md) for property/stream details and custom events.
 
 ## Cost
 
-~$50/month for both environments: prod ~$35 (warm Cloud Run instance + Cloud SQL), staging ~$15 (Cloud SQL; Cloud Run scales to zero). Alerts and caps: [GCP Spend-Cap Kill-Switch](../infra/gcp-billing/README.md).
+About $5-8/month for both environments. Workers Paid ($5) covers both blog Workers, the sandbox Workers, D1, Vectorize, R2 and Workers AI at this traffic; the aviation container bills only while it runs (sleeps after idle). Claude usage is billed by Anthropic regardless of host. Check Cloudflare billing after the first month and note any drift here.
