@@ -1,4 +1,6 @@
 import { sql } from 'drizzle-orm';
+import { loadBlogSources } from '../../../utils/rag/content-ingest';
+import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL } from '../../../utils/rag/runtime';
 
 defineRouteMeta({
   openAPI: {
@@ -21,10 +23,12 @@ export default defineEventHandler(async (event) => {
     chunks: number | null;
     contentSize: number | null;
     contextSize: number | null;
+    embedded: number | null;
   }>(sql`
     SELECT
       (SELECT COUNT(*) FROM documents) as documents,
       COUNT(*) as chunks,
+      COUNT("embeddedAt") as embedded,
       SUM(LENGTH(content)) as contentSize,
       SUM(LENGTH("contextualContent")) as contextSize
     FROM document_chunks
@@ -36,8 +40,7 @@ export default defineEventHandler(async (event) => {
   const contextSize = Number(totals?.contextSize || 0);
   const avgChunksPerDoc = documentCount > 0 ? chunkCount / documentCount : 0;
 
-  // TODO(cloudflare-rag): count vectors in Vectorize once embeddings move there
-  const embeddedCount = 0;
+  const embeddedCount = Number(totals?.embedded || 0);
 
   const lastIndexed = await db.get<{ title: string; createdAt: number }>(sql`
     SELECT title, "createdAt"
@@ -46,24 +49,13 @@ export default defineEventHandler(async (event) => {
     LIMIT 1
   `);
 
-  // Get document list with file system status
-  const { readdir } = await import('node:fs/promises');
-  const { join } = await import('node:path');
-  let filesOnDisk = 0;
-
-  try {
-    const blogDir = join(process.cwd(), 'content/2.blog');
-    const files = await readdir(blogDir);
-    filesOnDisk = files.filter((f) => f.endsWith('.md')).length;
-  } catch {
-    // Ignore errors
-  }
+  const publishedPosts = (await loadBlogSources()).length;
 
   return {
     documents: {
       indexed: documentCount,
-      onDisk: filesOnDisk,
-      pendingIndex: Math.max(0, filesOnDisk - documentCount),
+      onDisk: publishedPosts, // key kept for the admin page; counts published Nuxt Content posts
+      pendingIndex: Math.max(0, publishedPosts - documentCount),
     },
     chunks: {
       total: chunkCount,
@@ -84,8 +76,8 @@ export default defineEventHandler(async (event) => {
           date: new Date(lastIndexed.createdAt),
         }
       : null,
-    embeddingDimensions: 1024,
-    vectorIndex: 'Vectorize (cosine)',
-    textIndex: 'none (FTS5 pending)',
+    embeddingDimensions: EMBEDDING_DIMENSIONS,
+    vectorIndex: `Vectorize (cosine, ${EMBEDDING_MODEL})`,
+    textIndex: 'D1 FTS5 (trigram, bm25)',
   };
 });

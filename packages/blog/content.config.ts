@@ -63,6 +63,7 @@ export default defineContentConfig({
       type: 'page',
       source: '2.blog/**/*',
       schema: z.object({
+        rawbody: z.string(),
         title: z.string().nonempty(),
         description: z.string().nonempty(),
         status: z.enum(['draft', 'published']).default('published'),

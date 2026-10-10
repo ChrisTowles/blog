@@ -67,59 +67,11 @@ export function chunkText(text: string, options: ChunkOptions = {}): Chunk[] {
   return chunks;
 }
 
-/**
- * Extract frontmatter and content from markdown
- */
-export interface Frontmatter {
-  title?: string;
-  description?: string;
-  date?: string;
-}
+/** Drops a leading YAML frontmatter block; Nuxt Content's `rawbody` is the whole file. */
+export function stripFrontmatter(markdown: string): string {
+  const match = markdown.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n([\s\S]*)$/);
 
-export interface ParsedMarkdown {
-  frontmatter: Frontmatter;
-  content: string;
-  title: string;
-  slug: string;
-}
-
-export function parseBlogMarkdown(markdown: string, filePath: string): ParsedMarkdown {
-  const frontmatterMatch = markdown.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
-
-  let frontmatter: Frontmatter = {};
-  let content = markdown;
-
-  if (frontmatterMatch && frontmatterMatch[1] && frontmatterMatch[2]) {
-    // Simple YAML parsing for common fields
-    const yamlContent = frontmatterMatch[1];
-    content = frontmatterMatch[2].trim();
-
-    // Parse basic YAML fields
-    const titleMatch = yamlContent.match(/^title:\s*(.+)$/m);
-    const descMatch = yamlContent.match(/^description:\s*["']?(.*)["']?$/m);
-    const dateMatch = yamlContent.match(/^date:\s*(.+)$/m);
-
-    frontmatter = {
-      title: titleMatch?.[1]?.replace(/^["']|["']$/g, '') || '',
-      description: descMatch?.[1] || '',
-      date: dateMatch?.[1] || '',
-    };
-  }
-
-  // Extract slug from filename, matching Nuxt Content v3 path generation:
-  // - Strip pure numeric prefix only (e.g., "20250713." but NOT "20250803-1.")
-  // - Nuxt Content keeps non-pure-numeric prefixes like "20250803-1." as part of the path
-  // - Lowercase and replace spaces with hyphens
-  const filename = filePath.split('/').pop() || '';
-  const slugMatch = filename.match(/^\d+\.(.+)\.md$/);
-  const slug = (slugMatch?.[1] || filename.replace('.md', '')).toLowerCase().replace(/\s+/g, '-');
-
-  return {
-    frontmatter,
-    content,
-    title: frontmatter.title || slug,
-    slug,
-  };
+  return (match?.[1] ?? markdown).trim();
 }
 
 /**

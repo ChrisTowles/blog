@@ -9,6 +9,7 @@ import { log } from 'evlog';
 import { z } from 'zod';
 import type { JsonObject } from '~~/shared/json-types';
 import { retrieveRAG } from '../rag/retrieve';
+import { RagUnavailableError } from '../rag/runtime';
 import type { ToolPayload } from './tool-payload';
 
 const optionalString = z.string().optional().catch(undefined);
@@ -145,9 +146,15 @@ export async function executeTool(
         return { error: 'Query is required' };
       }
 
-      const results = await retrieveRAG(query, {
-        topK: 5,
-      });
+      let results;
+
+      try {
+        results = await retrieveRAG(query, { topK: 5 });
+      } catch (error) {
+        if (error instanceof RagUnavailableError) return { error: error.message };
+
+        throw error;
+      }
 
       const baseUrl = options?.baseUrl || '';
 

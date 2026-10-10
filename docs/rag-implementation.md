@@ -1,304 +1,85 @@
-# RAG Implementation: Contextual Hybrid Search with Reranking
+# RAG Implementation: Contextual Hybrid Search on Cloudflare
 
-Documentation for the blog's Retrieval-Augmented Generation (RAG) system.
-
-## Overview
-
-The chat feature uses RAG to search blog content and provide contextually relevant answers with source citations. Implementation follows [Anthropic's Contextual Retrieval cookbook](https://github.com/anthropics/claude-cookbooks/blob/main/capabilities/contextual-embeddings/guide.ipynb).
-
-**Performance (from Anthropic's research):**
-| Approach | Pass@10 |
-|----------|---------|
-| Baseline RAG | 87% |
-| + Contextual Embeddings | 92% |
-| + Hybrid Search (BM25) | 92% |
-| + Reranking | **95%** |
+Blog posts are chunked, each chunk gets a Claude-written situating description (Anthropic's contextual retrieval), and retrieval fuses vector search with keyword search before an optional rerank.
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        INGESTION PIPELINE                        │
-├─────────────────────────────────────────────────────────────────┤
-│  Markdown Files    →  Chunker  →  Claude Haiku  →  Titan Embed  │
-│  (content/2.blog/)    (~500 tok)   (context gen)    (1024 dim)  │
-│                                         ↓                        │
-│                              PostgreSQL + pgvector               │
-│                              (documents, document_chunks)        │
-└─────────────────────────────────────────────────────────────────┘
+Ingest   Nuxt Content (posts) -> chunk -> Claude Haiku context -> Workers AI embeddings
+                                   |                                   |
+                                   v                                   v
+                             D1 document_chunks                 Vectorize (id = chunk id)
+                             + FTS5 document_chunks_fts
 
-┌─────────────────────────────────────────────────────────────────┐
-│                        RETRIEVAL PIPELINE                        │
-├─────────────────────────────────────────────────────────────────┤
-│  User Query                                                      │
-│      ↓                                                           │
-│  ┌─────────────┐    ┌─────────────┐                             │
-│  │  Semantic   │    │    BM25     │   (parallel)                │
-│  │  (pgvector) │    │  (tsvector) │                             │
-│  └──────┬──────┘    └──────┬──────┘                             │
-│         └────────┬─────────┘                                     │
-│                  ↓                                               │
-│         Reciprocal Rank Fusion (RRF)                            │
-│                  ↓                                               │
-│         Cohere Rerank v3 (Bedrock)                              │
-│                  ↓                                               │
-│         Top 5 Results with URLs                                  │
-└─────────────────────────────────────────────────────────────────┘
+Retrieve query -> embed -> Vectorize topK -> hydrate rows from D1 ----\
+                -> FTS5 MATCH + bm25 ------------------------------------> RRF -> rerank -> top K
 ```
 
-## Tech Stack
+| Piece         | Choice                                                                  |
+| ------------- | ----------------------------------------------------------------------- |
+| Embeddings    | Workers AI `@cf/qwen/qwen3-embedding-0.6b`, 1024-d, batches of 32       |
+| Vector store  | Vectorize binding `VECTORIZE`, 1024-d cosine, one vector per chunk      |
+| Keyword index | D1 FTS5 `document_chunks_fts`, external content, `tokenize='trigram'`   |
+| Reranker      | Workers AI `@cf/baai/bge-reranker-base` (512-token input, top 20 fused) |
+| Context text  | Claude Haiku via `getAnthropicClient()`                                 |
+| Source        | Nuxt Content `posts` collection (`rawbody` field), published posts only |
 
-| Component          | Technology            | Purpose                         |
-| ------------------ | --------------------- | ------------------------------- |
-| Vector Store       | PostgreSQL + pgvector | Semantic search with HNSW index |
-| BM25 Search        | PostgreSQL tsvector   | Keyword/full-text search        |
-| Embeddings         | Amazon Titan Text v2  | 1024-dim vectors via Bedrock    |
-| Reranking          | Cohere Rerank v3      | Final precision via Bedrock     |
-| Context Generation | Claude Haiku          | Situating context for chunks    |
+Model ids and I/O shapes were checked against the Workers AI docs: embeddings take `{ text: string[] }` (documents) or `{ queries: string }` (applies the retrieval instruction) with at most 32 inputs and return `{ data: number[][], shape }`; the reranker takes `{ query, contexts: [{ text }], top_k }` and returns `{ response: [{ id, score }] }`.
 
-## Database Schema
+## Data model
 
-### `documents` table
+- `documents`: slug, title, url, path (Nuxt Content stem), contentHash.
+- `document_chunks`: content, contextualContent, `embeddedAt` (set after the vector is upserted).
+- Vectorize metadata per vector: `documentId`, `slug`, `url`, `title`. Queries use `returnMetadata: 'none'` (topK cap 100 instead of 50); chunk text and document fields are loaded from D1.
+- Migrations: `0001_chunk_embedded_at.sql` (drizzle) and `0002_chunks_fts5.sql` (custom: virtual table, insert/update/delete triggers, rebuild). The update trigger only fires for `content` / `contextualContent`, so setting `embeddedAt` does not reindex FTS.
 
-Stores blog post metadata for linking results back to source URLs.
+The trigram tokenizer matches substrings of three or more characters, so queries drop shorter terms. Terms are quoted and OR-ed into the `MATCH` expression; `bm25(document_chunks_fts, 1.0, 0.5)` weights chunk text over the generated context.
 
-| Column               | Type         | Description                                     |
-| -------------------- | ------------ | ----------------------------------------------- |
-| id                   | uuid         | Primary key                                     |
-| slug                 | varchar(200) | Unique slug (e.g., "tips-for-claude-code")      |
-| title                | varchar(500) | Post title                                      |
-| path                 | varchar(500) | Source file path                                |
-| url                  | varchar(500) | Public URL (e.g., "/blog/tips-for-claude-code") |
-| contentHash          | varchar(64)  | SHA-256 for change detection                    |
-| createdAt, updatedAt | timestamp    | Timestamps                                      |
-
-### `document_chunks` table
-
-Stores chunked content with embeddings and full-text search vector.
-
-| Column            | Type         | Description                        |
-| ----------------- | ------------ | ---------------------------------- |
-| id                | uuid         | Primary key                        |
-| documentId        | uuid         | FK to documents                    |
-| chunkIndex        | integer      | Order within document              |
-| content           | text         | Original chunk text                |
-| contextualContent | text         | Claude-generated situating context |
-| embedding         | vector(1024) | Titan embedding                    |
-| searchVector      | tsvector     | Auto-generated for BM25            |
-
-**Indexes:**
-
-- `embedding` - HNSW index (`vector_cosine_ops`) for fast similarity search
-- `searchVector` - GIN index for full-text search
-
-## File Structure
+## Code
 
 ```
-packages/blog/server/
-├── utils/
-│   ├── ai/
-│   │   ├── anthropic.ts     # Claude client
-│   │   ├── bedrock.ts       # Titan embeddings, Cohere rerank
-│   │   └── tools.ts         # Chat tools (searchBlogContent)
-│   └── rag/
-│       ├── chunker.ts       # Text chunking, markdown parsing
-│       ├── ingest.ts        # Blog post ingestion pipeline
-│       └── retrieve.ts      # Hybrid search + reranking
-├── api/
-│   └── admin/rag/
-│       └── ingest.post.ts   # Admin endpoint for ingestion
-└── database/
-    ├── schema.ts            # Drizzle schema (documents, document_chunks)
-    └── migrations/
-        └── 0003_*.sql       # pgvector extension + tables
+server/utils/rag/
+├── chunker.ts          # paragraph chunking, frontmatter stripping, SHA-256 hash
+├── runtime.ts          # RagRuntime { ai, vectorize, db }, RagUnavailableError, withRagErrors
+├── workers-ai.ts       # embedTexts / embedQuery / rerankDocuments (zod-parsed outputs)
+├── vectors.ts          # Vectorize upsert / delete / query
+├── store.ts            # delete a document's chunks + vectors together
+├── ingest.ts           # ingestSources(runtime, sources, describe): pure, injectable
+├── content-ingest.ts   # Nuxt Content loader, ingestBlogPosts, ingestDocument
+└── retrieve.ts         # semanticSearch, keywordSearch, RRF, retrieveRAG(Detailed)
 ```
 
-## Ingestion Pipeline
+Everything takes a `RagRuntime`, so tests inject fakes (`server/test-utils/rag-fakes.ts`) instead of mocking modules.
 
-### 1. Content Parsing
+## Ingestion
 
-- Reads `content/2.blog/*.md` files
-- Extracts YAML frontmatter (title, date)
-- Derives slug from filename: `20250713.tips-for-claude-code.md` → `tips-for-claude-code`
+1. `loadBlogSources()` reads published posts with `queryCollection(event, 'posts')` (no filesystem, so it works on Workers).
+2. A document is skipped when its hash is unchanged and every chunk has `embeddedAt`; a run that failed part-way resumes on the next call.
+3. Otherwise: chunk, generate contexts, embed in batches, replace old chunks and vectors, insert new rows, upsert vectors, stamp `embeddedAt`.
+4. A full run also deletes documents (and vectors) whose post is gone or became a draft.
 
-### 2. Chunking Strategy
+A full ingest makes one Claude call per chunk, so use `limit` to stay inside request limits and call again; unchanged documents are skipped.
 
-- Target size: ~500 tokens (~2000 chars)
-- Overlap: ~100 tokens (~400 chars)
-- Preserves paragraph boundaries
-- Minimum chunk size: 200 chars
+## Retrieval
 
-### 3. Contextual Description Generation
+Semantic and keyword legs run in parallel with 10x candidates (capped at 100). A failing leg is logged and the other still answers; RRF (0.7 / 0.3, k = 60) merges, then the reranker reorders the top 20, falling back to fused order if it fails.
 
-Uses Claude Haiku with **prompt caching** (60%+ cost savings):
+If `AI` or `VECTORIZE` is not bound (`env.dev` omits them because they only run remotely), RAG throws `RagUnavailableError` ("RAG unavailable: AI binding missing"). Routes return 503; the chat `searchBlogContent` tool returns `{ error }`.
 
-```
-<document title="{title}" url="{url}">
-{full_document_content}  ← CACHED
-</document>
+## Endpoints
 
-<chunk>{chunk_content}</chunk>
+| Endpoint                                    | Notes                                                           |
+| ------------------------------------------- | --------------------------------------------------------------- |
+| `POST /api/search`                          | Public, reranked, deduplicated by document                      |
+| `POST /api/admin/rag/ingest`                | Admin (`ChrisTowles` session). Body `{ slug?, force?, limit? }` |
+| `POST /api/admin/rag/documents/:id/reindex` | Force re-embed one document                                     |
+| `DELETE /api/admin/rag/documents/:id`       | Removes chunks and vectors                                      |
+| `GET /api/admin/rag/stats`, `.../documents` | Embedded counts come from `embeddedAt`                          |
+| `POST /api/admin/rag/search-test`           | Both legs, timings, fused results                               |
 
-Generate 1-2 sentences situating this chunk within the overall document
-for improving search retrieval.
-```
+After importing data into a fresh D1 and Vectorize index, sign in as the admin and `POST /api/admin/rag/ingest` (repeat until `documentsProcessed` is 0).
 
-### 4. Embedding
+## Testing
 
-- Combines: `{chunk_content}\n\nContext: {contextual_description}`
-- Embeds with Amazon Titan Text v2 (1024 dimensions)
-- L2 normalized for cosine similarity
-
-### 5. Storage
-
-- Inserts into `document_chunks` table
-- `searchVector` auto-generated by PostgreSQL trigger
-
-### Incremental Updates
-
-- SHA-256 hash of content stored in `documents.contentHash`
-- Unchanged documents skipped on re-ingestion
-- Changed documents: delete old chunks, re-ingest
-
-## Retrieval Pipeline
-
-### 1. Query Embedding
-
-Embed user query with Titan Text v2.
-
-### 2. Parallel Search
-
-**Semantic Search (pgvector):**
-
-```sql
-SELECT *, embedding <=> $query_embedding AS distance
-FROM document_chunks
-ORDER BY distance LIMIT 50
-```
-
-**BM25 Search (tsvector):**
-
-```sql
-SELECT *, ts_rank(search_vector, plainto_tsquery($query)) AS rank
-FROM document_chunks
-WHERE search_vector @@ plainto_tsquery($query)
-ORDER BY rank DESC LIMIT 50
-```
-
-### 3. Reciprocal Rank Fusion (RRF)
-
-Combines semantic and BM25 results:
-
-```
-score(doc) = Σ (weight / (rank + k))
-```
-
-- k = 60 (standard constant)
-- Semantic weight: 0.7
-- BM25 weight: 0.3
-
-### 4. Reranking
-
-- Top 20 candidates sent to Cohere Rerank v3
-- Returns final top 5 with relevance scores
-
-### 5. Result Format
-
-```typescript
-interface RAGResult {
-  content: string; // Original chunk
-  contextualContent: string; // Generated context
-  documentTitle: string; // "Tips for Claude Code"
-  documentUrl: string; // "/blog/tips-for-claude-code"
-  score: number;
-}
-```
-
-## Chat Integration
-
-### Tool Definition
-
-```typescript
-{
-  name: 'searchBlogContent',
-  description: 'Search blog posts for relevant information...',
-  input_schema: {
-    properties: {
-      query: { type: 'string' }
-    }
-  }
-}
-```
-
-### System Prompt Addition
-
-```
-When citing blog content, ALWAYS use markdown links:
-"According to [Tips for Claude Code](/blog/tips-for-claude-code), ..."
-```
-
-## Admin Interface
-
-**URL:** `/admin/rag`
-
-Features:
-
-- "Run Ingestion" button
-- Results display (processed, skipped, chunks, errors)
-- Protected by auth middleware
-
-## Cost Estimates
-
-### Ingestion (one-time, ~40 posts)
-
-| Service                     | Cost       |
-| --------------------------- | ---------- |
-| Claude Haiku (with caching) | ~$0.50     |
-| Titan embeddings            | ~$0.02     |
-| **Total**                   | **~$0.52** |
-
-### Per Query
-
-| Service         | Cost        |
-| --------------- | ----------- |
-| Titan embedding | ~$0.0001    |
-| Cohere rerank   | ~$0.001     |
-| **Total**       | **~$0.001** |
-
-## Environment Variables
-
-```bash
-# AWS (for Bedrock)
-AWS_REGION=us-east-1
-# Uses default credential chain (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, or IAM role)
-
-# Anthropic (for context generation)
-ANTHROPIC_API_KEY=sk-ant-...
-
-# PostgreSQL (must have pgvector extension)
-DATABASE_URL=postgresql://...
-```
-
-## Commands
-
-```bash
-# Generate migration
-pnpm db:generate
-
-# Run migration (enables pgvector, creates tables)
-pnpm db:migrate
-
-# Trigger ingestion via API
-curl -X POST https://your-site/api/admin/rag/ingest
-
-# Or use admin UI
-# Navigate to /admin/rag
-```
-
-## Future Improvements
-
-- [ ] Webhook to auto-ingest on new blog post publish
-- [ ] Query result caching for frequently asked questions
-- [ ] Rate limiting on RAG queries
-- [ ] Analytics dashboard for search quality
-- [ ] Support for other content types (slides, apps)
+- `pnpm test`: RRF, query building, Workers AI helpers, vector helpers and binding checks with fakes.
+- `pnpm test:integration`: runs all migrations on local D1 and checks FTS5 hits, trigger sync, ingest, skip/force/prune and the hybrid pipeline with fake AI and Vectorize.

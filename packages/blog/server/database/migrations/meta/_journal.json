@@ -8,6 +8,20 @@
       "when": 1791661564306,
       "tag": "0000_baseline",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1791664264483,
+      "tag": "0001_chunk_embedded_at",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791664265002,
+      "tag": "0002_chunks_fts5",
+      "breakpoints": true
     }
   ]
 }

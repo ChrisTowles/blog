@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
 
   const startTime = Date.now();
 
-  const results = await retrieveRAG(query, { topK, skipRerank: false });
+  const results = await withRagErrors(() => retrieveRAG(query, { topK, skipRerank: false }));
 
   // Deduplicate by document - keep highest scoring chunk per document
   const seenSlugs = new Map<string, (typeof dedupedResults)[number]>();

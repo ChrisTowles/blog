@@ -1,10 +1,12 @@
-import { sql } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import { log } from 'evlog';
-import { SpanKind, SpanStatusCode, trace } from '@opentelemetry/api';
 import { createHash } from 'node:crypto';
-import { useDrizzle } from '../drizzle';
-import { embedText, rerankDocuments } from '../ai/bedrock';
+import { SpanKind, SpanStatusCode, trace, type Span } from '@opentelemetry/api';
+import { documentChunks, documents } from '../../database/schema';
 import { recordSpanError } from '../observability/span-helpers';
+import { EMBEDDING_MODEL, RERANK_MODEL, useRagRuntime, type RagRuntime } from './runtime';
+import { embedQuery, rerankDocuments } from './workers-ai';
+import { queryChunkVectors } from './vectors';
 
 const ragTracer = trace.getTracer('blog.rag');
 
@@ -38,7 +40,12 @@ const DEFAULT_OPTIONS: Required<RetrieveOptions> = {
   skipRerank: false,
 };
 
-type ChunkCandidate = {
+// D1 caps a statement at 100 bound parameters, and hydrating candidates binds one per id.
+const MAX_CANDIDATES = 100;
+
+const RERANK_CANDIDATES = 20;
+
+export type ChunkCandidate = {
   id: string;
   documentId: string;
   content: string;
@@ -49,18 +56,63 @@ type ChunkCandidate = {
   documentSlug: string;
 };
 
+export type SemanticCandidate = ChunkCandidate & { distance: number };
+
+export type KeywordCandidate = ChunkCandidate & { rank: number };
+
+const candidateColumns = {
+  id: documentChunks.id,
+  documentId: documentChunks.documentId,
+  content: documentChunks.content,
+  contextualContent: documentChunks.contextualContent,
+  chunkIndex: documentChunks.chunkIndex,
+  documentTitle: documents.title,
+  documentUrl: documents.url,
+  documentSlug: documents.slug,
+};
+
+async function loadCandidates(db: RagRuntime['db'], ids: string[]): Promise<ChunkCandidate[]> {
+  if (ids.length === 0) return [];
+
+  return db
+    .select(candidateColumns)
+    .from(documentChunks)
+    .innerJoin(documents, eq(documentChunks.documentId, documents.id))
+    .where(inArray(documentChunks.id, ids));
+}
+
 /**
- * Semantic search. TODO(cloudflare-rag): query Vectorize with the embedding and hydrate
- * the chunk rows from D1. Until then it returns nothing and retrieval is keyword-only.
+ * Embeds the query, asks Vectorize for the nearest chunk ids, then loads those rows from D1.
+ * Vectors whose chunk row is gone (Vectorize writes are eventually consistent) are dropped.
  */
-async function semanticSearch(
-  _queryEmbedding: number[],
-  _limit: number,
-): Promise<Array<ChunkCandidate & { distance: number }>> {
-  return [];
+export async function semanticSearch(
+  { ai, vectorize, db }: RagRuntime,
+  query: string,
+  limit: number,
+): Promise<SemanticCandidate[]> {
+  const vector = await embedQuery(ai, query);
+  const matches = await queryChunkVectors(vectorize, vector, limit);
+
+  const rows = new Map(
+    (
+      await loadCandidates(
+        db,
+        matches.map((m) => m.id),
+      )
+    ).map((r) => [r.id, r]),
+  );
+
+  return matches.flatMap((match) => {
+    const row = rows.get(match.id);
+
+    return row ? [{ ...row, distance: 1 - match.score }] : [];
+  });
 }
 
 const MAX_QUERY_TERMS = 8;
+
+// The trigram tokenizer cannot match anything shorter than three characters.
+const MIN_TERM_LENGTH = 3;
 
 export function keywordTerms(query: string): string[] {
   return [
@@ -68,60 +120,49 @@ export function keywordTerms(query: string): string[] {
       query
         .toLowerCase()
         .split(/\s+/)
-        .map((t) => t.replace(/[%_\\]/g, ''))
-        .filter((t) => t.length >= 3),
+        .map((t) => t.replace(/[^\p{L}\p{N}_-]/gu, ''))
+        .filter((t) => t.length >= MIN_TERM_LENGTH),
     ),
   ].slice(0, MAX_QUERY_TERMS);
 }
 
-/** Number of query terms a chunk contains, as a SQL expression over `dc`. */
-export function keywordRank(terms: string[]) {
-  return sql.join(
-    terms.map(
-      (t) =>
-        sql`(CASE WHEN lower(dc.content) LIKE ${`%${t}%`} OR lower(dc."contextualContent") LIKE ${`%${t}%`} THEN 1 ELSE 0 END)`,
-    ),
-    sql` + `,
-  );
+/** FTS5 MATCH expression: each term is a quoted phrase, OR-ed together. Null when nothing usable. */
+export function ftsMatchQuery(query: string): string | null {
+  const terms = keywordTerms(query);
+
+  if (terms.length === 0) return null;
+
+  return terms.map((t) => `"${t.replaceAll('"', '""')}"`).join(' OR ');
 }
 
-/**
- * Keyword search. TODO(cloudflare-rag): replace the LIKE scan with the FTS5 trigram table.
- */
-async function bm25Search(
+/** BM25 over the `document_chunks_fts` trigram index. `rank` is negated bm25, so higher is better. */
+export async function keywordSearch(
+  { db }: Pick<RagRuntime, 'db'>,
   query: string,
   limit: number,
-): Promise<Array<ChunkCandidate & { rank: number }>> {
-  try {
-    const db = useDrizzle();
-    const terms = keywordTerms(query);
+): Promise<KeywordCandidate[]> {
+  const match = ftsMatchQuery(query);
 
-    if (terms.length === 0) return [];
+  if (!match) return [];
 
-    const rank = keywordRank(terms);
-
-    return await db.all<ChunkCandidate & { rank: number }>(sql`
-        SELECT
-            dc.id,
-            dc."documentId",
-            dc.content,
-            dc."contextualContent",
-            dc."chunkIndex",
-            d.title as "documentTitle",
-            d.url as "documentUrl",
-            d.slug as "documentSlug",
-            (${rank}) AS rank
-        FROM document_chunks dc
-        JOIN documents d ON dc."documentId" = d.id
-        WHERE (${rank}) > 0
-        ORDER BY rank DESC
-        LIMIT ${limit}
-    `);
-  } catch {
-    log.error('rag', 'Keyword search failed');
-
-    return [];
-  }
+  return db.all<KeywordCandidate>(sql`
+    SELECT
+      dc.id,
+      dc."documentId",
+      dc.content,
+      dc."contextualContent",
+      dc."chunkIndex",
+      d.title AS "documentTitle",
+      d.url AS "documentUrl",
+      d.slug AS "documentSlug",
+      -bm25(document_chunks_fts, 1.0, 0.5) AS rank
+    FROM document_chunks_fts
+    JOIN document_chunks dc ON dc.rowid = document_chunks_fts.rowid
+    JOIN documents d ON d.id = dc."documentId"
+    WHERE document_chunks_fts MATCH ${match}
+    ORDER BY rank DESC
+    LIMIT ${limit}
+  `);
 }
 
 /**
@@ -129,15 +170,14 @@ async function bm25Search(
  * Formula: score = Σ (weight / (rank + k)) where k = 60 (standard)
  */
 export function reciprocalRankFusion(
-  semanticResults: Array<ChunkCandidate & { distance: number }>,
-  bm25Results: Array<ChunkCandidate & { rank: number }>,
+  semanticResults: SemanticCandidate[],
+  bm25Results: KeywordCandidate[],
   semanticWeight: number,
   bm25Weight: number,
 ): Array<ChunkCandidate & { score: number }> {
   const k = 60; // Standard RRF constant
   const scoreMap = new Map<string, { candidate: ChunkCandidate; score: number }>();
 
-  // Score semantic results
   semanticResults.forEach((result, index) => {
     const rank = index + 1;
     const score = semanticWeight / (rank + k);
@@ -147,7 +187,6 @@ export function reciprocalRankFusion(
     });
   });
 
-  // Add BM25 scores
   bm25Results.forEach((result, index) => {
     const rank = index + 1;
     const score = bm25Weight / (rank + k);
@@ -162,7 +201,6 @@ export function reciprocalRankFusion(
     }
   });
 
-  // Sort by combined score
   const combined = Array.from(scoreMap.values()).sort((a, b) => b.score - a.score);
 
   return combined.map((item) => ({
@@ -171,15 +209,44 @@ export function reciprocalRankFusion(
   }));
 }
 
+export interface RetrievalDetails {
+  results: RAGResult[];
+  semantic: SemanticCandidate[];
+  keyword: KeywordCandidate[];
+  timingsMs: { semantic: number; keyword: number; rerank: number; total: number };
+}
+
+async function timed<T>(work: () => Promise<T>): Promise<[T, number]> {
+  const start = Date.now();
+  const value = await work();
+
+  return [value, Date.now() - start];
+}
+
+async function degrade<T>(span: Span, leg: string, work: () => Promise<T[]>): Promise<T[]> {
+  try {
+    return await work();
+  } catch (error) {
+    log.error('rag', `${leg} search failed: ${error}`);
+    span.setAttribute(`rag.${leg}.error`, true);
+
+    return [];
+  }
+}
+
 /**
- * Main retrieval function: hybrid search with optional reranking
+ * Hybrid retrieval with the intermediate candidate lists. A failing semantic or keyword leg is
+ * logged and the other leg still answers; missing bindings throw `RagUnavailableError` before
+ * any work starts.
  */
-export async function retrieveRAG(
+export async function retrieveRAGDetailed(
   query: string,
   options: RetrieveOptions = {},
-): Promise<RAGResult[]> {
+  runtime: RagRuntime = useRagRuntime(),
+): Promise<RetrievalDetails> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
-  const candidateCount = opts.topK * opts.candidateMultiplier;
+  const candidateCount = Math.min(opts.topK * opts.candidateMultiplier, MAX_CANDIDATES);
+  const startedAt = Date.now();
 
   return ragTracer.startActiveSpan(
     'rag.retrieve',
@@ -193,76 +260,63 @@ export async function retrieveRAG(
         'rag.semantic.weight': opts.semanticWeight,
         'rag.bm25.weight': opts.bm25Weight,
         'rag.rerank.enabled': !opts.skipRerank,
-        'rag.embedding.model': 'amazon.titan-embed-text-v2:0',
+        'rag.embedding.model': EMBEDDING_MODEL,
       },
     },
     async (span) => {
       try {
-        // Step 1: Generate query embedding
-        let queryEmbedding: number[];
-
-        try {
-          queryEmbedding = await embedText(query);
-        } catch {
-          log.error('rag', 'Failed to generate embedding');
-          span.setAttribute('error.type', 'EmbeddingError');
-          span.setStatus({ code: SpanStatusCode.ERROR, message: 'embedding failed' });
-
-          return [];
-        }
-
-        // Step 2: Parallel semantic and BM25 search
-        const [semanticResults, bm25Results] = await Promise.all([
-          semanticSearch(queryEmbedding, candidateCount),
-          bm25Search(query, candidateCount),
+        const [[semantic, semanticMs], [keyword, keywordMs]] = await Promise.all([
+          timed(() =>
+            degrade(span, 'semantic', () => semanticSearch(runtime, query, candidateCount)),
+          ),
+          timed(() => degrade(span, 'bm25', () => keywordSearch(runtime, query, candidateCount))),
         ]);
 
         span.setAttributes({
-          'rag.semantic.candidates': semanticResults.length,
-          'rag.bm25.candidates': bm25Results.length,
+          'rag.semantic.candidates': semantic.length,
+          'rag.bm25.candidates': keyword.length,
         });
 
-        // Step 3: Reciprocal Rank Fusion
         const fusedResults = reciprocalRankFusion(
-          semanticResults,
-          bm25Results,
+          semantic,
+          keyword,
           opts.semanticWeight,
           opts.bm25Weight,
         );
 
         span.setAttribute('rag.fused.count', fusedResults.length);
 
-        // If no results, return empty
-        if (fusedResults.length === 0) {
-          span.setAttribute('rag.results.count', 0);
+        let finalResults: Array<ChunkCandidate & { score: number }> = fusedResults.slice(
+          0,
+          opts.topK,
+        );
 
-          return [];
-        }
+        let rerankMs = 0;
 
-        // Step 4: Reranking (optional)
-        let finalResults: Array<ChunkCandidate & { score: number }>;
+        if (!opts.skipRerank && fusedResults.length > 0) {
+          const topCandidates = fusedResults.slice(0, RERANK_CANDIDATES);
 
-        if (opts.skipRerank) {
-          finalResults = fusedResults.slice(0, opts.topK);
-        } else {
-          // Prepare documents for reranking
-          const topCandidates = fusedResults.slice(0, Math.min(20, fusedResults.length));
+          try {
+            const [reranked, ms] = await timed(() =>
+              rerankDocuments(
+                runtime.ai,
+                query,
+                topCandidates.map((c) => `${c.content}\n\nContext: ${c.contextualContent}`),
+                opts.topK,
+              ),
+            );
 
-          const documentsForRerank = topCandidates.map(
-            (c) => `${c.content}\n\nContext: ${c.contextualContent}`,
-          );
+            rerankMs = ms;
+            span.setAttribute('rag.reranker.model', RERANK_MODEL);
+            finalResults = reranked.flatMap((r) => {
+              const candidate = topCandidates[r.index];
 
-          // Rerank with Cohere
-          const rerankResults = await rerankDocuments(query, documentsForRerank, opts.topK);
-          span.setAttribute('rag.reranker.model', 'cohere.rerank-v3.5:0');
-
-          // Map rerank results back to candidates
-          finalResults = rerankResults
-            .filter((r) => topCandidates[r.index] !== undefined)
-            .map((r) => ({
-              ...topCandidates[r.index]!,
-              score: r.relevanceScore,
-            }));
+              return candidate ? [{ ...candidate, score: r.relevanceScore }] : [];
+            });
+          } catch (error) {
+            log.error('rag', `Rerank failed, keeping fused order: ${error}`);
+            span.setAttribute('rag.rerank.error', true);
+          }
         }
 
         span.setAttributes({
@@ -270,24 +324,42 @@ export async function retrieveRAG(
           'rag.top_score': finalResults[0]?.score ?? 0,
         });
 
-        // Format final results
-        return finalResults.map((r) => ({
-          content: r.content,
-          contextualContent: r.contextualContent,
-          documentTitle: r.documentTitle,
-          documentUrl: r.documentUrl,
-          documentSlug: r.documentSlug,
-          chunkIndex: r.chunkIndex,
-          score: r.score,
-        }));
+        return {
+          results: finalResults.map((r) => ({
+            content: r.content,
+            contextualContent: r.contextualContent,
+            documentTitle: r.documentTitle,
+            documentUrl: r.documentUrl,
+            documentSlug: r.documentSlug,
+            chunkIndex: r.chunkIndex,
+            score: r.score,
+          })),
+          semantic,
+          keyword,
+          timingsMs: {
+            semantic: semanticMs,
+            keyword: keywordMs,
+            rerank: rerankMs,
+            total: Date.now() - startedAt,
+          },
+        };
       } catch (err) {
         recordSpanError(span, err);
+        span.setStatus({ code: SpanStatusCode.ERROR });
         throw err;
       } finally {
         span.end();
       }
     },
   );
+}
+
+export async function retrieveRAG(
+  query: string,
+  options: RetrieveOptions = {},
+  runtime?: RagRuntime,
+): Promise<RAGResult[]> {
+  return (await retrieveRAGDetailed(query, options, runtime)).results;
 }
 
 /**
