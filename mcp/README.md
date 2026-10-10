@@ -1,35 +1,38 @@
 # mcp
 
-Cloud Run service that hosts **`sandbox.towles.dev`** (prod) and
-**`stage-sandbox.towles.dev`** (staging) — the MCP Apps (SEP-1865) iframe host
-used by [towles.dev](https://towles.dev) to isolate untrusted HTML UI resources
-in a cross-origin iframe.
+Cloudflare Worker (`towles-sandbox`, staging `towles-sandbox-staging`) that hosts
+**`sandbox.towles.dev`** (prod) and **`stage-sandbox.towles.dev`** (staging) — the
+MCP Apps (SEP-1865) iframe host used by [towles.dev](https://towles.dev) to isolate
+untrusted HTML UI resources in a cross-origin iframe.
 
 The MCP Apps spec requires the host and the iframe to sit on **different
 origins**. The blog runs on `chris.towles.dev` / `stage-chris.towles.dev`; this
-service runs on `sandbox.*.towles.dev`, which is a different origin, satisfying
-the requirement. The service is a dedicated Cloud Run deployment (not the blog
-process) so a bug in the blog cannot reach the sandbox surface.
+Worker runs on `sandbox.*.towles.dev`, which is a different origin, satisfying
+the requirement. It is a dedicated Worker (not the blog Worker) so a bug in the
+blog cannot reach the sandbox surface.
 
 ## Files
 
 | File                            | Purpose                                                                                     |
 | ------------------------------- | ------------------------------------------------------------------------------------------- |
-| `server.ts`                     | h3 HTTP server. Routes `/`, `/sandbox.html`, `/sandbox.js`, `/relay.js` + baseline headers. |
-| `sandbox.html`                  | Page loaded inside the blog's iframe. Imports `sandbox.js` as an ES module.                 |
-| `sandbox.js`                    | Browser entry: wires window events → `relay.js` and runs the post-load sandbox self-test.   |
-| `relay.js`                      | Testable core: origin validation + message relay state machine. Plain JS with JSDoc types.  |
+| `worker.ts`                     | Worker entry. Routes `/`, `/sandbox.html`, `/sandbox.js`, `/relay.js` + baseline headers.   |
+| `wrangler.jsonc`                | Worker config: static assets (`run_worker_first`), custom-domain routes, `staging` env.     |
+| `public/`                       | Static assets read through the `ASSETS` binding. Only files here are ever served.           |
+| `public/sandbox.html`           | Page loaded inside the blog's iframe. Imports `sandbox.js` as an ES module.                 |
+| `public/sandbox.js`             | Browser entry: wires window events → `relay.js` and runs the post-load sandbox self-test.   |
+| `public/relay.js`               | Testable core: origin validation + message relay state machine. Plain JS with JSDoc types.  |
+| `public/index.html`             | Landing page served at `/`. Informational only.                                             |
 | `csp.ts`                        | Strict CSP param parser. Directive-key allowlist + injection-character strip + length cap.  |
-| `index.html`                    | Landing page served at `/`. Informational only.                                             |
 | `csp.test.ts`, `origin.test.ts` | Vitest unit tests for the security-critical parsing and relay logic.                        |
-| `e2e/`                          | Playwright fixture: boots two origins locally to exercise the full handshake.               |
+| `worker.test.ts`                | Vitest tests for routing and headers, with a fake `ASSETS` binding.                         |
+| `e2e/`                          | Playwright: runs `wrangler dev` plus a host page on a second origin for the full handshake. |
 
 ## Security model
 
-- **Origin isolation.** SEP-1865 requires host ≠ iframe origins. `sandbox.towles.dev` is a different origin from `chris.towles.dev`, and serves from a separate Cloud Run service.
+- **Origin isolation.** SEP-1865 requires host ≠ iframe origins. `sandbox.towles.dev` is a different origin from `chris.towles.dev`, and is a separate Worker.
 - **Referrer allowlist.** `relay.js` validates `document.referrer` against `ALLOWED_HOST_ORIGIN_PATTERNS` at load time. Unknown embedders throw before any messages are processed.
 - **CSP parsing.** `csp.ts` accepts only a JSON object with keys `connectDomains`, `resourceDomains`, `frameDomains`, `baseUriDomains`. Unknown keys are dropped; each entry must be a syntactically valid http(s) URL with no injection characters; the raw query is capped at 4 KiB.
-- **Per-request CSP headers.** `server.ts` computes the CSP from the `?csp=` query param and emits it as an HTTP header (not a meta tag). Meta-tag CSP is spoofable; HTTP headers are not.
+- **Per-request CSP headers.** `worker.ts` computes the CSP from the `?csp=` query param and emits it as an HTTP header (not a meta tag). Meta-tag CSP is spoofable; HTTP headers are not.
 - **Post-message origin checks.** Every inbound message is origin-checked against the derived host origin (parent) or our own origin (inner iframe). Replies to the parent use the specific host origin, never `"*"`.
 - **Sandbox self-test.** On load, `sandbox.js` attempts `window.top.alert(...)`; if this succeeds the iframe is misconfigured and the script throws. A passing self-test means isolation is working.
 - **Baseline hardening.** Every response carries HSTS, nosniff, referrer policy, COOP, CORP. The landing page adds `X-Frame-Options: DENY` and a strict CSP.
@@ -38,59 +41,36 @@ process) so a bug in the blog cannot reach the sandbox surface.
 
 ```bash
 pnpm --filter @chris-towles/mcp dev
-# → http://localhost:8080
+# → http://sandbox.localhost:8081/sandbox.html
 ```
 
-Or from the repo root as part of the full dev stack:
-
-```bash
-pnpm dev   # blog + mcp on 8081 + tooling
-```
+Port 8081 matches the blog's default `NUXT_PUBLIC_MCP_SANDBOX_URL`. Browsers
+resolve `*.localhost` to loopback, so the sandbox and the blog (`localhost:3000`)
+stay on different origins.
 
 ## Tests
 
 ```bash
-cd mcp
-pnpm install       # first time only
-pnpm test          # 30 unit tests
+pnpm --filter @chris-towles/mcp test       # unit tests
+pnpm --filter @chris-towles/mcp test:e2e   # Playwright against wrangler dev
 ```
 
 Coverage:
 
 - **CSP:** malformed JSON → default; `;`/`"`/`'`/newline/space injection → stripped; unknown directive → dropped; non-array directive value → dropped; length cap; shape of the default header; defense-in-depth resanitization.
 - **Relay / origin:** unexpected parent origin ignored; unexpected inner origin ignored; `sandbox-resource-ready` writes HTML; unrelated messages relayed; inner → parent targets the specific host origin (not `*`); referrer allowlist accepts the blog origins and rejects everything else.
+- **Worker:** baseline headers on every response, per-route headers, 404 for anything outside `public/`, per-request CSP.
 
-## Build + deploy
-
-`pnpm --filter @chris-towles/mcp build` bundles `server.ts` into
-`dist/server.mjs` via rolldown. The Dockerfile at
-`infra/container/mcp.Dockerfile` runs the same bundle step and produces the
-runtime image, then `node server.mjs` serves traffic with zero TS transform on
-cold start.
-
-Manual deploy path (CI handles this on merge to `main`):
+## Deploy
 
 ```bash
-# staging
-docker build -t us-central1-docker.pkg.dev/blog-towles-staging/containers/mcp:latest \
-  -f infra/container/mcp.Dockerfile .
-docker push us-central1-docker.pkg.dev/blog-towles-staging/containers/mcp:latest
-pnpm gcp:staging:apply   # applies Terraform incl. mcp-run + Cloudflare DNS
-
-# prod
-docker build -t us-central1-docker.pkg.dev/blog-towles-production/containers/mcp:latest \
-  -f infra/container/mcp.Dockerfile .
-docker push us-central1-docker.pkg.dev/blog-towles-production/containers/mcp:latest
-pnpm gcp:prod:apply
+pnpm --filter @chris-towles/mcp deploy          # production → sandbox.towles.dev
+pnpm --filter @chris-towles/mcp deploy:staging  # staging    → stage-sandbox.towles.dev
 ```
 
-Terraform in `infra/terraform/modules/mcp-run/` provisions:
-
-- `google_cloud_run_v2_service` named `mcp`
-- `google_cloud_run_domain_mapping` for the custom hostname (`sandbox.towles.dev` / `stage-sandbox.towles.dev`)
-- `roles/run.invoker` bound to `allUsers`
-
-DNS is managed by the `cloudflare_record` resource in `infra/terraform/environments/main.tf` (requires `TF_VAR_cloudflare_api_token`).
+The `routes` in `wrangler.jsonc` are Workers custom domains: wrangler creates the
+DNS record itself, so the hostname must not already have one (remove the old
+Cloud Run CNAME first).
 
 ## Verification checklist
 
