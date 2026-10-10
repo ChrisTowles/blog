@@ -12,4 +12,5 @@ export function getDeck(id: string): DeckTheme {
 }
 
 export type { DeckTheme } from './types';
+
 export { cardCode, parseCardCode } from './types';

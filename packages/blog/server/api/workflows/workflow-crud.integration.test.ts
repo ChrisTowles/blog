@@ -36,6 +36,7 @@ describe.skipIf(!hasDatabase)('Workflow CRUD Integration', () => {
       .select()
       .from(tables.workflows)
       .where(eq(tables.workflows.ownerId, testUser.id));
+
     expect(rows).toHaveLength(1);
     expect(rows[0]!.name).toBe('My Workflow');
   });
@@ -51,6 +52,7 @@ describe.skipIf(!hasDatabase)('Workflow CRUD Integration', () => {
       .select()
       .from(tables.workflowNodes)
       .where(eq(tables.workflowNodes.workflowId, workflow.id));
+
     expect(nodes).toHaveLength(0);
   });
 
@@ -61,12 +63,14 @@ describe.skipIf(!hasDatabase)('Workflow CRUD Integration', () => {
       username: 'otheruser',
       providerId: '99999',
     });
+
     await createTestWorkflow(otherUser.id, { name: 'Other workflow' });
 
     const myWorkflows = await db
       .select()
       .from(tables.workflows)
       .where(eq(tables.workflows.ownerId, testUser.id));
+
     expect(myWorkflows).toHaveLength(0);
   });
 
@@ -83,6 +87,7 @@ describe.skipIf(!hasDatabase)('Workflow CRUD Integration', () => {
           eq(tables.workflowNodes.nodeId, 'node_test'),
         ),
       );
+
     expect(loaded[0]!.label).toBe('Analyzer');
     expect(JSON.parse(loaded[0]!.outputSchema).type).toBe('object');
   });

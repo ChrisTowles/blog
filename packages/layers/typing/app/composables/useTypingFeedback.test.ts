@@ -1,20 +1,13 @@
 // @vitest-environment node
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { computed, effectScope, nextTick, ref } from 'vue';
+import { effectScope, nextTick, ref } from 'vue';
 import { useTypingFeedback } from './useTypingFeedback';
-import type { UseTypingEngine } from './useTypingEngine';
 
 function makeEngine() {
   const correctTyped = ref(0);
   const errors = ref(0);
-  const cursor = ref(0);
-  const nextChar = computed(() => '');
-  return {
-    correctTyped,
-    errors,
-    cursor,
-    nextChar,
-  } as unknown as UseTypingEngine;
+
+  return { correctTyped, errors };
 }
 
 function makeAudio() {
@@ -70,6 +63,7 @@ describe('useTypingFeedback', () => {
       engine.correctTyped.value = i;
       await nextTick();
     }
+
     // 3, 6, 9 all crossed
     expect(fb.tierUp.value).toBe(3);
     expect(audio.playStreakDing).toHaveBeenCalledTimes(3);
@@ -91,6 +85,7 @@ describe('useTypingFeedback', () => {
       engine.correctTyped.value = i;
       await nextTick();
     }
+
     expect(fb.streak.value).toBe(3);
 
     engine.errors.value = 1;
@@ -129,6 +124,7 @@ describe('useTypingFeedback', () => {
       engine.correctTyped.value = i;
       await nextTick();
     }
+
     expect(fb.streak.value).toBe(5);
 
     engine.correctTyped.value = 4; // backspace

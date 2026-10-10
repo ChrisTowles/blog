@@ -1,3 +1,4 @@
+import type Anthropic from '@anthropic-ai/sdk';
 import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { log } from 'evlog';
@@ -22,6 +23,7 @@ export function loadCustomSkills(): CustomSkill[] {
 
   if (!existsSync(skillsDir)) {
     cachedSkills = [];
+
     return cachedSkills;
   }
 
@@ -32,10 +34,12 @@ export function loadCustomSkills(): CustomSkill[] {
     if (!entry.isDirectory()) continue;
 
     const skillFile = join(skillsDir, entry.name, 'SKILL.md');
+
     if (!existsSync(skillFile)) continue;
 
     try {
       const parsed = parseFrontmatter(readFileSync(skillFile, 'utf-8'));
+
       if (parsed.name && parsed.description) {
         skills.push(parsed);
       }
@@ -45,6 +49,7 @@ export function loadCustomSkills(): CustomSkill[] {
   }
 
   cachedSkills = skills;
+
   return cachedSkills;
 }
 
@@ -55,11 +60,7 @@ export function loadCustomSkills(): CustomSkill[] {
  * since the Skills API requires custom skills to be uploaded and referenced
  * by generated skill_id — inline instructions are not supported.
  */
-export function getSkillsForAPI(): Array<{
-  type: string;
-  skill_id: string;
-  version?: string;
-}> {
+export function getSkillsForAPI(): Anthropic.Beta.Messages.BetaSkillParams[] {
   return [
     { type: 'anthropic', skill_id: 'pdf', version: 'latest' },
     { type: 'anthropic', skill_id: 'pptx', version: 'latest' },
@@ -81,9 +82,11 @@ export function getSkillsSystemPrompt(): string {
   ];
 
   const skills = loadCustomSkills();
+
   if (skills.length > 0) {
     lines.push('');
     lines.push('Custom skills available:');
+
     for (const s of skills) {
       lines.push(`- ${s.name}: ${s.description}`);
     }
@@ -95,6 +98,7 @@ export function getSkillsSystemPrompt(): string {
 /** Simple YAML frontmatter parser for SKILL.md files */
 function parseFrontmatter(content: string): CustomSkill {
   const match = content.match(/^---\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/);
+
   if (!match) return { name: '', description: '', body: content };
 
   const frontmatter = match[1]!;
@@ -105,9 +109,11 @@ function parseFrontmatter(content: string): CustomSkill {
 
   for (const line of frontmatter.split('\n')) {
     const nameMatch = line.match(/^name:\s*(.+)$/);
+
     if (nameMatch) name = nameMatch[1]!.trim();
 
     const descMatch = line.match(/^description:\s*(.+)$/);
+
     if (descMatch) description = descMatch[1]!.trim();
   }
 

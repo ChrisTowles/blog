@@ -1,5 +1,6 @@
 import { eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { outputSchemaSchema } from '../../../shared/workflow-schemas';
 
 defineRouteMeta({
   openAPI: { description: 'Save full graph state for a workflow', tags: ['workflows'] },
@@ -11,10 +12,7 @@ const nodeDataSchema = z.object({
   model: z.string(),
   temperature: z.number().min(0).max(2),
   maxTokens: z.number().int().min(1).max(8192),
-  outputSchema: z.object({
-    type: z.literal('object'),
-    properties: z.record(z.string(), z.unknown()),
-  }),
+  outputSchema: outputSchemaSchema,
   inputMapping: z.record(z.string(), z.string()).optional(),
 });
 
@@ -47,24 +45,24 @@ export default defineEventHandler(async (event) => {
   const { id } = await getValidatedRouterParams(event, z.object({ id: z.string() }).parse);
   const { name, nodes, edges, viewport } = await readValidatedBody(event, saveSchema.parse);
   const workflow = await requireWorkflowOwner(event, id);
+
   if (workflow.isPublished) {
     throw createError({ statusCode: 403, message: 'Cannot edit a template workflow' });
   }
+
   const db = useDrizzle();
 
   await db.transaction(async (tx) => {
     // 1. Update viewport (only if provided), updatedAt, and bump version in one statement
-    const updates: Record<string, unknown> = {
-      updatedAt: new Date().toISOString(),
-      version: sql`version + 1`,
-    };
-    if (name !== undefined) {
-      updates.name = name;
-    }
-    if (viewport !== undefined) {
-      updates.viewport = JSON.stringify(viewport);
-    }
-    await tx.update(tables.workflows).set(updates).where(eq(tables.workflows.id, id));
+    await tx
+      .update(tables.workflows)
+      .set({
+        name,
+        viewport: viewport === undefined ? undefined : JSON.stringify(viewport),
+        updatedAt: new Date().toISOString(),
+        version: sql`version + 1`,
+      })
+      .where(eq(tables.workflows.id, id));
 
     // 2. Delete existing nodes and edges
     await tx.delete(tables.workflowNodes).where(eq(tables.workflowNodes.workflowId, id));

@@ -31,7 +31,7 @@ export type UseTypingFeedback = {
 };
 
 export function useTypingFeedback(
-  engine: UseTypingEngine,
+  engine: Pick<UseTypingEngine, 'correctTyped' | 'errors'>,
   audio: ReturnType<typeof useTypingAudio>,
   options: UseTypingFeedbackOptions = {},
 ): UseTypingFeedback {

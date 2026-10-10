@@ -158,6 +158,7 @@ const closeTimeScatterOption = computed(() => {
       formatter: (params: { name: string; data: { realHours: number } }) => {
         const hours = params.data.realHours;
         const display = hours < 24 ? `${hours.toFixed(1)}h` : `${(hours / 24).toFixed(1)}d`;
+
         return `${params.name}<br/>Close time: ${display}`;
       },
     },
@@ -185,8 +186,11 @@ const closeTimeScatterOption = computed(() => {
 
 function formatDuration(hours: number | null): string {
   if (hours === null) return '-';
+
   if (hours < 1) return `${Math.round(hours * 60)}m`;
+
   if (hours < 24) return `${hours.toFixed(1)}h`;
+
   return `${(hours / 24).toFixed(1)}d`;
 }
 </script>

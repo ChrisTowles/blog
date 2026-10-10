@@ -25,6 +25,7 @@ describe('envSchema', () => {
   it('applies default build metadata', () => {
     const result = envSchema.safeParse(validEnv);
     expect(result.success).toBe(true);
+
     if (result.success) {
       expect(result.data.GIT_SHA).toBe('dev');
       expect(result.data.BUILD_TAG).toBe('local');
@@ -42,6 +43,7 @@ describe('envSchema', () => {
       ...validEnv,
       NUXT_SESSION_PASSWORD: 'too-short',
     });
+
     expect(result.success).toBe(false);
   });
 });

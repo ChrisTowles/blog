@@ -1,6 +1,8 @@
 <script setup lang="ts">
 const route = useRoute();
+
 const { data: page } = await useAsyncData('app', () => queryCollection('apps').first());
+
 const { data: appEntries } = await useAsyncData(route.path, () =>
   queryCollection('appEntry').all(),
 );

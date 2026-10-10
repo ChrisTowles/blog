@@ -10,6 +10,7 @@ import type {
   ToolResultPart,
   UiResourcePart,
 } from '~~/shared/chat-types';
+import type { JsonObject } from '~~/shared/json-types';
 
 interface UseChatOptions {
   id: string;
@@ -22,7 +23,7 @@ interface UseChatOptions {
 interface ToolInvocation {
   toolCallId: string;
   toolName: string;
-  args: Record<string, unknown>;
+  args: JsonObject;
   state: 'pending' | 'complete';
   result?: unknown;
 }
@@ -57,6 +58,7 @@ export function useChat(options: UseChatOptions) {
       role: 'user',
       parts: [{ type: 'text', text }],
     };
+
     messages.value = [...messages.value, userMessage];
 
     const assistantMessageId = crypto.randomUUID();
@@ -85,22 +87,26 @@ export function useChat(options: UseChatOptions) {
       }
 
       const reader = response.body?.getReader();
+
       if (!reader) throw new Error('No response body');
 
       const decoder = new TextDecoder();
       let buffer = '';
       let currentTextPart: { type: 'text'; text: string } | null = null;
+
       let currentReasoningPart: {
         type: 'reasoning';
         text: string;
         state: 'streaming' | 'done';
       } | null = null;
+
       const toolInvocations: ToolInvocation[] = [];
       const codeExecutions: CodeExecution[] = [];
       const uiResourceParts: UiResourcePart[] = [];
 
       while (true) {
         const { done, value } = await reader.read();
+
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
@@ -119,11 +125,13 @@ export function useChat(options: UseChatOptions) {
               if (!currentTextPart) {
                 currentTextPart = { type: 'text', text: '' };
               }
+
               currentTextPart.text += event.text;
             } else if (event.type === 'reasoning') {
               if (!currentReasoningPart) {
                 currentReasoningPart = { type: 'reasoning', text: '', state: 'streaming' };
               }
+
               currentReasoningPart.text += event.text;
             } else if (event.type === 'tool_start') {
               toolInvocations.push({
@@ -134,6 +142,7 @@ export function useChat(options: UseChatOptions) {
               });
             } else if (event.type === 'tool_end') {
               const invocation = toolInvocations.find((t) => t.toolCallId === event.toolCallId);
+
               if (invocation) {
                 invocation.state = 'complete';
                 invocation.result = event.result;
@@ -150,6 +159,7 @@ export function useChat(options: UseChatOptions) {
               });
             } else if (event.type === 'code_result') {
               const lastExecution = codeExecutions[codeExecutions.length - 1];
+
               if (lastExecution) {
                 lastExecution.stdout = event.stdout;
                 lastExecution.stderr = event.stderr;
@@ -196,8 +206,10 @@ export function useChat(options: UseChatOptions) {
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
         status.value = 'ready';
+
         return;
       }
+
       log.error('chat', 'Chat streaming error');
       error.value = err instanceof Error ? err : new Error('Unknown error');
       status.value = 'error';
@@ -216,6 +228,7 @@ export function useChat(options: UseChatOptions) {
     uiResources: UiResourcePart[],
   ): void {
     const parts: MessagePart[] = [];
+
     if (reasoning) parts.push(reasoning);
 
     for (const tool of tools) {
@@ -268,10 +281,12 @@ export function useChat(options: UseChatOptions) {
     }
 
     const lastUserMsg = messages.value.findLast((m) => m.role === 'user');
+
     if (!lastUserMsg) return;
 
     messages.value = messages.value.slice(0, -1);
     const textPart = lastUserMsg.parts.find((p) => p.type === 'text');
+
     if (textPart && 'text' in textPart) {
       await sendMessage(textPart.text);
     }
@@ -289,6 +304,7 @@ export function useChat(options: UseChatOptions) {
       role: message.role,
       parts: message.parts,
     };
+
     messages.value = [...messages.value, full];
 
     try {

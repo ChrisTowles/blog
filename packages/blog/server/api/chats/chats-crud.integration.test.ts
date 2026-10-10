@@ -156,6 +156,7 @@ describe.skipIf(!hasDatabase)('Chat CRUD Integration', () => {
         username: 'otheruser',
         providerId: '99999',
       });
+
       const otherChat = await createTestChat(otherUser.id, { title: 'Secret Chat' });
 
       const result = await db.query.chats.findFirst({
@@ -199,6 +200,7 @@ describe.skipIf(!hasDatabase)('Chat CRUD Integration', () => {
         .select()
         .from(tables.messages)
         .where(eq(tables.messages.chatId, chat.id));
+
       expect(messages).toHaveLength(0);
     });
 
@@ -217,6 +219,7 @@ describe.skipIf(!hasDatabase)('Chat CRUD Integration', () => {
         username: 'otheruser',
         providerId: '99999',
       });
+
       const otherChat = await createTestChat(otherUser.id);
 
       const deleted = await db
@@ -231,6 +234,7 @@ describe.skipIf(!hasDatabase)('Chat CRUD Integration', () => {
         .select()
         .from(tables.chats)
         .where(eq(tables.chats.id, otherChat.id));
+
       expect(remaining).toHaveLength(1);
     });
   });
@@ -265,6 +269,7 @@ describe.skipIf(!hasDatabase)('Chat CRUD Integration', () => {
         .select()
         .from(tables.chats)
         .where(eq(tables.chats.userId, otherUser.id));
+
       expect(remaining).toHaveLength(1);
       expect(remaining[0]!.title).toBe('Their Chat');
     });

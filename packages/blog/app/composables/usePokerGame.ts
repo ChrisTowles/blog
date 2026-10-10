@@ -37,6 +37,7 @@ export function usePokerGame() {
       stateRef.player.chips = 1000;
       stateRef.ai.chips = 1000;
     }
+
     banter.clear();
     engine.startHand();
     fire('hand-start');
@@ -49,11 +50,13 @@ export function usePokerGame() {
       await new Promise<void>((r) => setTimeout(r, 700));
       const action = decideAi({ state: stateRef });
       const ok = engine.apply('ai', action);
+
       if (!ok) {
         engine.apply('ai', {
           kind: stateRef.currentBet - stateRef.ai.committed > 0 ? 'fold' : 'check',
         });
       }
+
       // Trigger banter for AI actions before the state advances to a new street.
       switch (action.kind) {
         case 'bet':
@@ -72,9 +75,11 @@ export function usePokerGame() {
           fire('ai-fold');
           break;
       }
+
       engine.advanceIfReady();
       aiThinking.value = false;
       maybeFireResult();
+
       if (stateRef.toAct === 'ai' && !stateRef.handOver) {
         await new Promise<void>((r) => setTimeout(r, 400));
       }
@@ -84,10 +89,13 @@ export function usePokerGame() {
   function maybeFireResult() {
     if (!stateRef.handOver || !stateRef.result) return;
     const r = stateRef.result;
+
     if (r.winner === 'split') {
       fire('split');
+
       return;
     }
+
     if (r.winner === 'ai') {
       fire(
         r.revealAi ? 'win-showdown' : 'win-fold',
@@ -104,7 +112,9 @@ export function usePokerGame() {
   async function playerAct(action: PlayerAction) {
     if (stateRef.toAct !== 'player' || stateRef.handOver) return;
     const ok = engine.apply('player', action);
+
     if (!ok) return;
+
     // Trigger banter for player actions
     switch (action.kind) {
       case 'bet':
@@ -120,6 +130,7 @@ export function usePokerGame() {
         fire('player-fold');
         break;
     }
+
     engine.advanceIfReady();
     maybeFireResult();
     await maybeAiAct();

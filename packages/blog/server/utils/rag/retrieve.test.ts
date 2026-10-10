@@ -24,6 +24,7 @@ describe('reciprocalRankFusion', () => {
         rank: 0.5,
       },
     ];
+
     const result = reciprocalRankFusion([], bm25Results, 0.7, 0.3);
     expect(result).toHaveLength(1);
     expect(result[0]!.id).toBe('1');
@@ -43,6 +44,7 @@ describe('reciprocalRankFusion', () => {
         distance: 0.2,
       },
     ];
+
     const result = reciprocalRankFusion(semanticResults, [], 0.7, 0.3);
     expect(result).toHaveLength(1);
     expect(result[0]!.id).toBe('1');

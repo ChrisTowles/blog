@@ -2,13 +2,22 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useTTS } from './useTTS';
 
 // Mock Web Speech API
-const mockUtterance = {
+interface MockUtteranceState {
+  rate: number;
+  pitch: number;
+  volume: number;
+  text: string;
+  onboundary: ((e: SpeechSynthesisEvent) => void) | null;
+  onend: (() => void) | null;
+}
+
+const mockUtterance: MockUtteranceState = {
   rate: 1,
   pitch: 1,
   volume: 1,
   text: '',
-  onboundary: null as ((e: SpeechSynthesisEvent) => void) | null,
-  onend: null as (() => void) | null,
+  onboundary: null,
+  onend: null,
 };
 
 // Use a real class so `new` works in all environments
@@ -23,11 +32,13 @@ class MockSpeechSynthesisUtterance {
     this.text = text ?? '';
     // Proxy assignments back to shared object so tests can inspect
     Object.assign(mockUtterance, this);
-    return mockUtterance as unknown as MockSpeechSynthesisUtterance;
+
+    return mockUtterance;
   }
 }
 
 vi.stubGlobal('SpeechSynthesisUtterance', MockSpeechSynthesisUtterance);
+
 vi.stubGlobal('speechSynthesis', {
   speak: vi.fn(),
   cancel: vi.fn(),

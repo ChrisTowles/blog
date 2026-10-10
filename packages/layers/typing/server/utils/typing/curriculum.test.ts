@@ -67,9 +67,11 @@ describe('typing curriculum', () => {
     // Capitals (stage 16+) and spelling-list / topic lessons can break this
     // rule; the curriculum lessons must not.
     const lessons = getBuiltInLessons();
+
     for (const lesson of lessons) {
       if (lesson.stage >= 16) continue; // capitals + numbers + symbols stages allowed
       const unlocked = new Set(unlockedKeysForStage(lesson.stage));
+
       for (const ch of lesson.text) {
         expect(unlocked.has(ch), `lesson ${lesson.slug} contains forbidden char "${ch}"`).toBe(
           true,
@@ -91,6 +93,7 @@ describe('typing curriculum', () => {
       'accumulation',
       'consolidation',
     ]);
+
     for (const lesson of getBuiltInLessons()) {
       expect(allowedKinds.has(lesson.kind)).toBe(true);
     }

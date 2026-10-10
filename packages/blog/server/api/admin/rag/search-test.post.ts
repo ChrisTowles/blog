@@ -1,23 +1,23 @@
 import { z } from 'zod';
 import { sql } from 'drizzle-orm';
 
-interface SemanticRow {
+type SemanticRow = {
   id: string;
   title: string;
   url: string;
   chunkIndex: number;
   preview: string;
   distance: string;
-}
+};
 
-interface BM25Row {
+type BM25Row = {
   id: string;
   title: string;
   url: string;
   chunkIndex: number;
   preview: string;
   rank: string;
-}
+};
 
 defineRouteMeta({
   openAPI: {
@@ -28,6 +28,7 @@ defineRouteMeta({
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event);
+
   if (!session.user) {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized' });
   }
@@ -64,7 +65,8 @@ export default defineEventHandler(async (event) => {
 
   // Raw semantic results
   const semanticStart = Date.now();
-  const semanticRaw = await db.execute(sql`
+
+  const semanticRaw = await db.execute<SemanticRow>(sql`
     SELECT
       dc.id,
       d.title,
@@ -78,11 +80,13 @@ export default defineEventHandler(async (event) => {
     ORDER BY distance
     LIMIT 10
   `);
+
   timings.semanticSearch = Date.now() - semanticStart;
 
   // Raw BM25 results
   const bm25Start = Date.now();
-  const bm25Raw = await db.execute(sql`
+
+  const bm25Raw = await db.execute<BM25Row>(sql`
     SELECT
       dc.id,
       d.title,
@@ -96,6 +100,7 @@ export default defineEventHandler(async (event) => {
     ORDER BY rank DESC
     LIMIT 10
   `);
+
   timings.bm25Search = Date.now() - bm25Start;
 
   timings.total = Date.now() - startTime;
@@ -112,14 +117,14 @@ export default defineEventHandler(async (event) => {
       chunkIndex: r.chunkIndex,
     })),
     pipeline: {
-      semanticResults: (semanticRaw.rows as unknown as SemanticRow[]).map((r, i) => ({
+      semanticResults: semanticRaw.rows.map((r, i) => ({
         rank: i + 1,
         title: r.title,
         url: r.url,
         distance: parseFloat(r.distance).toFixed(4),
         preview: r.preview,
       })),
-      bm25Results: (bm25Raw.rows as unknown as BM25Row[]).map((r, i) => ({
+      bm25Results: bm25Raw.rows.map((r, i) => ({
         rank: i + 1,
         title: r.title,
         url: r.url,

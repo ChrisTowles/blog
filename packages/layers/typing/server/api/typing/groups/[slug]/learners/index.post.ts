@@ -21,13 +21,16 @@ const bodySchema = z.object({
 export default defineEventHandler(async (event) => {
   const { slug } = await getValidatedRouterParams(event, paramsSchema.parse);
   const group = await findGroupBySlug(slug);
+
   if (!group) {
     throw createError({ statusCode: 404, statusMessage: 'Group not found' });
   }
+
   await requireGuardian(event, { groupId: group.id });
 
   const body = await readValidatedBody(event, bodySchema.parse);
   const db = useDrizzle();
+
   const [created] = await db
     .insert(tables.typingLearners)
     .values({
@@ -37,9 +40,11 @@ export default defineEventHandler(async (event) => {
       avatarUrl: body.avatarUrl ?? null,
     })
     .returning();
+
   if (!created) {
     throw createError({ statusCode: 500, statusMessage: 'Failed to create learner' });
   }
+
   const learner: Learner = {
     id: created.id,
     groupId: created.groupId,
@@ -51,5 +56,6 @@ export default defineEventHandler(async (event) => {
     createdAt: created.createdAt.toISOString(),
     updatedAt: created.updatedAt.toISOString(),
   };
+
   return { learner };
 });

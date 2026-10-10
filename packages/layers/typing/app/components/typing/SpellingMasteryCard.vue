@@ -9,6 +9,7 @@ const props = defineProps<{
 
 const masteredCount = computed(() => {
   const set = new Set(props.masteredWords ?? []);
+
   return props.list.words.filter((w) => set.has(w)).length;
 });
 </script>

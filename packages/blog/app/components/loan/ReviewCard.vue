@@ -1,12 +1,6 @@
 <script setup lang="ts">
-import type { DefineComponent } from 'vue';
 import type { ReviewState } from '~/composables/useLoanReview';
 import { TEST_IDS } from '~~/shared/test-ids';
-import ProsePre from '~/components/prose/ProsePre.vue';
-
-const components = {
-  pre: ProsePre as unknown as DefineComponent,
-};
 
 const props = defineProps<{
   review: ReviewState;
@@ -17,11 +11,13 @@ const showRaw = ref(false);
 const decisionColor = computed(() => {
   if (!props.review.decision) return 'neutral' as const;
   const map = { approved: 'success', denied: 'error', flagged: 'warning' } as const;
+
   return map[props.review.decision] ?? ('neutral' as const);
 });
 
 const decisionLabel = computed(() => {
   if (!props.review.decision) return '';
+
   return (
     { approved: 'Approved', denied: 'Denied', flagged: 'Flagged' }[props.review.decision] || ''
   );
@@ -29,7 +25,9 @@ const decisionLabel = computed(() => {
 
 const statusIcon = computed(() => {
   if (props.review.status === 'pending') return 'i-lucide-clock';
+
   if (props.review.status === 'streaming') return 'i-lucide-loader';
+
   return props.review.decision === 'approved' ? 'i-lucide-check-circle' : 'i-lucide-alert-triangle';
 });
 
@@ -39,6 +37,7 @@ const rawJsonMarkdown = computed(() => {
     null,
     2,
   );
+
   return '```json\n' + json + '\n```';
 });
 </script>
@@ -76,7 +75,6 @@ const rawJsonMarkdown = computed(() => {
         v-else-if="review.status === 'complete' && review.text"
         :value="review.text"
         :cache-key="`review-${review.reviewer}-complete`"
-        :components="components"
         :parser-options="{ highlight: false }"
         class="prose prose-sm dark:prose-invert max-w-none mb-4 *:first:mt-0 *:last:mb-0"
       />
@@ -104,7 +102,6 @@ const rawJsonMarkdown = computed(() => {
           v-if="showRaw"
           :value="rawJsonMarkdown"
           :cache-key="`review-${review.reviewer}-raw`"
-          :components="components"
           :parser-options="{ highlight: false }"
           class="raw-json mt-2 prose prose-sm dark:prose-invert max-w-none *:first:mt-0 *:last:mb-0"
         />

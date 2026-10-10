@@ -7,22 +7,24 @@ import path from 'node:path';
 $.verbose = true;
 
 const SCRIPT_DIR = import.meta.dirname;
+
 const PROJECT_ROOT = path.resolve(SCRIPT_DIR, '..');
 
 function parseTfvars(filePath: string): Record<string, string> {
   const content = fs.readFileSync(filePath, 'utf-8');
-  const vars: Record<string, string> = {};
-  for (const line of content.split('\n')) {
+
+  const entries = content.split('\n').flatMap((line) => {
     const match = line.match(/^(\w+)\s*=\s*"([^"]*)"/);
-    if (match) {
-      vars[match[1]] = match[2];
-    }
-  }
-  return vars;
+
+    return match ? [[match[1], match[2]] as const] : [];
+  });
+
+  return Object.fromEntries(entries);
 }
 
 function getEnvConfig(env: 'staging' | 'production') {
   const tfDir = env === 'staging' ? 'staging' : 'prod';
+
   const tfvarsPath = path.join(
     PROJECT_ROOT,
     'infra',
@@ -30,6 +32,7 @@ function getEnvConfig(env: 'staging' | 'production') {
     'environments',
     `${tfDir}.tfvars`,
   );
+
   const vars = parseTfvars(tfvarsPath);
 
   return {
@@ -86,6 +89,7 @@ async function callPowerFunction(config: ReturnType<typeof getEnvConfig>, action
 
 // Parse arguments
 let action: 'on' | 'off' | null = null;
+
 let environment = 'staging';
 
 for (let i = 2; i < process.argv.length; i++) {
@@ -124,12 +128,16 @@ if (environment !== 'staging') {
   process.exit(1);
 }
 
-const config = getEnvConfig(environment as 'staging');
+const config = getEnvConfig(environment);
 
 consola.log(`Environment: ${environment}`);
+
 consola.log(`  Project: ${config.project}`);
+
 consola.log(`  Region: ${config.region}`);
+
 consola.log(`  Cloud Run: ${config.service}`);
+
 consola.log(`  Cloud SQL: ${config.sqlInstance}`);
 
 await callPowerFunction(config, action);

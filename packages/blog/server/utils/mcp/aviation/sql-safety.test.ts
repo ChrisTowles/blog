@@ -19,6 +19,7 @@ describe('sql-safety validateSql', () => {
       const result = await validateSql(
         `SELECT * FROM read_parquet('${AVIATION_BUCKET_URL_PREFIX}dims/aircraft.parquet') LIMIT 10`,
       );
+
       expectOk(result);
     });
 
@@ -60,6 +61,7 @@ describe('sql-safety validateSql', () => {
       ['DELETE (DML)', `DELETE FROM t`],
       ['multiple statements', `SELECT 1; SELECT 2`],
     ];
+
     for (const [label, sql] of banned) {
       it(`rejects ${label}`, async () => {
         const result = await validateSql(sql);
@@ -73,6 +75,7 @@ describe('sql-safety validateSql', () => {
       const result = await validateSql(
         `SELECT * FROM read_parquet('https://attacker.example.com/p.parquet')`,
       );
+
       expectErr(result);
       expect(result.error).toMatch(/not allowed|not allowlisted/i);
     });
@@ -81,6 +84,7 @@ describe('sql-safety validateSql', () => {
       const result = await validateSql(
         `SELECT * FROM read_csv_auto('https://attacker.example.com/p.csv')`,
       );
+
       expectErr(result);
     });
 
@@ -88,6 +92,7 @@ describe('sql-safety validateSql', () => {
       const result = await validateSql(
         `SELECT COUNT(*) FROM read_parquet('${AVIATION_BUCKET_URL_PREFIX}facts/bts_t100_202501.parquet')`,
       );
+
       expectOk(result);
     });
   });
@@ -109,6 +114,7 @@ function expectOk(r: SqlValidationResult): asserts r is Extract<SqlValidationRes
   if (!r.ok) {
     throw new Error(`Expected ok, got error: ${r.error}`);
   }
+
   expect(r.ok).toBe(true);
 }
 
@@ -118,6 +124,7 @@ function expectErr(
   if (r.ok) {
     throw new Error(`Expected error, got ok with sql: ${r.sql}`);
   }
+
   expect(r.ok).toBe(false);
   expect(r.error).toBeTruthy();
 }

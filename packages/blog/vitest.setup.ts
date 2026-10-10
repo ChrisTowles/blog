@@ -6,4 +6,5 @@
 // (excluded from `pnpm test`); unit tests only run local SELECTs that never
 // actually authenticate, so fake creds are fine.
 if (!process.env.GCS_HMAC_KEY_ID) process.env.GCS_HMAC_KEY_ID = 'test-hmac-key-id';
+
 if (!process.env.GCS_HMAC_SECRET) process.env.GCS_HMAC_SECRET = 'test-hmac-secret';

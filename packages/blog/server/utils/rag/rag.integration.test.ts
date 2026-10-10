@@ -11,7 +11,7 @@ describe.skipIf(!hasAWSConfig)('Bedrock Embeddings Integration', () => {
 
     expect(Array.isArray(embedding)).toBe(true);
     expect(embedding).toHaveLength(1024); // Titan v2 1024 dimensions
-    expect(embedding.every((n: number) => typeof n === 'number')).toBe(true);
+    expect(embedding.every((n) => Number.isFinite(n))).toBe(true);
   });
 
   it('generates consistent embeddings for same text', async () => {
@@ -63,6 +63,7 @@ describe.skipIf(!hasAWSConfig)('Bedrock Reranking Integration', () => {
     const { rerankDocuments } = await import('../ai/bedrock');
 
     const query = 'How to configure TypeScript';
+
     const documents = [
       'Python is a programming language used for data science.',
       'TypeScript configuration involves tsconfig.json settings.',
@@ -163,6 +164,7 @@ describe('RAG Retrieval Integration', () => {
       { ...makeCandidate('winner'), distance: 0.1 },
       { ...makeCandidate('loser'), distance: 0.5 },
     ];
+
     const bm25 = [
       { ...makeCandidate('winner'), rank: 1 },
       { ...makeCandidate('other'), rank: 0.5 },

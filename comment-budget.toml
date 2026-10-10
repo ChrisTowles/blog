@@ -1,4 +1,13 @@
-skip = ["node_modules", ".nuxt", ".output", ".nitro", ".data", "dist", ".claude/worktrees"]
+skip = [
+  "node_modules",
+  ".nuxt",
+  ".output",
+  ".nitro",
+  ".data",
+  "dist",
+  ".claude/worktrees",
+  "tools/oxlint/anti-slop",
+]
 
 [kinds.typescript]
 grammar = "typescript"

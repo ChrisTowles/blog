@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Handle, Position } from '@vue-flow/core';
 import type { NodeProps } from '@vue-flow/core';
-import type { NodeRunStatus, WorkflowNodeType } from '../../../shared/workflow-types';
-import { NODE_TYPE_DEFAULTS } from '../../../shared/workflow-types';
+import type { AccentColor, NodeRunStatus, OutputSchema } from '../../../shared/workflow-types';
+import { isWorkflowNodeType, NODE_TYPE_DEFAULTS } from '../../../shared/workflow-types';
 
 interface WorkflowNodeData {
   label: string;
@@ -10,59 +10,72 @@ interface WorkflowNodeData {
   model: string;
   temperature: number;
   maxTokens: number;
-  outputSchema: Record<string, unknown>;
+  outputSchema: OutputSchema;
   inputMapping: Record<string, string>;
   __runStatus?: NodeRunStatus;
 }
 
 const props = defineProps<NodeProps<WorkflowNodeData>>();
 
-const nodeType = computed(() => (props.type as WorkflowNodeType) ?? 'prompt');
+const nodeType = computed(() => (isWorkflowNodeType(props.type) ? props.type : 'prompt'));
+
 const defaults = computed(() => NODE_TYPE_DEFAULTS[nodeType.value]);
+
 const runStatus = computed(() => props.data?.__runStatus);
 
 const schemaFields = computed(() => {
   const schema = props.data?.outputSchema;
+
   if (!schema?.properties) return [];
-  return Object.keys(schema.properties as Record<string, unknown>);
+
+  return Object.keys(schema.properties);
 });
 
 const promptPreview = computed(() => {
   const p = props.data?.prompt ?? '';
+
   return p.length > 80 ? p.slice(0, 77) + '…' : p;
 });
 
 const statusClasses = computed(() => {
   const s = runStatus.value?.status;
+
   if (s === 'running') return 'ring-2 ring-blue-400 ring-offset-1';
+
   if (s === 'completed') return 'ring-2 ring-green-400 ring-offset-1';
+
   if (s === 'failed') return 'ring-2 ring-red-400 ring-offset-1';
+
   return '';
 });
 
 const outputPreview = computed(() => {
   if (!runStatus.value?.output) return '';
   const str = JSON.stringify(runStatus.value.output);
+
   return str.length > 120 ? str.slice(0, 120) + '…' : str;
 });
 
 const modelShortName = computed(() => {
   const model = props.data?.model ?? '';
+
   if (model.includes('haiku')) return 'haiku';
+
   if (model.includes('sonnet')) return 'sonnet';
+
   if (model.includes('opus')) return 'opus';
+
   return model;
 });
 
-const accentColorClass = computed(() => {
-  const map: Record<string, string> = {
-    blue: 'bg-blue-500',
-    violet: 'bg-violet-500',
-    amber: 'bg-amber-500',
-    green: 'bg-green-500',
-  };
-  return map[defaults.value.accentColor] ?? 'bg-blue-500';
-});
+const ACCENT_CLASSES = {
+  blue: 'bg-blue-500',
+  violet: 'bg-violet-500',
+  amber: 'bg-amber-500',
+  green: 'bg-green-500',
+} satisfies Record<AccentColor, string>;
+
+const accentColorClass = computed(() => ACCENT_CLASSES[defaults.value.accentColor]);
 </script>
 
 <template>

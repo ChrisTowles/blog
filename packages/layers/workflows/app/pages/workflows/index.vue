@@ -9,28 +9,36 @@ const { loggedIn } = useUserSession();
 const { data: workflows, refresh } = await useFetch('/api/workflows', {
   transform: (raw) => {
     const result = workflowListResponseSchema.safeParse(raw);
+
     if (!result.success) {
       log.warn('workflow-list', `Invalid workflow list API response: ${String(result.error)}`);
+
       return [];
     }
+
     return result.data;
   },
 });
 
 const newName = ref('');
+
 const creating = ref(false);
+
 const cloning = ref<string | null>(null);
 
 async function createWorkflow() {
   const name = newName.value.trim();
+
   if (!name || creating.value) return;
 
   creating.value = true;
+
   try {
     const { id } = await $fetch<{ id: string }>('/api/workflows', {
       method: 'POST',
       body: { name },
     });
+
     newName.value = '';
     await navigateTo(`/workflows/${id}`);
   } finally {
@@ -41,10 +49,12 @@ async function createWorkflow() {
 async function cloneWorkflow(id: string) {
   if (cloning.value) return;
   cloning.value = id;
+
   try {
     const { id: cloneId } = await $fetch<{ id: string }>(`/api/workflows/${id}/clone`, {
       method: 'POST',
     });
+
     await navigateTo(`/workflows/${cloneId}`);
   } finally {
     cloning.value = null;
@@ -58,6 +68,7 @@ async function deleteWorkflow(id: string) {
 }
 
 const templates = computed(() => workflows.value?.filter((w) => w.isTemplate) ?? []);
+
 const userWorkflows = computed(() => workflows.value?.filter((w) => !w.isTemplate) ?? []);
 </script>
 

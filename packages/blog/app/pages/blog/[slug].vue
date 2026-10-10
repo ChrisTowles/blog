@@ -4,11 +4,13 @@ const route = useRoute();
 const { data: post } = await useAsyncData(route.path, () =>
   queryCollection('posts').path(route.path).first(),
 );
+
 if (!post.value) {
   throw createError({ statusCode: 404, statusMessage: 'Post not found', fatal: true });
 }
 
 const isDraft = post.value.status === 'draft';
+
 if (isDraft && !import.meta.dev) {
   throw createError({ statusCode: 404, statusMessage: 'Post not found', fatal: true });
 }
@@ -17,9 +19,12 @@ const { data: surround } = await useAsyncData(`${route.path}-surround`, async ()
   const items = await queryCollectionItemSurroundings('posts', route.path, {
     fields: ['description', 'status'],
   });
+
   if (!items) return items;
   // Replace draft neighbors with undefined (prev/next slot stays empty)
   const [prev, next] = items;
+
+  // SAFETY: UContentSurround renders an undefined slot as empty, though its prop type omits it
   return [
     prev?.status === 'draft' ? undefined : prev,
     next?.status === 'draft' ? undefined : next,

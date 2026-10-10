@@ -1,13 +1,22 @@
 import 'dotenv/config';
-import { GoogleGenAI, Modality } from '@google/genai';
+import { GoogleGenAI, Modality, type GenerateContentParameters } from '@google/genai';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
+
+export interface ImageModels {
+  generateContent(params: GenerateContentParameters): Promise<{
+    candidates?: {
+      content?: { parts?: { inlineData?: { mimeType?: string; data?: string } }[] };
+    }[];
+  }>;
+}
 
 export interface GenerateImageOptions {
   prompt: string;
   outputPath: string;
   model?: string;
   aspectRatio?: string;
+  models?: ImageModels;
 }
 
 export interface GenerateImageResult {
@@ -19,14 +28,15 @@ export async function generateBlogImage(
   options: GenerateImageOptions,
 ): Promise<GenerateImageResult> {
   const apiKey = process.env.GOOGLE_AI_API_KEY;
+
   if (!apiKey) {
     throw new Error('GOOGLE_AI_API_KEY environment variable is required');
   }
 
-  const ai = new GoogleGenAI({ apiKey });
+  const models = options.models ?? new GoogleGenAI({ apiKey }).models;
   const model = options.model ?? 'gemini-2.5-flash-image';
 
-  const response = await ai.models.generateContent({
+  const response = await models.generateContent({
     model,
     contents: options.prompt,
     config: {
@@ -54,10 +64,12 @@ export async function generateBlogImage(
 // CLI entrypoint
 if (import.meta.url === `file://${process.argv[1]}`) {
   const [prompt, outputPath] = process.argv.slice(2);
+
   if (!prompt || !outputPath) {
     console.error('Usage: tsx scripts/generate-blog-image.ts "<prompt>" <output-path>');
     process.exit(1);
   }
+
   generateBlogImage({ prompt, outputPath })
     .then((r) => console.log(`Image saved to ${r.path}`))
     .catch((e) => {

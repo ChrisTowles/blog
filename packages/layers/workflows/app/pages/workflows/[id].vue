@@ -7,8 +7,8 @@ import '@vue-flow/core/dist/style.css';
 import '@vue-flow/core/dist/theme-default.css';
 import type { Node, Edge, NodeTypesObject, ViewportTransform } from '@vue-flow/core';
 import { log } from 'evlog';
-import type { WorkflowNodeType } from '../../../shared/workflow-types';
-import { NODE_TYPE_DEFAULTS } from '../../../shared/workflow-types';
+import WorkflowPromptNode from '../../components/workflow/PromptNode.vue';
+import { isWorkflowNodeType, NODE_TYPE_DEFAULTS } from '../../../shared/workflow-types';
 import {
   workflowDetailResponseSchema,
   workflowEditorQuerySchema,
@@ -17,11 +17,14 @@ import {
 const { loggedIn } = useUserSession();
 
 const route = useRoute();
+
 const router = useRouter();
-const workflowId = route.params.id as string;
+
+const workflowId = String(route.params.id);
 
 // Validate URL query params at page load
 const queryResult = workflowEditorQuerySchema.safeParse(route.query);
+
 if (!queryResult.success) {
   log.warn('workflow-editor', `Invalid URL query params, resetting: ${String(queryResult.error)}`);
   await router.replace({ query: {} });
@@ -30,10 +33,13 @@ if (!queryResult.success) {
 const { data: workflow } = await useFetch(`/api/workflows/${workflowId}`, {
   transform: (raw) => {
     const result = workflowDetailResponseSchema.safeParse(raw);
+
     if (!result.success) {
       log.warn('workflow-editor', `Invalid workflow API response: ${String(result.error)}`);
+
       return null;
     }
+
     return result.data;
   },
 });
@@ -45,12 +51,15 @@ if (!workflow.value) {
 useSeoMeta({ title: workflow.value.name });
 
 const isTemplate = Boolean(workflow.value.isTemplate);
+
 const canEdit = loggedIn.value && !isTemplate;
 
-const nodes = shallowRef<Node[]>((workflow.value.nodes ?? []) as Node[]);
-const edges = shallowRef<Edge[]>((workflow.value.edges ?? []) as Edge[]);
+const nodes = shallowRef<Node[]>(workflow.value.nodes ?? []);
+
+const edges = shallowRef<Edge[]>(workflow.value.edges ?? []);
 
 const config = useRuntimeConfig();
+
 const { setViewport, project, addNodes, onNodeClick, onConnect, addEdges } = useVueFlow();
 
 onConnect((params) => {
@@ -58,7 +67,10 @@ onConnect((params) => {
 });
 
 // --- UI state: local refs, initialized from URL, synced back as side effect ---
-const selectedNodeId = ref<string | null>((route.query.node as string) ?? null);
+const selectedNodeId = ref<string | null>(
+  queryResult.success ? (queryResult.data.node ?? null) : null,
+);
+
 const activeTab = ref(route.query.tab === 'run' ? 'run' : 'edit');
 
 const selectedNode = computed((): Node | null => {
@@ -74,7 +86,9 @@ const viewport = ref<{ x: number; y: number; zoom: number }>(
 // Single watcher syncs all UI state to URL
 watch([selectedNodeId, activeTab], ([nodeId, tab]) => {
   const query: Record<string, string> = {};
+
   if (nodeId) query.node = nodeId;
+
   if (tab === 'run') query.tab = 'run';
   router.replace({ query });
 });
@@ -82,16 +96,17 @@ watch([selectedNodeId, activeTab], ([nodeId, tab]) => {
 const workflowName = ref(workflow.value!.name);
 
 const { startRun, runStatus, isRunning, finalOutput, runError } = useWorkflowRun(workflowId);
+
 const { save, saveStatus } = useWorkflowAutoSave(workflowId, nodes, edges, viewport, workflowName);
 
-const saveStatusDisplay = computed(() => {
-  const map: Record<string, { class: string; text: string }> = {
-    saving: { class: 'text-yellow-500', text: 'Saving…' },
-    saved: { class: 'text-green-500', text: 'Saved' },
-    error: { class: 'text-red-500', text: 'Save failed' },
-  };
-  return map[saveStatus.value] ?? { class: 'text-gray-400', text: '' };
-});
+const SAVE_STATUS_DISPLAY = {
+  idle: { class: 'text-gray-400', text: '' },
+  saving: { class: 'text-yellow-500', text: 'Saving…' },
+  saved: { class: 'text-green-500', text: 'Saved' },
+  error: { class: 'text-red-500', text: 'Save failed' },
+};
+
+const saveStatusDisplay = computed(() => SAVE_STATUS_DISPLAY[saveStatus.value]);
 
 watch(
   [nodes, edges, workflowName],
@@ -106,10 +121,12 @@ const cloning = ref(false);
 async function cloneWorkflow() {
   if (cloning.value) return;
   cloning.value = true;
+
   try {
     const { id } = await $fetch<{ id: string }>(`/api/workflows/${workflowId}/clone`, {
       method: 'POST',
     });
+
     await navigateTo(`/workflows/${id}`);
   } finally {
     cloning.value = false;
@@ -127,6 +144,7 @@ onNodeClick(({ node }) => {
 
 function onViewportChange({ flowTransform }: { event: unknown; flowTransform: ViewportTransform }) {
   viewport.value = flowTransform;
+
   if (canEdit) save();
 }
 
@@ -146,6 +164,7 @@ watch(
   (status) => {
     for (const node of nodes.value) {
       const nodeStatus = status.get(node.id);
+
       if (nodeStatus) {
         node.data = { ...node.data, __runStatus: nodeStatus };
       } else if (node.data.__runStatus) {
@@ -171,11 +190,13 @@ onMounted(() => {
 
 function onDrop(event: DragEvent) {
   event.preventDefault();
-  const type = event.dataTransfer?.getData('application/workflow-node') as WorkflowNodeType;
-  if (!type) return;
+  const type = event.dataTransfer?.getData('application/workflow-node');
 
-  const canvasEl = (event.target as HTMLElement).closest('.vue-flow');
+  if (!type || !isWorkflowNodeType(type)) return;
+
+  const canvasEl = event.target instanceof HTMLElement ? event.target.closest('.vue-flow') : null;
   const rect = canvasEl?.getBoundingClientRect();
+
   if (!rect) return;
 
   const position = project({
@@ -194,7 +215,7 @@ function onDrop(event: DragEvent) {
       data: {
         label: `${type.charAt(0).toUpperCase() + type.slice(1)} Node`,
         prompt: '',
-        model: config.public.model_fast as string,
+        model: config.public.model_fast,
         temperature: defaults.temperature,
         maxTokens: defaults.maxTokens,
         outputSchema: { type: 'object', properties: {}, required: [] },
@@ -204,12 +225,11 @@ function onDrop(event: DragEvent) {
   ]);
 }
 
-const promptNodeComponent = resolveComponent('WorkflowPromptNode') as NodeTypesObject[string];
 const nodeTypes: NodeTypesObject = {
-  prompt: promptNodeComponent,
-  transform: promptNodeComponent,
-  classifier: promptNodeComponent,
-  validator: promptNodeComponent,
+  prompt: WorkflowPromptNode,
+  transform: WorkflowPromptNode,
+  classifier: WorkflowPromptNode,
+  validator: WorkflowPromptNode,
 };
 </script>
 
@@ -340,7 +360,7 @@ const nodeTypes: NodeTypesObject = {
               :run-error="runError"
               :run-status="runStatus"
               :nodes="nodes"
-              @run="(input: Record<string, unknown>) => startRun(input)"
+              @run="(input: Record<string, string>) => startRun(input)"
               @select-node="
                 (id: string) => {
                   selectNode(id);

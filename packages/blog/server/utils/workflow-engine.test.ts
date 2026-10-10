@@ -4,6 +4,7 @@ import {
   resolveTemplate,
   findTerminalNodes,
 } from '../../../layers/workflows/server/utils/workflow-engine';
+import type { JsonObject } from '../../../layers/workflows/shared/workflow-types';
 import type {
   WorkflowNode,
   WorkflowEdge,
@@ -24,22 +25,26 @@ describe('topologicalSort', () => {
 
   it('sorts A→B→C correctly', () => {
     const nodes = [{ id: 'c' }, { id: 'a' }, { id: 'b' }];
+
     const edges = [
       { source: 'a', target: 'b' },
       { source: 'b', target: 'c' },
     ];
+
     const result = topologicalSort(nodes, edges);
     expect(result.map((n) => n.id)).toEqual(['a', 'b', 'c']);
   });
 
   it('handles diamond shape (A→B, A→C, B→D, C→D)', () => {
     const nodes = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }];
+
     const edges = [
       { source: 'a', target: 'b' },
       { source: 'a', target: 'c' },
       { source: 'b', target: 'd' },
       { source: 'c', target: 'd' },
     ];
+
     const result = topologicalSort(nodes, edges);
     expect(result.map((n) => n.id)).toContain('a');
     expect(result.map((n) => n.id)).toContain('d');
@@ -50,19 +55,22 @@ describe('topologicalSort', () => {
 
   it('throws on cycle', () => {
     const nodes = [{ id: 'a' }, { id: 'b' }];
+
     const edges = [
       { source: 'a', target: 'b' },
       { source: 'b', target: 'a' },
     ];
+
     expect(() => topologicalSort(nodes, edges)).toThrow('Cycle');
   });
 });
 
 describe('resolveTemplate', () => {
-  const outputs = new Map([
+  const outputs = new Map<string, JsonObject>([
     ['node_1', { answer: 'Paris', confidence: 0.99 }],
     ['node_2', { category: 'geography' }],
   ]);
+
   const input = { query: 'What is the capital of France?' };
 
   it('replaces {{input.field}} references', () => {
@@ -81,6 +89,7 @@ describe('resolveTemplate', () => {
       outputs,
       input,
     );
+
     expect(result).toBe('Q: What is the capital of France? A: Paris Cat: geography');
   });
 
@@ -90,7 +99,7 @@ describe('resolveTemplate', () => {
   });
 
   it('handles nested object values by JSON-stringifying', () => {
-    const out = new Map([['n', { data: { nested: true } }]]);
+    const out = new Map<string, JsonObject>([['n', { data: { nested: true } }]]);
     const result = resolveTemplate('{{n.data}}', out, {});
     expect(result).toBe('{"nested":true}');
   });
@@ -106,7 +115,7 @@ describe('findTerminalNodes', () => {
       model: 'm',
       temperature: 0.7,
       maxTokens: 1024,
-      outputSchema: {},
+      outputSchema: { type: 'object', properties: {} },
       inputMapping: {},
     };
   }
@@ -118,21 +127,25 @@ describe('findTerminalNodes', () => {
 
   it('returns only the last node in a chain', () => {
     const nodes = [makeNode('a'), makeNode('b'), makeNode('c')];
+
     const edges: WorkflowEdge[] = [
       { source: 'a', target: 'b' },
       { source: 'b', target: 'c' },
     ];
+
     expect(findTerminalNodes(nodes, edges).map((n) => n.id)).toEqual(['c']);
   });
 
   it('returns the convergence node in a diamond', () => {
     const nodes = [makeNode('a'), makeNode('b'), makeNode('c'), makeNode('d')];
+
     const edges: WorkflowEdge[] = [
       { source: 'a', target: 'b' },
       { source: 'a', target: 'c' },
       { source: 'b', target: 'd' },
       { source: 'c', target: 'd' },
     ];
+
     expect(findTerminalNodes(nodes, edges).map((n) => n.id)).toEqual(['d']);
   });
 });

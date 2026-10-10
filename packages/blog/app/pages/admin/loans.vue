@@ -36,10 +36,12 @@ const { data, status, refresh } = await useFetch<{ applications: LoanApplication
 const applications = computed(() => data.value?.applications ?? []);
 
 const creating = ref(false);
+
 const toast = useToast();
 
 async function createLoan() {
   creating.value = true;
+
   try {
     const result = await $fetch<{ id: string }>('/api/loan', { method: 'POST' });
     await navigateTo(`/loan/${result.id}`);
@@ -61,7 +63,10 @@ function countByStatus(s: LoanStatus) {
   return applications.value.filter((a) => a.status === s).length;
 }
 
-const statusBadgeColor: Record<string, 'success' | 'error' | 'warning' | 'primary' | 'neutral'> = {
+const statusBadgeColor: Record<
+  LoanStatus,
+  'success' | 'error' | 'warning' | 'primary' | 'neutral'
+> = {
   approved: 'success',
   denied: 'error',
   flagged: 'warning',
@@ -69,8 +74,8 @@ const statusBadgeColor: Record<string, 'success' | 'error' | 'warning' | 'primar
   intake: 'neutral',
 };
 
-function badgeColor(s: string | null) {
-  return statusBadgeColor[s ?? 'intake'] ?? 'neutral';
+function badgeColor(s: LoanStatus | null) {
+  return statusBadgeColor[s ?? 'intake'];
 }
 
 const columns = [

@@ -19,9 +19,11 @@ import { dirname, extname, join, resolve } from 'node:path';
 import { buildCspHeader, DEFAULT_CSP_HEADER, parseCspParam } from '../csp.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
 const ROOT = resolve(__dirname, '..');
 
 const SANDBOX_PORT = Number(process.env.SANDBOX_PORT || 8081);
+
 const HOST_PORT = Number(process.env.HOST_PORT || 8080);
 
 const MIME = {
@@ -63,6 +65,7 @@ const sandbox = createServer(async (req, res) => {
       'Referrer-Policy': 'strict-origin-when-cross-origin',
     });
     res.end(body);
+
     return;
   }
 
@@ -106,8 +109,10 @@ const host = createServer((req, res) => {
     });
   </script>
 </body></html>`;
+
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(html);
+
     return;
   }
 
@@ -116,9 +121,11 @@ const host = createServer((req, res) => {
 });
 
 await new Promise((r) => sandbox.listen(SANDBOX_PORT, r));
+
 await new Promise((r) => host.listen(HOST_PORT, '127.0.0.1', r));
 
 // eslint-disable-next-line no-console
 console.log(`[mcp-e2e] sandbox: http://localhost:${SANDBOX_PORT}`);
+
 // eslint-disable-next-line no-console
 console.log(`[mcp-e2e] host:    http://127.0.0.1:${HOST_PORT}`);

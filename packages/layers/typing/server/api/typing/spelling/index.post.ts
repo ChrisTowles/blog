@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
-import type { SpellingList } from '../../../../../../blog/shared/typing-types';
 import { requireGuardian } from '../../../utils/typing/require-guardian';
 import { autoGenerateSpellingLessons } from '../../../utils/typing/spelling-lessons';
+import { toSpellingList } from '../../../utils/typing/spelling-list-row';
 
 const wordSchema = z
   .string()
@@ -30,6 +30,7 @@ export default defineEventHandler(async (event) => {
     .from(tables.typingLearners)
     .where(eq(tables.typingLearners.id, body.learnerId))
     .limit(1);
+
   const learnerStage = learnerRows[0]?.currentStage ?? 5;
 
   // Upsert the list (unique on (learnerId, weekOf)).
@@ -38,13 +39,11 @@ export default defineEventHandler(async (event) => {
     .from(tables.typingSpellingLists)
     .where(eq(tables.typingSpellingLists.learnerId, body.learnerId))
     .limit(50);
-  const same = existing.find((row) => {
-    const date =
-      typeof row.weekOf === 'string' ? row.weekOf : new Date(row.weekOf).toISOString().slice(0, 10);
-    return date === body.weekOf;
-  });
+
+  const same = existing.find((row) => row.weekOf === body.weekOf);
 
   let listRow;
+
   if (same) {
     const [updated] = await db
       .update(tables.typingSpellingLists)
@@ -55,6 +54,7 @@ export default defineEventHandler(async (event) => {
       })
       .where(eq(tables.typingSpellingLists.id, same.id))
       .returning();
+
     listRow = updated!;
   } else {
     const [created] = await db
@@ -68,6 +68,7 @@ export default defineEventHandler(async (event) => {
         createdBy: userId,
       })
       .returning();
+
     listRow = created!;
   }
 
@@ -81,6 +82,7 @@ export default defineEventHandler(async (event) => {
 
   // Generate / regenerate lessons.
   let lessons: { drillLessonId: number; sentenceLessonId: number } | null = null;
+
   try {
     lessons = await autoGenerateSpellingLessons(listRow.id, body.words, learnerStage);
   } catch {
@@ -89,19 +91,5 @@ export default defineEventHandler(async (event) => {
     lessons = null;
   }
 
-  const out: SpellingList = {
-    id: listRow.id,
-    learnerId: listRow.learnerId,
-    weekOf:
-      typeof listRow.weekOf === 'string'
-        ? listRow.weekOf
-        : new Date(listRow.weekOf).toISOString().slice(0, 10),
-    words: listRow.words,
-    source: listRow.source as 'paste' | 'type' | 'image',
-    sourceImageUrl: listRow.sourceImageUrl,
-    createdBy: listRow.createdBy,
-    createdAt: listRow.createdAt.toISOString(),
-    updatedAt: listRow.updatedAt.toISOString(),
-  };
-  return { list: out, lessons };
+  return { list: toSpellingList(listRow), lessons };
 });

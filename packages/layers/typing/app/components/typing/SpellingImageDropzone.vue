@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { TEST_IDS } from '~~/shared/test-ids';
+import { fetchErrorMessage } from '../../utils/typing/fetch-error';
 
 const props = defineProps<{
   learnerId: number;
@@ -10,7 +11,9 @@ const emit = defineEmits<{
 }>();
 
 const fileInput = ref<HTMLInputElement | null>(null);
+
 const error = ref<string | null>(null);
+
 const uploading = ref(false);
 
 function pick() {
@@ -18,25 +21,29 @@ function pick() {
 }
 
 async function onChange(ev: Event) {
-  const target = ev.target as HTMLInputElement;
-  const file = target.files?.[0];
+  const target = ev.target instanceof HTMLInputElement ? ev.target : null;
+  const file = target?.files?.[0];
+
   if (!file) return;
   error.value = null;
   uploading.value = true;
+
   try {
     const form = new FormData();
     form.append('learnerId', String(props.learnerId));
     form.append('image', file);
+
     const result = await $fetch<{ ok: true; words: string[] }>('/api/typing/spelling/extract', {
       method: 'POST',
       body: form,
     });
+
     emit('extracted', result.words);
   } catch (caught: unknown) {
-    const err = caught as { statusMessage?: string; data?: { statusMessage?: string } };
-    error.value = err.statusMessage ?? err.data?.statusMessage ?? 'Extraction failed';
+    error.value = fetchErrorMessage(caught, 'Extraction failed');
   } finally {
     uploading.value = false;
+
     if (target) target.value = '';
   }
 }

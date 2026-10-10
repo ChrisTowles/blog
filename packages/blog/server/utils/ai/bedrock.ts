@@ -7,9 +7,10 @@ export function getBedrockClient(): BedrockRuntimeClient {
   if (!_bedrockClient) {
     const config = useRuntimeConfig();
     _bedrockClient = new BedrockRuntimeClient({
-      region: (config.awsRegion as string) || 'us-east-1',
+      region: config.awsRegion || 'us-east-1',
     });
   }
+
   return _bedrockClient;
 }
 
@@ -60,9 +61,11 @@ export async function embedTexts(texts: string[]): Promise<EmbeddingResult[]> {
  */
 export async function embedText(text: string): Promise<number[]> {
   const results = await embedTexts([text]);
+
   if (!results[0]) {
     throw new Error('Failed to generate embedding');
   }
+
   return results[0].embedding;
 }
 

@@ -19,18 +19,22 @@ useHead({
 });
 
 const stages = getStages();
+
 const lessons = getBuiltInLessons();
 
 const { progress, getLessonBest } = useTypingProgress();
 
 const route = useRoute();
+
 const router = useRouter();
 
 const selectedStage = ref<number>(progress.value.currentStage);
+
 const lessonPickerRef = ref<HTMLElement | null>(null);
 
 onMounted(() => {
   const q = Number(route.query.stage);
+
   if (q >= 1 && q <= 20) selectedStage.value = q;
 });
 
@@ -41,6 +45,7 @@ watch(selectedStage, (val) => {
 function selectStage(stage: number) {
   const isChanging = selectedStage.value !== stage;
   selectedStage.value = stage;
+
   // If the user clicked a stage tile from down in the grid, lift them
   // back up to the lesson picker so they actually see the "Start" cards.
   if (isChanging && import.meta.client) {
@@ -66,20 +71,27 @@ type StageRow = {
 
 function familyForStage(stage: number): 0 | 1 | 2 | 3 {
   if (stage <= 5) return 0; // home row
+
   if (stage <= 10) return 1; // top row
+
   if (stage <= 15) return 2; // bottom row
+
   return 3; // capitals + numbers + symbols
 }
 
 const stageRows = computed<StageRow[]>(() => {
   const current = progress.value.currentStage;
+
   return stages.map((s) => {
     const stageLessons = lessons.filter((l) => l.stage === s.stage);
     const attempted = stageLessons.filter((l) => getLessonBest(l.slug) !== null).length;
+
     const progressPct =
       stageLessons.length > 0 ? Math.round((attempted / stageLessons.length) * 100) : 0;
+
     const status: StageStatus =
       s.stage < current ? 'completed' : s.stage === current ? 'current' : 'future';
+
     return {
       stage: s.stage,
       name: s.name,
@@ -95,6 +107,7 @@ const stageRows = computed<StageRow[]>(() => {
 // --- Selected stage detail ----------------------------------------------
 
 const selectedStageDef = computed(() => stages.find((s) => s.stage === selectedStage.value));
+
 const lessonsForSelected = computed(() => lessons.filter((l) => l.stage === selectedStage.value));
 
 // Friendly labels + icon glyphs for lesson kinds (drill/bigram/word/sentence/paragraph).
@@ -150,15 +163,19 @@ const KIND_META: Record<LessonKind, { label: string; icon: string; accent: strin
 // --- Spelling card (kept from prior implementation) ----------------------
 
 const { active } = useActiveLearner();
+
 const activeSpellingList = ref<SpellingList | null>(null);
+
 const activeSpellingProgress = ref<SpellingProgress[]>([]);
 
 watchEffect(async () => {
   if (!active.value) {
     activeSpellingList.value = null;
     activeSpellingProgress.value = [];
+
     return;
   }
+
   try {
     const result = await $fetch<{
       lists: SpellingList[];
@@ -166,6 +183,7 @@ watchEffect(async () => {
     }>('/api/typing/spelling', {
       params: { learnerId: active.value.id },
     });
+
     activeSpellingList.value = result.lists[0] ?? null;
     activeSpellingProgress.value = activeSpellingList.value
       ? (result.progressByList[activeSpellingList.value.id] ?? [])

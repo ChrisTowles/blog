@@ -4,11 +4,13 @@
  */
 
 import { test, expect } from '@playwright/test';
+import type { JsonObject } from '~~/shared/json-types';
 
 const MCP_URL = '/mcp/aviation';
+
 const RESOURCE_URL = '/mcp/aviation/resource?uri=' + encodeURIComponent('ui://aviation-answer');
 
-function rpc(id: number, method: string, params: Record<string, unknown> = {}) {
+function rpc(id: number, method: string, params: JsonObject = {}) {
   return { jsonrpc: '2.0' as const, id, method, params };
 }
 
@@ -23,6 +25,7 @@ test.describe('MCP aviation — public surface', () => {
       }),
       headers: { Accept: 'application/json, text/event-stream' },
     });
+
     expect(initRes.status(), 'initialize accepted').toBeLessThan(400);
     const sessionId = initRes.headers()['mcp-session-id'];
     expect(sessionId, 'server minted a session id').toBeTruthy();
@@ -44,6 +47,7 @@ test.describe('MCP aviation — public surface', () => {
         Accept: 'application/json, text/event-stream',
       },
     });
+
     expect(listRes.status()).toBe(200);
     const body = await listRes.text();
     // Streamable HTTP can return either a plain JSON object or an SSE frame

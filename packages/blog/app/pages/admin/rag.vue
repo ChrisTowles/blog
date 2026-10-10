@@ -50,6 +50,7 @@ interface SearchResult {
 }
 
 const toast = useToast();
+
 const activeTab = ref('overview');
 
 // Stats
@@ -67,11 +68,13 @@ const { data: documentsData, refresh: refreshDocuments } = await useFetch<{
 
 // Ingestion
 const ingesting = ref(false);
+
 const ingestResult = ref<IngestResult | null>(null);
 
 async function runIngestion() {
   ingesting.value = true;
   ingestResult.value = null;
+
   try {
     const result = await $fetch<IngestResult>('/api/admin/rag/ingest', { method: 'POST' });
     ingestResult.value = result;
@@ -97,19 +100,24 @@ async function runIngestion() {
 
 // Search Test
 const searchQuery = ref('');
+
 const searching = ref(false);
+
 const searchResult = ref<SearchResult | null>(null);
+
 const skipRerank = ref(false);
 
 async function runSearch() {
   if (!searchQuery.value.trim()) return;
   searching.value = true;
   searchResult.value = null;
+
   try {
     const result = await $fetch<SearchResult>('/api/admin/rag/search-test', {
       method: 'POST',
       body: { query: searchQuery.value, topK: 5, skipRerank: skipRerank.value },
     });
+
     searchResult.value = result;
   } catch (error) {
     toast.add({
@@ -125,6 +133,7 @@ async function runSearch() {
 
 // Document Actions
 const selectedDoc = ref<string | null>(null);
+
 const docDetails = ref<{
   document: Document;
   chunks: Array<{
@@ -142,11 +151,13 @@ const docDetails = ref<{
     allEmbedded: boolean;
   };
 } | null>(null);
+
 const loadingDoc = ref(false);
 
 async function viewDocument(id: string) {
   selectedDoc.value = id;
   loadingDoc.value = true;
+
   try {
     docDetails.value = await $fetch(`/api/admin/rag/documents/${id}`);
   } catch {
@@ -158,11 +169,13 @@ async function viewDocument(id: string) {
 
 async function deleteDocument(id: string) {
   if (!confirm('Delete this document from the index?')) return;
+
   try {
     await $fetch(`/api/admin/rag/documents/${id}`, { method: 'DELETE' });
     toast.add({ title: 'Document deleted', color: 'success' });
     refreshDocuments();
     refreshStats();
+
     if (selectedDoc.value === id) {
       selectedDoc.value = null;
       docDetails.value = null;
@@ -177,6 +190,7 @@ async function reindexDocument(id: string) {
     await $fetch(`/api/admin/rag/documents/${id}/reindex`, { method: 'POST' });
     toast.add({ title: 'Document re-indexed', color: 'success' });
     refreshDocuments();
+
     if (selectedDoc.value === id) viewDocument(id);
   } catch {
     toast.add({ title: 'Re-index failed', color: 'error' });

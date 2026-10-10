@@ -104,6 +104,7 @@ export const BANTER_EVENTS = [
   'lose-showdown',
   'split',
 ] as const;
+
 export type BanterEvent = (typeof BANTER_EVENTS)[number];
 
 export interface BanterContext {

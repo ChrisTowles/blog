@@ -15,5 +15,6 @@ export default defineEventHandler((event) => {
   setResponseHeader(event, 'Access-Control-Max-Age', 600);
   setResponseHeader(event, 'Vary', 'Origin');
   setResponseStatus(event, 204);
+
   return '';
 });

@@ -9,6 +9,7 @@ export default defineEventHandler(async (event) => {
       input: z.string().min(1, 'Message cannot be empty'),
     }).parse,
   );
+
   const db = useDrizzle();
 
   const [chat] = await db
@@ -18,6 +19,7 @@ export default defineEventHandler(async (event) => {
       userId: session.user?.id || session.id,
     })
     .returning();
+
   if (!chat) {
     throw createError({ statusCode: 500, statusMessage: 'Failed to create chat' });
   }

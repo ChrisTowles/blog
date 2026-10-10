@@ -23,12 +23,14 @@ function formatBytes(bytes: number): string {
   const k = 1024;
   const sizes = ['B', 'KB', 'MB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
+
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
 async function compressImage(filePath: string): Promise<boolean> {
   if (!fs.existsSync(filePath)) {
     consola.warn(`Skipping ${filePath} (file not found)`);
+
     return false;
   }
 
@@ -56,13 +58,16 @@ async function compressImage(filePath: string): Promise<boolean> {
     } else {
       consola.info('No size improvement, keeping original');
       fs.unlinkSync(tempFile);
+
       return false;
     }
   } catch (ex) {
     consola.error(`Failed to compress ${path.basename(filePath)}`, ex);
+
     if (fs.existsSync(tempFile)) {
       fs.unlinkSync(tempFile);
     }
+
     return false;
   }
 }
@@ -85,6 +90,7 @@ async function main() {
 
   for (const file of pngFiles) {
     processedCount++;
+
     if (await compressImage(file)) {
       compressedCount++;
     }

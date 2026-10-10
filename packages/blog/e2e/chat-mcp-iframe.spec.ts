@@ -27,9 +27,11 @@ test.describe('Aviation MCP in-chat', () => {
 
     // The canonical starter driving CH-01 in the cross-host matrix.
     const expected = 'Which operators have the oldest Boeing 737 fleets?';
+
     const pill = page.locator(`[data-testid="${TEST_IDS.AVIATION.STARTER_QUESTION_BUTTON}"]`, {
       hasText: expected,
     });
+
     await expect(pill).toBeVisible();
   });
 });

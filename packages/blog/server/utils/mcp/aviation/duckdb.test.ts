@@ -19,6 +19,7 @@ describe('aviation duckdb', () => {
 
   it('opens connections with httpfs loaded (SELECT 1 succeeds)', async () => {
     const conn = await openAviationConnection();
+
     try {
       const reader = await conn.runAndReadAll(`SELECT 1 AS x`);
       const rows = reader.getRows();
@@ -30,6 +31,7 @@ describe('aviation duckdb', () => {
 
   it('rejects local file reads (disabled_filesystems lockdown)', async () => {
     const conn = await openAviationConnection();
+
     try {
       await expect(conn.run(`SELECT * FROM read_csv_auto('/etc/hosts')`)).rejects.toThrow();
     } finally {
@@ -39,6 +41,7 @@ describe('aviation duckdb', () => {
 
   it('runWithTimeout rejects after the deadline and interrupts the query', async () => {
     const conn = await openAviationConnection();
+
     try {
       // A pure-CPU-looping query; range() generates 10B rows.
       const start = Date.now();

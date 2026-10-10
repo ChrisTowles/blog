@@ -17,6 +17,7 @@ const timestamps = {
 };
 
 export const providerEnum = pgEnum('provider', ['github', 'google']);
+
 export const roleEnum = pgEnum('role', ['user', 'assistant']);
 
 export const users = pgTable(
@@ -150,7 +151,9 @@ export const loanStatusEnum = pgEnum('loan_status', [
   'denied',
   'flagged',
 ]);
+
 export const reviewerEnum = pgEnum('reviewer', ['the-bank', 'loan-market', 'background-checks']);
+
 export const reviewDecisionEnum = pgEnum('review_decision', ['approved', 'denied', 'flagged']);
 
 export const loanApplications = pgTable(

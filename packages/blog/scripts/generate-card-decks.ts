@@ -21,7 +21,9 @@ import { cardCode } from '../shared/poker/decks/types';
 import { RANKS, SUITS } from '../app/utils/poker/types';
 
 const __filename = fileURLToPath(import.meta.url);
+
 const __dirname = dirname(__filename);
+
 const OUT_ROOT = resolve(__dirname, '..', 'public', 'poker', 'decks');
 
 const cmd = defineCommand({
@@ -40,30 +42,37 @@ const cmd = defineCommand({
       const dir = join(OUT_ROOT, deckId, 'portraits');
       const map = new Map<string, string>();
       let files: string[] = [];
+
       try {
         files = await readdir(dir);
       } catch {
         return map;
       }
+
       for (const f of files) {
         if (!f.endsWith('.png')) continue;
         const code = f.replace(/\.png$/, '');
         const raw = await readFile(join(dir, f));
+
         const jpeg = await sharp(raw)
           .resize(384, 512, { fit: 'cover' })
           .jpeg({ quality: 82, mozjpeg: true })
           .toBuffer();
+
         map.set(code, `data:image/jpeg;base64,${jpeg.toString('base64')}`);
       }
+
       return map;
     }
 
     const counts: Array<{ deck: string; faces: number; portraits: number }> = [];
+
     for (const deck of DECKS) {
       const deckDir = join(OUT_ROOT, deck.id);
       await mkdir(deckDir, { recursive: true });
       const portraitData = await loadPortraits(deck.id);
       let faces = 0;
+
       for (const suit of SUITS) {
         for (const rank of RANKS) {
           const card = { rank, suit };
@@ -73,6 +82,7 @@ const cmd = defineCommand({
           faces++;
         }
       }
+
       const back = deck.generateBack();
       await writeFile(join(deckDir, 'back.svg'), back, 'utf8');
       counts.push({ deck: deck.name, faces, portraits: portraitData.size });

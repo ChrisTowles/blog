@@ -7,7 +7,9 @@ defineProps<{
 }>();
 
 const colorMode = useColorMode();
-const appConfig = useAppConfig() as { ui: { colors: { primary: string; neutral: string } } };
+
+const appConfig = useAppConfig();
+
 const { user, clear } = useUserSession();
 
 const colors = [
@@ -29,6 +31,7 @@ const colors = [
   'pink',
   'rose',
 ];
+
 const neutrals = ['slate', 'gray', 'zinc', 'neutral', 'stone'];
 
 const items = computed<DropdownMenuItem[][]>(() => [

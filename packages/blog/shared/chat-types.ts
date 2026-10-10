@@ -1,3 +1,4 @@
+import type { JsonObject } from './json-types';
 import type { AviationToolResult } from './mcp-aviation-types';
 
 export type MessageRole = 'user' | 'assistant';
@@ -13,7 +14,10 @@ export interface McpUiResourceCsp {
 }
 
 export interface McpUiResourcePermissions {
-  [key: string]: unknown;
+  camera?: object;
+  microphone?: object;
+  geolocation?: object;
+  clipboardWrite?: object;
 }
 
 /**
@@ -38,7 +42,7 @@ export interface ToolUsePart {
   type: 'tool-use';
   toolName: string;
   toolCallId: string;
-  args: Record<string, unknown>;
+  args: JsonObject;
 }
 
 export interface ToolResultPart {
@@ -75,7 +79,7 @@ export interface UiResourcePart {
   toolCallId: string;
   uiResourceUri: string;
   /** Loosely typed at the wire boundary so a future non-aviation surface isn't breaking. */
-  structuredContent: AviationToolResult | Record<string, unknown>;
+  structuredContent: AviationToolResult | JsonObject;
   csp?: McpUiResourceCsp;
   permissions?: McpUiResourcePermissions;
   /** True if the MCP tool returned `isError`. */
@@ -145,7 +149,7 @@ export interface SSEToolStartEvent {
   type: 'tool_start';
   tool: string;
   toolCallId: string;
-  args: Record<string, unknown>;
+  args: JsonObject;
 }
 
 export interface SSEToolEndEvent {

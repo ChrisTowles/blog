@@ -7,12 +7,13 @@ import {
   HAND_CATEGORY_LABEL,
   type PlayerAction,
   type PlayerState,
-  type Stage,
   cardLabel,
 } from './types';
 
 const STARTING_CHIPS = 1000;
+
 const SMALL_BLIND = 10;
+
 const BIG_BLIND = 20;
 
 function freshPlayer(chips: number): PlayerState {
@@ -85,12 +86,14 @@ export function createEngine(deps: EngineDeps = {}): PokerEngine {
   // Use externally-provided (e.g. Vue reactive) state if given, so mutations
   // here propagate to consumers. Default to a plain object for tests.
   const state: GameState = deps.state ?? freshGameState();
+
   if (deps.state) {
     Object.assign(state, freshGameState());
   }
 
   function log(who: Actor | 'system', text: string) {
     state.log.push({ who, text });
+
     if (state.log.length > 60) state.log.shift();
   }
 
@@ -99,6 +102,7 @@ export function createEngine(deps: EngineDeps = {}): PokerEngine {
     const post = Math.min(amount, p.chips);
     p.chips -= post;
     p.committed += post;
+
     if (p.chips === 0) p.isAllIn = true;
     state.pot += post;
     state.currentBet = Math.max(state.currentBet, p.committed);
@@ -133,6 +137,7 @@ export function createEngine(deps: EngineDeps = {}): PokerEngine {
     deck = dealDeck();
     // Deal hole cards: 1 to each, then 1 to each (standard order)
     const order: Actor[] = state.dealer === 'player' ? ['ai', 'player'] : ['player', 'ai'];
+
     for (let pass = 0; pass < 2; pass++) {
       for (const actor of order) {
         state[actor].hole.push(deck.shift()!);
@@ -157,6 +162,7 @@ export function createEngine(deps: EngineDeps = {}): PokerEngine {
       // Burn 1, deal 3
       deck.shift();
       const flop: Card[] = [];
+
       for (let i = 0; i < 3; i++) flop.push(deck.shift()!);
       state.community.push(...flop);
       state.stage = 'flop';
@@ -205,12 +211,14 @@ export function createEngine(deps: EngineDeps = {}): PokerEngine {
     const playerHand = evaluateBest([...state.player.hole, ...state.community]);
     const aiHand = evaluateBest([...state.ai.hole, ...state.community]);
     let winner: Actor | 'split';
+
     if (playerHand.score > aiHand.score) winner = 'player';
     else if (aiHand.score > playerHand.score) winner = 'ai';
     else winner = 'split';
 
     let summary = '';
     let chipsWon = 0;
+
     if (winner === 'split') {
       const half = Math.floor(state.pot / 2);
       state.player.chips += half;
@@ -244,7 +252,9 @@ export function createEngine(deps: EngineDeps = {}): PokerEngine {
   function bothSettled(): boolean {
     const p = state.player;
     const a = state.ai;
+
     if (p.hasFolded || a.hasFolded) return true;
+
     if (p.committed !== a.committed) return false;
 
     // At least one action must have occurred OR we reached check-check.
@@ -254,16 +264,21 @@ export function createEngine(deps: EngineDeps = {}): PokerEngine {
 
   function passTurnAfterAction(actor: Actor) {
     const other: Actor = actor === 'player' ? 'ai' : 'player';
+
     if (state[other].hasFolded) {
       state.toAct = null;
+
       return;
     }
+
     // If both committed equal AND opponent has acted at least once this round,
     // the round is closed.
     if (state.player.committed === state.ai.committed && roundClosed(actor)) {
       state.toAct = null;
+
       return;
     }
+
     state.toAct = other;
   }
 
@@ -272,6 +287,7 @@ export function createEngine(deps: EngineDeps = {}): PokerEngine {
 
   function roundClosed(lastActor: Actor): boolean {
     actedThisRound.add(lastActor);
+
     // Round closes when both have acted and committed amounts are equal
     return actedThisRound.has('player') && actedThisRound.has('ai');
   }
@@ -280,28 +296,40 @@ export function createEngine(deps: EngineDeps = {}): PokerEngine {
     actedThisRound = new Set();
   }
 
+  function onRiver(): boolean {
+    return state.stage === 'river';
+  }
+
   function bettingClosed(): boolean {
     // Either player all-in with the other matched → no more bets possible
     if (state.player.hasFolded || state.ai.hasFolded) return true;
+
     if (state.player.committed !== state.ai.committed) return false;
+
     return state.player.isAllIn || state.ai.isAllIn;
   }
 
   function advanceIfReady() {
     if (state.handOver) return;
+
     if (state.player.hasFolded) {
       settleByFold('ai');
+
       return;
     }
+
     if (state.ai.hasFolded) {
       settleByFold('player');
+
       return;
     }
+
     if (!bothSettled()) return;
 
     // If river betting is settled, go to showdown.
     if (state.stage === 'river') {
       settleShowdown();
+
       return;
     }
 
@@ -310,11 +338,12 @@ export function createEngine(deps: EngineDeps = {}): PokerEngine {
     dealStreet();
 
     // If betting can no longer happen (all-in matched), fast-forward to showdown.
-    while (bettingClosed() && (state.stage as Stage) !== 'river') {
+    while (bettingClosed() && !onRiver()) {
       resetActedThisRound();
       dealStreet();
     }
-    if (bettingClosed() && (state.stage as Stage) === 'river') {
+
+    if (bettingClosed() && onRiver()) {
       settleShowdown();
     }
   }
@@ -330,6 +359,7 @@ export function createEngine(deps: EngineDeps = {}): PokerEngine {
     const canBet = state.currentBet === 0 && me.chips > 0;
     const canRaise = state.currentBet > 0 && me.chips - toCall > 0;
     const canFold = !me.hasFolded;
+
     return {
       canCheck,
       canCall,
@@ -345,6 +375,7 @@ export function createEngine(deps: EngineDeps = {}): PokerEngine {
 
   function apply(actor: Actor, action: PlayerAction): boolean {
     if (state.handOver) return false;
+
     if (state.toAct !== actor) return false;
     const me = state[actor];
 
@@ -353,34 +384,44 @@ export function createEngine(deps: EngineDeps = {}): PokerEngine {
         me.hasFolded = true;
         log(actor, 'folds');
         state.toAct = null;
+
         return true;
       }
+
       case 'check': {
         if (state.currentBet !== me.committed) return false;
         log(actor, 'checks');
         passTurnAfterAction(actor);
+
         return true;
       }
+
       case 'call': {
         const toCall = state.currentBet - me.committed;
+
         if (toCall <= 0) return false;
         const amount = Math.min(toCall, me.chips);
         me.chips -= amount;
         me.committed += amount;
         state.pot += amount;
+
         if (me.chips === 0) me.isAllIn = true;
         log(actor, `calls ${amount}`);
         passTurnAfterAction(actor);
+
         return true;
       }
+
       case 'bet': {
         if (state.currentBet !== 0) return false;
+
         if (action.amount <= 0) return false;
         const amount = Math.min(action.amount, me.chips);
         me.chips -= amount;
         me.committed += amount;
         state.pot += amount;
         state.currentBet = me.committed;
+
         if (me.chips === 0) me.isAllIn = true;
         log(actor, `bets ${amount}`);
         // After a bet, opponent must respond
@@ -388,26 +429,33 @@ export function createEngine(deps: EngineDeps = {}): PokerEngine {
         actedThisRound.add(actor);
         actedThisRound.delete(other);
         state.toAct = other;
+
         return true;
       }
+
       case 'raise': {
         const toAmount = action.toAmount;
+
         if (toAmount <= state.currentBet) return false;
         const delta = toAmount - me.committed;
+
         if (delta > me.chips) return false;
         me.chips -= delta;
         me.committed += delta;
         state.pot += delta;
         state.currentBet = me.committed;
+
         if (me.chips === 0) me.isAllIn = true;
         log(actor, `raises to ${toAmount}`);
         const other: Actor = actor === 'player' ? 'ai' : 'player';
         actedThisRound.add(actor);
         actedThisRound.delete(other);
         state.toAct = other;
+
         return true;
       }
     }
+
     return false;
   }
 

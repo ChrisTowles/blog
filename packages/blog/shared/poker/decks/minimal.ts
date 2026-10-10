@@ -3,10 +3,15 @@ import type { DeckTheme } from './types';
 import { SUIT_PATHS, escapeSvgText, rankToLabel, suitColor } from './svg-helpers';
 
 const W = 250;
+
 const H = 350;
+
 const PALETTE = { red: '#ef4444', black: '#0f172a' };
+
 const SURFACE = '#ffffff';
+
 const BORDER = '#cbd5e1';
+
 const RADIUS = 22;
 
 function defs(): string {
@@ -22,6 +27,7 @@ function generateFace(card: Card): string {
   const color = suitColor(card.suit, PALETTE);
   const rank = escapeSvgText(rankToLabel(card.rank));
   const suitId = `suit-${card.suit}`;
+
   // Big rank top-left, big suit bottom-right. Clean and modern.
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}">${defs()}
     <rect x="0" y="0" width="${W}" height="${H}" rx="${RADIUS}" ry="${RADIUS}" fill="${SURFACE}" stroke="${BORDER}" stroke-width="1.5"/>

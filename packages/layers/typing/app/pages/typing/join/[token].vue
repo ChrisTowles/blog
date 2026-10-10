@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { TEST_IDS } from '~~/shared/test-ids';
+import { fetchErrorMessage } from '../../../utils/typing/fetch-error';
 
 definePageMeta({
   layout: 'typing',
@@ -16,16 +17,20 @@ useHead({
 });
 
 const route = useRoute();
+
 const token = computed(() => String(route.params.token ?? ''));
 
 const status = ref<'idle' | 'joining' | 'done' | 'error'>('idle');
+
 const error = ref<string | null>(null);
+
 const joinedGroupName = ref<string | null>(null);
 
 async function accept() {
   if (status.value === 'joining' || !token.value) return;
   status.value = 'joining';
   error.value = null;
+
   try {
     const result = await $fetch<{
       ok: true;
@@ -33,11 +38,11 @@ async function accept() {
       groupSlug: string | null;
       groupName: string | null;
     }>(`/api/typing/groups/${token.value}/join`, { method: 'POST' });
+
     joinedGroupName.value = result.groupName;
     status.value = 'done';
   } catch (e: unknown) {
-    const err = e as { statusMessage?: string; message?: string };
-    error.value = err.statusMessage ?? err.message ?? 'Failed to join group';
+    error.value = fetchErrorMessage(e, 'Failed to join group', { useMessage: true });
     status.value = 'error';
   }
 }

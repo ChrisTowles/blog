@@ -41,6 +41,7 @@ export async function cleanupDatabase() {
 
 export async function createTestUser(overrides?: Partial<typeof tables.users.$inferInsert>) {
   const db = useDrizzle();
+
   const [user] = await db
     .insert(tables.users)
     .values({
@@ -53,6 +54,7 @@ export async function createTestUser(overrides?: Partial<typeof tables.users.$in
       ...overrides,
     })
     .returning();
+
   return user!;
 }
 
@@ -61,6 +63,7 @@ export async function createTestChat(
   overrides?: Partial<typeof tables.chats.$inferInsert>,
 ) {
   const db = useDrizzle();
+
   const [chat] = await db
     .insert(tables.chats)
     .values({
@@ -69,6 +72,7 @@ export async function createTestChat(
       ...overrides,
     })
     .returning();
+
   return chat!;
 }
 
@@ -77,6 +81,7 @@ export async function createTestMessage(
   overrides?: Partial<typeof tables.messages.$inferInsert>,
 ) {
   const db = useDrizzle();
+
   const [message] = await db
     .insert(tables.messages)
     .values({
@@ -86,6 +91,7 @@ export async function createTestMessage(
       ...overrides,
     })
     .returning();
+
   return message!;
 }
 
@@ -94,6 +100,7 @@ export async function createTestLoanApplication(
   overrides?: Partial<typeof tables.loanApplications.$inferInsert>,
 ) {
   const db = useDrizzle();
+
   const [application] = await db
     .insert(tables.loanApplications)
     .values({
@@ -103,6 +110,7 @@ export async function createTestLoanApplication(
       ...overrides,
     })
     .returning();
+
   return application!;
 }
 
@@ -111,6 +119,7 @@ export async function createTestLoanReview(
   overrides?: Partial<typeof tables.loanReviews.$inferInsert>,
 ) {
   const db = useDrizzle();
+
   const [review] = await db
     .insert(tables.loanReviews)
     .values({
@@ -122,6 +131,7 @@ export async function createTestLoanReview(
       ...overrides,
     })
     .returning();
+
   return review!;
 }
 
@@ -130,6 +140,7 @@ export async function createTestLoanMessage(
   overrides?: Partial<typeof tables.loanMessages.$inferInsert>,
 ) {
   const db = useDrizzle();
+
   const [message] = await db
     .insert(tables.loanMessages)
     .values({
@@ -139,6 +150,7 @@ export async function createTestLoanMessage(
       ...overrides,
     })
     .returning();
+
   return message!;
 }
 
@@ -146,6 +158,7 @@ export async function createTestTypingGroup(
   overrides?: Partial<typeof tables.typingGroups.$inferInsert>,
 ) {
   const db = useDrizzle();
+
   const [group] = await db
     .insert(tables.typingGroups)
     .values({
@@ -155,6 +168,7 @@ export async function createTestTypingGroup(
       ...overrides,
     })
     .returning();
+
   return group!;
 }
 
@@ -164,6 +178,7 @@ export async function addTestGuardian(
   overrides?: Partial<typeof tables.typingGroupMembers.$inferInsert>,
 ) {
   const db = useDrizzle();
+
   const [member] = await db
     .insert(tables.typingGroupMembers)
     .values({
@@ -173,6 +188,7 @@ export async function addTestGuardian(
       ...overrides,
     })
     .returning();
+
   return member!;
 }
 
@@ -181,6 +197,7 @@ export async function createTestLearner(
   overrides?: Partial<typeof tables.typingLearners.$inferInsert>,
 ) {
   const db = useDrizzle();
+
   const [learner] = await db
     .insert(tables.typingLearners)
     .values({
@@ -190,6 +207,7 @@ export async function createTestLearner(
       ...overrides,
     })
     .returning();
+
   return learner!;
 }
 
@@ -198,6 +216,7 @@ export async function createTestWorkflow(
   overrides: Partial<{ name: string; description: string }> = {},
 ) {
   const db = useDrizzle();
+
   const [workflow] = await db
     .insert(tables.workflows)
     .values({
@@ -206,6 +225,7 @@ export async function createTestWorkflow(
       ownerId: userId,
     })
     .returning();
+
   return workflow!;
 }
 
@@ -215,6 +235,7 @@ export async function createTestWorkflowNode(
   overrides: Partial<{ label: string; type: string }> = {},
 ) {
   const db = useDrizzle();
+
   const [node] = await db
     .insert(tables.workflowNodes)
     .values({
@@ -228,5 +249,6 @@ export async function createTestWorkflowNode(
       inputMapping: '{}',
     })
     .returning();
+
   return node!;
 }

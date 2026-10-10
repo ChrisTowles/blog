@@ -2,6 +2,7 @@
 import { TEST_IDS } from '~~/shared/test-ids';
 
 const route = useRoute();
+
 const { loggedIn } = useUserSession();
 
 // Four items, on purpose. The nav used to carry ten, which needed ~1400px to

@@ -10,6 +10,7 @@ defineProps<{
 type Row = ReadonlyArray<{ key: string; w?: number; label?: string }>;
 
 const HOME_ROW_KEYS = new Set(['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';']);
+
 const NUB_KEYS = new Set(['f', 'j']);
 
 const ROWS: ReadonlyArray<Row> = [
@@ -83,6 +84,7 @@ const HOME_FINGERS: ReadonlyArray<{ finger: Finger; cols: 1 | 2 }> = [
 function cellWidthRem(cols: 1 | 2): string {
   // 2.25rem per key + 0.25rem inter-key gap absorbed for multi-col cells.
   const total = cols * 2.25 + (cols - 1) * 0.25;
+
   return `${total}rem`;
 }
 </script>
@@ -103,7 +105,7 @@ function cellWidthRem(cols: 1 | 2): string {
           HOME_ROW_KEYS.has(cell.key)
             ? 'border-2 border-slate-500 dark:border-slate-400'
             : 'border-slate-300 dark:border-slate-700',
-          FINGER_BG_KEY[FINGER_MAP[cell.key] ?? 'thumb'],
+          FINGER_BG_KEY[FINGER_MAP.get(cell.key) ?? 'thumb'],
           hint && hint.expected === cell.key
             ? 'scale-110 ring-4 ring-amber-400 dark:ring-amber-500'
             : 'opacity-90',

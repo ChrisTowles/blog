@@ -30,6 +30,7 @@ const engine = useTypingEngine({
       audio.playFanfare();
       audio.playEncouragement();
     }
+
     emit('complete', result);
   },
 });
@@ -43,6 +44,7 @@ const { wrongFlash, pressTick, streak, tierUp } = useTypingFeedback(engine, audi
     // Speak the expected letter so a learner who can't read the cue
     // hears what they need to press.
     const expected = engine.nextChar.value;
+
     if (expected) void audio.play(expected.toLowerCase());
   },
 });
@@ -69,18 +71,24 @@ function onKeydown(e: KeyboardEvent) {
   // Prevent the browser's default tab navigation while running.
   if (e.key === 'Tab') {
     e.preventDefault();
+
     return;
   }
+
   if (e.key === 'Backspace') {
     e.preventDefault();
     engine.feed({ key: 'Backspace', at: Date.now() });
+
     return;
   }
+
   if (e.key === 'Escape') {
     e.preventDefault();
     engine.cancel();
+
     return;
   }
+
   if (e.key.length === 1) {
     e.preventDefault();
     engine.feed({ key: e.key, at: Date.now() });
@@ -91,28 +99,38 @@ function tileClass(idx: number) {
   if (idx < engine.cursor.value) {
     return 'bg-emerald-300 text-emerald-950 dark:bg-emerald-500 dark:text-emerald-50';
   }
+
   if (idx === engine.cursor.value) {
     return wrongFlash.value
       ? 'bg-rose-400 text-white ring-4 ring-rose-500 animate-pulse'
       : 'bg-amber-300 text-amber-950 ring-4 ring-amber-400 dark:bg-amber-400 dark:text-amber-950 tile-current';
   }
+
   return 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400';
 }
 
 const wpmRounded = computed(() => Math.round(engine.wpm.value));
+
 const accuracyPct = computed(() => Math.round(engine.accuracy.value * 100));
+
 const progressPct = computed(() => {
   if (props.text.length === 0) return 0;
+
   return Math.min(100, Math.round((engine.cursor.value / props.text.length) * 100));
 });
+
 const lessonChars = computed(() => Array.from(props.text));
+
 const hasSpace = computed(() => props.text.includes(' '));
 
 // Rocket mood: bobs while streaking, dips on wrong, blasts off when done.
 const rocketMood = computed<'idle' | 'happy' | 'oops' | 'launch'>(() => {
   if (engine.state.value === 'done') return 'launch';
+
   if (wrongFlash.value) return 'oops';
+
   if (streak.value >= 3) return 'happy';
+
   return 'idle';
 });
 </script>

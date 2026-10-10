@@ -8,6 +8,7 @@ export default defineOAuthGoogleEventHandler({
     let user = await db.query.users.findFirst({
       where: (u, { eq }) => and(eq(u.provider, 'google'), eq(u.providerId, googleUser.sub)),
     });
+
     if (!user) {
       [user] = await db
         .insert(tables.users)
@@ -39,10 +40,12 @@ export default defineOAuthGoogleEventHandler({
     // cookie instead. Falls back to `/` for direct visits.
     const redirectTo = getCookie(event, 'oauth_redirect') || '/';
     deleteCookie(event, 'oauth_redirect');
+
     return sendRedirect(event, redirectTo);
   },
   onError(event, error) {
     log.error({ tag: 'auth', message: 'Google OAuth error', error: String(error) });
+
     return sendRedirect(event, '/login');
   },
 });

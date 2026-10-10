@@ -15,11 +15,15 @@ import { SUITS, type Card, type Suit } from '../packages/blog/app/utils/poker/ty
 import { cardCode } from '../packages/blog/shared/poker/decks/types';
 
 const __filename = fileURLToPath(import.meta.url);
+
 const __dirname = dirname(__filename);
+
 const REPO_ROOT = resolve(__dirname, '..');
+
 const PORTRAITS_ROOT = resolve(REPO_ROOT, 'packages/blog/public/poker/decks');
 
 type FaceRank = 'J' | 'Q' | 'K';
+
 const FACE_RANKS_NUMERIC: Record<FaceRank, 11 | 12 | 13> = { J: 11, Q: 12, K: 13 };
 
 interface DeckStyle {
@@ -71,21 +75,24 @@ const RANK_PERSONA: Record<FaceRank, { royal: string; attire: string; pose: stri
   },
 };
 
-const DECK_STYLES: Record<string, DeckStyle> = {
-  classic: {
-    id: 'classic',
-    baseStyle:
-      'Painterly classical playing-card portrait in the style of vintage tarot cards and ' +
-      'medieval illuminated manuscripts. Rich saturated colors, hand-painted feel, soft lighting, ' +
-      'subtle paper texture. Composition tight to the figure, head and shoulders prominent.',
-    background:
-      'Plain ivory parchment background with a subtle filigree border vignette in the suit color. ' +
-      'No additional scene elements behind the figure.',
-    guards:
-      'NO text, NO letters, NO numbers, NO playing-card frame, NO suit symbols visible in the image. ' +
-      'No watermarks. Vertical portrait composition. The figure must fully fit within the frame.',
-  },
-};
+const DECK_STYLES = new Map<string, DeckStyle>([
+  [
+    'classic',
+    {
+      id: 'classic',
+      baseStyle:
+        'Painterly classical playing-card portrait in the style of vintage tarot cards and ' +
+        'medieval illuminated manuscripts. Rich saturated colors, hand-painted feel, soft lighting, ' +
+        'subtle paper texture. Composition tight to the figure, head and shoulders prominent.',
+      background:
+        'Plain ivory parchment background with a subtle filigree border vignette in the suit color. ' +
+        'No additional scene elements behind the figure.',
+      guards:
+        'NO text, NO letters, NO numbers, NO playing-card frame, NO suit symbols visible in the image. ' +
+        'No watermarks. Vertical portrait composition. The figure must fully fit within the frame.',
+    },
+  ],
+]);
 
 interface PortraitJob {
   deckId: string;
@@ -99,6 +106,7 @@ interface PortraitJob {
 function buildPrompt(deck: DeckStyle, suit: Suit, rank: FaceRank): string {
   const t = SUIT_THEME[suit];
   const r = RANK_PERSONA[rank];
+
   return [
     `${deck.baseStyle}`,
     `Subject: a ${r.royal} representing the ${rank} of ${t.name}, ${r.attire}.`,
@@ -114,16 +122,20 @@ function buildPrompt(deck: DeckStyle, suit: Suit, rank: FaceRank): string {
 function buildJobs(deckIds: string[], cards: string[] | null): PortraitJob[] {
   const FACE_RANKS: FaceRank[] = ['J', 'Q', 'K'];
   const jobs: PortraitJob[] = [];
+
   for (const deckId of deckIds) {
-    const deck = DECK_STYLES[deckId];
+    const deck = DECK_STYLES.get(deckId);
+
     if (!deck) {
       consola.warn(`No portrait style defined for deck "${deckId}" — skipping.`);
       continue;
     }
+
     for (const suit of SUITS) {
       for (const rank of FACE_RANKS) {
         const card: Card = { rank: FACE_RANKS_NUMERIC[rank], suit };
         const code = cardCode(card);
+
         if (cards && !cards.includes(code)) continue;
         jobs.push({
           deckId,
@@ -136,6 +148,7 @@ function buildJobs(deckIds: string[], cards: string[] | null): PortraitJob[] {
       }
     }
   }
+
   return jobs;
 }
 
@@ -150,13 +163,17 @@ async function generatePortrait(ai: GoogleGenAI, job: PortraitJob, model: string
       },
     },
   });
+
   const parts = response.candidates?.[0]?.content?.parts ?? [];
+
   const imagePart = parts.find((p: { inlineData?: { mimeType?: string; data?: string } }) =>
     p.inlineData?.mimeType?.startsWith('image/'),
   );
+
   if (!imagePart?.inlineData?.data) {
     throw new Error(`No image data returned for ${job.deckId}/${job.cardCode}`);
   }
+
   const raw = Buffer.from(imagePart.inlineData.data, 'base64');
   await mkdir(dirname(job.outputPath), { recursive: true });
   // Keep the high-res PNG as the canonical archive; SVG embedding is done
@@ -197,7 +214,7 @@ const cmd = defineCommand({
     },
   },
   async run({ args }) {
-    const allDecks = Object.keys(DECK_STYLES);
+    const allDecks = [...DECK_STYLES.keys()];
     const deckIds = args.deck ? args.deck.split(',').map((s) => s.trim()) : allDecks;
     const cardFilter = args.cards ? args.cards.split(',').map((s) => s.trim()) : null;
     const jobs = buildJobs(deckIds, cardFilter);
@@ -208,7 +225,9 @@ const cmd = defineCommand({
       for (const j of jobs) {
         consola.info(`${j.deckId}/${j.cardCode}\n  → ${j.outputPath}\n  prompt: ${j.prompt}`);
       }
+
       consola.box('Dry run — no API calls made');
+
       return;
     }
 
@@ -222,6 +241,7 @@ const cmd = defineCommand({
     let made = 0;
     let skipped = 0;
     let failed = 0;
+
     for (const job of jobs) {
       if (!args.force) {
         try {
@@ -233,6 +253,7 @@ const cmd = defineCommand({
           // not present — fall through to generate
         }
       }
+
       try {
         await generatePortrait(ai, job, args.model);
         made++;

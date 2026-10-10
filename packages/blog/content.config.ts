@@ -1,6 +1,7 @@
 import { defineContentConfig, defineCollection, z } from '@nuxt/content';
 
 const variantEnum = z.enum(['solid', 'outline', 'subtle', 'soft', 'ghost', 'link']);
+
 const colorEnum = z.enum([
   'primary',
   'secondary',
@@ -10,6 +11,7 @@ const colorEnum = z.enum([
   'success',
   'info',
 ]);
+
 const sizeEnum = z.enum(['xs', 'sm', 'md', 'lg', 'xl']);
 
 const baseSchema = {

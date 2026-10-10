@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { TEST_IDS } from '~~/shared/test-ids';
+import { fetchErrorMessage } from '../../../utils/typing/fetch-error';
 
 definePageMeta({
   layout: 'typing',
@@ -16,14 +17,19 @@ useHead({
 });
 
 const { active } = useActiveLearner();
+
 const router = useRouter();
 
 const tab = ref<'manual' | 'image'>('manual');
+
 const extracted = ref<string[]>([]);
+
 const error = ref<string | null>(null);
+
 const saving = ref(false);
 
 const today = new Date().toISOString().slice(0, 10);
+
 const weekOf = ref(today);
 
 function onExtracted(words: string[]) {
@@ -33,11 +39,15 @@ function onExtracted(words: string[]) {
 
 async function save(words: string[], source: 'paste' | 'type' | 'image' = 'type') {
   error.value = null;
+
   if (!active.value) {
     error.value = 'Pick a learner first';
+
     return;
   }
+
   saving.value = true;
+
   try {
     await $fetch('/api/typing/spelling', {
       method: 'POST',
@@ -50,8 +60,7 @@ async function save(words: string[], source: 'paste' | 'type' | 'image' = 'type'
     });
     await router.push('/typing/spelling');
   } catch (e: unknown) {
-    const err = e as { statusMessage?: string };
-    error.value = err.statusMessage ?? 'Save failed';
+    error.value = fetchErrorMessage(e, 'Save failed');
   } finally {
     saving.value = false;
   }

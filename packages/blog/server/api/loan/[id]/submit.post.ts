@@ -27,14 +27,17 @@ function sendReviewSSE(
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event);
+
   if (!session.user?.id) {
     throw createError({ statusCode: 401, statusMessage: 'Login required' });
   }
+
   const userId = session.user.id;
 
   const { id } = await getValidatedRouterParams(event, z.object({ id: z.string() }).parse);
 
   const db = useDrizzle();
+
   const application = await db.query.loanApplications.findFirst({
     where: (app, { eq: e }) => and(e(app.id, id), e(app.userId, userId)),
   });
@@ -43,7 +46,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Application not found' });
   }
 
-  const appData = application.applicationData as LoanApplicationData;
+  const appData: LoanApplicationData = application.applicationData ?? {};
+
   if (!isApplicationComplete(appData)) {
     throw createError({ statusCode: 400, statusMessage: 'Application is incomplete' });
   }
@@ -72,7 +76,8 @@ export default defineEventHandler(async (event) => {
           const systemPrompt = loadApproverPrompt(reviewer);
           let fullText = '';
 
-          const reviewModel = config.public.model as string;
+          const reviewModel = config.public.model;
+
           const streamResponse = withAnthropicStreamSpan(
             'chat',
             reviewModel,
@@ -128,12 +133,14 @@ export default defineEventHandler(async (event) => {
         }
 
         let overallDecision: ReviewDecision = 'approved';
+
         if (decisions.includes('denied')) overallDecision = 'denied';
         else if (decisions.includes('flagged')) overallDecision = 'flagged';
 
         // Status stays 'reviewing' — AI recommendation is advisory, human makes final decision
 
         const summaryParts: string[] = [];
+
         if (overallDecision === 'approved')
           summaryParts.push('All reviewers approved the application.');
         else if (overallDecision === 'denied')
@@ -161,5 +168,6 @@ export default defineEventHandler(async (event) => {
   setHeader(event, 'Content-Type', 'text/event-stream');
   setHeader(event, 'Cache-Control', 'no-cache');
   setHeader(event, 'Connection', 'keep-alive');
+
   return stream;
 });

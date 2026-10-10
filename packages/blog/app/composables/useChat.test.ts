@@ -13,13 +13,14 @@ import type {
   CodeExecutionPart,
   FilePart,
 } from '~~/shared/chat-types';
+import type { JsonObject } from '~~/shared/json-types';
 
 // ── Extracted pure logic from useChat ──────────────────────────────
 
 interface ToolInvocation {
   toolCallId: string;
   toolName: string;
-  args: Record<string, unknown>;
+  args: JsonObject;
   state: 'pending' | 'complete';
   result?: unknown;
 }
@@ -38,13 +39,14 @@ interface CodeExecution {
  * Parse SSE lines from a buffer, extracting complete `data: {...}` events.
  * Returns parsed events and any remaining incomplete buffer.
  */
-function parseSSELines(buffer: string): { events: SSEEvent[]; remaining: string } {
+function parseSSELines(buffer: string) {
   const lines = buffer.split('\n');
   const remaining = lines.pop() || '';
   const events: SSEEvent[] = [];
 
   for (const line of lines) {
     if (!line.startsWith('data: ')) continue;
+
     try {
       events.push(JSON.parse(line.slice(6)));
     } catch {
@@ -61,11 +63,13 @@ function parseSSELines(buffer: string): { events: SSEEvent[]; remaining: string 
  */
 function processSSEEvents(events: SSEEvent[]) {
   let currentTextPart: { type: 'text'; text: string } | null = null;
+
   let currentReasoningPart: {
     type: 'reasoning';
     text: string;
     state: 'streaming' | 'done';
   } | null = null;
+
   const toolInvocations: ToolInvocation[] = [];
   const codeExecutions: CodeExecution[] = [];
   let titleUpdated = false;
@@ -75,11 +79,13 @@ function processSSEEvents(events: SSEEvent[]) {
       if (!currentTextPart) {
         currentTextPart = { type: 'text', text: '' };
       }
+
       currentTextPart.text += event.text;
     } else if (event.type === 'reasoning') {
       if (!currentReasoningPart) {
         currentReasoningPart = { type: 'reasoning', text: '', state: 'streaming' };
       }
+
       currentReasoningPart.text += event.text;
     } else if (event.type === 'tool_start') {
       toolInvocations.push({
@@ -90,6 +96,7 @@ function processSSEEvents(events: SSEEvent[]) {
       });
     } else if (event.type === 'tool_end') {
       const invocation = toolInvocations.find((t) => t.toolCallId === event.toolCallId);
+
       if (invocation) {
         invocation.state = 'complete';
         invocation.result = event.result;
@@ -106,6 +113,7 @@ function processSSEEvents(events: SSEEvent[]) {
       });
     } else if (event.type === 'code_result') {
       const lastExecution = codeExecutions[codeExecutions.length - 1];
+
       if (lastExecution) {
         lastExecution.stdout = event.stdout;
         lastExecution.stderr = event.stderr;
@@ -142,6 +150,7 @@ function assembleMessageParts(
   executions: CodeExecution[],
 ): MessagePart[] {
   const parts: MessagePart[] = [];
+
   if (reasoning) parts.push(reasoning);
 
   for (const tool of tools) {
@@ -322,6 +331,7 @@ describe('processSSEEvents', () => {
       mediaType: 'image/png',
       url: '/api/artifacts/files/f-1',
     };
+
     const result = processSSEEvents([
       { type: 'code_start', code: 'plot()', language: 'python' },
       { type: 'code_result', stdout: '', stderr: '', exitCode: 0, files: [file] },
@@ -396,9 +406,9 @@ describe('assembleMessageParts', () => {
 
     expect(parts).toHaveLength(2);
     expect(parts[0]!.type).toBe('tool-use');
-    expect((parts[0] as ToolUsePart).toolName).toBe('getWeather');
+    expect(parts[0]).toMatchObject({ toolName: 'getWeather' });
     expect(parts[1]!.type).toBe('tool-result');
-    expect((parts[1] as ToolResultPart).result).toEqual({ temp: 72 });
+    expect(parts[1]).toMatchObject({ result: { temp: 72 } });
   });
 
   it('adds only tool-use for pending tools (no result)', () => {
@@ -434,7 +444,7 @@ describe('assembleMessageParts', () => {
 
     expect(parts).toHaveLength(1);
     expect(parts[0]!.type).toBe('code-execution');
-    expect((parts[0] as CodeExecutionPart).stdout).toBe('42\n');
+    expect(parts[0]).toMatchObject({ stdout: '42\n' });
   });
 
   it('includes files after code execution parts', () => {
@@ -445,6 +455,7 @@ describe('assembleMessageParts', () => {
       mediaType: 'image/png',
       url: '/api/artifacts/files/f-1',
     };
+
     const executions: CodeExecution[] = [
       {
         code: 'plot()',
@@ -474,6 +485,7 @@ describe('assembleMessageParts', () => {
         result: { total: 17 },
       },
     ];
+
     const executions: CodeExecution[] = [
       {
         code: 'x = 1',
@@ -522,6 +534,7 @@ describe('full streaming sequence', () => {
     ];
 
     const state = processSSEEvents(events);
+
     const parts = assembleMessageParts(
       state.reasoningPart,
       state.textPart,
@@ -545,6 +558,7 @@ describe('full streaming sequence', () => {
     ];
 
     const state = processSSEEvents(events);
+
     const parts = assembleMessageParts(
       state.reasoningPart,
       state.textPart,
@@ -554,7 +568,7 @@ describe('full streaming sequence', () => {
 
     expect(parts).toHaveLength(1);
     expect(parts[0]!.type).toBe('text');
-    expect((parts[0] as { text: string }).text).toBe('Hello! How can I help?');
+    expect(parts[0]).toMatchObject({ text: 'Hello! How can I help?' });
   });
 
   it('processes multiple tool invocations in one turn', () => {
@@ -609,6 +623,7 @@ describe('full streaming sequence', () => {
 describe('user message construction', () => {
   it('creates user message with text part', () => {
     const text = 'What is the weather?';
+
     const userMessage: ChatMessage = {
       id: 'test-uuid',
       role: 'user',

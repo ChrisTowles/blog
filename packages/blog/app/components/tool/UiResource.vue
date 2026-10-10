@@ -16,21 +16,26 @@ import {
   PostMessageTransport,
   buildAllowAttribute,
   type McpUiResourceCsp,
-  type McpUiResourcePermissions,
   type McpUiMessageRequest,
 } from '@modelcontextprotocol/ext-apps/app-bridge';
+import { z } from 'zod';
 import type { UiResourcePart, HostContextStatus } from '~~/shared/chat-types';
 import { TEST_IDS } from '~~/shared/test-ids';
 
-type StructuredRecord = Record<string, unknown>;
+const textField = z.string().catch('');
+
+const fallbackFields = z.object({
+  answer: textField,
+  message: textField,
+  title: textField,
+  text: textField,
+});
 
 /** Pick a human-readable fallback string from the structuredContent payload. */
-function fallbackDisplayText(sc: StructuredRecord): string {
-  for (const key of ['answer', 'message', 'title', 'text']) {
-    const value = sc[key];
-    if (typeof value === 'string' && value.length > 0) return value;
-  }
-  return '';
+function fallbackDisplayText(sc: UiResourcePart['structuredContent']): string {
+  const { answer, message, title, text } = fallbackFields.parse(sc);
+
+  return answer || message || title || text;
 }
 
 const props = defineProps<{
@@ -52,11 +57,15 @@ const emit = defineEmits<{
 }>();
 
 const runtimeConfig = useRuntimeConfig();
-const sandboxBaseUrl = runtimeConfig.public.mcpSandboxUrl as string;
+
+const sandboxBaseUrl = runtimeConfig.public.mcpSandboxUrl;
+
 const sandboxOrigin = computed(() => new URL(sandboxBaseUrl, window.location.href).origin);
 
 const iframeRef = ref<HTMLIFrameElement | null>(null);
+
 const status = ref<'pending' | 'ready' | 'error' | 'unreachable'>('pending');
+
 const errorMessage = ref<string>('');
 
 /** Exposed for tests — validates origin + drops silently on mismatch. */
@@ -67,11 +76,11 @@ function isOriginAllowed(origin: string): boolean {
 defineExpose({ isOriginAllowed });
 
 let appBridge: AppBridge | null = null;
+
 let cleanupFns: Array<() => void> = [];
 
-const structured = computed<StructuredRecord>(() => {
-  return (props.part.structuredContent ?? {}) as StructuredRecord;
-});
+const structured = computed(() => props.part.structuredContent ?? {});
+
 const fallbackText = computed(() => fallbackDisplayText(structured.value));
 
 /**
@@ -81,6 +90,7 @@ const fallbackText = computed(() => fallbackDisplayText(structured.value));
 function waitForSandboxReady(iframe: HTMLIFrameElement, allowedOrigin: string): Promise<void> {
   return new Promise((resolve, reject) => {
     let settled = false;
+
     const timeout = setTimeout(() => {
       if (settled) return;
       settled = true;
@@ -91,15 +101,19 @@ function waitForSandboxReady(iframe: HTMLIFrameElement, allowedOrigin: string): 
     const listener = (event: MessageEvent) => {
       // Origin validation — drop silently on mismatch.
       if (event.origin !== allowedOrigin) return;
+
       if (event.source !== iframe.contentWindow) return;
-      const data = event.data as { method?: string } | undefined;
+      const data: { method?: string } | undefined = event.data;
+
       if (data?.method !== 'ui/notifications/sandbox-proxy-ready') return;
+
       if (settled) return;
       settled = true;
       clearTimeout(timeout);
       window.removeEventListener('message', listener);
       resolve();
     };
+
     window.addEventListener('message', listener);
     cleanupFns.push(() => {
       window.removeEventListener('message', listener);
@@ -110,15 +124,16 @@ function waitForSandboxReady(iframe: HTMLIFrameElement, allowedOrigin: string): 
 
 function resolveResourceEndpoint(uri: string): string {
   if (uri.startsWith('ui://echo-')) return `/mcp/echo/resource?uri=${encodeURIComponent(uri)}`;
+
   return `/mcp/aviation/resource?uri=${encodeURIComponent(uri)}`;
 }
 
 async function resolveHtml(): Promise<string> {
   if (props.html) return props.html;
   const endpoint = resolveResourceEndpoint(props.part.uiResourceUri);
+
   try {
-    const text = await $fetch<string>(endpoint, { responseType: 'text' });
-    return typeof text === 'string' ? text : '';
+    return await $fetch<string>(endpoint, { responseType: 'text' });
   } catch {
     return '';
   }
@@ -129,10 +144,12 @@ async function boot(iframe: HTMLIFrameElement): Promise<void> {
   const permissions = props.part.permissions;
 
   iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms');
-  const allow = buildAllowAttribute(permissions as McpUiResourcePermissions | undefined);
+  const allow = buildAllowAttribute(permissions);
+
   if (allow) iframe.setAttribute('allow', allow);
 
   const src = new URL(sandboxBaseUrl, window.location.href);
+
   if (csp) src.searchParams.set('csp', JSON.stringify(csp));
 
   const readyPromise = waitForSandboxReady(iframe, sandboxOrigin.value);
@@ -143,13 +160,16 @@ async function boot(iframe: HTMLIFrameElement): Promise<void> {
   } catch (e) {
     status.value = 'unreachable';
     errorMessage.value = e instanceof Error ? e.message : String(e);
+
     return;
   }
 
   const win = iframe.contentWindow;
+
   if (!win) {
     status.value = 'error';
     errorMessage.value = 'iframe has no contentWindow';
+
     return;
   }
 
@@ -158,7 +178,7 @@ async function boot(iframe: HTMLIFrameElement): Promise<void> {
     // undefined where the example uses `serverInfo.client`; the basic-host
     // passes the actual MCP client so the bridge can proxy arbitrary tools,
     // but we only use it for sandbox-resource + tool-input/result forwarding.
-    undefined as unknown as import('@modelcontextprotocol/sdk/client/index.js').Client,
+    null,
     { name: 'blog-chat-host', version: '0.1.0' },
     {
       openLinks: {},
@@ -182,16 +202,17 @@ async function boot(iframe: HTMLIFrameElement): Promise<void> {
   // before connect so early inbound requests aren't missed).
   appBridge.onmessage = async (params: McpUiMessageRequest['params']) => {
     const contentArr = params?.content ?? [];
-    const textBlock = contentArr.find(
-      (b): b is { type: 'text'; text: string } =>
-        !!b && typeof b === 'object' && 'type' in b && b.type === 'text' && 'text' in b,
-    );
+
+    const textBlock = contentArr.find((b) => b.type === 'text');
+
     if (textBlock?.text) emit('followup', textBlock.text);
+
     return {};
   };
 
   appBridge.onsizechange = async ({ width, height }) => {
     if (height !== undefined) iframe.style.height = `${height}px`;
+
     if (width !== undefined) iframe.style.minWidth = `min(${width}px, 100%)`;
   };
 
@@ -212,10 +233,10 @@ async function boot(iframe: HTMLIFrameElement): Promise<void> {
   // Proxies, so we deep-clone to plain JSON first. (Previously `csp` was
   // always undefined for fresh tool calls, so this never surfaced; now that
   // ask_aviation ships a real CSP per SEP-1865, we must scrub it.)
-  const plainCsp = csp ? (JSON.parse(JSON.stringify(csp)) as typeof csp) : undefined;
-  const plainPermissions = permissions
-    ? (JSON.parse(JSON.stringify(permissions)) as typeof permissions)
-    : undefined;
+  const plainCsp = csp ? plainClone(csp) : undefined;
+
+  const plainPermissions = permissions ? plainClone(permissions) : undefined;
+
   await appBridge.sendSandboxResourceReady({
     html,
     csp: plainCsp,
@@ -227,6 +248,7 @@ async function boot(iframe: HTMLIFrameElement): Promise<void> {
   } catch (e) {
     status.value = 'error';
     errorMessage.value = e instanceof Error ? e.message : String(e);
+
     return;
   }
 
@@ -241,6 +263,10 @@ async function boot(iframe: HTMLIFrameElement): Promise<void> {
   });
 
   status.value = 'ready';
+}
+
+function plainClone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value));
 }
 
 function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
@@ -263,13 +289,15 @@ watch(
     appBridge.sendHostContextChange({
       // biome-ignore lint: local extension keyed under `status`, not in the SEP-1865 shape.
       status: next ? 'streaming' : 'idle',
-    } as Parameters<AppBridge['sendHostContextChange']>[0]);
+    });
   },
 );
 
 onMounted(async () => {
   await nextTick();
+
   if (!iframeRef.value) return;
+
   try {
     await boot(iframeRef.value);
   } catch (e) {
@@ -281,12 +309,14 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   for (const fn of cleanupFns) fn();
   cleanupFns = [];
+
   if (appBridge) {
     try {
       appBridge.close();
     } catch {
       // swallow
     }
+
     appBridge = null;
   }
 });

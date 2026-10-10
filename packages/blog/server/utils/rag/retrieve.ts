@@ -38,7 +38,7 @@ const DEFAULT_OPTIONS: Required<RetrieveOptions> = {
   skipRerank: false,
 };
 
-interface ChunkCandidate {
+type ChunkCandidate = {
   id: string;
   documentId: string;
   content: string;
@@ -47,7 +47,7 @@ interface ChunkCandidate {
   documentTitle: string;
   documentUrl: string;
   documentSlug: string;
-}
+};
 
 /**
  * Semantic search using pgvector cosine similarity
@@ -62,7 +62,7 @@ async function semanticSearch(
     // Use raw SQL for pgvector cosine distance operator
     const embeddingStr = `[${queryEmbedding.join(',')}]`;
 
-    const results = await db.execute(sql`
+    const results = await db.execute<ChunkCandidate & { distance: number }>(sql`
         SELECT
             dc.id,
             dc."documentId",
@@ -84,9 +84,10 @@ async function semanticSearch(
       return [];
     }
 
-    return results.rows as unknown as Array<ChunkCandidate & { distance: number }>;
+    return results.rows;
   } catch {
     log.error('rag', 'Semantic search failed');
+
     return [];
   }
 }
@@ -101,7 +102,7 @@ async function bm25Search(
   try {
     const db = useDrizzle();
 
-    const results = await db.execute(sql`
+    const results = await db.execute<ChunkCandidate & { rank: number }>(sql`
         SELECT
             dc.id,
             dc."documentId",
@@ -123,9 +124,10 @@ async function bm25Search(
       return [];
     }
 
-    return results.rows as unknown as Array<ChunkCandidate & { rank: number }>;
+    return results.rows;
   } catch {
     log.error('rag', 'BM25 search failed');
+
     return [];
   }
 }
@@ -206,12 +208,14 @@ export async function retrieveRAG(
       try {
         // Step 1: Generate query embedding
         let queryEmbedding: number[];
+
         try {
           queryEmbedding = await embedText(query);
         } catch {
           log.error('rag', 'Failed to generate embedding');
           span.setAttribute('error.type', 'EmbeddingError');
           span.setStatus({ code: SpanStatusCode.ERROR, message: 'embedding failed' });
+
           return [];
         }
 
@@ -220,6 +224,7 @@ export async function retrieveRAG(
           semanticSearch(queryEmbedding, candidateCount),
           bm25Search(query, candidateCount),
         ]);
+
         span.setAttributes({
           'rag.semantic.candidates': semanticResults.length,
           'rag.bm25.candidates': bm25Results.length,
@@ -232,11 +237,13 @@ export async function retrieveRAG(
           opts.semanticWeight,
           opts.bm25Weight,
         );
+
         span.setAttribute('rag.fused.count', fusedResults.length);
 
         // If no results, return empty
         if (fusedResults.length === 0) {
           span.setAttribute('rag.results.count', 0);
+
           return [];
         }
 
@@ -248,6 +255,7 @@ export async function retrieveRAG(
         } else {
           // Prepare documents for reranking
           const topCandidates = fusedResults.slice(0, Math.min(20, fusedResults.length));
+
           const documentsForRerank = topCandidates.map(
             (c) => `${c.content}\n\nContext: ${c.contextualContent}`,
           );

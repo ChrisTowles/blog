@@ -12,6 +12,7 @@ export default defineEventHandler(async (event) => {
   const db = useDrizzle();
 
   const conditions = [eq(tables.workflows.isPublished, 1)];
+
   if (session.user) {
     conditions.push(eq(tables.workflows.ownerId, session.user.id));
   }
