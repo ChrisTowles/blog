@@ -22,6 +22,7 @@ export default defineEventHandler(async (event) => {
 
   // Deduplicate by document - keep highest scoring chunk per document
   const seenSlugs = new Map<string, (typeof dedupedResults)[number]>();
+
   const dedupedResults: Array<{
     title: string;
     url: string;
@@ -45,6 +46,7 @@ export default defineEventHandler(async (event) => {
     };
 
     const existing = seenSlugs.get(r.documentSlug);
+
     if (!existing) {
       seenSlugs.set(r.documentSlug, entry);
       dedupedResults.push(entry);

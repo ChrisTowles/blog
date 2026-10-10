@@ -40,7 +40,7 @@ export async function generateContextualDescription(
 ): Promise<string> {
   const client = getAnthropicClient();
   const config = useRuntimeConfig();
-  const model = config.public.model_fast as string;
+  const model = config.public.model_fast;
 
   const response = await withAnthropicSpan(
     'chat',
@@ -77,6 +77,7 @@ export async function generateContextualDescription(
   );
 
   const textBlock = response.content.find((c) => c.type === 'text');
+
   return textBlock?.text ?? '';
 }
 
@@ -85,6 +86,7 @@ export async function generateContextualDescription(
  */
 export async function ingestBlogPosts(): Promise<IngestResult> {
   const db = useDrizzle();
+
   const result: IngestResult = {
     documentsProcessed: 0,
     documentsSkipped: 0,
@@ -100,6 +102,7 @@ export async function ingestBlogPosts(): Promise<IngestResult> {
     files = (await readdir(blogDir)).filter((f) => f.endsWith('.md'));
   } catch (error) {
     result.errors.push(`Failed to read blog directory: ${error}`);
+
     return result;
   }
 
@@ -143,6 +146,7 @@ export async function ingestBlogPosts(): Promise<IngestResult> {
         .returning();
 
       const doc = insertedDocs[0];
+
       if (!doc) {
         throw new Error(`Failed to insert document: ${parsed.slug}`);
       }
@@ -211,17 +215,20 @@ export async function ingestDocument(slug: string): Promise<IngestResult> {
     files = (await readdir(blogDir)).filter((f) => f.endsWith('.md'));
   } catch (error) {
     result.errors.push(`Failed to read blog directory: ${error}`);
+
     return result;
   }
 
   // Find file matching slug
   const file = files.find((f) => {
     const parsed = parseBlogMarkdown('', f);
+
     return parsed.slug === slug;
   });
 
   if (!file) {
     result.errors.push(`Document not found: ${slug}`);
+
     return result;
   }
 

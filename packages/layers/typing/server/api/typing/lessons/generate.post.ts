@@ -18,21 +18,31 @@ const bodySchema = z.object({
 });
 
 type Bucket = { count: number; resetAt: number };
+
 const RATE_LIMITS = { anon: 10, authed: 30 } as const;
+
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+type BucketTake = { ok: boolean; remaining: number };
+
 const buckets = new Map<string, Bucket>();
 
-function takeFromBucket(key: string, limit: number): { ok: boolean; remaining: number } {
+function takeFromBucket(key: string, limit: number): BucketTake {
   const now = Date.now();
   const existing = buckets.get(key);
+
   if (!existing || existing.resetAt < now) {
     buckets.set(key, { count: 1, resetAt: now + DAY_MS });
+
     return { ok: true, remaining: limit - 1 };
   }
+
   if (existing.count >= limit) {
     return { ok: false, remaining: 0 };
   }
+
   existing.count++;
+
   return { ok: true, remaining: limit - existing.count };
 }
 
@@ -46,15 +56,18 @@ export default defineEventHandler(async (event) => {
     getRequestHeader(event, 'cf-connecting-ip') ??
     getRequestHeader(event, 'x-forwarded-for') ??
     'unknown';
+
   const key = isAuthed ? `user:${userId}` : `ip:${ip}`;
   const limit = isAuthed ? RATE_LIMITS.authed : RATE_LIMITS.anon;
   const taken = takeFromBucket(key, limit);
+
   if (!taken.ok) {
     throw createError({ statusCode: 429, statusMessage: 'Daily generation limit reached' });
   }
 
   const body = await readValidatedBody(event, bodySchema.parse);
   const result = await generateLesson(body);
+
   if (!result.ok) {
     throw createError({ statusCode: 422, statusMessage: result.reason });
   }
@@ -62,13 +75,17 @@ export default defineEventHandler(async (event) => {
   // Persist as `topic` lesson if we have a DB. Even if the DB is unset
   // we still return the generated text for ephemeral runs.
   let savedLesson: LessonRow | null = null;
+
   if (process.env.DATABASE_URL) {
     try {
       const db = useDrizzle();
+
       const slug = `topic-${body.stage}-${Date.now().toString(36)}-${Math.random()
         .toString(36)
         .slice(2, 8)}`;
+
       const title = `${body.topic} (stage ${body.stage})`;
+
       const [row] = await db
         .insert(tables.typingLessons)
         .values({
@@ -83,6 +100,7 @@ export default defineEventHandler(async (event) => {
           generatedBy: 'ai',
         })
         .returning();
+
       if (row) {
         savedLesson = {
           id: row.id,

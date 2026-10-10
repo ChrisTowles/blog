@@ -149,6 +149,7 @@ async function executeSearchBlogContent(query: string) {
     };
   } catch (error) {
     console.error('Search failed:', error);
+
     return {
       results: [],
       hint: 'Search temporarily unavailable. The database may not be accessible.',
@@ -161,6 +162,7 @@ async function executeSearchBlogContent(query: string) {
  */
 async function executeGetCurrentDateTime() {
   const now = new Date();
+
   return {
     date: now.toLocaleDateString('en-US', {
       weekday: 'long',
@@ -227,6 +229,7 @@ async function executeGetWeather(location: string) {
     const geoRes = await fetch(
       `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1`,
     );
+
     const geoData = await geoRes.json();
 
     if (!geoData.results?.length) {
@@ -239,6 +242,7 @@ async function executeGetWeather(location: string) {
     const weatherRes = await fetch(
       `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5`,
     );
+
     const weather = await weatherRes.json();
 
     const current = weather.current;
@@ -260,18 +264,22 @@ async function executeGetWeather(location: string) {
       })),
     };
   } catch (error) {
-    return { error: 'Failed to fetch weather data', details: (error as Error).message };
+    return {
+      error: 'Failed to fetch weather data',
+      details: error instanceof Error ? error.message : String(error),
+    };
   }
 }
 
 function getWeatherCondition(code: number): { icon: string; text: string } {
-  const conditions: Record<number, { icon: string; text: string }> = {
-    0: { icon: 'i-lucide-sun', text: 'Clear sky' },
-    1: { icon: 'i-lucide-sun', text: 'Mainly clear' },
-    2: { icon: 'i-lucide-cloud-sun', text: 'Partly cloudy' },
-    3: { icon: 'i-lucide-cloud', text: 'Overcast' },
-  };
-  return conditions[code] || { icon: 'i-lucide-cloud', text: 'Unknown' };
+  const conditions = new Map([
+    [0, { icon: 'i-lucide-sun', text: 'Clear sky' }],
+    [1, { icon: 'i-lucide-sun', text: 'Mainly clear' }],
+    [2, { icon: 'i-lucide-cloud-sun', text: 'Partly cloudy' }],
+    [3, { icon: 'i-lucide-cloud', text: 'Overcast' }],
+  ]);
+
+  return conditions.get(code) || { icon: 'i-lucide-cloud', text: 'Unknown' };
 }
 
 /**
@@ -294,6 +302,7 @@ async function executeRollDice(notation: string, label?: string) {
   }
 
   const rolls = [];
+
   for (let i = 0; i < count; i++) {
     rolls.push({
       sides,

@@ -67,6 +67,7 @@ describe('artifact-types', () => {
 
     it('should discriminate by type field', () => {
       const textEvent: ArtifactSSEEvent = { type: 'artifact_text', text: 'hello' };
+
       if (textEvent.type === 'artifact_text') {
         expectTypeOf(textEvent).toMatchTypeOf<ArtifactSSETextEvent>();
       }

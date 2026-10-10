@@ -70,8 +70,14 @@ export function chunkText(text: string, options: ChunkOptions = {}): Chunk[] {
 /**
  * Extract frontmatter and content from markdown
  */
+export interface Frontmatter {
+  title?: string;
+  description?: string;
+  date?: string;
+}
+
 export interface ParsedMarkdown {
-  frontmatter: Record<string, unknown>;
+  frontmatter: Frontmatter;
   content: string;
   title: string;
   slug: string;
@@ -80,7 +86,7 @@ export interface ParsedMarkdown {
 export function parseBlogMarkdown(markdown: string, filePath: string): ParsedMarkdown {
   const frontmatterMatch = markdown.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
 
-  let frontmatter: Record<string, unknown> = {};
+  let frontmatter: Frontmatter = {};
   let content = markdown;
 
   if (frontmatterMatch && frontmatterMatch[1] && frontmatterMatch[2]) {
@@ -111,7 +117,7 @@ export function parseBlogMarkdown(markdown: string, filePath: string): ParsedMar
   return {
     frontmatter,
     content,
-    title: (frontmatter.title as string) || slug,
+    title: frontmatter.title || slug,
     slug,
   };
 }
@@ -124,5 +130,6 @@ export async function hashContent(content: string): Promise<string> {
   const data = encoder.encode(content);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
+
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }

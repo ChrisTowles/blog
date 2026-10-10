@@ -1,8 +1,9 @@
 /** Per-word mastery ships with the lists so the UI renders mastery counts in one round-trip. */
 import { z } from 'zod';
 import { and, desc, eq, inArray } from 'drizzle-orm';
-import type { SpellingList, SpellingProgress } from '../../../../../../blog/shared/typing-types';
+import type { SpellingProgress } from '../../../../../../blog/shared/typing-types';
 import { requireGuardian } from '../../../utils/typing/require-guardian';
+import { toSpellingList } from '../../../utils/typing/spelling-list-row';
 
 const querySchema = z.object({
   learnerId: z.coerce.number().int().positive(),
@@ -16,33 +17,26 @@ export default defineEventHandler(async (event) => {
   const db = useDrizzle();
   const baseWhere = eq(tables.typingSpellingLists.learnerId, learnerId);
   const where = weekOf ? and(baseWhere, eq(tables.typingSpellingLists.weekOf, weekOf)) : baseWhere;
+
   const rows = await db
     .select()
     .from(tables.typingSpellingLists)
     .where(where)
     .orderBy(desc(tables.typingSpellingLists.weekOf));
 
-  const lists: SpellingList[] = rows.map((r) => ({
-    id: r.id,
-    learnerId: r.learnerId,
-    weekOf: typeof r.weekOf === 'string' ? r.weekOf : new Date(r.weekOf).toISOString().slice(0, 10),
-    words: r.words,
-    source: r.source as 'paste' | 'type' | 'image',
-    sourceImageUrl: r.sourceImageUrl,
-    createdBy: r.createdBy,
-    createdAt: r.createdAt.toISOString(),
-    updatedAt: r.updatedAt.toISOString(),
-  }));
+  const lists = rows.map(toSpellingList);
 
   // Fetch progress rows for all returned lists in a single query so the
   // UI can render mastery counts without an N+1 fetch.
   const ids = lists.map((l) => l.id);
   const progressByList: Record<number, SpellingProgress[]> = {};
+
   if (ids.length > 0) {
     const progressRows = await db
       .select()
       .from(tables.typingSpellingProgress)
       .where(inArray(tables.typingSpellingProgress.spellingListId, ids));
+
     for (const p of progressRows) {
       const bucket = (progressByList[p.spellingListId] ??= []);
       bucket.push({

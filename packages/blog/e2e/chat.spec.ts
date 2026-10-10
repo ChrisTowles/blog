@@ -9,6 +9,7 @@ async function gotoChat(page: Page) {
   await page.goto('/chat');
   const input = page.getByTestId(TEST_IDS.CHAT.INPUT);
   await expect(input).toBeVisible({ timeout: 30_000 });
+
   return input;
 }
 

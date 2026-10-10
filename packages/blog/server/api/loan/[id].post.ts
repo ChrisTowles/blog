@@ -2,7 +2,13 @@ import { z } from 'zod';
 import { log } from 'evlog';
 import type { MessageParam } from '@anthropic-ai/sdk/resources/messages';
 import type { ChatMessage, SSEEvent } from '~~/shared/chat-types';
-import type { LoanApplicationData } from '~~/shared/loan-types';
+import {
+  CREDIT_SCORE_RANGES,
+  EMPLOYMENT_TYPES,
+  LOAN_PURPOSES,
+  PROPERTY_TYPES,
+  type LoanApplicationData,
+} from '~~/shared/loan-types';
 import { loanChatTools, executeLoanTool } from '~~/server/utils/ai/loan-tools';
 import { LOAN_INTAKE_SYSTEM_PROMPT } from '~~/server/utils/ai/loan-system-prompt';
 import { withAnthropicStreamSpan } from '~~/server/utils/observability/anthropic';
@@ -14,12 +20,32 @@ defineRouteMeta({
   },
 });
 
+const toolArgsSchema = z.record(z.string(), z.json());
+
+type ToolArgs = z.infer<typeof toolArgsSchema>;
+
+const loanApplicationDataSchema = z.object({
+  fullName: z.string().optional(),
+  income: z.number().optional(),
+  employmentType: z.enum(EMPLOYMENT_TYPES).optional(),
+  employer: z.string().optional(),
+  yearsEmployed: z.number().optional(),
+  creditScoreRange: z.enum(CREDIT_SCORE_RANGES).optional(),
+  monthlyDebt: z.number().optional(),
+  propertyValue: z.number().optional(),
+  loanAmount: z.number().optional(),
+  downPayment: z.number().optional(),
+  propertyType: z.enum(PROPERTY_TYPES).optional(),
+  loanPurpose: z.enum(LOAN_PURPOSES).optional(),
+}) satisfies z.ZodType<LoanApplicationData>;
+
 function convertToAnthropicMessages(messages: ChatMessage[]): MessageParam[] {
   return messages.map((msg) => {
     const textContent = msg.parts
       .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
       .map((p) => p.text)
       .join('\n');
+
     return { role: msg.role, content: textContent || ' ' };
   });
 }
@@ -35,12 +61,15 @@ function sendSSE(
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event);
+
   if (!session.user?.id) {
     throw createError({ statusCode: 401, statusMessage: 'Login required' });
   }
+
   const userId = session.user.id;
 
   const { id } = await getValidatedRouterParams(event, z.object({ id: z.string() }).parse);
+
   const { model, messages } = await readValidatedBody(
     event,
     z.object({
@@ -50,6 +79,7 @@ export default defineEventHandler(async (event) => {
   );
 
   const db = useDrizzle();
+
   const application = await db.query.loanApplications.findFirst({
     where: (app, { eq: e }) => and(e(app.id, id), e(app.userId, userId)),
   });
@@ -67,6 +97,7 @@ export default defineEventHandler(async (event) => {
 
   // Save user message
   const lastMessage = messages[messages.length - 1];
+
   if (lastMessage?.role === 'user') {
     await db.insert(tables.loanMessages).values({
       applicationId: id,
@@ -75,8 +106,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  let applicationData: LoanApplicationData =
-    (application.applicationData as LoanApplicationData) || {};
+  let applicationData: LoanApplicationData = application.applicationData ?? {};
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -98,7 +128,8 @@ export default defineEventHandler(async (event) => {
         while (turnCount < maxTurns) {
           turnCount++;
 
-          const loanModel = model || (config.public.model as string);
+          const loanModel = model || config.public.model;
+
           const streamResponse = withAnthropicStreamSpan(
             'chat',
             loanModel,
@@ -122,11 +153,12 @@ export default defineEventHandler(async (event) => {
 
           let hasToolUse = false;
           const toolResults: { type: 'tool_result'; tool_use_id: string; content: string }[] = [];
-          const toolUses: { id: string; name: string; input: Record<string, unknown> }[] = [];
+          const toolUses: { id: string; name: string; input: ToolArgs }[] = [];
 
           for await (const streamEvent of streamResponse) {
             if (streamEvent.type === 'content_block_start') {
               const block = streamEvent.content_block;
+
               if (block.type === 'tool_use') {
                 currentToolUseId = block.id || null;
                 currentToolName = block.name || null;
@@ -135,6 +167,7 @@ export default defineEventHandler(async (event) => {
               }
             } else if (streamEvent.type === 'content_block_delta') {
               const delta = streamEvent.delta;
+
               if (delta.type === 'text_delta') {
                 fullText += delta.text;
                 sendSSE(controller, { type: 'text', text: delta.text });
@@ -143,9 +176,10 @@ export default defineEventHandler(async (event) => {
               }
             } else if (streamEvent.type === 'content_block_stop') {
               if (currentToolUseId && currentToolName) {
-                let toolArgs: Record<string, unknown> = {};
+                let toolArgs: ToolArgs = {};
+
                 try {
-                  if (toolInputJson) toolArgs = JSON.parse(toolInputJson);
+                  if (toolInputJson) toolArgs = toolArgsSchema.parse(JSON.parse(toolInputJson));
                 } catch {
                   toolResults.push({
                     type: 'tool_result',
@@ -170,18 +204,24 @@ export default defineEventHandler(async (event) => {
                 const toolResult = executeLoanTool(currentToolName, toolArgs, { applicationData });
 
                 if (currentToolName === 'updateApplication' && toolResult.updated) {
-                  applicationData = {
+                  const merged = loanApplicationDataSchema.safeParse({
                     ...applicationData,
-                    ...(toolResult.updated as LoanApplicationData),
-                  };
-                  await db
-                    .update(tables.loanApplications)
-                    .set({ applicationData })
-                    .where(eq(tables.loanApplications.id, id));
-                  sendSSE(controller, {
-                    type: 'application_update',
-                    data: applicationData,
-                  } as never);
+                    ...toolResult.updated,
+                  });
+
+                  if (merged.success) {
+                    applicationData = merged.data;
+                    await db
+                      .update(tables.loanApplications)
+                      .set({ applicationData })
+                      .where(eq(tables.loanApplications.id, id));
+                    sendSSE(controller, {
+                      type: 'application_update',
+                      data: applicationData,
+                    });
+                  } else {
+                    log.warn('loan', 'Ignored invalid application update from tool');
+                  }
                 }
 
                 toolResults.push({
@@ -246,5 +286,6 @@ export default defineEventHandler(async (event) => {
   setHeader(event, 'Content-Type', 'text/event-stream');
   setHeader(event, 'Cache-Control', 'no-cache');
   setHeader(event, 'Connection', 'keep-alive');
+
   return stream;
 });

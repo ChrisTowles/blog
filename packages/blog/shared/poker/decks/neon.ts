@@ -3,11 +3,17 @@ import type { DeckTheme } from './types';
 import { PIP_LAYOUTS, SUIT_PATHS, escapeSvgText, pipUseElements, rankToLabel } from './svg-helpers';
 
 const W = 250;
+
 const H = 350;
+
 const RADIUS = 18;
+
 const HOT_RED = '#ff3868';
+
 const HOT_BLUE = '#22d3ee';
+
 const SURFACE = '#0b1228';
+
 const BORDER = '#1e293b';
 
 function defs(): string {
@@ -45,14 +51,17 @@ function cornerIndex(card: Card): string {
   const color = suitNeonColor(card);
   const rank = escapeSvgText(rankToLabel(card.rank));
   const suitId = `suit-${card.suit}`;
+
   const tl = `<g transform="translate(20 14)" filter="url(#glow)">
     <text x="14" y="32" text-anchor="middle" font-family="'JetBrains Mono', 'Fira Code', monospace" font-size="32" font-weight="700" fill="${color}">${rank}</text>
     <use href="#${suitId}" x="2" y="38" width="24" height="24"/>
   </g>`;
+
   const br = `<g transform="translate(${W - 20} ${H - 14}) rotate(180)" filter="url(#glow)">
     <text x="14" y="32" text-anchor="middle" font-family="'JetBrains Mono', 'Fira Code', monospace" font-size="32" font-weight="700" fill="${color}">${rank}</text>
     <use href="#${suitId}" x="2" y="38" width="24" height="24"/>
   </g>`;
+
   return tl + br;
 }
 
@@ -61,6 +70,7 @@ function aceFace(card: Card): string {
   const size = 140;
   const x = (W - size) / 2;
   const y = (H - size) / 2;
+
   return `<use href="#${suitId}" x="${x}" y="${y}" width="${size}" height="${size}"/>`;
 }
 
@@ -69,6 +79,7 @@ function numberFace(card: Card): string {
   const padX = 45;
   const padY = 50;
   const frame = { x: padX, y: padY, w: W - padX * 2, h: H - padY * 2 };
+
   return pipUseElements(card, frame, 0.42, suitId);
 }
 
@@ -80,6 +91,7 @@ function faceCardFace(card: Card): string {
   const fy = 50;
   const fw = W - fx * 2;
   const fh = H - fy * 2;
+
   return `<g>
     <rect x="${fx}" y="${fy}" width="${fw}" height="${fh}" rx="10" ry="10" fill="none" stroke="${color}" stroke-width="2" filter="url(#glow)"/>
     <rect x="${fx + 8}" y="${fy + 8}" width="${fw - 16}" height="${fh - 16}" rx="6" ry="6" fill="none" stroke="${color}" stroke-width="0.8" stroke-opacity="0.45"/>
@@ -93,9 +105,11 @@ function faceCardFace(card: Card): string {
 
 function generateFace(card: Card): string {
   let body = '';
+
   if (card.rank === 14) body = aceFace(card);
   else if (card.rank >= 11) body = faceCardFace(card);
-  else if (PIP_LAYOUTS[card.rank as keyof typeof PIP_LAYOUTS]) body = numberFace(card);
+  else if (PIP_LAYOUTS[card.rank]) body = numberFace(card);
+
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}">${defs()}${cardSurface()}${body}${cornerIndex(card)}</svg>`;
 }
 
@@ -103,6 +117,7 @@ function generateBack(): string {
   // Concentric neon rings on a dark gradient.
   const cx = W / 2;
   const cy = H / 2;
+
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}">
     <defs>
       <radialGradient id="back-bg" cx="50%" cy="50%" r="60%">

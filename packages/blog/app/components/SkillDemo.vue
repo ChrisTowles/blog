@@ -14,12 +14,16 @@
  */
 
 const step = ref(1);
+
 const isAnimating = ref(false);
+
 const skillInstalled = ref(false);
+
 const showEnhancedResponse = ref(false);
 
 // User-editable fields for the skill
 const companyName = ref('Acme Corp');
+
 const deployProcess = ref(
   'run the full integration test suite, get sign-off from the on-call engineer, then deploy to canary (10% traffic) for 30 minutes before full rollout',
 );
@@ -55,6 +59,7 @@ function advanceStep(target: number) {
 
 function handleDragStart(e: DragEvent) {
   e.dataTransfer?.setData('text/plain', 'SKILL.md');
+
   if (e.dataTransfer) {
     e.dataTransfer.effectAllowed = 'move';
   }
@@ -62,9 +67,11 @@ function handleDragStart(e: DragEvent) {
 
 function handleDragOver(e: DragEvent) {
   e.preventDefault();
+
   if (e.dataTransfer) {
     e.dataTransfer.dropEffect = 'move';
   }
+
   isDragOver.value = true;
 }
 

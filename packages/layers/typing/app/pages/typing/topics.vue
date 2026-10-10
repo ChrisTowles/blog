@@ -16,7 +16,9 @@ useHead({
 });
 
 const lesson = ref<LessonRow | null>(null);
+
 const { recordAttempt } = useTypingProgress();
+
 const toast = useToast();
 
 function onGenerated(result: LessonRow) {
@@ -34,6 +36,7 @@ function onComplete(result: LessonCompleteResult) {
     errorsByKey: result.errorsByKey,
     completedAt: new Date().toISOString(),
   });
+
   if (outcome.stageAdvanced) {
     toast.add({
       title: `Stage ${outcome.currentStage} unlocked! 🎉`,

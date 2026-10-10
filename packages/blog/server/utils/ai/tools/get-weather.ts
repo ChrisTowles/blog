@@ -3,40 +3,43 @@ import { z } from 'zod';
 import { log } from 'evlog';
 import { toolResult, toolError } from './helpers';
 
+type WeatherCondition = { icon: string; text: string };
+
 /**
  * Weather condition codes to icons and text (Open-Meteo WMO codes)
  */
-const weatherConditions: Record<number, { icon: string; text: string }> = {
-  0: { icon: 'i-lucide-sun', text: 'Clear sky' },
-  1: { icon: 'i-lucide-sun', text: 'Mainly clear' },
-  2: { icon: 'i-lucide-cloud-sun', text: 'Partly cloudy' },
-  3: { icon: 'i-lucide-cloud', text: 'Overcast' },
-  45: { icon: 'i-lucide-cloud-fog', text: 'Fog' },
-  48: { icon: 'i-lucide-cloud-fog', text: 'Depositing rime fog' },
-  51: { icon: 'i-lucide-cloud-drizzle', text: 'Light drizzle' },
-  53: { icon: 'i-lucide-cloud-drizzle', text: 'Moderate drizzle' },
-  55: { icon: 'i-lucide-cloud-drizzle', text: 'Dense drizzle' },
-  61: { icon: 'i-lucide-cloud-rain', text: 'Slight rain' },
-  63: { icon: 'i-lucide-cloud-rain', text: 'Moderate rain' },
-  65: { icon: 'i-lucide-cloud-rain', text: 'Heavy rain' },
-  71: { icon: 'i-lucide-cloud-snow', text: 'Slight snow' },
-  73: { icon: 'i-lucide-cloud-snow', text: 'Moderate snow' },
-  75: { icon: 'i-lucide-cloud-snow', text: 'Heavy snow' },
-  80: { icon: 'i-lucide-cloud-rain', text: 'Slight showers' },
-  81: { icon: 'i-lucide-cloud-rain', text: 'Moderate showers' },
-  82: { icon: 'i-lucide-cloud-rain', text: 'Violent showers' },
-  95: { icon: 'i-lucide-cloud-lightning', text: 'Thunderstorm' },
-  96: { icon: 'i-lucide-cloud-lightning', text: 'Thunderstorm with hail' },
-  99: { icon: 'i-lucide-cloud-lightning', text: 'Thunderstorm with heavy hail' },
-};
+const weatherConditions = new Map<number, WeatherCondition>([
+  [0, { icon: 'i-lucide-sun', text: 'Clear sky' }],
+  [1, { icon: 'i-lucide-sun', text: 'Mainly clear' }],
+  [2, { icon: 'i-lucide-cloud-sun', text: 'Partly cloudy' }],
+  [3, { icon: 'i-lucide-cloud', text: 'Overcast' }],
+  [45, { icon: 'i-lucide-cloud-fog', text: 'Fog' }],
+  [48, { icon: 'i-lucide-cloud-fog', text: 'Depositing rime fog' }],
+  [51, { icon: 'i-lucide-cloud-drizzle', text: 'Light drizzle' }],
+  [53, { icon: 'i-lucide-cloud-drizzle', text: 'Moderate drizzle' }],
+  [55, { icon: 'i-lucide-cloud-drizzle', text: 'Dense drizzle' }],
+  [61, { icon: 'i-lucide-cloud-rain', text: 'Slight rain' }],
+  [63, { icon: 'i-lucide-cloud-rain', text: 'Moderate rain' }],
+  [65, { icon: 'i-lucide-cloud-rain', text: 'Heavy rain' }],
+  [71, { icon: 'i-lucide-cloud-snow', text: 'Slight snow' }],
+  [73, { icon: 'i-lucide-cloud-snow', text: 'Moderate snow' }],
+  [75, { icon: 'i-lucide-cloud-snow', text: 'Heavy snow' }],
+  [80, { icon: 'i-lucide-cloud-rain', text: 'Slight showers' }],
+  [81, { icon: 'i-lucide-cloud-rain', text: 'Moderate showers' }],
+  [82, { icon: 'i-lucide-cloud-rain', text: 'Violent showers' }],
+  [95, { icon: 'i-lucide-cloud-lightning', text: 'Thunderstorm' }],
+  [96, { icon: 'i-lucide-cloud-lightning', text: 'Thunderstorm with hail' }],
+  [99, { icon: 'i-lucide-cloud-lightning', text: 'Thunderstorm with heavy hail' }],
+]);
 
-function getCondition(code: number): { icon: string; text: string } {
-  return weatherConditions[code] || { icon: 'i-lucide-cloud', text: 'Unknown' };
+function getCondition(code: number): WeatherCondition {
+  return weatherConditions.get(code) || { icon: 'i-lucide-cloud', text: 'Unknown' };
 }
 
 function getDayName(dateStr: string, index: number): string {
   if (index === 0) return 'Today';
   const date = new Date(dateStr);
+
   return date.toLocaleDateString('en-US', { weekday: 'short' });
 }
 
@@ -55,9 +58,11 @@ export const getWeather = tool(
       const geoRes = await fetch(
         `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(args.location)}&count=1`,
       );
+
       if (!geoRes.ok) {
         return toolError('Failed to geocode location');
       }
+
       const geoData = await geoRes.json();
 
       if (!geoData.results?.length) {
@@ -70,9 +75,11 @@ export const getWeather = tool(
       const weatherRes = await fetch(
         `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5`,
       );
+
       if (!weatherRes.ok) {
         return toolError('Failed to fetch weather data');
       }
+
       const weather = await weatherRes.json();
 
       const current = weather.current;
@@ -95,6 +102,7 @@ export const getWeather = tool(
       });
     } catch {
       log.error('tools', 'Weather fetch error');
+
       return toolError('Failed to fetch weather data');
     }
   },

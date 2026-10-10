@@ -18,13 +18,16 @@ export function usePokerBanter(personaId: () => string) {
     const id = personaId();
     const myReq = ++requestSeq;
     loading.value = true;
+
     try {
       const res = await $fetch<{ text: string; event: BanterEvent }>('/api/poker/banter', {
         method: 'POST',
         body: { personaId: id, event, situation },
       });
+
       // Drop stale responses if a newer trigger fired while we were waiting.
       if (myReq !== requestSeq) return;
+
       if (res.text) {
         currentLine.value = { text: res.text, event: res.event };
       }

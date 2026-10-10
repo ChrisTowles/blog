@@ -34,6 +34,7 @@ describe('sanitizeCspDomains', () => {
       'https://evil.com"',
       'https://evil.com other',
     ];
+
     expect(sanitizeCspDomains(input)).toEqual(['https://ok.com']);
   });
 
@@ -81,6 +82,7 @@ describe('parseCspParam', () => {
       scriptSrc: ["'unsafe-eval'"],
       evil: ["'unsafe-inline'"],
     });
+
     const parsed = parseCspParam(input)!;
     expect(parsed).toEqual({
       connectDomains: ['https://api.example.com'],
@@ -94,6 +96,7 @@ describe('parseCspParam', () => {
     const input = JSON.stringify({
       connectDomains: ['https://ok.com', "https://evil.com; script-src 'unsafe-eval'"],
     });
+
     const parsed = parseCspParam(input)!;
     expect(parsed.connectDomains).toEqual(['https://ok.com']);
   });
@@ -102,6 +105,7 @@ describe('parseCspParam', () => {
     const input = JSON.stringify({
       connectDomains: 'https://ok.com',
     });
+
     const parsed = parseCspParam(input);
     expect(parsed).toEqual({});
   });
@@ -117,6 +121,7 @@ describe('buildCspHeader', () => {
       connectDomains: ['https://api.example.com'],
       resourceDomains: ['https://cdn.example.com'],
     });
+
     expect(header).not.toMatch(/[\r\n]/);
   });
 
@@ -124,6 +129,7 @@ describe('buildCspHeader', () => {
     const header = buildCspHeader({
       connectDomains: ['https://api.example.com'],
     });
+
     expect(header).toContain("connect-src 'self' https://api.example.com");
     expect(header).toContain("frame-src 'none'");
     expect(header).toContain("object-src 'none'");
@@ -134,6 +140,7 @@ describe('buildCspHeader', () => {
     const header = buildCspHeader({
       frameDomains: ['https://frame.example.com'],
     });
+
     expect(header).toContain('frame-src https://frame.example.com');
     expect(header).not.toContain("frame-src 'none'");
   });
@@ -142,6 +149,7 @@ describe('buildCspHeader', () => {
     const header = buildCspHeader({
       baseUriDomains: ['https://base.example.com'],
     });
+
     expect(header).toContain('base-uri https://base.example.com');
     expect(header).not.toContain("base-uri 'none'");
   });
@@ -152,16 +160,19 @@ describe('buildCspHeader', () => {
       // input must not corrupt the output header shape.
       connectDomains: ["https://evil.com; script-src 'unsafe-eval'"],
     });
+
     // The injected literal must be absent from the connect-src directive.
     const connectSrcMatch = header.match(/connect-src [^;]*/);
     expect(connectSrcMatch).not.toBeNull();
     expect(connectSrcMatch![0]).not.toContain('evil');
     expect(connectSrcMatch![0]).toBe("connect-src 'self'");
+
     // The header always has the same number of directives regardless of input.
     const directives = header
       .split(';')
       .map((d) => d.trim())
       .filter(Boolean);
+
     expect(directives).toHaveLength(11);
   });
 });

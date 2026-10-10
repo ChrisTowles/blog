@@ -15,6 +15,7 @@ describe('StarterQuestions', () => {
     const buttons = wrapper.findAll('[data-testid="aviation-starter-question"]');
     expect(buttons.length).toBe(CLIENT_LIST.length);
     const labels = buttons.map((b) => b.text().trim());
+
     for (const q of CLIENT_LIST) {
       expect(labels).toContain(q);
     }
@@ -33,7 +34,9 @@ describe('StarterQuestions', () => {
     const wrapper = await mountSuspended(StarterQuestions, {
       props: { disabled: true },
     });
+
     const buttons = wrapper.findAll('[data-testid="aviation-starter-question"]');
+
     for (const b of buttons) {
       expect(b.attributes('disabled')).toBeDefined();
     }

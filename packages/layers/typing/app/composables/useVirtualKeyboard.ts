@@ -10,56 +10,56 @@
  */
 import type { Finger, Hand } from '~~/shared/typing-types';
 
-export const FINGER_MAP: Record<string, Finger> = {
+export const FINGER_MAP = new Map<string, Finger>([
   // Left hand
-  q: 'lp',
-  a: 'lp',
-  z: 'lp',
-  '1': 'lp',
-  w: 'lr',
-  s: 'lr',
-  x: 'lr',
-  '2': 'lr',
-  e: 'lm',
-  d: 'lm',
-  c: 'lm',
-  '3': 'lm',
-  r: 'li',
-  f: 'li',
-  v: 'li',
-  '4': 'li',
-  t: 'li',
-  g: 'li',
-  b: 'li',
-  '5': 'li',
+  ['q', 'lp'],
+  ['a', 'lp'],
+  ['z', 'lp'],
+  ['1', 'lp'],
+  ['w', 'lr'],
+  ['s', 'lr'],
+  ['x', 'lr'],
+  ['2', 'lr'],
+  ['e', 'lm'],
+  ['d', 'lm'],
+  ['c', 'lm'],
+  ['3', 'lm'],
+  ['r', 'li'],
+  ['f', 'li'],
+  ['v', 'li'],
+  ['4', 'li'],
+  ['t', 'li'],
+  ['g', 'li'],
+  ['b', 'li'],
+  ['5', 'li'],
   // Right hand
-  y: 'ri',
-  h: 'ri',
-  n: 'ri',
-  '6': 'ri',
-  u: 'ri',
-  j: 'ri',
-  m: 'ri',
-  '7': 'ri',
-  i: 'rm',
-  k: 'rm',
-  ',': 'rm',
-  '8': 'rm',
-  o: 'rr',
-  l: 'rr',
-  '.': 'rr',
-  '9': 'rr',
-  p: 'rp',
-  ';': 'rp',
-  "'": 'rp',
-  '/': 'rp',
-  '0': 'rp',
-  '-': 'rp',
-  '[': 'rp',
-  ']': 'rp',
+  ['y', 'ri'],
+  ['h', 'ri'],
+  ['n', 'ri'],
+  ['6', 'ri'],
+  ['u', 'ri'],
+  ['j', 'ri'],
+  ['m', 'ri'],
+  ['7', 'ri'],
+  ['i', 'rm'],
+  ['k', 'rm'],
+  [',', 'rm'],
+  ['8', 'rm'],
+  ['o', 'rr'],
+  ['l', 'rr'],
+  ['.', 'rr'],
+  ['9', 'rr'],
+  ['p', 'rp'],
+  [';', 'rp'],
+  ["'", 'rp'],
+  ['/', 'rp'],
+  ['0', 'rp'],
+  ['-', 'rp'],
+  ['[', 'rp'],
+  [']', 'rp'],
   // Thumbs (space)
-  ' ': 'thumb',
-};
+  [' ', 'thumb'],
+]);
 
 const HAND_MAP: Record<Finger, Hand> = {
   lp: 'left',
@@ -91,47 +91,49 @@ export type UseVirtualKeyboard = {
   hint: ComputedRef<KeyboardHint | null>;
 };
 
-const SHIFTED_NUMBER_MAP: Record<string, string> = {
-  '!': '1',
-  '@': '2',
-  '#': '3',
-  $: '4',
-  '%': '5',
-  '^': '6',
-  '&': '7',
-  '*': '8',
-  '(': '9',
-  ')': '0',
-  ':': ';',
-  '"': "'",
-  '?': '/',
-  '<': ',',
-  '>': '.',
-  '+': '=',
-  _: '-',
-  '~': '`',
-  '{': '[',
-  '}': ']',
-  '|': '\\',
-};
+const SHIFTED_NUMBER_MAP = new Map<string, string>([
+  ['!', '1'],
+  ['@', '2'],
+  ['#', '3'],
+  ['$', '4'],
+  ['%', '5'],
+  ['^', '6'],
+  ['&', '7'],
+  ['*', '8'],
+  ['(', '9'],
+  [')', '0'],
+  [':', ';'],
+  ['"', "'"],
+  ['?', '/'],
+  ['<', ','],
+  ['>', '.'],
+  ['+', '='],
+  ['_', '-'],
+  ['~', '`'],
+  ['{', '['],
+  ['}', ']'],
+  ['|', '\\'],
+]);
 
 export function useVirtualKeyboard(options: UseVirtualKeyboardOptions): UseVirtualKeyboard {
   const hint = computed<KeyboardHint | null>(() => {
     const ch = options.nextChar.value;
+
     if (!ch) return null;
 
     let expected = ch;
     let shiftRequired = false;
+    const unshifted = SHIFTED_NUMBER_MAP.get(ch);
 
     if (/^[A-Z]$/.test(ch)) {
       shiftRequired = true;
       expected = ch.toLowerCase();
-    } else if (SHIFTED_NUMBER_MAP[ch]) {
+    } else if (unshifted) {
       shiftRequired = true;
-      expected = SHIFTED_NUMBER_MAP[ch];
+      expected = unshifted;
     }
 
-    const finger = FINGER_MAP[expected] ?? 'li';
+    const finger = FINGER_MAP.get(expected) ?? 'li';
     const hand = HAND_MAP[finger];
 
     return {

@@ -1,5 +1,6 @@
 import { eq, and } from 'drizzle-orm';
 import { MODEL_HAIKU } from '~~/shared/models';
+import type { OutputSchema } from '../../../shared/workflow-types';
 
 defineRouteMeta({
   openAPI: {
@@ -18,7 +19,7 @@ interface SeedNode {
   model?: string;
   temperature?: number;
   maxTokens?: number;
-  outputSchema: Record<string, unknown>;
+  outputSchema: OutputSchema;
 }
 
 interface SeedEdge {
@@ -507,6 +508,7 @@ const EXAMPLES: SeedWorkflow[] = [
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event);
+
   if (!session.user) {
     throw createError({ statusCode: 401, message: 'Unauthorized' });
   }
@@ -532,6 +534,7 @@ export default defineEventHandler(async (event) => {
           .set({ isPublished: 1 })
           .where(eq(tables.workflows.id, existing.id));
       }
+
       continue;
     }
 

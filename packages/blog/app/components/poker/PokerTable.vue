@@ -15,12 +15,16 @@ const props = defineProps<{
 }>();
 
 const containerRef = ref<HTMLDivElement | null>(null);
+
 let app: Application | null = null;
+
 let resizeObserver: ResizeObserver | null = null;
 
 // Card layout constants — base size; the actual size scales with canvas width
 const CARD_W_MAX = 80;
+
 const CARD_ASPECT = 1.4; // height / width
+
 const CARD_GAP_RATIO = 0.15; // gap as fraction of card width
 
 function computeCardLayout(canvasWidth: number) {
@@ -32,6 +36,7 @@ function computeCardLayout(canvasWidth: number) {
   const w = Math.min(CARD_W_MAX, Math.floor(usable / 5.6));
   const h = Math.round(w * CARD_ASPECT);
   const gap = Math.round(w * CARD_GAP_RATIO);
+
   return { w, h, gap };
 }
 
@@ -76,6 +81,7 @@ async function buildScene() {
       letterSpacing: 2,
     },
   });
+
   stageText.anchor.set(0.5, 0);
   application.stage.addChild(stageText);
 
@@ -88,6 +94,7 @@ async function buildScene() {
       fontWeight: '700',
     },
   });
+
   potText.anchor.set(0.5, 0.5);
   application.stage.addChild(potText);
 
@@ -100,6 +107,7 @@ async function buildScene() {
       fontWeight: '600',
     },
   });
+
   aiStackText.anchor.set(0.5, 0);
   application.stage.addChild(aiStackText);
 
@@ -111,6 +119,7 @@ async function buildScene() {
       fill: 0xfde68a,
     },
   });
+
   aiCommittedText.anchor.set(0.5, 0);
   application.stage.addChild(aiCommittedText);
 
@@ -123,6 +132,7 @@ async function buildScene() {
       fontWeight: '600',
     },
   });
+
   playerStackText.anchor.set(0.5, 1);
   application.stage.addChild(playerStackText);
 
@@ -134,6 +144,7 @@ async function buildScene() {
       fill: 0xfde68a,
     },
   });
+
   playerCommittedText.anchor.set(0.5, 1);
   application.stage.addChild(playerCommittedText);
 
@@ -147,6 +158,7 @@ async function buildScene() {
       letterSpacing: 1,
     },
   });
+
   toActText.anchor.set(0.5, 0.5);
   application.stage.addChild(toActText);
 
@@ -190,6 +202,7 @@ function drawCard(
 
   const cardLayer = new Container();
   container.addChild(cardLayer);
+
   if (faceDown || !card) {
     drawCardBack(cardLayer, { w: cardW, h: cardH });
   } else {
@@ -261,6 +274,7 @@ function drawScene() {
   } else {
     scene.toActText.visible = false;
   }
+
   scene.toActText.x = w / 2;
   // Position between AI cards and community cards, regardless of card scale.
   scene.toActText.y = h / 2 - layout.h / 2 - 18;
@@ -277,6 +291,7 @@ function drawScene() {
   // AI hole cards (top, centered)
   const aiHoleY = 110;
   const aiHoleX0 = w / 2 - cw - gap / 2;
+
   for (let i = 0; i < 2; i++) {
     const c = props.state.ai.hole[i] ?? null;
     const x = aiHoleX0 + i * (cw + gap);
@@ -286,9 +301,11 @@ function drawScene() {
   // Community cards (center)
   const communityY = h / 2 - ch / 2;
   const communityX0 = w / 2 - (cw * 5 + gap * 4) / 2;
+
   for (let i = 0; i < 5; i++) {
     const c = props.state.community[i] ?? null;
     const x = communityX0 + i * (cw + gap);
+
     if (c) {
       drawCard(scene.cardLayer, c, x, communityY, cw, ch, false);
     } else {
@@ -303,6 +320,7 @@ function drawScene() {
   // Player hole cards (bottom)
   const playerHoleY = h - ch - 110;
   const playerHoleX0 = w / 2 - cw - gap / 2;
+
   for (let i = 0; i < 2; i++) {
     const c = props.state.player.hole[i] ?? null;
     const x = playerHoleX0 + i * (cw + gap);
@@ -335,10 +353,12 @@ onMounted(() => {
 onBeforeUnmount(() => {
   resizeObserver?.disconnect();
   resizeObserver = null;
+
   if (app) {
     app.destroy(true, { children: true });
     app = null;
   }
+
   scene = null;
 });
 </script>

@@ -63,10 +63,12 @@ describe('tic-tac-toe', () => {
       // can occasionally edge out the center; bump the sample size so the
       // gap is many sigma above noise.
       const tally = Array(9).fill(0);
+
       for (let i = 0; i < 5000; i++) {
         const move = chooseAIMove(emptyBoard(), 'weighted');
         tally[move]++;
       }
+
       const max = Math.max(...tally);
       expect(tally[4]).toBe(max);
     });

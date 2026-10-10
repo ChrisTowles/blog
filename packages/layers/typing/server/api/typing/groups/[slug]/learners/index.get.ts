@@ -15,12 +15,15 @@ const paramsSchema = z.object({
 export default defineEventHandler(async (event) => {
   const { slug } = await getValidatedRouterParams(event, paramsSchema.parse);
   const group = await findGroupBySlug(slug);
+
   if (!group) {
     throw createError({ statusCode: 404, statusMessage: 'Group not found' });
   }
+
   await requireGuardian(event, { groupId: group.id });
 
   const rows = await listGroupLearners(group.id);
+
   const learners: Learner[] = rows.map((l) => ({
     id: l.id,
     groupId: l.groupId,
@@ -32,5 +35,6 @@ export default defineEventHandler(async (event) => {
     createdAt: l.createdAt.toISOString(),
     updatedAt: l.updatedAt.toISOString(),
   }));
+
   return { learners };
 });

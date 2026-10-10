@@ -10,7 +10,9 @@ const emit = defineEmits<{
 }>();
 
 const tab = ref<'type' | 'paste'>('type');
+
 const wordsInput = ref(props.initialWords?.join('\n') ?? '');
+
 const pastedText = ref('');
 
 const error = ref<string | null>(null);
@@ -24,11 +26,15 @@ function parse(input: string): string[] {
 
 function validate(words: string[]): { ok: true } | { ok: false; reason: string } {
   if (words.length === 0) return { ok: false, reason: 'add at least one word' };
+
   if (words.length > 30) return { ok: false, reason: 'too many words (max 30)' };
+
   for (const w of words) {
     if (w.length < 2 || w.length > 15) return { ok: false, reason: `bad length: "${w}"` };
+
     if (!/^[a-z']+$/.test(w)) return { ok: false, reason: `bad chars: "${w}"` };
   }
+
   return { ok: true };
 }
 
@@ -38,10 +44,13 @@ function save() {
   const text = source === 'paste' ? pastedText.value : wordsInput.value;
   const words = parse(text);
   const v = validate(words);
+
   if (!v.ok) {
     error.value = v.reason;
+
     return;
   }
+
   emit('save', words, source);
 }
 </script>

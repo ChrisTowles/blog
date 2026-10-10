@@ -5,18 +5,23 @@ const props = defineProps<{
   file: FilePart;
 }>();
 
-const FILE_TYPE_ICONS: Record<string, string> = {
-  'application/pdf': 'i-lucide-file-text',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+const FILE_TYPE_ICONS = new Map([
+  ['application/pdf', 'i-lucide-file-text'],
+  [
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     'i-lucide-presentation',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'i-lucide-sheet',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'i-lucide-file-text',
-};
+  ],
+  ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'i-lucide-sheet'],
+  ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'i-lucide-file-text'],
+]);
 
 const isImage = computed(() => props.file.mediaType.startsWith('image/'));
+
 const isPdf = computed(() => props.file.mediaType === 'application/pdf');
+
 const isHtml = computed(() => props.file.mediaType === 'text/html');
-const icon = computed(() => FILE_TYPE_ICONS[props.file.mediaType] || 'i-lucide-file');
+
+const icon = computed(() => FILE_TYPE_ICONS.get(props.file.mediaType) || 'i-lucide-file');
 </script>
 
 <template>

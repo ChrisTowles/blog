@@ -1,5 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { outputSchemaSchema } from '../../../shared/workflow-schemas';
+import type { OutputSchema } from '../../../shared/workflow-types';
 
 defineRouteMeta({
   openAPI: {
@@ -19,14 +21,19 @@ export default defineEventHandler(async (event) => {
   ]);
 
   const nodes = dbNodes.map((n) => {
-    let outputSchema: Record<string, unknown> = { type: 'object', properties: {} };
+    let outputSchema: OutputSchema = { type: 'object', properties: {} };
     let inputMapping: Record<string, string> = {};
+
     try {
-      outputSchema = JSON.parse(n.outputSchema);
+      const parsed = outputSchemaSchema.safeParse(JSON.parse(n.outputSchema));
+
+      if (parsed.success) outputSchema = parsed.data;
     } catch {}
+
     try {
       inputMapping = JSON.parse(n.inputMapping);
     } catch {}
+
     return {
       id: n.nodeId,
       type: n.type,

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { TEST_IDS } from '~~/shared/test-ids';
+import { fetchErrorMessage } from '../../../utils/typing/fetch-error';
 import type { Learner, TypingGroup } from '~~/shared/typing-types';
 
 definePageMeta({
@@ -32,22 +33,29 @@ const { data, refresh, error, pending } = await useFetch<{
 
 const isUnauthed = computed(() => {
   const status = error.value && 'statusCode' in error.value ? error.value.statusCode : null;
+
   return status === 401;
 });
 
 const groups = computed(() => data.value?.groups ?? []);
 
 const newGroupName = ref('');
+
 const newLearnerName = ref('');
+
 const inviteLink = ref<string | null>(null);
+
 const inviteExpires = ref<string | null>(null);
+
 const creating = ref(false);
+
 const formError = ref<string | null>(null);
 
 async function createFamily() {
   if (!newGroupName.value || creating.value) return;
   creating.value = true;
   formError.value = null;
+
   try {
     await $fetch('/api/typing/groups', {
       method: 'POST',
@@ -64,31 +72,33 @@ async function createFamily() {
     // group + learner immediately too.
     await refresh();
   } catch (e: unknown) {
-    const err = e as { statusMessage?: string; message?: string };
-    formError.value = err.statusMessage ?? err.message ?? 'Failed to create family';
+    formError.value = fetchErrorMessage(e, 'Failed to create family', { useMessage: true });
   } finally {
     creating.value = false;
   }
 }
 
 const invitePending = ref<number | null>(null);
+
 async function generateInvite(group: TypingGroup) {
   if (invitePending.value === group.id) return;
   invitePending.value = group.id;
   formError.value = null;
+
   try {
     const result = await $fetch<{ url: string; expiresAt: string }>(
       `/api/typing/groups/${group.slug}/invite`,
       { method: 'POST', body: {} },
     );
+
     // Make the link copy-able with the full origin baked in.
     const origin =
       typeof window !== 'undefined' && window.location?.origin ? window.location.origin : '';
+
     inviteLink.value = origin ? `${origin}${result.url}` : result.url;
     inviteExpires.value = result.expiresAt;
   } catch (e: unknown) {
-    const err = e as { statusMessage?: string; message?: string };
-    formError.value = err.statusMessage ?? err.message ?? 'Failed to generate invite';
+    formError.value = fetchErrorMessage(e, 'Failed to generate invite', { useMessage: true });
   } finally {
     invitePending.value = null;
   }
@@ -96,6 +106,7 @@ async function generateInvite(group: TypingGroup) {
 
 async function copyInvite() {
   if (!inviteLink.value) return;
+
   try {
     await navigator.clipboard.writeText(inviteLink.value);
   } catch {
@@ -106,11 +117,15 @@ async function copyInvite() {
 // --- Delete-group with type-the-name confirm --------------------------
 
 const deletingGroup = ref<TypingGroup | null>(null);
+
 const deleteTyped = ref('');
+
 const deletePending = ref(false);
+
 const deleteMatches = computed(() => {
   if (!deletingGroup.value) return false;
   const expected = `delete ${deletingGroup.value.name.trim().toLowerCase()}`;
+
   return deleteTyped.value.trim().toLowerCase() === expected;
 });
 
@@ -129,6 +144,7 @@ async function confirmDeleteGroup() {
   if (!deletingGroup.value || !deleteMatches.value || deletePending.value) return;
   deletePending.value = true;
   formError.value = null;
+
   try {
     await $fetch(`/api/typing/groups/${deletingGroup.value.slug}`, { method: 'DELETE' });
     cancelDeleteGroup();
@@ -136,8 +152,7 @@ async function confirmDeleteGroup() {
     inviteExpires.value = null;
     await refresh();
   } catch (e: unknown) {
-    const err = e as { statusMessage?: string; message?: string };
-    formError.value = err.statusMessage ?? err.message ?? 'Failed to delete group';
+    formError.value = fetchErrorMessage(e, 'Failed to delete group', { useMessage: true });
   } finally {
     deletePending.value = false;
   }

@@ -1,4 +1,5 @@
-import type { Card, Rank, Suit } from '../../../app/utils/poker/types';
+import type { Card, Rank } from '../../../app/utils/poker/types';
+import { SUITS } from '../../../app/utils/poker/types';
 
 export interface DeckTheme {
   /** Stable id used in URLs and filenames. */
@@ -29,25 +30,34 @@ export interface DeckTheme {
  */
 export function cardCode(card: Card): string {
   const r = card.rank;
+
   const rankCh =
     r === 14 ? 'A' : r === 13 ? 'K' : r === 12 ? 'Q' : r === 11 ? 'J' : r === 10 ? 'T' : String(r);
+
   return `${card.suit}${rankCh}`;
 }
 
+const RANK_BY_CODE = new Map<string, Rank>([
+  ['A', 14],
+  ['K', 13],
+  ['Q', 12],
+  ['J', 11],
+  ['T', 10],
+  ['9', 9],
+  ['8', 8],
+  ['7', 7],
+  ['6', 6],
+  ['5', 5],
+  ['4', 4],
+  ['3', 3],
+  ['2', 2],
+]);
+
 export function parseCardCode(code: string): Card {
-  const suit = code[0] as Suit;
-  const rankCh = code[1]!;
-  const rank: Rank =
-    rankCh === 'A'
-      ? 14
-      : rankCh === 'K'
-        ? 13
-        : rankCh === 'Q'
-          ? 12
-          : rankCh === 'J'
-            ? 11
-            : rankCh === 'T'
-              ? 10
-              : (parseInt(rankCh, 10) as Rank);
+  const suit = SUITS.find((candidate) => candidate === code[0]);
+  const rank = RANK_BY_CODE.get(code[1] ?? '');
+
+  if (!suit || !rank) throw new Error(`Invalid card code: ${code}`);
+
   return { rank, suit };
 }

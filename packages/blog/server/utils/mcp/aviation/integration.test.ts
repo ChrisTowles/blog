@@ -21,6 +21,7 @@ import {
   executeSchemaTool,
   AVIATION_TOOL_DESCRIPTIONS,
 } from './aviation-tools';
+import { AVIATION_STARTER_QUESTIONS } from './aviation-prompt';
 import { registerAviationUiResource } from './ui-resource';
 
 async function createLinkedPair(): Promise<{ client: Client; close: () => Promise<void> }> {
@@ -66,6 +67,7 @@ async function createLinkedPair(): Promise<{ client: Client; close: () => Promis
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   const client = new Client({ name: 'test-client', version: '0.0.1' }, {});
   await Promise.all([client.connect(clientTransport), server.connect(serverTransport)]);
+
   return {
     client,
     close: async () => {
@@ -94,11 +96,8 @@ describe('aviation MCP transport contract', () => {
     );
     // ask_aviation must advertise its UI resource per MCP Apps
     const ask = tools.find((t) => t.name === AVIATION_TOOL_NAMES.ASK);
-    const meta = ask?._meta as
-      | { ui?: { resourceUri?: string }; 'ui/resourceUri'?: string }
-      | undefined;
-    const uri = meta?.ui?.resourceUri ?? meta?.['ui/resourceUri'];
-    expect(uri).toBe(AVIATION_UI_RESOURCE_URI);
+
+    expect(ask?._meta).toMatchObject({ ui: { resourceUri: AVIATION_UI_RESOURCE_URI } });
   });
 
   it('list_questions returns 10 starter questions', async () => {
@@ -106,10 +105,11 @@ describe('aviation MCP transport contract', () => {
       name: AVIATION_TOOL_NAMES.LIST_QUESTIONS,
       arguments: {},
     });
+
     const content = Array.isArray(result.content) ? result.content[0] : undefined;
     expect(content?.type).toBe('text');
-    const structured = result.structuredContent as { questions: string[] } | undefined;
-    expect(structured?.questions.length).toBe(10);
+    expect(AVIATION_STARTER_QUESTIONS).toHaveLength(10);
+    expect(result.structuredContent).toEqual({ questions: AVIATION_STARTER_QUESTIONS });
   });
 
   it('schema tool returns the dataset surface', async () => {
@@ -117,8 +117,10 @@ describe('aviation MCP transport contract', () => {
       name: AVIATION_TOOL_NAMES.SCHEMA,
       arguments: {},
     });
+
     const content = Array.isArray(result.content) ? result.content[0] : undefined;
     expect(content?.type).toBe('text');
+
     if (content?.type !== 'text') throw new Error('type narrow');
     expect(content.text).toContain('dims/aircraft.parquet');
     expect(content.text).toContain('bts_t100');
@@ -136,6 +138,6 @@ describe('aviation MCP transport contract', () => {
     expect(content?.mimeType).toBe('text/html;profile=mcp-app');
     // Text contents have a .text field; blob contents would have .blob instead.
     const maybeText = content && 'text' in content ? content.text : undefined;
-    expect(typeof maybeText).toBe('string');
+    expect(maybeText).toEqual(expect.any(String));
   });
 });

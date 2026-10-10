@@ -1,6 +1,7 @@
 const { google } = require('googleapis');
 
 const PROJECT_ID = process.env.PROJECT_ID || 'blog-towles-staging';
+
 const INSTANCE_NAME = process.env.INSTANCE_NAME || 'blog-towles-staging-db';
 
 exports.stopSql = async (req, res) => {

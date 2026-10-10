@@ -2,11 +2,13 @@
  * Helper utilities for Agent SDK tools
  */
 
+import type { ToolPayload } from '../tool-payload';
+
 /**
  * Standard tool result format
  * Wraps data in the expected Agent SDK content structure
  */
-export function toolResult(data: unknown) {
+export function toolResult(data: ToolPayload) {
   return {
     content: [
       {

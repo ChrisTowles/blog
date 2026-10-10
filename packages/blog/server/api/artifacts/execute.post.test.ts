@@ -12,16 +12,17 @@ import type { ArtifactSSEEvent } from '~~/shared/artifact-types';
  */
 const encoder = new TextEncoder();
 
-function sendSSE(controller: ReadableStreamDefaultController, event: ArtifactSSEEvent) {
+function sendSSE(controller: { enqueue: (chunk: Uint8Array) => void }, event: ArtifactSSEEvent) {
   controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
 }
 
 function createMockController() {
   const chunks: Uint8Array[] = [];
+
   return {
     controller: {
       enqueue: (chunk: Uint8Array) => chunks.push(chunk),
-    } as unknown as ReadableStreamDefaultController,
+    },
     chunks,
     decode: () => new TextDecoder().decode(chunks[0]),
   };

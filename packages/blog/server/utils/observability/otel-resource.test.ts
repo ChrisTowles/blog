@@ -2,22 +2,17 @@
  * Unit tests for the OTel resource resolver.
  *
  * Drives the pure logic (`resolveOtelResourceAttrs`, `buildOtelResource`)
- * directly — the Nitro plugin is a thin adapter around it. Mirrors the
- * mcp-rate-limit test style.
+ * directly — the Nitro plugin is a thin adapter around it.
  */
 
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   ATTR_SERVICE_INSTANCE_ID,
   ATTR_SERVICE_NAME,
   ATTR_SERVICE_NAMESPACE,
 } from '@opentelemetry/semantic-conventions';
 
-// `defineNitroPlugin` runs at module import time; stub it so the file's
-// pure exports can be loaded without standing up a Nitro runtime.
-vi.mock('nitropack/runtime', () => ({ defineNitroPlugin: () => undefined }));
-
-const { buildOtelResource, resolveOtelResourceAttrs } = await import('./00-otel-sdk');
+import { buildOtelResource, resolveOtelResourceAttrs } from './otel-resource';
 
 describe('resolveOtelResourceAttrs', () => {
   it('returns service name from OTEL_SERVICE_NAME and instance from K_REVISION', () => {
@@ -27,6 +22,7 @@ describe('resolveOtelResourceAttrs', () => {
       K_REVISION: 'blog-staging-00042-abc',
       NODE_ENV: 'production',
     });
+
     expect(attrs).toEqual({
       serviceName: 'blog-staging',
       serviceNamespace: 'towles',
@@ -43,6 +39,7 @@ describe('resolveOtelResourceAttrs', () => {
       },
       31415,
     );
+
     expect(attrs.serviceInstanceId).toBe('dev-31415');
   });
 
@@ -50,6 +47,7 @@ describe('resolveOtelResourceAttrs', () => {
     const attrs = resolveOtelResourceAttrs({
       OTEL_EXPORTER_OTLP_ENDPOINT: 'https://otlp.nr-data.net',
     });
+
     expect(attrs.serviceName).toBe('blog-local');
   });
 
@@ -59,6 +57,7 @@ describe('resolveOtelResourceAttrs', () => {
       OTEL_DEPLOYMENT_ENV: 'staging',
       NODE_ENV: 'production',
     });
+
     expect(attrs.deploymentEnv).toBe('staging');
   });
 
@@ -66,6 +65,7 @@ describe('resolveOtelResourceAttrs', () => {
     const attrs = resolveOtelResourceAttrs({
       OTEL_EXPORTER_OTLP_ENDPOINT: 'https://otlp.nr-data.net',
     });
+
     expect(attrs.deploymentEnv).toBe('development');
   });
 
@@ -90,6 +90,7 @@ describe('buildOtelResource', () => {
       serviceInstanceId: 'blog-prod-00007-x',
       deploymentEnv: 'production',
     });
+
     const attrs = resource.attributes;
     expect(attrs[ATTR_SERVICE_NAME]).toBe('blog-prod');
     expect(attrs[ATTR_SERVICE_NAMESPACE]).toBe('towles');

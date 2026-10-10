@@ -11,13 +11,18 @@ import {
   applyHostFonts,
   applyHostStyleVariables,
   type McpUiHostContext,
+  type McpUiToolResultNotification,
 } from '@modelcontextprotocol/ext-apps';
+import { z } from 'zod';
+import type { JsonObject, JsonValue } from '../../shared/json-types';
 
 /* --------------------------------------------------------------------------
  * Progress labels — duplicated from shared/mcp-aviation-types.ts. The iframe
  * bundle is a separate build and can't import from the Nuxt module graph.
  * -------------------------------------------------------------------------- */
-type AviationProgressStep = 'planning' | 'validating' | 'querying' | 'rendering';
+const progressStepSchema = z.enum(['planning', 'validating', 'querying', 'rendering']);
+
+type AviationProgressStep = z.infer<typeof progressStepSchema>;
 
 const AVIATION_PROGRESS_MESSAGES: Record<AviationProgressStep, readonly string[]> = {
   planning: [
@@ -44,28 +49,6 @@ const AVIATION_PROGRESS_MESSAGES: Record<AviationProgressStep, readonly string[]
 
 const LOADING_TICK_MS = 1500;
 
-interface AviationPendingResult {
-  pending: true;
-  question: string;
-  queryUrl: string;
-}
-
-interface AviationQueryProgressEvent {
-  type: 'progress';
-  step: AviationProgressStep;
-}
-interface AviationQueryResultEvent {
-  type: 'result';
-  result: AviationToolResult;
-}
-interface AviationQueryErrorEvent {
-  type: 'error';
-  message: string;
-}
-type AviationQueryEvent =
-  | AviationQueryProgressEvent
-  | AviationQueryResultEvent
-  | AviationQueryErrorEvent;
 import * as echarts from 'echarts/core';
 import { BarChart, LineChart, ScatterChart, PieChart, TreemapChart } from 'echarts/charts';
 import {
@@ -93,20 +76,55 @@ echarts.use([
   CanvasRenderer,
 ]);
 
-/* --------------------------------------------------------------------------
- * Contract — kept in sync with packages/blog/shared/mcp-aviation-types.ts.
- * Duplicated here (not imported) because the iframe is a separate bundle that
- * must not reach into the Nuxt app's module graph.
- * -------------------------------------------------------------------------- */
+/* Contract — kept in sync with packages/blog/shared/mcp-aviation-types.ts.
+ * Zod schemas, not imports: the iframe is a separate bundle, and the payload is
+ * decoded here at the trust boundary. */
 
-interface AviationToolResult {
-  sql: string;
-  answer: string;
-  hero_number?: string;
-  chart_option: Record<string, unknown>;
-  followups: [string, string, string];
-  rows: Array<Record<string, unknown>>;
-  truncated: boolean;
+const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
+  z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.null(),
+    z.array(jsonValueSchema),
+    z.record(z.string(), jsonValueSchema),
+  ]),
+);
+
+const jsonObjectSchema = z.record(z.string(), jsonValueSchema);
+
+const toolResultSchema = z.object({
+  sql: z.string(),
+  answer: z.string(),
+  hero_number: z.string().optional(),
+  chart_option: jsonObjectSchema,
+  followups: z.tuple([z.string(), z.string(), z.string()]),
+  rows: z.array(jsonObjectSchema),
+  truncated: z.boolean(),
+});
+
+const pendingResultSchema = z.object({
+  pending: z.literal(true),
+  question: z.string(),
+  queryUrl: z.string(),
+});
+
+const queryEventSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('progress'), step: progressStepSchema }),
+  z.object({ type: z.literal('result'), result: toolResultSchema }),
+  z.object({ type: z.literal('error'), message: z.string() }),
+]);
+
+type AviationToolResult = z.infer<typeof toolResultSchema>;
+
+type AviationPendingResult = z.infer<typeof pendingResultSchema>;
+
+type ToolResultParams = Pick<McpUiToolResultNotification['params'], 'structuredContent'>;
+
+function asJsonObject(value: JsonValue | undefined): JsonObject {
+  const parsed = jsonObjectSchema.safeParse(value);
+
+  return parsed.success ? parsed.data : {};
 }
 
 /* --------------------------------------------------------------------------
@@ -437,10 +455,12 @@ function stopLoadingTicker(): void {
     clearInterval(state.loadingMessageTicker);
     state.loadingMessageTicker = undefined;
   }
+
   if (state.loadingTimerTicker) {
     clearInterval(state.loadingTimerTicker);
     state.loadingTimerTicker = undefined;
   }
+
   state.loadingStep = undefined;
   state.loadingStartedAt = undefined;
 }
@@ -451,6 +471,7 @@ const STEP_ORDER: readonly AviationProgressStep[] = [
   'querying',
   'rendering',
 ];
+
 const STEP_SHORT_LABELS: Record<AviationProgressStep, string> = {
   planning: 'Plan',
   validating: 'Validate',
@@ -544,15 +565,18 @@ function applyStepToLoader(root: HTMLElement, step: AviationProgressStep): void 
   const fillPct = activeIndex === 0 ? 0 : (activeIndex / (STEP_ORDER.length - 1)) * 100;
 
   const fill = root.querySelector<HTMLElement>('[data-role="fill"]');
+
   if (fill) fill.style.width = `${fillPct}%`;
 
   const plane = root.querySelector<SVGElement>('[data-role="plane"]');
-  if (plane) (plane as unknown as HTMLElement).style.left = `${planeLeftPct}%`;
+
+  if (plane) plane.style.left = `${planeLeftPct}%`;
 
   for (const stepEl of Array.from(root.querySelectorAll<HTMLElement>('.av-step'))) {
-    const stepName = stepEl.getAttribute('data-step') as AviationProgressStep | null;
-    if (!stepName) continue;
-    const idx = STEP_ORDER.indexOf(stepName);
+    const stepName = progressStepSchema.safeParse(stepEl.getAttribute('data-step'));
+
+    if (!stepName.success) continue;
+    const idx = STEP_ORDER.indexOf(stepName.data);
     const stageState = idx < activeIndex ? 'done' : idx === activeIndex ? 'active' : 'pending';
     stepEl.setAttribute('data-state', stageState);
   }
@@ -562,6 +586,7 @@ function formatElapsed(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000));
   const m = Math.floor(total / 60);
   const s = total % 60;
+
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
@@ -571,78 +596,86 @@ function mountStyle(): void {
   document.head.appendChild(style);
 }
 
-function shouldRenderTable(option: Record<string, unknown>): boolean {
-  if ((option as { __table?: unknown }).__table === true) return true;
-  const series = (option as { series?: unknown }).series;
+function shouldRenderTable(option: JsonObject): boolean {
+  if (option.__table === true) return true;
+  const series = option.series;
+
   if (Array.isArray(series) && series.length === 0) return true;
+
   if (series === undefined || series === null) return true;
+
   return false;
 }
 
-function validateChartOption(option: Record<string, unknown>): string | null {
+function validateChartOption(option: JsonObject): string | null {
   // Minimal check: ECharts requires `series` (array) when rendering a chart.
   // We already routed table-shaped results elsewhere, so here we just confirm
   // series is usable. An empty series array has already been routed to table.
-  const series = (option as { series?: unknown }).series;
-  if (!Array.isArray(series)) return 'chart_option.series is not an array';
+  if (!Array.isArray(option.series)) return 'chart_option.series is not an array';
+
   return null;
 }
 
-function renderTable(rows: Array<Record<string, unknown>>): HTMLElement {
+function renderTable(rows: JsonObject[]): HTMLElement {
   const wrap = document.createElement('div');
   wrap.className = 'table-wrap';
+
   if (rows.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'empty';
     empty.setAttribute('data-testid', 'aviation-empty');
     empty.textContent = 'No rows returned. Try a different date range or question.';
     wrap.appendChild(empty);
+
     return wrap;
   }
+
   const table = document.createElement('table');
   table.className = 'aviation-table';
   table.setAttribute('data-testid', 'aviation-table');
   const cols = Object.keys(rows[0]);
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
+
   for (const col of cols) {
     const th = document.createElement('th');
     th.textContent = col;
     headerRow.appendChild(th);
   }
+
   thead.appendChild(headerRow);
   table.appendChild(thead);
   const tbody = document.createElement('tbody');
+
   for (const row of rows.slice(0, 500)) {
     const tr = document.createElement('tr');
+
     for (const col of cols) {
       const td = document.createElement('td');
       const v = row[col];
       td.textContent = v === null || v === undefined ? '' : String(v);
       tr.appendChild(td);
     }
+
     tbody.appendChild(tr);
   }
+
   table.appendChild(tbody);
   wrap.appendChild(table);
+
   return wrap;
 }
 
-function applyChartDefaults(option: Record<string, unknown>): Record<string, unknown> {
+function applyChartDefaults(option: JsonObject): JsonObject {
   // We OWN the outer layout — title position, grid box, pie/treemap framing.
   // The LLM is unreliable at leaving room for the title, so our layout keys
   // win. Caller-supplied style keys (text, textStyle, itemStyle, label, …)
   // still bleed through because we spread the caller FIRST, then override
   // only the position keys we care about.
-  const caller = option as {
-    grid?: Record<string, unknown>;
-    title?: Record<string, unknown>;
-    series?: unknown;
-  };
-  const merged: Record<string, unknown> = {
+  const merged: JsonObject = {
     ...option,
     grid: {
-      ...(caller.grid ?? {}),
+      ...asJsonObject(option.grid),
       top: 64,
       left: 8,
       right: 24,
@@ -650,50 +683,63 @@ function applyChartDefaults(option: Record<string, unknown>): Record<string, unk
       containLabel: true,
     },
   };
-  if (caller.title) {
+
+  if (option.title) {
+    const title = asJsonObject(option.title);
+
     merged.title = {
-      ...caller.title,
+      ...title,
       top: 12,
       left: 'center',
       textStyle: {
         fontSize: 14,
         fontWeight: 600,
-        ...((caller.title as { textStyle?: Record<string, unknown> }).textStyle ?? {}),
+        ...asJsonObject(title.textStyle),
       },
     };
   }
+
   // Pie/treemap ignore `grid`, so their bounding box must be pushed down at
   // the series level. We force `top` (and null out `center` on pie so `top`
   // actually applies — ECharts ignores `top` when `center` is set).
-  if (Array.isArray(caller.series)) {
-    merged.series = caller.series.map((s) => {
-      if (!s || typeof s !== 'object') return s;
-      const series = s as Record<string, unknown>;
+  if (Array.isArray(option.series)) {
+    merged.series = option.series.map((s) => {
+      const parsed = jsonObjectSchema.safeParse(s);
+
+      if (!parsed.success) return s;
+      const series = parsed.data;
+
       if (series.type === 'pie') {
         return { ...series, center: ['50%', '58%'] };
       }
+
       if (series.type === 'treemap') {
         return { ...series, top: 56, bottom: 12, left: 8, right: 8 };
       }
+
       return s;
     });
   }
+
   return merged;
 }
 
-function renderChart(container: HTMLElement, option: Record<string, unknown>): void {
+function renderChart(container: HTMLElement, option: JsonObject): void {
   // Dispose prior instance + observer if re-rendering (theme change).
   if (state.chartResizeObserver) {
     state.chartResizeObserver.disconnect();
     state.chartResizeObserver = undefined;
   }
+
   if (state.chart) {
     state.chart.dispose();
     state.chart = undefined;
   }
+
   const chart = echarts.init(container, state.theme === 'dark' ? 'dark' : undefined, {
     renderer: 'canvas',
   });
+
   state.chart = chart;
   chart.setOption(applyChartDefaults(option), true);
 
@@ -707,6 +753,7 @@ function renderFallback(answer: string, reason: string): HTMLElement {
   box.className = 'error-state';
   box.setAttribute('data-testid', 'aviation-chart-fallback');
   box.textContent = answer;
+
   if (reason) {
     const small = document.createElement('div');
     small.style.fontSize = '.75rem';
@@ -714,6 +761,7 @@ function renderFallback(answer: string, reason: string): HTMLElement {
     small.textContent = `(chart unavailable: ${reason})`;
     box.appendChild(small);
   }
+
   return box;
 }
 
@@ -741,6 +789,7 @@ function renderSqlBlock(sql: string): HTMLElement {
   });
   container.appendChild(btn);
   container.appendChild(panel);
+
   return container;
 }
 
@@ -753,23 +802,28 @@ function renderChips(
   wrap.setAttribute('role', 'group');
   wrap.setAttribute('aria-label', 'Follow-up questions');
   wrap.setAttribute('data-testid', 'aviation-chips');
+
   for (const q of followups) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'chip';
     btn.textContent = q;
     btn.setAttribute('aria-label', `Ask follow-up: ${q}`);
+
     if (state.streaming) btn.setAttribute('aria-disabled', 'true');
     btn.addEventListener('click', () => {
       if (btn.getAttribute('aria-disabled') === 'true') return;
+
       // Belt-and-suspenders: optimistically disable chips on first click.
       for (const child of Array.from(wrap.querySelectorAll<HTMLButtonElement>('.chip'))) {
         child.setAttribute('aria-disabled', 'true');
       }
+
       onClick(q);
     });
     wrap.appendChild(btn);
   }
+
   return wrap;
 }
 
@@ -780,6 +834,7 @@ function renderLoading(mount: HTMLElement, step: AviationProgressStep = 'plannin
   // renderLoading call); otherwise build fresh. This keeps the plane's CSS
   // transition alive as the step advances.
   let loader = mount.querySelector<HTMLElement>('[data-testid="aviation-loading"]');
+
   if (!loader || !loader.classList.contains('av-loader')) {
     mount.replaceChildren();
     const wrap = document.createElement('div');
@@ -796,6 +851,7 @@ function renderLoading(mount: HTMLElement, step: AviationProgressStep = 'plannin
 
   // Ensure elapsed timer is running (starts on first renderLoading call).
   if (!state.loadingStartedAt) state.loadingStartedAt = Date.now();
+
   if (!state.loadingTimerTicker && timerEl) {
     const el = timerEl;
     const start = state.loadingStartedAt;
@@ -813,8 +869,11 @@ function renderLoading(mount: HTMLElement, step: AviationProgressStep = 'plannin
     clearInterval(state.loadingMessageTicker);
     state.loadingMessageTicker = undefined;
   }
+
   state.loadingStep = step;
+
   if (textEl) textEl.textContent = messages[0] ?? '';
+
   if (messages.length > 1 && textEl) {
     let index = 0;
     const el = textEl;
@@ -823,14 +882,6 @@ function renderLoading(mount: HTMLElement, step: AviationProgressStep = 'plannin
       el.textContent = messages[index] ?? '';
     }, LOADING_TICK_MS);
   }
-}
-
-function isPendingResult(sc: object): sc is AviationPendingResult {
-  return (
-    (sc as { pending?: unknown }).pending === true &&
-    typeof (sc as { question?: unknown }).question === 'string' &&
-    typeof (sc as { queryUrl?: unknown }).queryUrl === 'string'
-  );
 }
 
 /**
@@ -851,6 +902,7 @@ async function streamAviationQuery(
     body: JSON.stringify({ question: pending.question }),
     signal,
   });
+
   if (!response.ok || !response.body) {
     throw new Error(`Query endpoint returned ${response.status}`);
   }
@@ -863,24 +915,30 @@ async function streamAviationQuery(
 
   while (true) {
     const { value, done } = await reader.read();
+
     if (done) break;
     buffer += decoder.decode(value, { stream: true });
 
     let sep: number;
+
     while ((sep = buffer.indexOf('\n\n')) !== -1) {
       const frame = buffer.slice(0, sep);
       buffer = buffer.slice(sep + 2);
+
       const dataLine = frame
         .split('\n')
         .map((l) => l.trim())
         .find((l) => l.startsWith('data:'));
+
       if (!dataLine) continue;
       const payload = dataLine.slice('data:'.length).trim();
+
       if (!payload) continue;
 
-      let parsed: AviationQueryEvent;
+      let parsed: z.infer<typeof queryEventSchema>;
+
       try {
-        parsed = JSON.parse(payload) as AviationQueryEvent;
+        parsed = queryEventSchema.parse(JSON.parse(payload));
       } catch {
         continue;
       }
@@ -889,14 +947,16 @@ async function streamAviationQuery(
         renderLoading(mount, parsed.step);
       } else if (parsed.type === 'result') {
         finalResult = parsed.result;
-      } else if (parsed.type === 'error') {
+      } else {
         errorMessage = parsed.message;
       }
     }
   }
 
   if (errorMessage) throw new Error(errorMessage);
+
   if (!finalResult) throw new Error('query stream ended without a result');
+
   return finalResult;
 }
 
@@ -915,6 +975,7 @@ function renderResult(
   // Hero (hero_number + answer as h2).
   const hero = document.createElement('div');
   hero.className = 'hero';
+
   if (result.hero_number) {
     const big = document.createElement('div');
     big.className = 'hero-number';
@@ -922,6 +983,7 @@ function renderResult(
     big.textContent = result.hero_number;
     hero.appendChild(big);
   }
+
   const h2 = document.createElement('h2');
   h2.className = 'hero-answer';
   h2.setAttribute('data-testid', 'aviation-hero-answer');
@@ -940,12 +1002,11 @@ function renderResult(
   }
 
   // Visualization: chart OR table OR fallback.
-  if (!result.chart_option || typeof result.chart_option !== 'object') {
-    wrap.appendChild(renderFallback(result.answer, 'chart_option missing'));
-  } else if (shouldRenderTable(result.chart_option)) {
+  if (shouldRenderTable(result.chart_option)) {
     wrap.appendChild(renderTable(result.rows));
   } else {
     const err = validateChartOption(result.chart_option);
+
     if (err) {
       wrap.appendChild(renderFallback(result.answer, err));
     } else {
@@ -960,12 +1021,15 @@ function renderResult(
         try {
           renderChart(viz, result.chart_option);
         } catch (e) {
-          viz.replaceWith(renderFallback(result.answer, String((e as Error)?.message ?? e)));
+          viz.replaceWith(
+            renderFallback(result.answer, e instanceof Error ? e.message : String(e)),
+          );
         }
       });
       // Still need chips + SQL appended — but wrap is already in DOM; append to wrap.
       wrap.appendChild(renderChips(result.followups, onFollowup));
       wrap.appendChild(renderSqlBlock(result.sql));
+
       return;
     }
   }
@@ -983,25 +1047,31 @@ function handleHostContextChanged(ctx: McpUiHostContext): void {
   if (ctx.theme) {
     applyDocumentTheme(ctx.theme);
     state.theme = ctx.theme === 'dark' ? 'dark' : 'light';
+
     // Re-render chart with new theme if currently showing one.
     if (state.result && state.chart) {
       const opt = state.result.chart_option;
-      if (opt && typeof opt === 'object' && !shouldRenderTable(opt)) {
+
+      if (!shouldRenderTable(opt)) {
         const viz = document.querySelector<HTMLElement>('[data-testid="aviation-chart"]');
+
         if (viz) renderChart(viz, opt);
       }
     }
   }
+
   if (ctx.styles?.variables) applyHostStyleVariables(ctx.styles.variables);
+
   if (ctx.styles?.css?.fonts) applyHostFonts(ctx.styles.css.fonts);
 
   // Forward-compatible streaming-disable signal: `status` is a local extension the host
   // sends (see <ToolUiResource>), so accept 'streaming' and ignore unknown values.
-  const status = (ctx as { status?: unknown }).status;
-  const nextStreaming = status === 'streaming';
+  const nextStreaming = ctx.status === 'streaming';
+
   if (nextStreaming !== state.streaming) {
     state.streaming = nextStreaming;
     const chips = document.querySelectorAll<HTMLButtonElement>('.chip');
+
     for (const chip of Array.from(chips)) {
       if (state.streaming) chip.setAttribute('aria-disabled', 'true');
       else chip.removeAttribute('aria-disabled');
@@ -1020,13 +1090,23 @@ export interface BootstrapDeps {
   mount?: HTMLElement;
 }
 
-export function createBootstrap(deps: BootstrapDeps = {}): {
+function requireMount(): HTMLElement {
+  const mount = document.getElementById('app');
+
+  if (!mount) throw new Error('aviation-answer: #app mount element is missing');
+
+  return mount;
+}
+
+export interface Bootstrap {
   app: App;
   mount: HTMLElement;
-  handleToolResult: (r: unknown) => void;
+  handleToolResult: (params: ToolResultParams) => void;
   handleHostContextChanged: (ctx: McpUiHostContext) => void;
-} {
-  const mount = deps.mount ?? (document.getElementById('app') as HTMLElement);
+}
+
+export function createBootstrap(deps: BootstrapDeps = {}): Bootstrap {
+  const mount = deps.mount ?? requireMount();
   const app = deps.app ?? new App({ name: 'aviation-answer', version: '0.1.0' });
 
   mountStyle();
@@ -1055,16 +1135,14 @@ export function createBootstrap(deps: BootstrapDeps = {}): {
     }
   }
 
-  function handleToolResult(raw: unknown): void {
+  function handleToolResult(params: ToolResultParams): void {
     // The App SDK's `ontoolresult` passes the notification's `params`; spec
     // says `params` contains `content` + `structuredContent`. Be defensive.
-    const params = (raw ?? {}) as {
-      structuredContent?: unknown;
-      content?: unknown;
-    };
     const sc = params.structuredContent;
-    if (!sc || typeof sc !== 'object') {
+
+    if (!sc) {
       renderFallbackShell(mount, 'Tool result missing structuredContent');
+
       return;
     }
 
@@ -1073,15 +1151,17 @@ export function createBootstrap(deps: BootstrapDeps = {}): {
     // Fresh tool calls: the server returns a pending pointer and the iframe
     // drives the slow work via SSE. Persisted replays bypass this — their
     // structuredContent is already the final AviationToolResult.
-    if (isPendingResult(sc)) {
+    const pending = pendingResultSchema.safeParse(sc);
+
+    if (pending.success) {
       const controller = new AbortController();
       pendingAbort = controller;
-      void streamAviationQuery(mount, sc, controller.signal)
+      void streamAviationQuery(mount, pending.data, controller.signal)
         .then((result) => {
           if (controller.signal.aborted) return;
           renderResult(mount, result, onFollowup);
         })
-        .catch((err: unknown) => {
+        .catch((err) => {
           if (controller.signal.aborted) return;
           const message = err instanceof Error ? err.message : String(err);
           renderFallbackShell(mount, `Query failed: ${message}`);
@@ -1089,10 +1169,19 @@ export function createBootstrap(deps: BootstrapDeps = {}): {
         .finally(() => {
           if (pendingAbort === controller) pendingAbort = null;
         });
+
       return;
     }
 
-    renderResult(mount, sc as AviationToolResult, onFollowup);
+    const result = toolResultSchema.safeParse(sc);
+
+    if (!result.success) {
+      renderFallbackShell(mount, 'Tool result has an unexpected shape');
+
+      return;
+    }
+
+    renderResult(mount, result.data, onFollowup);
   }
 
   app.ontoolinput = () => {
@@ -1107,7 +1196,7 @@ export function createBootstrap(deps: BootstrapDeps = {}): {
   app.ontoolresult = (params) => handleToolResult(params);
 
   app.onhostcontextchanged = (params) => {
-    handleHostContextChanged(params as McpUiHostContext);
+    handleHostContextChanged(params);
   };
 
   app.ontoolcancelled = () => {
@@ -1144,13 +1233,15 @@ function renderFallbackShell(mount: HTMLElement, message: string): void {
  * `window.__MCP_UI_TEST__ = true` before module eval (vitest does via setup).
  * -------------------------------------------------------------------------- */
 
+export interface AviationAnswerHook {
+  handleToolResult: (params: ToolResultParams) => void;
+  handleHostContextChanged: (ctx: McpUiHostContext) => void;
+}
+
 declare global {
   interface Window {
     __MCP_UI_TEST__?: boolean;
-    __AVIATION_ANSWER__?: {
-      handleToolResult: (r: unknown) => void;
-      handleHostContextChanged: (ctx: McpUiHostContext) => void;
-    };
+    __AVIATION_ANSWER__?: AviationAnswerHook;
   }
 }
 
@@ -1192,8 +1283,10 @@ if (
       /* best-effort; postMessage rarely throws but a pinned parent origin could */
     }
   };
+
   // Initial size ping before the App handshake fires.
   notifySize();
+
   // Observe both elements ext-apps observes, so when content arrives (loader
   // -> chart) the host grows the iframe. The ext-apps autoResize path will
   // additionally re-observe after connect; the duplicate notifications are
@@ -1213,6 +1306,7 @@ if (
   };
   void boot.app.connect().then(() => {
     const ctx = boot.app.getHostContext();
+
     if (ctx) handleHostContextChanged(ctx);
   });
 }

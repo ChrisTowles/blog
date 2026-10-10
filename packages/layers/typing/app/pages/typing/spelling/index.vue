@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { TEST_IDS } from '~~/shared/test-ids';
+import { fetchErrorMessage } from '../../../utils/typing/fetch-error';
 import type { SpellingList, SpellingProgress } from '~~/shared/typing-types';
 
 definePageMeta({
@@ -17,16 +18,21 @@ useHead({
 });
 
 const { active } = useActiveLearner();
+
 const lists = ref<SpellingList[]>([]);
+
 const progressByList = ref<Record<number, SpellingProgress[]>>({});
+
 const error = ref<string | null>(null);
 
 async function load() {
   if (!active.value) {
     lists.value = [];
     progressByList.value = {};
+
     return;
   }
+
   try {
     const result = await $fetch<{
       lists: SpellingList[];
@@ -34,12 +40,12 @@ async function load() {
     }>('/api/typing/spelling', {
       params: { learnerId: active.value.id },
     });
+
     lists.value = result.lists;
     progressByList.value = result.progressByList ?? {};
     error.value = null;
   } catch (e: unknown) {
-    const err = e as { statusMessage?: string };
-    error.value = err.statusMessage ?? 'Failed to load lists';
+    error.value = fetchErrorMessage(e, 'Failed to load lists');
   }
 }
 

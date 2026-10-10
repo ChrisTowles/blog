@@ -12,9 +12,11 @@ export function pickWordsForRound(opts: {
 }): string[] {
   const pool = opts.source.length > 0 ? opts.source : FALLBACK_WORDS;
   const words: string[] = [];
+
   for (let i = 0; i < opts.count; i++) {
     words.push(pool[Math.floor(Math.random() * pool.length)] ?? FALLBACK_WORDS[0]!);
   }
+
   return words;
 }
 

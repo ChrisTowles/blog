@@ -4,12 +4,8 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { unlockedKeysForStage } from './curriculum';
-import {
-  validateGeneratedText,
-  generateLesson,
-  truncateWithinBounds,
-  type AnthropicLike,
-} from './lesson-generator';
+import type { AnthropicLike } from './anthropic-like';
+import { validateGeneratedText, generateLesson, truncateWithinBounds } from './lesson-generator';
 import { blockListCheck } from './lesson-safety';
 
 describe('validateGeneratedText', () => {
@@ -30,12 +26,14 @@ describe('validateGeneratedText', () => {
   it('rejects too-short text', () => {
     const result = validateGeneratedText('a', stage5, { min: 50, max: 200 });
     expect(result.ok).toBe(false);
+
     if (!result.ok) expect(result.reason).toMatch(/too short/);
   });
 
   it('rejects too-long text', () => {
     const result = validateGeneratedText('a'.repeat(500), stage5, { min: 10, max: 200 });
     expect(result.ok).toBe(false);
+
     if (!result.ok) expect(result.reason).toMatch(/too long/);
   });
 });
@@ -87,6 +85,7 @@ describe('blockListCheck', () => {
   it('catches a block-list term anywhere in the string', () => {
     const result = blockListCheck('I love porn and games');
     expect(result.safe).toBe(false);
+
     if (!result.safe) expect(result.source).toBe('block-list');
   });
 });
@@ -121,7 +120,9 @@ describe('generateLesson (stub Anthropic client)', () => {
       { stage: 5, topic: 'glass', kind: 'sentence', length: 'short' },
       stub,
     );
+
     expect(result.ok).toBe(true);
+
     if (result.ok) expect(result.text).toContain('flask');
   });
 
@@ -145,6 +146,7 @@ describe('generateLesson (stub Anthropic client)', () => {
       { stage: 5, topic: 'glass', kind: 'sentence', length: 'short' },
       stub,
     );
+
     expect(result.ok).toBe(true);
     expect(create).toHaveBeenCalledTimes(3);
   });
@@ -158,6 +160,7 @@ describe('generateLesson (stub Anthropic client)', () => {
       { stage: 5, topic: 'animals', kind: 'sentence', length: 'short' },
       stub,
     );
+
     expect(result.ok).toBe(false);
   });
 
@@ -176,21 +179,27 @@ describe('generateLesson (stub Anthropic client)', () => {
       { stage: 5, topic: 'glass', kind: 'sentence', length: 'short' },
       stub,
     );
+
     expect(result.ok).toBe(true);
+
     if (result.ok) {
       expect(result.text.length).toBeLessThanOrEqual(160);
       expect(result.text.length).toBeGreaterThanOrEqual(60);
     }
+
     expect(create).toHaveBeenCalledTimes(2);
   });
 
   it('errors when ANTHROPIC_API_KEY is missing', async () => {
     delete process.env.ANTHROPIC_API_KEY;
+
     const result = await generateLesson(
       { stage: 5, topic: 'animals', kind: 'sentence', length: 'short' },
       stub,
     );
+
     expect(result.ok).toBe(false);
+
     if (!result.ok) expect(result.reason).toMatch(/ANTHROPIC_API_KEY/);
   });
 });

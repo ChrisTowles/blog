@@ -6,19 +6,21 @@ const props = defineProps<{
 }>();
 
 const colorMode = useColorMode();
+
 const highlighter = await useHighlighter();
+
 const showCode = ref(false);
 
-const LANG_MAP: Record<string, string> = {
-  python: 'python',
-  py: 'python',
-  bash: 'bash',
-  sh: 'bash',
-  javascript: 'js',
-  typescript: 'ts',
-};
+const LANG_MAP = new Map([
+  ['python', 'python'],
+  ['py', 'python'],
+  ['bash', 'bash'],
+  ['sh', 'bash'],
+  ['javascript', 'js'],
+  ['typescript', 'ts'],
+]);
 
-const lang = computed(() => LANG_MAP[props.execution.language] || props.execution.language);
+const lang = computed(() => LANG_MAP.get(props.execution.language) || props.execution.language);
 </script>
 
 <template>

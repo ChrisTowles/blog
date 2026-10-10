@@ -18,6 +18,7 @@ const decks = DECKS.map((deck) => ({
   cards: SUITS.flatMap((suit) =>
     RANKS.map((rank) => {
       const code = cardCode({ rank, suit });
+
       return { code, url: `/poker/decks/${deck.id}/${code}.svg`, label: code };
     }),
   ),

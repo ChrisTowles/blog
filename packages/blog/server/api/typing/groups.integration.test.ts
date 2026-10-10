@@ -108,6 +108,7 @@ describe.skipIf(!hasDatabase)('Typing groups integration', () => {
     it('inserts and retrieves an invite row', async () => {
       const group = await createTestTypingGroup();
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
       const [invite] = await db
         .insert(tables.typingGroupInvites)
         .values({
@@ -117,6 +118,7 @@ describe.skipIf(!hasDatabase)('Typing groups integration', () => {
           expiresAt,
         })
         .returning();
+
       expect(invite).toBeDefined();
       expect(invite!.acceptedAt).toBeNull();
     });
@@ -133,6 +135,7 @@ describe.skipIf(!hasDatabase)('Typing groups integration', () => {
         .set({ currentStage: 5 })
         .where(eq(tables.typingLearners.id, learner.id))
         .returning();
+
       expect(updated!.currentStage).toBe(5);
     });
   });
@@ -155,6 +158,7 @@ describe.skipIf(!hasDatabase)('Typing groups integration', () => {
           errorsByKey: { f: 1 },
         })
         .returning();
+
       expect(attempt!.wpm).toBe(12);
 
       // Upsert key stat for "f".
@@ -172,6 +176,7 @@ describe.skipIf(!hasDatabase)('Typing groups integration', () => {
         .where(
           and(eq(tables.typingKeyStats.learnerId, learner.id), eq(tables.typingKeyStats.key, 'f')),
         );
+
       expect(rows).toHaveLength(1);
       expect(rows[0]!.errors).toBe(1);
     });
@@ -194,6 +199,7 @@ describe.skipIf(!hasDatabase)('Typing groups integration', () => {
         .select()
         .from(tables.typingAttempts)
         .where(eq(tables.typingAttempts.learnerId, learner.id));
+
       expect(remaining).toHaveLength(0);
     });
   });

@@ -10,7 +10,9 @@ definePageMeta({
 const toast = useToast();
 
 const input = ref('');
+
 const loading = ref(false);
+
 const { model } = useModels();
 
 async function setPrompt(prompt: string) {
@@ -27,6 +29,7 @@ async function createChat(prompt: string) {
       method: 'POST',
       body: { input: prompt },
     });
+
     console.log('chat', chat);
     refreshNuxtData('chats');
     const { gtag } = useGtag();
@@ -51,11 +54,13 @@ function onSubmit() {
 
 async function onAviationStarter(question: string) {
   loading.value = true;
+
   try {
     const chat = await $fetch('/api/chats', {
       method: 'POST',
       body: { input: question },
     });
+
     refreshNuxtData('chats');
     await navigateTo(`/chat/${chat.id}`);
   } catch (error) {

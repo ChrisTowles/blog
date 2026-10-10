@@ -1,6 +1,7 @@
 import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
-import type { WorkflowSSEEvent } from '../../../../../../shared/workflow-types';
+import { jsonObjectSchema } from '../../../../../../shared/workflow-schemas';
+import type { JsonObject, WorkflowSSEEvent } from '../../../../../../shared/workflow-types';
 
 defineRouteMeta({
   openAPI: { description: 'SSE stream for live workflow execution status', tags: ['workflows'] },
@@ -18,6 +19,7 @@ export default defineEventHandler(async (event) => {
     event,
     z.object({ id: z.string(), runId: z.string() }).parse,
   );
+
   await requireWorkflowOrTemplate(event, id);
   const db = useDrizzle();
 
@@ -62,12 +64,14 @@ export default defineEventHandler(async (event) => {
           .where(eq(tables.workflowRuns.id, runId));
 
         const sortedNodes = topologicalSort(engineNodes, engineEdges);
-        const nodeOutputs = new Map<string, Record<string, unknown>>();
-        const workflowInput: Record<string, unknown> = run.inputData
-          ? JSON.parse(run.inputData)
+        const nodeOutputs = new Map<string, JsonObject>();
+
+        const workflowInput = run.inputData
+          ? jsonObjectSchema.parse(JSON.parse(run.inputData))
           : {};
 
         let runFailed = false;
+
         for (const node of sortedNodes) {
           sendEvent(controller, {
             event: 'node:start',
@@ -106,7 +110,8 @@ export default defineEventHandler(async (event) => {
         if (!runFailed) {
           // Aggregate terminal node outputs
           const terminalNodes = findTerminalNodes(engineNodes, engineEdges);
-          const finalOutput: Record<string, Record<string, unknown>> = {};
+          const finalOutput: Record<string, JsonObject> = {};
+
           for (const node of terminalNodes) {
             finalOutput[node.id] = nodeOutputs.get(node.id) ?? {};
           }

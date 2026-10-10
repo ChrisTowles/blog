@@ -2,13 +2,16 @@
 import { TEST_IDS } from '~~/shared/test-ids';
 
 const { activeLearnerId, active, learners, setActive } = useActiveLearner();
+
 const { loggedIn } = useUserSession();
 
 const open = ref(false);
 
 const label = computed(() => {
   const a = active.value;
+
   if (a) return a.displayName;
+
   return 'You (anonymous)';
 });
 
@@ -18,9 +21,11 @@ function pick(id: number | 'anon') {
 }
 
 const wrapperRef = ref<HTMLElement | null>(null);
+
 function onClickOutside(event: MouseEvent) {
   if (!wrapperRef.value) return;
-  if (!wrapperRef.value.contains(event.target as Node)) {
+
+  if (!(event.target instanceof Node) || !wrapperRef.value.contains(event.target)) {
     open.value = false;
   }
 }

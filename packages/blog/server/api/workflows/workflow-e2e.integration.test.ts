@@ -10,8 +10,10 @@ import {
   executeNode,
   dbNodeToEngineNode,
 } from '../../../../layers/workflows/server/utils/workflow-engine';
+import type { JsonObject } from '../../../../layers/workflows/shared/workflow-types';
 
 const hasDatabase = !!process.env.DATABASE_URL;
+
 const hasAnthropicKey = !!process.env.ANTHROPIC_API_KEY;
 
 describe.skipIf(!hasDatabase || !hasAnthropicKey)(
@@ -47,16 +49,17 @@ describe.skipIf(!hasDatabase || !hasAnthropicKey)(
         model?: string;
         temperature?: number;
         maxTokens?: number;
-        outputSchema: Record<string, unknown>;
+        outputSchema: JsonObject;
       }>;
       edges: Array<{ source: string; target: string }>;
-      input?: Record<string, unknown>;
+      input?: JsonObject;
     }) {
       // 1. Create workflow
       const [workflow] = await db
         .insert(tables.workflows)
         .values({ name: config.name, ownerId: testUser.id })
         .returning();
+
       expect(workflow).toBeDefined();
 
       // 2. Insert nodes
@@ -95,6 +98,7 @@ describe.skipIf(!hasDatabase || !hasAnthropicKey)(
           startedAt: new Date().toISOString(),
         })
         .returning();
+
       expect(run).toBeDefined();
 
       // 5. Load nodes from DB and convert to engine format
@@ -109,6 +113,7 @@ describe.skipIf(!hasDatabase || !hasAnthropicKey)(
         .where(eq(tables.workflowEdges.workflowId, workflow!.id));
 
       const engineNodes = dbNodes.map(dbNodeToEngineNode);
+
       const engineEdges = dbEdges.map((e) => ({
         source: e.sourceNode,
         target: e.targetNode,
@@ -119,8 +124,8 @@ describe.skipIf(!hasDatabase || !hasAnthropicKey)(
       expect(sortedNodes).toHaveLength(config.nodes.length);
 
       // 7. Execute each node in order
-      const nodeOutputs = new Map<string, Record<string, unknown>>();
-      const workflowInput: Record<string, unknown> = config.input ?? {};
+      const nodeOutputs = new Map<string, JsonObject>();
+      const workflowInput: JsonObject = config.input ?? {};
 
       for (const node of sortedNodes) {
         const result = await executeNode(node, run!.id, nodeOutputs, workflowInput);
@@ -135,7 +140,8 @@ describe.skipIf(!hasDatabase || !hasAnthropicKey)(
 
       // 8. Aggregate terminal output
       const terminalNodes = findTerminalNodes(engineNodes, engineEdges);
-      const finalOutput: Record<string, Record<string, unknown>> = {};
+      const finalOutput: Record<string, JsonObject> = {};
+
       for (const node of terminalNodes) {
         finalOutput[node.id] = nodeOutputs.get(node.id) ?? {};
       }
@@ -249,7 +255,7 @@ describe.skipIf(!hasDatabase || !hasAnthropicKey)(
       expect(result.nodeExecs).toHaveLength(4);
       expect(result.nodeExecs.every((e) => e.status === 'completed')).toBe(true);
       expect(result.finalOutput.summary?.summary).toBeDefined();
-      expect(typeof result.finalOutput.summary?.summary).toBe('string');
+      expect(result.finalOutput.summary?.summary).toEqual(expect.any(String));
       console.log('✓ Workflow 1 output:', JSON.stringify(result.finalOutput.summary, null, 2));
     }, 120_000);
 
@@ -657,7 +663,7 @@ describe.skipIf(!hasDatabase || !hasAnthropicKey)(
     // Verify template resolution works across all workflows
     // ─────────────────────────────────────────────────────────
     it('resolveTemplate handles nested object references correctly', () => {
-      const outputs = new Map<string, Record<string, unknown>>();
+      const outputs = new Map<string, JsonObject>();
       outputs.set('node1', { items: ['a', 'b', 'c'], count: 3 });
 
       const result = resolveTemplate('Found {{node1.count}} items: {{node1.items}}', outputs, {});

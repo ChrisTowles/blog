@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const route = useRoute();
+
 const isLessonRunner = computed(() => route.path.startsWith('/typing/lesson/'));
 
 const { loggedIn } = useUserSession();
@@ -7,21 +8,22 @@ const { loggedIn } = useUserSession();
 // Hydrate available learners on first render (signed-in only). Errors are
 // silent — the layout renders fine for anonymous users.
 const { setLearners } = useActiveLearner();
+
 const { data: groupsData } = await useFetch('/api/typing/groups', {
   key: 'typing:groups',
-  default: () => ({ groups: [] as Array<{ learners: Array<unknown> }> }),
+  default: () => ({ groups: [] }),
   // Auth-required endpoint; ignore 401 silently. Skip SSR — the session
   // cookie isn't attached to the internal fetch during SSR, so the
   // request would 401 and the page would hydrate with empty groups.
   ignoreResponseError: true,
   server: false,
 });
+
 watchEffect(() => {
   const all = groupsData.value?.groups ?? [];
   // Flatten all learners across groups (single-group-per-learner UI for MVP,
   // but the schema supports many).
-  const merged = all.flatMap((g) => g.learners as never[]);
-  setLearners(merged as never);
+  setLearners(all.flatMap((g) => g.learners));
 });
 
 const items = computed(() => [

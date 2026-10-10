@@ -2,11 +2,11 @@ import { tool } from '@anthropic-ai/claude-agent-sdk';
 import { z } from 'zod';
 import { toolResult, toolError } from './helpers';
 
-interface DiceRoll {
+type DiceRoll = {
   sides: number;
   result: number;
   kept: boolean;
-}
+};
 
 /**
  * Normalize natural language dice notation to formal notation
@@ -17,15 +17,18 @@ function normalizeNotation(input: string): string {
 
   // Extract base dice pattern
   const baseMatch = notation.match(/^(\d+)d(\d+)/);
+
   if (!baseMatch) return notation;
 
   const count = parseInt(baseMatch[1]!, 10);
 
   // Handle "drop lowest [n]" → keep highest (count - n)
   const dropLowestMatch = notation.match(/drop\s+(?:the\s+)?lowest(?:\s+(\d+))?/);
+
   if (dropLowestMatch) {
     const dropCount = dropLowestMatch[1] ? parseInt(dropLowestMatch[1], 10) : 1;
     const keepCount = count - dropCount;
+
     if (keepCount > 0) {
       notation = `${baseMatch[0]}kh${keepCount}`;
     }
@@ -33,9 +36,11 @@ function normalizeNotation(input: string): string {
 
   // Handle "drop highest [n]" → keep lowest (count - n)
   const dropHighestMatch = notation.match(/drop\s+(?:the\s+)?highest(?:\s+(\d+))?/);
+
   if (dropHighestMatch) {
     const dropCount = dropHighestMatch[1] ? parseInt(dropHighestMatch[1], 10) : 1;
     const keepCount = count - dropCount;
+
     if (keepCount > 0) {
       notation = `${baseMatch[0]}kl${keepCount}`;
     }
@@ -53,6 +58,7 @@ function normalizeNotation(input: string): string {
 
   // Handle "keep highest [n]" that's not already kh format
   const keepHighestMatch = notation.match(/keep\s+(?:the\s+)?highest(?:\s+(\d+))?/);
+
   if (keepHighestMatch && !notation.includes('kh')) {
     const keepCount = keepHighestMatch[1] ? parseInt(keepHighestMatch[1], 10) : 1;
     notation = `${baseMatch[0]}kh${keepCount}`;
@@ -60,6 +66,7 @@ function normalizeNotation(input: string): string {
 
   // Handle "keep lowest [n]" that's not already kl format
   const keepLowestMatch = notation.match(/keep\s+(?:the\s+)?lowest(?:\s+(\d+))?/);
+
   if (keepLowestMatch && !notation.includes('kl')) {
     const keepCount = keepLowestMatch[1] ? parseInt(keepLowestMatch[1], 10) : 1;
     notation = `${baseMatch[0]}kl${keepCount}`;
@@ -67,6 +74,7 @@ function normalizeNotation(input: string): string {
 
   // Extract modifier if present (e.g., "+5", "- 3")
   const modMatch = input.match(/([+-])\s*(\d+)\s*$/);
+
   if (modMatch) {
     // Remove any existing modifier pattern from notation first
     notation = notation.replace(/\s*[+-]\s*\d+\s*$/, '');
@@ -116,12 +124,14 @@ export const rollDice = tool(
     if (count < 1 || count > 100) {
       return toolError('Number of dice must be between 1 and 100');
     }
+
     if (sides < 2 || sides > 100) {
       return toolError('Dice sides must be between 2 and 100');
     }
 
     // Roll all dice
     const rolls: DiceRoll[] = [];
+
     for (let i = 0; i < count; i++) {
       rolls.push({
         sides,
@@ -153,6 +163,7 @@ export const rollDice = tool(
     const rollsStr = rolls
       .map((r) => (r.kept ? r.result.toString() : `~~${r.result}~~`))
       .join(' + ');
+
     const breakdown =
       modifier !== 0
         ? `(${rollsStr}) ${modifier >= 0 ? '+' : ''}${modifier} = ${total}`

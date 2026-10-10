@@ -46,6 +46,7 @@ describe.skip('agent', () => {
               c.type === 'tool_use' && c.name === 'mcp__blog-tools__searchBlogContent',
           ),
       );
+
       expect(hasToolUse).toBe(true);
     });
 
@@ -74,7 +75,7 @@ describe.skip('agent', () => {
       });
 
       expect(result).toBeDefined();
-      expect(typeof result).toBe('string');
+      expect(result).toEqual(expect.any(String));
       expect(messages.length).toBeGreaterThan(0);
     });
 
@@ -93,6 +94,7 @@ describe.skip('agent', () => {
               c.type === 'tool_use' && c.name === 'mcp__blog-tools__getCurrentDateTime',
           ),
       );
+
       expect(hasTimeToolUse).toBe(true);
 
       // Result should mention time
@@ -115,6 +117,7 @@ describe.skip('agent', () => {
               c.type === 'tool_use' && c.name === 'mcp__blog-tools__getWeather',
           ),
       );
+
       expect(hasWeatherToolUse).toBe(true);
     });
 
@@ -132,6 +135,7 @@ describe.skip('agent', () => {
               c.type === 'tool_use' && c.name === 'mcp__blog-tools__rollDice',
           ),
       );
+
       expect(hasDiceToolUse).toBe(true);
 
       // Result should contain dice roll info
@@ -152,6 +156,7 @@ describe.skip('agent', () => {
               c.type === 'tool_use' && c.name === 'mcp__blog-tools__getAuthorInfo',
           ),
       );
+
       expect(hasAuthorToolUse).toBe(true);
 
       // Result should mention Chris Towles

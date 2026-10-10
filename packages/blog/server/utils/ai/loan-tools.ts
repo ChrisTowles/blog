@@ -1,9 +1,11 @@
 import type Anthropic from '@anthropic-ai/sdk';
+import { z } from 'zod';
 import {
   LOAN_APPLICATION_FIELDS,
   isApplicationComplete,
   type LoanApplicationData,
 } from '~~/shared/loan-types';
+import type { JsonObject } from '~~/shared/json-types';
 
 export const loanChatTools: Anthropic.Tool[] = [
   {
@@ -60,16 +62,29 @@ interface LoanToolContext {
   applicationData: LoanApplicationData;
 }
 
+export interface LoanToolResult {
+  updated?: JsonObject;
+  rejected?: string[];
+  message?: string;
+  complete?: boolean;
+  filledFields?: string[];
+  missingFields?: string[];
+  progress?: string;
+  error?: string;
+}
+
+const updateFieldsSchema = z.record(z.string(), z.json()).catch({});
+
 export function executeLoanTool(
   name: string,
-  args: Record<string, unknown>,
+  args: JsonObject,
   context: LoanToolContext,
-): Record<string, unknown> {
+): LoanToolResult {
   switch (name) {
     case 'updateApplication': {
-      const fields = (args.fields || {}) as Record<string, unknown>;
+      const fields = updateFieldsSchema.parse(args.fields);
       const validFields = new Set<string>(LOAN_APPLICATION_FIELDS);
-      const updated: Record<string, unknown> = {};
+      const updated: JsonObject = {};
       const rejected: string[] = [];
 
       for (const [key, value] of Object.entries(fields)) {
@@ -82,12 +97,15 @@ export function executeLoanTool(
 
       return { updated, rejected, message: 'Fields saved successfully.' };
     }
+
     case 'checkCompleteness': {
       const data = context.applicationData;
       const complete = isApplicationComplete(data);
+
       const filledFields = LOAN_APPLICATION_FIELDS.filter(
         (f) => data[f] !== undefined && data[f] !== null,
       );
+
       const missingFields = LOAN_APPLICATION_FIELDS.filter(
         (f) => data[f] === undefined || data[f] === null,
       );
@@ -99,6 +117,7 @@ export function executeLoanTool(
         progress: `${filledFields.length}/${LOAN_APPLICATION_FIELDS.length}`,
       };
     }
+
     default:
       return { error: `Unknown loan tool: ${name}` };
   }

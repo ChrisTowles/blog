@@ -17,6 +17,7 @@ function monteCarloEquity(
 
   let wins = 0;
   let ties = 0;
+
   for (let t = 0; t < trials; t++) {
     const shuffled = shuffle(deck, rng);
     const oppHole = shuffled.slice(0, 2);
@@ -24,15 +25,20 @@ function monteCarloEquity(
     const board = [...community, ...shuffled.slice(2, 2 + need)];
     const aiHand = evaluateBest([...hole, ...board]);
     const oppHand = evaluateBest([...oppHole, ...board]);
+
     if (aiHand.score > oppHand.score) wins++;
     else if (aiHand.score === oppHand.score) ties++;
   }
+
   return (wins + ties / 2) / trials;
 }
 
 /** Chen-style preflop strength → maps to ~equity vs random hand. */
 function preflopStrength(hole: Card[]): number {
-  const [a, b] = hole.slice().sort((x, y) => y.rank - x.rank) as [Card, Card];
+  const [a, b] = hole.slice().sort((x, y) => y.rank - x.rank);
+
+  if (!a || !b) throw new Error('preflopStrength needs two hole cards');
+
   const high: Rank = a.rank;
   const low: Rank = b.rank;
   const suited = a.suit === b.suit;
@@ -45,26 +51,33 @@ function preflopStrength(hole: Card[]): number {
     12: 7,
     11: 6,
   };
+
   let pts = baseMap[high] ?? high / 2;
 
   if (pair) {
     pts = Math.max(5, pts * 2);
+
     if (high === 5) pts = 6;
+
     if (high <= 4) pts = 5;
   }
+
   if (suited) pts += 2;
 
   const gap = high - low;
+
   if (!pair) {
     if (gap === 1) pts += 1;
     else if (gap === 2) pts -= 1;
     else if (gap === 3) pts -= 2;
     else if (gap >= 4) pts -= 4;
+
     if (gap <= 1 && high < 12) pts += 1;
   }
 
   // Map ~ -2..20 → 0.2..0.85
   const equity = Math.max(0.2, Math.min(0.85, 0.4 + pts * 0.025));
+
   return equity;
 }
 
@@ -114,13 +127,18 @@ export function decideAi(input: AiDecisionInput): PlayerAction {
       const sizeMul = adjEquity > 0.85 ? 1.2 : adjEquity > 0.7 ? 0.75 : 0.5;
       const target = Math.max(bigBlind, Math.round(state.pot * sizeMul));
       const amount = Math.min(stack, target);
+
       if (amount <= 0) return { kind: 'check' };
+
       return { kind: 'bet', amount };
     }
+
     if (bluff) {
       const amount = Math.min(stack, Math.max(bigBlind, Math.round(state.pot * 0.5)));
+
       return { kind: 'bet', amount };
     }
+
     return { kind: 'check' };
   }
 
@@ -133,6 +151,7 @@ export function decideAi(input: AiDecisionInput): PlayerAction {
   if (adjEquity > 0.78 && rng() < 0.85) {
     const raiseSize = Math.max(bigBlind * 2, Math.round(state.pot * 0.9));
     const toAmount = Math.min(ai.committed + toCall + raiseSize, ai.committed + stack);
+
     if (toAmount > state.currentBet) {
       return { kind: 'raise', toAmount };
     }
@@ -142,6 +161,7 @@ export function decideAi(input: AiDecisionInput): PlayerAction {
   if (adjEquity > 0.62 && rng() < 0.35) {
     const raiseSize = Math.max(bigBlind * 2, Math.round(state.pot * 0.6));
     const toAmount = Math.min(ai.committed + toCall + raiseSize, ai.committed + stack);
+
     if (toAmount > state.currentBet) {
       return { kind: 'raise', toAmount };
     }

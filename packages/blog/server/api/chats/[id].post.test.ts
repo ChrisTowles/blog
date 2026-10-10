@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { ChatMessage, MessagePart } from '~~/shared/chat-types';
+import type { JsonObject } from '~~/shared/json-types';
 
 // Test the helper functions extracted from the endpoint
 
@@ -19,10 +20,7 @@ function convertToAnthropicMessages(messages: ChatMessage[]) {
 }
 
 // Replicate sendSSE for testing
-function sendSSE(
-  controller: { enqueue: (data: Uint8Array) => void },
-  event: Record<string, unknown>,
-) {
+function sendSSE(controller: { enqueue: (data: Uint8Array) => void }, event: JsonObject) {
   const encoder = new TextEncoder();
   controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
 }
@@ -59,7 +57,7 @@ describe('Chat [id].post endpoint', () => {
           id: '1',
           role: 'assistant',
           parts: [
-            { type: 'reasoning', text: 'thinking...', state: 'done' } as MessagePart,
+            { type: 'reasoning', text: 'thinking...', state: 'done' },
             { type: 'text', text: 'The answer is 42' },
           ],
         },
@@ -102,7 +100,7 @@ describe('Chat [id].post endpoint', () => {
           id: '1',
           role: 'assistant',
           parts: [
-            { type: 'reasoning', text: 'Let me think...', state: 'done' } as MessagePart,
+            { type: 'reasoning', text: 'Let me think...', state: 'done' },
             { type: 'text', text: 'Final answer' },
           ],
         },
@@ -118,6 +116,7 @@ describe('Chat [id].post endpoint', () => {
   describe('sendSSE', () => {
     it('formats SSE data correctly', () => {
       const chunks: Uint8Array[] = [];
+
       const mockController = {
         enqueue: (data: Uint8Array) => chunks.push(data),
       };
@@ -130,6 +129,7 @@ describe('Chat [id].post endpoint', () => {
 
     it('handles title events', () => {
       const chunks: Uint8Array[] = [];
+
       const mockController = {
         enqueue: (data: Uint8Array) => chunks.push(data),
       };
@@ -143,6 +143,7 @@ describe('Chat [id].post endpoint', () => {
 
     it('handles error events', () => {
       const chunks: Uint8Array[] = [];
+
       const mockController = {
         enqueue: (data: Uint8Array) => chunks.push(data),
       };
@@ -156,6 +157,7 @@ describe('Chat [id].post endpoint', () => {
 
     it('handles tool_start events', () => {
       const chunks: Uint8Array[] = [];
+
       const mockController = {
         enqueue: (data: Uint8Array) => chunks.push(data),
       };
@@ -175,6 +177,7 @@ describe('Chat [id].post endpoint', () => {
 
     it('handles tool_end events', () => {
       const chunks: Uint8Array[] = [];
+
       const mockController = {
         enqueue: (data: Uint8Array) => chunks.push(data),
       };
@@ -193,6 +196,7 @@ describe('Chat [id].post endpoint', () => {
 
     it('handles done events with messageId', () => {
       const chunks: Uint8Array[] = [];
+
       const mockController = {
         enqueue: (data: Uint8Array) => chunks.push(data),
       };
@@ -206,6 +210,7 @@ describe('Chat [id].post endpoint', () => {
 
     it('handles reasoning events', () => {
       const chunks: Uint8Array[] = [];
+
       const mockController = {
         enqueue: (data: Uint8Array) => chunks.push(data),
       };
@@ -295,6 +300,7 @@ describe('Chat [id].post endpoint', () => {
   describe('SSE Format Validation', () => {
     it('SSE events end with double newline', () => {
       const chunks: Uint8Array[] = [];
+
       const mockController = {
         enqueue: (data: Uint8Array) => chunks.push(data),
       };
@@ -307,6 +313,7 @@ describe('Chat [id].post endpoint', () => {
 
     it('SSE events start with data: prefix', () => {
       const chunks: Uint8Array[] = [];
+
       const mockController = {
         enqueue: (data: Uint8Array) => chunks.push(data),
       };
@@ -319,6 +326,7 @@ describe('Chat [id].post endpoint', () => {
 
     it('SSE payload is valid JSON', () => {
       const chunks: Uint8Array[] = [];
+
       const mockController = {
         enqueue: (data: Uint8Array) => chunks.push(data),
       };

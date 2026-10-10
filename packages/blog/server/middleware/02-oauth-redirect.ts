@@ -6,10 +6,13 @@
  */
 export default defineEventHandler((event) => {
   const url = getRequestURL(event);
+
   if (!url.pathname.startsWith('/auth/')) return;
+
   if (url.searchParams.has('code')) return; // callback phase — cookie already set
 
   const redirect = url.searchParams.get('redirect');
+
   if (!redirect || !redirect.startsWith('/')) return; // same-origin only
 
   setCookie(event, 'oauth_redirect', redirect, {

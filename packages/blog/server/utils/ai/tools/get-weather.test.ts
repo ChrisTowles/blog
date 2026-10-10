@@ -4,12 +4,9 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+import type { JsonValue } from '~~/shared/json-types';
 import { getWeather } from './get-weather';
-
-type WeatherResult = {
-  content: Array<{ text: string }>;
-  isError?: boolean;
-};
+import { toolText } from './test-utils';
 
 const londonGeocode = {
   results: [
@@ -37,7 +34,7 @@ const londonForecast = {
   },
 };
 
-function jsonResponse(body: unknown): Response {
+function jsonResponse(body: JsonValue): Response {
   return new Response(JSON.stringify(body), {
     status: 200,
     headers: { 'content-type': 'application/json' },
@@ -47,16 +44,20 @@ function jsonResponse(body: unknown): Response {
 describe('getWeather', () => {
   beforeEach(() => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
-      const url = typeof input === 'string' ? input : (input as Request).url;
+      const url = input instanceof Request ? input.url : String(input);
+
       if (url.includes('geocoding-api.open-meteo.com')) {
         if (url.includes('Nonexistent')) {
           return jsonResponse({ results: [] });
         }
+
         return jsonResponse(londonGeocode);
       }
+
       if (url.includes('api.open-meteo.com/v1/forecast')) {
         return jsonResponse(londonForecast);
       }
+
       throw new Error(`unexpected fetch: ${url}`);
     });
   });
@@ -66,8 +67,8 @@ describe('getWeather', () => {
   });
 
   it('should return formatted weather data for valid location', async () => {
-    const result = (await getWeather.handler({ location: 'London' }, undefined)) as WeatherResult;
-    const data = JSON.parse(result.content[0]!.text);
+    const result = await getWeather.handler({ location: 'London' }, undefined);
+    const data = JSON.parse(toolText(result));
 
     expect(data.location).toBe('London, United Kingdom');
     expect(data.temperature).toBe(14);
@@ -80,8 +81,8 @@ describe('getWeather', () => {
   });
 
   it('should format daily forecast correctly', async () => {
-    const result = (await getWeather.handler({ location: 'London' }, undefined)) as WeatherResult;
-    const data = JSON.parse(result.content[0]!.text);
+    const result = await getWeather.handler({ location: 'London' }, undefined);
+    const data = JSON.parse(toolText(result));
 
     expect(data.dailyForecast[0].day).toBe('Today');
     expect(data.dailyForecast[0].high).toBe(16);
@@ -91,11 +92,9 @@ describe('getWeather', () => {
   });
 
   it('should return error for unknown location', async () => {
-    const result = (await getWeather.handler(
-      { location: 'Nonexistent City XYZ' },
-      undefined,
-    )) as WeatherResult;
-    const data = JSON.parse(result.content[0]!.text);
+    const result = await getWeather.handler({ location: 'Nonexistent City XYZ' }, undefined);
+
+    const data = JSON.parse(toolText(result));
 
     expect(result.isError).toBe(true);
     expect(data.error).toContain('Nonexistent City XYZ');

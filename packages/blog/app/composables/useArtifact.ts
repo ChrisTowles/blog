@@ -33,8 +33,10 @@ export function useArtifact(options: UseArtifactOptions = {}) {
   function handleContainerError(msg: string): string {
     if (/container|expired|not found/i.test(msg) && containerId.value) {
       containerId.value = null;
+
       return `${msg} (container cleared — try again)`;
     }
+
     return msg;
   }
 
@@ -75,6 +77,7 @@ export function useArtifact(options: UseArtifactOptions = {}) {
       }
 
       const reader = response.body?.getReader();
+
       if (!reader) throw new Error('No response body');
 
       status.value = 'streaming';
@@ -83,6 +86,7 @@ export function useArtifact(options: UseArtifactOptions = {}) {
 
       while (true) {
         const { done, value } = await reader.read();
+
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
@@ -105,8 +109,10 @@ export function useArtifact(options: UseArtifactOptions = {}) {
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
         status.value = 'idle';
+
         return;
       }
+
       const msg = handleContainerError(err instanceof Error ? err.message : 'Unknown error');
       error.value = msg;
       status.value = 'error';

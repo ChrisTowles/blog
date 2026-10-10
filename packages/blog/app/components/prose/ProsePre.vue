@@ -3,7 +3,9 @@ import mermaid from 'mermaid';
 import { log } from 'evlog';
 
 const colorMode = useColorMode();
+
 const highlighter = await useHighlighter();
+
 const props = defineProps<{
   code: string;
   language: string;
@@ -12,12 +14,15 @@ const props = defineProps<{
 }>();
 
 const isMermaid = computed(() => props.language === 'mermaid');
+
 const mermaidSvg = ref('');
+
 const mermaidId = `mermaid-${Math.random().toString(36).slice(2)}`;
 
 // Blog theme colors (sky primary, zinc neutral)
 const mermaidTheme = computed(() => {
   const isDark = colorMode.value === 'dark';
+
   return {
     theme: 'base' as const,
     themeVariables: {
@@ -89,17 +94,20 @@ async function renderMermaid() {
 }
 
 onMounted(renderMermaid);
+
 watch(() => colorMode.value, renderMermaid);
 
 const trimmedCode = computed(() => {
   return props.code.trim().replace(/`+$/, '');
 });
-const LANG_MAP: Record<string, string> = {
-  javascript: 'js',
-  typescript: 'ts',
-};
 
-const lang = computed(() => LANG_MAP[props.language] || props.language);
+const LANG_MAP = new Map([
+  ['javascript', 'js'],
+  ['typescript', 'ts'],
+]);
+
+const lang = computed(() => LANG_MAP.get(props.language) || props.language);
+
 const key = computed(() => {
   return `${lang.value}-${colorMode.value}`;
 });

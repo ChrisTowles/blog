@@ -16,27 +16,34 @@ export async function requireGuardian(
 ): Promise<{ userId: string; groupId: number }> {
   const session = await getUserSession(event);
   const userId = session.user?.id;
+
   if (!userId) {
     throw createError({ statusCode: 401, statusMessage: 'Sign in required' });
   }
 
   if (target.groupId !== undefined) {
     const ok = await isGuardianOfGroup(userId, target.groupId);
+
     if (!ok) {
       throw createError({ statusCode: 403, statusMessage: 'Not a guardian of this group' });
     }
+
     return { userId, groupId: target.groupId };
   }
 
   if (target.learnerId !== undefined) {
     const ok = await isGuardianOfLearner(userId, target.learnerId);
+
     if (!ok) {
       throw createError({ statusCode: 403, statusMessage: 'Not a guardian of this learner' });
     }
+
     const learner = await findLearnerById(target.learnerId);
+
     if (!learner) {
       throw createError({ statusCode: 404, statusMessage: 'Learner not found' });
     }
+
     return { userId, groupId: learner.groupId };
   }
 

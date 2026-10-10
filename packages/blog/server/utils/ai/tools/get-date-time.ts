@@ -10,6 +10,7 @@ export const getCurrentDateTime = tool(
   {},
   async () => {
     const now = new Date();
+
     return toolResult({
       date: now.toLocaleDateString('en-US', {
         weekday: 'long',

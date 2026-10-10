@@ -37,10 +37,8 @@ describe('isApplicationComplete', () => {
   });
 
   it('returns false when fields have null values', () => {
-    const withNulls = {
-      ...completeApplication,
-      income: null as unknown as number,
-    };
+    const withNulls = { ...completeApplication, income: null };
+
     expect(isApplicationComplete(withNulls)).toBe(false);
   });
 
@@ -50,6 +48,7 @@ describe('isApplicationComplete', () => {
       income: 0,
       fullName: '',
     };
+
     expect(isApplicationComplete(withZeroAndEmpty)).toBe(true);
   });
 
@@ -59,6 +58,7 @@ describe('isApplicationComplete', () => {
       socialSecurityNumber: '123-45-6789',
       favoriteColor: 'blue',
     };
+
     expect(isApplicationComplete(withExtras)).toBe(true);
   });
 });

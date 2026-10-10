@@ -23,7 +23,8 @@ export const searchBlogContent = tool(
     }
 
     const config = useRuntimeConfig();
-    const baseUrl = (config.public.siteUrl as string) || '';
+    const baseUrl = config.public.siteUrl || '';
+
     return toolResult({
       results: results.map((r) => ({
         content: r.content,

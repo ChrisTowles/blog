@@ -138,9 +138,12 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
     if (e.key === 'Backspace') {
       if (cursor.value > 0) {
         cursor.value--;
+
         if (correctTyped.value > 0) correctTyped.value--;
       }
+
       lastKeyAt.value = e.at;
+
       return;
     }
 
@@ -150,6 +153,7 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
     }
 
     const expected = text[cursor.value];
+
     if (expected === undefined) return;
 
     totalTyped.value++;
@@ -157,6 +161,7 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
     const matches = options.caseInsensitive
       ? e.key.toLowerCase() === expected.toLowerCase()
       : e.key === expected;
+
     if (matches) {
       // Timing only from correct keys: otherwise "kid pauses, then mistypes" lands in
       // the heatmap as fast time on the letter they never hit.
@@ -169,10 +174,12 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
         const newCount = perKeyAttempts.value[expected];
         perKeyAvgMs.value[expected] = (prior * (newCount - 1) + dt) / newCount;
       }
+
       lastKeyAt.value = e.at;
 
       correctTyped.value++;
       cursor.value++;
+
       if (cursor.value >= text.length) {
         complete(e.at);
       }
@@ -195,29 +202,37 @@ export function useTypingEngine(options: UseTypingEngineOptions): UseTypingEngin
     // makes this recompute at all — reading it here is load-bearing, not redundant.
     const tick = nowRef.value;
     const end = endedAt.value ?? (state.value === 'running' ? Math.max(tick, clock()) : start);
+
     if (start === null || end === null) return 0;
+
     return Math.max(0, end - start);
   });
 
   const wpm = computed(() => {
     const minutes = durationMs.value / 60000;
+
     if (minutes <= 0) return 0;
+
     return correctTyped.value / 5 / minutes;
   });
 
   const netWpm = computed(() => {
     const minutes = durationMs.value / 60000;
+
     if (minutes <= 0) return 0;
+
     return Math.max(0, wpm.value - errors.value / minutes);
   });
 
   const accuracy = computed(() => {
     if (totalTyped.value === 0) return 1;
+
     return correctTyped.value / totalTyped.value;
   });
 
   const nextChar = computed(() => {
     if (cursor.value >= text.length) return '';
+
     return text[cursor.value] ?? '';
   });
 

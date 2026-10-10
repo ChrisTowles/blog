@@ -9,10 +9,32 @@
  * These helpers consolidate the lookups so individual routes stay terse.
  */
 import { and, eq } from 'drizzle-orm';
+import { z } from 'zod';
+import type { TypingGroup } from '../../../../../blog/shared/typing-types';
 import { useDrizzle, tables } from '../../../../../blog/server/utils/drizzle';
+
+const groupKindSchema = z.enum(['family', 'classroom']);
+
+export function toTypingGroup(
+  row: Omit<TypingGroup, 'kind' | 'createdAt' | 'updatedAt'> & {
+    kind: string;
+    createdAt: Date;
+    updatedAt: Date;
+  },
+): TypingGroup {
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    kind: groupKindSchema.parse(row.kind),
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
 
 export async function isGuardianOfGroup(userId: string, groupId: number): Promise<boolean> {
   const db = useDrizzle();
+
   const rows = await db
     .select({ groupId: tables.typingGroupMembers.groupId })
     .from(tables.typingGroupMembers)
@@ -23,11 +45,13 @@ export async function isGuardianOfGroup(userId: string, groupId: number): Promis
       ),
     )
     .limit(1);
+
   return rows.length > 0;
 }
 
 export async function isGuardianOfLearner(userId: string, learnerId: number): Promise<boolean> {
   const db = useDrizzle();
+
   const rows = await db
     .select({ groupId: tables.typingLearners.groupId })
     .from(tables.typingLearners)
@@ -39,11 +63,13 @@ export async function isGuardianOfLearner(userId: string, learnerId: number): Pr
       and(eq(tables.typingLearners.id, learnerId), eq(tables.typingGroupMembers.userId, userId)),
     )
     .limit(1);
+
   return rows.length > 0;
 }
 
 export async function listGuardianGroups(userId: string) {
   const db = useDrizzle();
+
   return db
     .select({
       id: tables.typingGroups.id,
@@ -63,11 +89,13 @@ export async function listGuardianGroups(userId: string) {
 
 export async function findGroupBySlug(slug: string) {
   const db = useDrizzle();
+
   const rows = await db
     .select()
     .from(tables.typingGroups)
     .where(eq(tables.typingGroups.slug, slug))
     .limit(1);
+
   return rows[0] ?? null;
 }
 
@@ -78,10 +106,12 @@ export async function findGroupBySlug(slug: string) {
  */
 export function buildGroupSlug(userId: string, name: string): string {
   const prefix = userId.replace(/-/g, '').slice(0, 6).toLowerCase();
+
   const namePart = name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+
   return `${prefix}-${namePart || 'group'}`;
 }
 
@@ -90,6 +120,7 @@ export async function generateUniqueGroupSlug(userId: string, name: string): Pro
   const base = buildGroupSlug(userId, name);
   let candidate = base;
   let suffix = 2;
+
   // Tiny loop: collisions are rare (same user, same group name).
   while (true) {
     const existing = await db
@@ -97,6 +128,7 @@ export async function generateUniqueGroupSlug(userId: string, name: string): Pro
       .from(tables.typingGroups)
       .where(eq(tables.typingGroups.slug, candidate))
       .limit(1);
+
     if (existing.length === 0) return candidate;
     candidate = `${base}-${suffix}`;
     suffix += 1;
@@ -105,22 +137,26 @@ export async function generateUniqueGroupSlug(userId: string, name: string): Pro
 
 export async function listGroupLearners(groupId: number) {
   const db = useDrizzle();
+
   return db.select().from(tables.typingLearners).where(eq(tables.typingLearners.groupId, groupId));
 }
 
 export async function findLearnerById(learnerId: number) {
   const db = useDrizzle();
+
   const rows = await db
     .select()
     .from(tables.typingLearners)
     .where(eq(tables.typingLearners.id, learnerId))
     .limit(1);
+
   return rows[0] ?? null;
 }
 
 export function generateInviteToken(): string {
   // 32 hex chars = 128 bits of entropy.
   const bytes = crypto.getRandomValues(new Uint8Array(16));
+
   return Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');

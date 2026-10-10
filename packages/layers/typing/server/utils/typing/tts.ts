@@ -8,11 +8,15 @@ import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
+import { z } from 'zod';
+
+const synthesizeResponseSchema = z.object({ audioContent: z.string().optional() });
 
 const PUBLIC_DIR = (() => {
   // Resolve packages/blog/public/audio/typing relative to this file.
   // This file is at packages/layers/typing/server/utils/typing/tts.ts.
   const here = new URL('.', import.meta.url).pathname;
+
   return join(here, '..', '..', '..', '..', '..', 'blog', 'public', 'audio', 'typing');
 })();
 
@@ -34,12 +38,15 @@ export type TTSProvider = 'google' | null;
 
 export function configuredProvider(): TTSProvider {
   const provider = process.env.TYPING_TTS_PROVIDER?.toLowerCase();
+
   if (provider === 'google' && process.env.GOOGLE_TTS_KEY) return 'google';
+
   return null;
 }
 
 async function googleSynthesize(phrase: string, voice: TTSVoice): Promise<Buffer | null> {
   const apiKey = process.env.GOOGLE_TTS_KEY;
+
   if (!apiKey) return null;
   // Voice naming convention assumes `chirp3-<lang>-<region>-<NAME>`.
   // Map to Google REST shape: `{ languageCode, name }`.
@@ -51,19 +58,24 @@ async function googleSynthesize(phrase: string, voice: TTSVoice): Promise<Buffer
   const name = `${languageCode}-Chirp3-HD-${parts.slice(3).join('-') || 'Aoede'}`;
 
   const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
+
   const body = {
     input: { text: phrase },
     voice: { languageCode, name },
     audioConfig: { audioEncoding: 'MP3' },
   };
+
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
+
   if (!res.ok) return null;
-  const data = (await res.json()) as { audioContent?: string };
+  const data = synthesizeResponseSchema.parse(await res.json());
+
   if (!data.audioContent) return null;
+
   return Buffer.from(data.audioContent, 'base64');
 }
 
@@ -72,16 +84,20 @@ export async function ensureAudio(
   voice: TTSVoice,
 ): Promise<{ url: string; cached: boolean } | null> {
   const provider = configuredProvider();
+
   if (!provider) return null;
 
   const path = audioCachePath(phrase, voice);
   const url = audioPublicUrl(phrase, voice);
+
   if (existsSync(path)) return { url, cached: true };
 
   const audio = await googleSynthesize(phrase, voice);
+
   if (!audio) return null;
 
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, audio);
+
   return { url, cached: false };
 }

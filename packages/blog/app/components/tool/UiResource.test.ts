@@ -31,29 +31,27 @@ describe('ToolUiResource — origin validation', () => {
     const wrapper = await mountSuspended(UiResource, {
       props: { part: STUB_PART, html: '<!doctype html><html></html>' },
     });
+
     // runtimeConfig.public.mcpSandboxUrl defaults to the local dev sandbox
     // proxy (sandbox.localhost:8081); resolve its origin once here to match
     // the component's computation.
     const sandboxOrigin = new URL(
-      (useRuntimeConfig().public.mcpSandboxUrl as string) ??
-        'http://sandbox.localhost:8081/sandbox.html',
+      useRuntimeConfig().public.mcpSandboxUrl ?? 'http://sandbox.localhost:8081/sandbox.html',
       window.location.href,
     ).origin;
 
-    const exposed = wrapper.vm as unknown as { isOriginAllowed: (o: string) => boolean };
-    expect(exposed.isOriginAllowed(sandboxOrigin)).toBe(true);
+    expect(wrapper.vm.isOriginAllowed(sandboxOrigin)).toBe(true);
   });
 
   it('rejects messages from any other origin', async () => {
     const wrapper = await mountSuspended(UiResource, {
       props: { part: STUB_PART, html: '<!doctype html><html></html>' },
     });
-    const exposed = wrapper.vm as unknown as { isOriginAllowed: (o: string) => boolean };
 
-    expect(exposed.isOriginAllowed('https://evil.example.com')).toBe(false);
-    expect(exposed.isOriginAllowed('null')).toBe(false);
-    expect(exposed.isOriginAllowed('http://localhost:4321')).toBe(false);
-    expect(exposed.isOriginAllowed('')).toBe(false);
+    expect(wrapper.vm.isOriginAllowed('https://evil.example.com')).toBe(false);
+    expect(wrapper.vm.isOriginAllowed('null')).toBe(false);
+    expect(wrapper.vm.isOriginAllowed('http://localhost:4321')).toBe(false);
+    expect(wrapper.vm.isOriginAllowed('')).toBe(false);
   });
 });
 
@@ -62,6 +60,7 @@ describe('ToolUiResource — DOM contract', () => {
     const wrapper = await mountSuspended(UiResource, {
       props: { part: STUB_PART, html: '<!doctype html><html></html>' },
     });
+
     const iframe = wrapper.find('iframe');
     expect(iframe.exists()).toBe(true);
     expect(iframe.attributes('sandbox')).toContain('allow-scripts');
@@ -72,6 +71,7 @@ describe('ToolUiResource — DOM contract', () => {
     const wrapper = await mountSuspended(UiResource, {
       props: { part: STUB_PART, html: '<!doctype html><html></html>' },
     });
+
     // Template contains a v-if branch for fallback that interpolates
     // structured.answer — so the rendered HTML (even with v-show) references
     // the part's content. Verify the root container carries the test-id.

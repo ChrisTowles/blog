@@ -16,22 +16,29 @@ const rows: string[][] = [
 
 function colorFor(key: string): string {
   const stat = props.keyStats[key];
+
   if (!stat || stat.attempts === 0) {
     return 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500';
   }
+
   const errorRate = stat.errors / Math.max(1, stat.attempts);
+
   if (errorRate >= 0.25) {
     return 'bg-rose-200 text-rose-900 dark:bg-rose-900/60 dark:text-rose-100';
   }
+
   if (errorRate >= 0.1) {
     return 'bg-amber-200 text-amber-900 dark:bg-amber-900/60 dark:text-amber-100';
   }
+
   return 'bg-emerald-200 text-emerald-900 dark:bg-emerald-900/60 dark:text-emerald-100';
 }
 
 function tooltip(key: string): string {
   const stat = props.keyStats[key];
+
   if (!stat) return key;
+
   return `${key}: ${stat.attempts} attempts, ${stat.errors} errors, ${Math.round(stat.avgMs)}ms avg`;
 }
 </script>

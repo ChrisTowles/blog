@@ -7,6 +7,29 @@
 // Node type identifiers
 export type WorkflowNodeType = 'prompt' | 'transform' | 'classifier' | 'validator';
 
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+
+export type JsonObject = Record<string, JsonValue>;
+
+// JSON-schema subset the output schema editor reads and writes
+export interface OutputSchemaProperty {
+  type: string;
+  description?: string;
+  enum?: string[];
+}
+
+export type OutputSchema = {
+  type: 'object';
+  properties: Record<string, OutputSchemaProperty>;
+  required?: string[];
+};
+
 // A single field in the output schema editor
 export interface SchemaField {
   name: string;
@@ -19,7 +42,7 @@ export interface SchemaField {
 // Live status for a single node during a run
 export interface NodeRunStatus {
   status: 'pending' | 'running' | 'completed' | 'failed';
-  output?: Record<string, unknown>;
+  output?: JsonObject;
   tokensIn?: number;
   tokensOut?: number;
   latencyMs?: number;
@@ -33,23 +56,29 @@ export type WorkflowSSEEvent =
       event: 'node:complete';
       data: {
         nodeId: string;
-        output: Record<string, unknown>;
+        output: JsonObject;
         tokensIn: number;
         tokensOut: number;
         latencyMs: number;
       };
     }
   | { event: 'node:error'; data: { nodeId: string; error: string } }
-  | { event: 'run:complete'; data: { output: Record<string, Record<string, unknown>> } }
+  | { event: 'run:complete'; data: { output: Record<string, JsonObject> } }
   | { event: 'run:error'; data: { error: string } };
+
+export type AccentColor = 'blue' | 'violet' | 'amber' | 'green';
 
 // Default configs per node type
 export const NODE_TYPE_DEFAULTS: Record<
   WorkflowNodeType,
-  { temperature: number; maxTokens: number; icon: string; accentColor: string }
+  { temperature: number; maxTokens: number; icon: string; accentColor: AccentColor }
 > = {
   prompt: { temperature: 0.7, maxTokens: 1024, icon: '⚡', accentColor: 'blue' },
   transform: { temperature: 0.3, maxTokens: 512, icon: '🔄', accentColor: 'violet' },
   classifier: { temperature: 0.2, maxTokens: 256, icon: '🏷️', accentColor: 'amber' },
   validator: { temperature: 0.1, maxTokens: 256, icon: '✅', accentColor: 'green' },
 };
+
+export function isWorkflowNodeType(value: string): value is WorkflowNodeType {
+  return Object.hasOwn(NODE_TYPE_DEFAULTS, value);
+}

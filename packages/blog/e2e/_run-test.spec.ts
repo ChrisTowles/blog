@@ -20,6 +20,7 @@ test('run workflow and check UI updates', async ({ context }) => {
   // Find or create a non-template workflow
   let workflowId: string;
   const existing = workflows.find((w: { isTemplate: number }) => !w.isTemplate);
+
   if (existing) {
     workflowId = existing.id;
   } else {
@@ -27,6 +28,7 @@ test('run workflow and check UI updates', async ({ context }) => {
     const cloneRes = await authPage.request.post(`/api/workflows/${template.id}/clone`);
     workflowId = (await cloneRes.json()).id;
   }
+
   console.log('Using workflow:', workflowId);
   await authPage.close();
 
@@ -61,6 +63,7 @@ test('run workflow and check UI updates', async ({ context }) => {
     console.log('Page contains "Run Workflow":', text?.includes('Run Workflow'));
     console.log('Page contains "Run":', text?.includes('Run'));
     console.log('Errors:', consoleErrors.join(' | '));
+
     return;
   }
 
@@ -78,14 +81,17 @@ test('run workflow and check UI updates', async ({ context }) => {
       .getByText('Execution Log')
       .isVisible()
       .catch(() => false);
+
     const hasRunning = await page
       .getByText('Running')
       .isVisible()
       .catch(() => false);
+
     const hasCompleted = await page
       .getByText('completed')
       .isVisible()
       .catch(() => false);
+
     console.log(`t=${i * 2}s: log=${hasLog} running=${hasRunning} completed=${hasCompleted}`);
 
     if (hasCompleted) break;

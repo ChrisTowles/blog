@@ -5,6 +5,7 @@ import { useTypingEngine } from './useTypingEngine';
 
 function makeClock(start = 1000) {
   let now = start;
+
   return {
     advance(ms: number) {
       now += ms;
@@ -166,6 +167,7 @@ describe('useTypingEngine', () => {
     // 0.2 gross minus 10 errors/min is -9.8, which must floor at 0.
     eng.feed({ key: 'a', at: clock.fn() });
     clock.advance(60_000);
+
     for (let i = 0; i < 10; i++) eng.feed({ key: 'X', at: clock.fn() });
     expect(eng.netWpm.value).toBe(0);
     // Gross is unaffected by the floor.

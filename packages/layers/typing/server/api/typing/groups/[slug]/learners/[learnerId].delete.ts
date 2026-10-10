@@ -15,12 +15,15 @@ const paramsSchema = z.object({
 export default defineEventHandler(async (event) => {
   const { slug, learnerId } = await getValidatedRouterParams(event, paramsSchema.parse);
   const group = await findGroupBySlug(slug);
+
   if (!group) {
     throw createError({ statusCode: 404, statusMessage: 'Group not found' });
   }
+
   await requireGuardian(event, { groupId: group.id });
 
   const db = useDrizzle();
+
   const result = await db
     .delete(tables.typingLearners)
     .where(

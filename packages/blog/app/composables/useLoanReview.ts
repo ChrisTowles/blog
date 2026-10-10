@@ -40,6 +40,7 @@ export function useLoanReview(options: UseLoanReviewOptions) {
       flags: [],
     },
   ]);
+
   const status = ref<'idle' | 'reviewing' | 'complete'>('idle');
   const overallDecision = ref<ReviewDecision | null>(null);
   const summary = ref('');
@@ -55,6 +56,7 @@ export function useLoanReview(options: UseLoanReviewOptions) {
       if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
 
       const reader = response.body?.getReader();
+
       if (!reader) throw new Error('No response body');
 
       const decoder = new TextDecoder();
@@ -62,6 +64,7 @@ export function useLoanReview(options: UseLoanReviewOptions) {
 
       while (true) {
         const { done, value } = await reader.read();
+
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
@@ -70,6 +73,7 @@ export function useLoanReview(options: UseLoanReviewOptions) {
 
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
+
           try {
             const event: LoanReviewSSEEvent = JSON.parse(line.slice(6));
             handleEvent(event);
@@ -87,15 +91,18 @@ export function useLoanReview(options: UseLoanReviewOptions) {
   function handleEvent(event: LoanReviewSSEEvent): void {
     if (event.type === 'review_start') {
       const review = reviews.value.find((r) => r.reviewer === event.reviewer);
+
       if (review) {
         review.status = 'streaming';
         review.displayName = event.displayName;
       }
     } else if (event.type === 'review_text') {
       const review = reviews.value.find((r) => r.reviewer === event.reviewer);
+
       if (review) review.text += event.text;
     } else if (event.type === 'review_complete') {
       const review = reviews.value.find((r) => r.reviewer === event.reviewer);
+
       if (review) {
         review.status = 'complete';
         review.decision = event.decision;

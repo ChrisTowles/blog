@@ -6,24 +6,13 @@
  *
  * Output: { ok: true, words } | { ok: false, reason, raw? }
  */
+import { z } from 'zod';
 import { getAnthropicClient } from '../../../../../blog/server/utils/ai/anthropic';
+import type { AnthropicLike } from './anthropic-like';
 
-export type AnthropicVisionLike = {
-  messages: {
-    create: (args: {
-      model: string;
-      max_tokens: number;
-      temperature?: number;
-      messages: Array<{
-        role: 'user';
-        content: Array<
-          | { type: 'text'; text: string }
-          | { type: 'image'; source: { type: 'base64'; media_type: string; data: string } }
-        >;
-      }>;
-    }) => Promise<{ content: Array<{ type: string; text: string }> }>;
-  };
-};
+export const imageMediaTypeSchema = z.enum(['image/png', 'image/jpeg', 'image/webp']);
+
+const extractionSchema = z.object({ words: z.array(z.string()) });
 
 const VISION_MODEL = 'claude-sonnet-4-5-20251022';
 
@@ -33,42 +22,45 @@ export type ExtractResult =
   | { ok: true; words: string[] }
   | { ok: false; reason: string; raw?: string };
 
-export function validateExtractedWords(words: unknown): ExtractResult {
-  if (!Array.isArray(words)) {
-    return { ok: false, reason: 'words is not an array' };
-  }
+export function validateExtractedWords(words: string[]): ExtractResult {
   if (words.length === 0) {
     return { ok: false, reason: 'no words extracted' };
   }
+
   if (words.length > 30) {
     return { ok: false, reason: `too many words: ${words.length}` };
   }
+
   const out: string[] = [];
+
   for (const w of words) {
-    if (typeof w !== 'string') {
-      return { ok: false, reason: 'non-string in words array' };
-    }
     const trimmed = w.trim();
+
     if (trimmed.length < 2 || trimmed.length > 15) {
       return { ok: false, reason: `bad length: ${JSON.stringify(trimmed)}` };
     }
+
     if (!/^[a-z']+$/.test(trimmed)) {
       return { ok: false, reason: `bad chars: ${JSON.stringify(trimmed)}` };
     }
+
     out.push(trimmed);
   }
+
   return { ok: true, words: out };
 }
 
 export async function extractSpellingWords(
   imageBase64: string,
-  imageMediaType: string,
-  client?: AnthropicVisionLike,
+  imageMediaType: z.infer<typeof imageMediaTypeSchema>,
+  client?: AnthropicLike,
 ): Promise<ExtractResult> {
   if (!process.env.ANTHROPIC_API_KEY) {
     return { ok: false, reason: 'ANTHROPIC_API_KEY not configured' };
   }
-  const ai = client ?? (getAnthropicClient() as unknown as AnthropicVisionLike);
+
+  const ai = client ?? getAnthropicClient();
+
   const response = await ai.messages.create({
     model: VISION_MODEL,
     max_tokens: 600,
@@ -88,20 +80,29 @@ export async function extractSpellingWords(
   });
 
   const block = response.content[0];
+
   if (!block || block.type !== 'text') {
     return { ok: false, reason: 'no text response' };
   }
+
   const raw = block.text.trim();
-  let parsed: unknown;
+  let json;
+
   try {
-    parsed = JSON.parse(raw);
+    json = JSON.parse(raw);
   } catch {
     return { ok: false, reason: 'unparseable JSON', raw };
   }
-  if (typeof parsed !== 'object' || parsed === null) {
-    return { ok: false, reason: 'parsed is not an object', raw };
+
+  const parsed = extractionSchema.safeParse(json);
+
+  if (!parsed.success) {
+    return { ok: false, reason: 'words is not an array of strings', raw };
   }
-  const validation = validateExtractedWords((parsed as { words?: unknown }).words);
+
+  const validation = validateExtractedWords(parsed.data.words);
+
   if (!validation.ok) return { ...validation, raw };
+
   return validation;
 }

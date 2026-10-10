@@ -1,5 +1,4 @@
 export interface EchoToolResult {
-  [key: string]: unknown;
   message: string;
   timestamp: string;
 }

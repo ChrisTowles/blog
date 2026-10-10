@@ -4,17 +4,9 @@
  * values are plausible-but-fake (nothing here claims to reflect real BTS data).
  */
 
-export interface AviationToolResultFixture {
-  sql: string;
-  answer: string;
-  hero_number?: string;
-  chart_option: Record<string, unknown>;
-  followups: [string, string, string];
-  rows: Array<Record<string, unknown>>;
-  truncated: boolean;
-}
+import type { AviationToolResult } from '../../shared/mcp-aviation-types';
 
-export const BAR_FIXTURE: AviationToolResultFixture = {
+export const BAR_FIXTURE = {
   sql: "SELECT manufacturer_name, COUNT(*) FROM read_parquet('gs://blog-mcp-data-prod/aviation/dims/aircraft.parquet') GROUP BY 1 ORDER BY 2 DESC LIMIT 5",
   answer: 'Cessna leads the US FAA registry by aircraft count, followed by Piper and Beech.',
   hero_number: '218,421',
@@ -41,9 +33,9 @@ export const BAR_FIXTURE: AviationToolResultFixture = {
     { manufacturer_name: 'AIRBUS', count: 2134 },
   ],
   truncated: false,
-};
+} satisfies AviationToolResult;
 
-export const TABLE_FIXTURE: AviationToolResultFixture = {
+export const TABLE_FIXTURE = {
   sql: "SELECT n_number, manufacturer_name, model_name FROM read_parquet('gs://.../dims/aircraft.parquet') LIMIT 3",
   answer: 'Three sample airframes from the FAA Registry.',
   chart_option: { __table: true },
@@ -54,25 +46,25 @@ export const TABLE_FIXTURE: AviationToolResultFixture = {
     { n_number: 'N54321', manufacturer_name: 'BEECH', model_name: 'A36' },
   ],
   truncated: false,
-};
+} satisfies AviationToolResult;
 
-export const EMPTY_FIXTURE: AviationToolResultFixture = {
+export const EMPTY_FIXTURE = {
   sql: 'SELECT 1 WHERE FALSE',
   answer: 'No matching rows in the current dataset.',
   chart_option: { __table: true },
   followups: ['a', 'b', 'c'],
   rows: [],
   truncated: false,
-};
+} satisfies AviationToolResult;
 
-export const TRUNCATED_FIXTURE: AviationToolResultFixture = {
+export const TRUNCATED_FIXTURE = {
   ...BAR_FIXTURE,
   truncated: true,
   answer: 'Top manufacturers (truncated).',
-};
+} satisfies AviationToolResult;
 
-export const BROKEN_CHART_FIXTURE: AviationToolResultFixture = {
+export const BROKEN_CHART_FIXTURE = {
   ...BAR_FIXTURE,
   // Intentionally invalid: series is not an array.
   chart_option: { title: { text: 'broken' }, series: 'not-an-array' },
-};
+} satisfies AviationToolResult;

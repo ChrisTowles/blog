@@ -19,6 +19,7 @@ class AnthropicProvider {
     if (!options?.config?.model) {
       throw new Error('Model must be specified in provider config');
     }
+
     if (!options?.config?.max_tokens) {
       throw new Error('max_tokens must be specified in provider config');
     }
@@ -31,7 +32,7 @@ class AnthropicProvider {
     return 'anthropic-custom';
   }
 
-  async callApi(prompt: string, context?: { vars?: Record<string, any> }) {
+  async callApi(prompt: string, context?: { vars?: { query?: string } }) {
     const model = this.model;
     const maxTokens = this.maxTokens;
 
@@ -50,7 +51,7 @@ class AnthropicProvider {
       max_tokens: maxTokens,
       system: prompt, // Use prompt as system message
       messages,
-      tools: tools as any[],
+      tools,
     });
 
     // Handle tool calls
@@ -67,6 +68,7 @@ class AnthropicProvider {
 
       // Execute all tool calls and collect results
       const toolResultBlocks = [];
+
       for (const toolUse of toolUseBlocks) {
         const result = await executeToolCall(toolUse.name, toolUse.input);
 
@@ -89,7 +91,7 @@ class AnthropicProvider {
         max_tokens: maxTokens,
         system: prompt,
         messages,
-        tools: tools as any[],
+        tools,
       });
     }
 
@@ -97,10 +99,12 @@ class AnthropicProvider {
     const textBlocks = response.content.filter(
       (block): block is Anthropic.TextBlock => block.type === 'text',
     );
+
     const textOutput = textBlocks.map((block) => block.text).join('\n\n');
 
     // Collect all tool calls made during the conversation
     const allToolCalls: any[] = [];
+
     for (const msg of messages) {
       if (msg.role === 'assistant' && Array.isArray(msg.content)) {
         const toolUses = msg.content.filter((block: any) => block.type === 'tool_use');

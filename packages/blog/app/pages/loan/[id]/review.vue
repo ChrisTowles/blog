@@ -20,8 +20,10 @@ useSeoMeta({
 });
 
 const route = useRoute();
+
 const toast = useToast();
-const id = route.params.id as string;
+
+const id = String(route.params.id);
 
 const { data } = await useFetch(`/api/loan/${id}`);
 
@@ -30,14 +32,12 @@ if (!data.value) {
 }
 
 // If still in intake and application is incomplete, redirect back
-if (
-  data.value.status === 'intake' &&
-  !isApplicationComplete(data.value.applicationData as LoanApplicationData)
-) {
+if (data.value.status === 'intake' && !isApplicationComplete(data.value.applicationData ?? {})) {
   await navigateTo(`/loan/${id}`, { replace: true });
 }
 
-const applicationData = data.value.applicationData as LoanApplicationData;
+const applicationData: LoanApplicationData = data.value.applicationData ?? {};
+
 const showAppData = ref(false);
 
 const appDataFields = computed(() =>
@@ -58,17 +58,16 @@ const staticReviews: ReviewState[] = hasExistingReviews
         displayName: REVIEWER_DISPLAY_NAMES[r.reviewer!],
         status: 'complete' as const,
         text: r.analysis || '',
-        decision: r.decision as ReviewDecision,
+        decision: r.decision ?? undefined,
         flags: r.flags || [],
       }))
   : [];
 
 // Human decision: only if status is a final decision (not reviewing/intake)
-const humanDecision: ReviewDecision | null = REVIEW_DECISIONS.includes(
-  data.value.status as ReviewDecision,
-)
-  ? (data.value.status as ReviewDecision)
-  : null;
+const loanStatus = data.value.status;
+
+const humanDecision: ReviewDecision | null =
+  REVIEW_DECISIONS.find((decision) => decision === loanStatus) ?? null;
 
 // Mode 1: Fresh review via SSE streaming
 const loanReview = !hasExistingReviews
@@ -88,9 +87,13 @@ const reviews = computed(() =>
 // AI recommendation computed from individual review decisions
 const aiRecommendation = computed<ReviewDecision | null>(() => {
   const completedReviews = reviews.value.filter((r) => r.decision);
+
   if (completedReviews.length === 0) return null;
+
   if (completedReviews.some((r) => r.decision === 'denied')) return 'denied';
+
   if (completedReviews.some((r) => r.decision === 'flagged')) return 'flagged';
+
   return 'approved';
 });
 
@@ -104,6 +107,7 @@ const rereviewing = ref(false);
 
 async function requestReReview() {
   rereviewing.value = true;
+
   try {
     await $fetch(`/api/loan/${id}/re-review`, { method: 'POST' });
     // Full reload to bust useFetch cache — client-side nav would use stale status
@@ -122,6 +126,7 @@ const updatingStatus = ref(false);
 
 async function setStatus(status: LoanStatus) {
   updatingStatus.value = true;
+
   try {
     await $fetch(`/api/loan/${id}/status`, { method: 'PATCH', body: { status } });
     // Full reload to bust useFetch cache

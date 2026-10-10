@@ -1,27 +1,25 @@
 <script setup lang="ts">
-import type { DefineComponent } from 'vue';
 import { useClipboard } from '@vueuse/core';
 import type {
   ChatMessage,
   CodeExecutionPart,
   FilePart,
+  MessagePart,
   ToolUsePart,
   ToolResultPart,
   UiResourcePart,
 } from '~~/shared/chat-types';
-import ProsePre from '../../components/prose/ProsePre.vue';
 
 definePageMeta({
   layout: 'chat-side-nav',
 });
 
-const components: Record<string, DefineComponent> = {
-  pre: ProsePre as unknown as DefineComponent,
-};
-
 const route = useRoute();
+
 const toast = useToast();
+
 const clipboard = useClipboard();
+
 const { model } = useModels();
 
 const { data } = await useFetch(`/api/chats/${route.params.id}`, { cache: 'force-cache' });
@@ -34,7 +32,8 @@ const input = ref('');
 
 const initialMessages: ChatMessage[] = (data.value.messages || []).map((msg) => ({
   id: msg.id,
-  role: msg.role as 'user' | 'assistant',
+  role: msg.role,
+  // SAFETY: the chat API persists only ChatMessage parts in this column
   parts: msg.parts as ChatMessage['parts'],
   createdAt: msg.createdAt ? new Date(msg.createdAt) : undefined,
 }));
@@ -59,6 +58,7 @@ const chat = useChat({
 
 function handleSubmit(e: Event) {
   e.preventDefault();
+
   if (input.value.trim()) {
     chat.sendMessage(input.value);
     input.value = '';
@@ -84,17 +84,10 @@ function copy(
   setTimeout(() => (copied.value = false), 2000);
 }
 
-function getPartKey(messageId: string, part: unknown, index: number) {
-  if (!part || typeof part !== 'object') return `${messageId}-unknown-${index}`;
+function getPartKey(messageId: string, part: MessagePart, index: number) {
+  const state = 'state' in part ? `-${part.state}` : '';
 
-  const type = 'type' in part ? part.type : 'unknown';
-  const state = 'state' in part ? `-${(part as { state: string }).state}` : '';
-
-  return `${messageId}-${type}-${index}${state}`;
-}
-
-function asChatMessage(msg: unknown): ChatMessage {
-  return msg as ChatMessage;
+  return `${messageId}-${part.type}-${index}${state}`;
 }
 
 function getToolResult(message: ChatMessage, toolUse: ToolUsePart): ToolResultPart | undefined {
@@ -149,7 +142,7 @@ onMounted(() => {
           <template #content="{ message: rawMessage }">
             <div class="*:first:mt-0 *:last:mb-0">
               <template
-                v-for="(part, index) in asChatMessage(rawMessage).parts"
+                v-for="(part, index) in rawMessage.parts"
                 :key="getPartKey(rawMessage.id, part, index)"
               >
                 <Reasoning
@@ -160,17 +153,17 @@ onMounted(() => {
                 <ToolWeather
                   v-else-if="part.type === 'tool-use' && part.toolName === 'getWeather'"
                   :tool-use="part"
-                  :tool-result="getToolResult(asChatMessage(rawMessage), part)"
+                  :tool-result="getToolResult(rawMessage, part)"
                 />
                 <ToolDice
                   v-else-if="part.type === 'tool-use' && part.toolName === 'rollDice'"
                   :tool-use="part"
-                  :tool-result="getToolResult(asChatMessage(rawMessage), part)"
+                  :tool-result="getToolResult(rawMessage, part)"
                 />
                 <ToolInvocation
                   v-else-if="part.type === 'tool-use'"
                   :tool-use="part"
-                  :tool-result="getToolResult(asChatMessage(rawMessage), part)"
+                  :tool-result="getToolResult(rawMessage, part)"
                 />
                 <ChatCodeExecution
                   v-else-if="part.type === 'code-execution'"
@@ -188,7 +181,6 @@ onMounted(() => {
                   v-else-if="part.type === 'text'"
                   :value="part.text"
                   :cache-key="`${rawMessage.id}-${index}`"
-                  :components="components"
                   :parser-options="{ highlight: false }"
                   class="*:first:mt-0 *:last:mb-0"
                 />

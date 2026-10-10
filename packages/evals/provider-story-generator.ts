@@ -15,6 +15,12 @@ interface StoryProviderConfig {
   wordCount?: number;
 }
 
+interface StoryVars {
+  phase?: PhonicsPhase;
+  theme?: string;
+  wordCount?: number;
+}
+
 class StoryGeneratorProvider {
   private config: StoryProviderConfig;
 
@@ -22,6 +28,7 @@ class StoryGeneratorProvider {
     if (!options?.config?.phase) {
       throw new Error('phase (1-4) must be specified in provider config');
     }
+
     this.config = options.config;
   }
 
@@ -29,10 +36,10 @@ class StoryGeneratorProvider {
     return 'story-generator';
   }
 
-  async callApi(prompt: string, context?: { vars?: Record<string, any> }) {
-    const phase = (context?.vars?.phase ?? this.config.phase) as PhonicsPhase;
-    const theme = (context?.vars?.theme ?? this.config.theme ?? 'adventure') as string;
-    const wordCount = (context?.vars?.wordCount ?? this.config.wordCount ?? 75) as number;
+  async callApi(prompt: string, context?: { vars?: StoryVars }) {
+    const phase = context?.vars?.phase ?? this.config.phase;
+    const theme = context?.vars?.theme ?? this.config.theme ?? 'adventure';
+    const wordCount = context?.vars?.wordCount ?? this.config.wordCount ?? 75;
 
     // Collect patterns for this phase and all lower phases
     const allowedPatterns = PHONICS_SEED.filter((unit) => unit.phase <= phase).flatMap(
@@ -40,10 +47,9 @@ class StoryGeneratorProvider {
     );
 
     // Collect sight words for this phase and all lower phases
-    const sightWords: string[] = [];
-    for (let p = 1; p <= phase; p++) {
-      sightWords.push(...SIGHT_WORDS_BY_PHASE[p as PhonicsPhase]);
-    }
+    const sightWords = Object.entries(SIGHT_WORDS_BY_PHASE).flatMap(([p, words]) =>
+      Number(p) <= phase ? words : [],
+    );
 
     const result = await generateStory({
       allowedPatterns,

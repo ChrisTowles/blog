@@ -20,14 +20,18 @@ export default defineEventHandler(async (event) => {
   const decoded = decodeURIComponent(phrase);
 
   const provider = configuredProvider();
+
   if (!provider) {
     setResponseStatus(event, 404);
+
     return { fallback: 'web-speech' as const };
   }
 
   const result = await ensureAudio(decoded, voice);
+
   if (!result) {
     setResponseStatus(event, 502);
+
     return { fallback: 'web-speech' as const, error: 'tts provider failed' };
   }
 

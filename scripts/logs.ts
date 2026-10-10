@@ -7,22 +7,24 @@ import path from 'node:path';
 $.verbose = true;
 
 const SCRIPT_DIR = import.meta.dirname;
+
 const PROJECT_ROOT = path.resolve(SCRIPT_DIR, '..');
 
 function parseTfvars(filePath: string): Record<string, string> {
   const content = fs.readFileSync(filePath, 'utf-8');
-  const vars: Record<string, string> = {};
-  for (const line of content.split('\n')) {
+
+  const entries = content.split('\n').flatMap((line) => {
     const match = line.match(/^(\w+)\s*=\s*"([^"]*)"/);
-    if (match) {
-      vars[match[1]] = match[2];
-    }
-  }
-  return vars;
+
+    return match ? [[match[1], match[2]] as const] : [];
+  });
+
+  return Object.fromEntries(entries);
 }
 
 function getEnvConfig(env: 'staging' | 'production') {
   const tfDir = env === 'staging' ? 'staging' : 'prod';
+
   const tfvarsPath = path.join(
     PROJECT_ROOT,
     'infra',
@@ -30,6 +32,7 @@ function getEnvConfig(env: 'staging' | 'production') {
     'environments',
     `${tfDir}.tfvars`,
   );
+
   const vars = parseTfvars(tfvarsPath);
 
   return {
@@ -77,7 +80,8 @@ Options:
 async function getLogs(options = {}) {
   await promptEnvironment();
 
-  const env = process.env.ENVIRONMENT as 'staging' | 'production';
+  const env = process.env.ENVIRONMENT;
+
   if (env !== 'staging' && env !== 'production') {
     consola.error(`Invalid environment: ${process.env.ENVIRONMENT}`);
     process.exit(1);
@@ -114,7 +118,9 @@ async function getLogs(options = {}) {
 
 // Parse arguments
 let tail = false;
+
 let filter = null;
+
 let limit = 150;
 
 for (let i = 2; i < process.argv.length; i++) {

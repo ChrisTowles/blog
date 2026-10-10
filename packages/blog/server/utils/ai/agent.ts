@@ -87,7 +87,7 @@ export function runAgent(options: AgentOptions): AsyncIterable<AgentMessage> {
       cwd: getProjectRoot(),
 
       // Model selection
-      model: options.model || (config.public.model as string) || 'sonnet',
+      model: options.model || config.public.model || 'sonnet',
 
       // System prompt with custom append
       systemPrompt: {
@@ -119,7 +119,7 @@ export function runAgent(options: AgentOptions): AsyncIterable<AgentMessage> {
       // Resume session for multi-turn conversations
       ...(options.resumeSessionId && { resume: options.resumeSessionId }),
     },
-  }) as AsyncIterable<AgentMessage>;
+  });
 }
 
 /**
@@ -135,6 +135,7 @@ export async function runAgentSync(options: AgentOptions): Promise<{
 
   for await (const message of runAgent(options)) {
     messages.push(message);
+
     if (message.type === 'result') {
       result = message.result;
     }

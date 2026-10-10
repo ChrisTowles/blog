@@ -4,6 +4,7 @@ import { mockNuxtImport } from '@nuxt/test-utils/runtime';
 
 // Mock useCookie
 let mockCookieValue = 'claude-haiku-4-5';
+
 mockNuxtImport('useCookie', () => {
   return () => {
     return {

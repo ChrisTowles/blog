@@ -8,11 +8,13 @@ function fixedDeck(): Card[] {
   const deck: Card[] = [];
   const ranks = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] as const;
   const suits = ['h', 'd', 'c', 's'] as const;
+
   for (const s of suits) {
     for (const r of ranks) {
       deck.push({ rank: r, suit: s });
     }
   }
+
   return deck;
 }
 

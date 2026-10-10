@@ -52,18 +52,21 @@ export function createLakeLeap(config: LakeLeapConfig): GameScene {
 
   function endRound(ctx: GameSceneContext) {
     if (!app) return;
+
     const summary = summarize({
       cleared: currentIndex,
       wrongs,
       startedAt,
       endedAt: Date.now(),
     });
+
     if (endText) {
       endText.text = summary.perfect
         ? `Cleared ${summary.cleared} platforms!`
         : `Cleared ${summary.cleared} (${wrongs} wrong)`;
       endText.visible = true;
     }
+
     const minutes = summary.durationMs / 60_000;
     const wpm = minutes > 0 ? correctChars / 5 / minutes : 0;
     const accuracy = typedChars > 0 ? correctChars / typedChars : 1;
@@ -82,6 +85,7 @@ export function createLakeLeap(config: LakeLeapConfig): GameScene {
   function moveCharacterTo(idx: number) {
     if (!charSprite) return;
     const target = platforms[idx];
+
     if (!target) return;
     charX = target.x;
     charY = target.y - 20;
@@ -105,6 +109,7 @@ export function createLakeLeap(config: LakeLeapConfig): GameScene {
       // Platforms.
       const platformY = h * 0.55;
       const spacing = Math.max(120, w / (count + 1));
+
       for (let i = 0; i < count; i++) {
         const x = 80 + i * spacing;
         const platformG = new Graphics();
@@ -112,6 +117,7 @@ export function createLakeLeap(config: LakeLeapConfig): GameScene {
           .roundRect(x - 50, platformY, 100, 20, 6)
           .fill({ color: i === 0 ? 0x84cc16 : 0xa3e635 });
         stage.addChild(platformG);
+
         const label = new PixiText({
           text: words[i] ?? '',
           style: {
@@ -121,6 +127,7 @@ export function createLakeLeap(config: LakeLeapConfig): GameScene {
             fontWeight: '700',
           },
         });
+
         label.anchor.set(0.5, 1);
         label.x = x;
         label.y = platformY - 4;
@@ -182,31 +189,42 @@ export function createLakeLeap(config: LakeLeapConfig): GameScene {
 
       unsubKey = ctx.onKey(({ key }) => {
         if (currentIndex >= count) return;
+
         if (key === 'Backspace') {
           typed = typed.slice(0, -1);
+
           if (inputText) inputText.text = typed;
+
           return;
         }
+
         if (key.length !== 1) return;
         const target = platforms[currentIndex]?.word ?? '';
         const expected = target[typed.length];
         typedChars++;
+
         if (key === expected) {
           correctChars++;
           typed += key;
+
           if (inputText) inputText.text = typed;
+
           if (typed === target) {
             // Jump.
             moveCharacterTo(currentIndex);
+
             if (currentWordHadError) {
               wordsErrored.add(target);
             } else {
               wordsCleared.push(target);
             }
+
             currentIndex++;
             typed = '';
             currentWordHadError = false;
+
             if (inputText) inputText.text = '';
+
             if (currentIndex >= count) endRound(ctx);
           }
         } else {
@@ -216,6 +234,7 @@ export function createLakeLeap(config: LakeLeapConfig): GameScene {
           wordsErrored.add(target);
           // Reset the current word on a wrong key.
           typed = '';
+
           if (inputText) inputText.text = '';
         }
       });

@@ -33,11 +33,13 @@ function resolveBundlePath(relPath: string): string {
     resolve(process.cwd(), relPath),
     resolve(process.cwd(), 'packages/blog', relPath),
   ];
+
   return candidates.find((p) => existsSync(p)) ?? candidates[0]!;
 }
 
 export function createBundleLoader({ relPath, label, uri }: BundleLoaderOptions): BundleLoader {
   const path = resolveBundlePath(relPath);
+
   const placeholder = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>${label} (bundle missing)</title></head>
 <body><p>${uri} bundle not built — run <code>pnpm build:ui-bundle</code>.</p></body></html>`;
@@ -47,20 +49,24 @@ export function createBundleLoader({ relPath, label, uri }: BundleLoaderOptions)
 
   function read(): string {
     if (IS_PROD && cached !== undefined) return cached;
+
     try {
       // Stat BEFORE read so the mtime we record matches the bytes we cache,
       // even if the watcher rewrites the file between calls.
       const mtime = IS_PROD ? 0 : statSync(path).mtimeMs;
+
       if (!IS_PROD && cached !== undefined && mtime === cachedMtimeMs) return cached;
       const html = readFileSync(path, 'utf8');
       cached = html;
       cachedMtimeMs = mtime;
+
       return html;
     } catch (err) {
       console.warn(
         `[ui-bundle] failed to read ${label} bundle at ${path}; serving placeholder.`,
         extractErrorMessage(err),
       );
+
       return placeholder;
     }
   }

@@ -16,6 +16,7 @@ export interface CardSize {
 }
 
 const PAD_X = 0.18;
+
 const PAD_Y = 0.14;
 
 function suitColor(suit: Suit): number {
@@ -39,9 +40,11 @@ function drawPip(
       fontWeight: '600',
     },
   });
+
   t.anchor.set(0.5);
   t.x = cx;
   t.y = cy;
+
   if (flipped) t.rotation = Math.PI;
   parent.addChild(t);
 }
@@ -52,6 +55,7 @@ function drawCornerIndex(parent: Container, card: Card, cw: number, ch: number, 
   const suitSize = Math.max(11, Math.round(cw * 0.18));
 
   const group = new Container();
+
   const rankText = new Text({
     text: rankLabel(card.rank),
     style: {
@@ -62,6 +66,7 @@ function drawCornerIndex(parent: Container, card: Card, cw: number, ch: number, 
       align: 'center',
     },
   });
+
   rankText.anchor.set(0.5, 0);
   group.addChild(rankText);
 
@@ -73,6 +78,7 @@ function drawCornerIndex(parent: Container, card: Card, cw: number, ch: number, 
       fill: color,
     },
   });
+
   suitText.anchor.set(0.5, 0);
   suitText.y = rankSize * 0.92;
   group.addChild(suitText);
@@ -85,17 +91,20 @@ function drawCornerIndex(parent: Container, card: Card, cw: number, ch: number, 
     group.x = Math.round(cw * 0.12);
     group.y = Math.round(cw * 0.08);
   }
+
   parent.addChild(group);
 }
 
 function drawNumberFace(parent: Container, card: Card, cw: number, ch: number) {
-  const layout = PIP_LAYOUTS[card.rank as keyof typeof PIP_LAYOUTS];
+  const layout = PIP_LAYOUTS[card.rank];
+
   if (!layout) return;
   const innerX = cw * PAD_X;
   const innerY = ch * PAD_Y;
   const innerW = cw - innerX * 2;
   const innerH = ch - innerY * 2;
   const pipSize = Math.max(14, Math.round(cw * 0.32));
+
   for (const [col, row] of layout) {
     const x = innerX + (col / 2) * innerW;
     const y = innerY + (row / 6) * innerH;
@@ -145,6 +154,7 @@ function drawFaceCardFace(parent: Container, card: Card, cw: number, ch: number)
       fontWeight: '700',
     },
   });
+
   monogram.anchor.set(0.5);
   monogram.x = cw / 2;
   monogram.y = ch / 2;
@@ -199,10 +209,12 @@ export function drawCardBack(parent: Container, size: CardSize) {
 
   const lattice = new Graphics();
   const step = Math.max(8, Math.round(cw * 0.16));
+
   for (let i = -ch; i < cw + ch; i += step) {
     lattice.moveTo(i, 0).lineTo(i + ch, ch);
     lattice.moveTo(i, ch).lineTo(i + ch, 0);
   }
+
   lattice.stroke({ color: 0x3b82f6, width: 1, alpha: 0.5 });
 
   const mask = new Graphics();
@@ -231,6 +243,7 @@ export function drawCardBack(parent: Container, size: CardSize) {
       fontWeight: '700',
     },
   });
+
   star.anchor.set(0.5);
   star.x = cx;
   star.y = cy;

@@ -4,6 +4,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { searchBlogContent } from './search-blog';
+import { toolText } from './test-utils';
 
 describe('searchBlogContent', () => {
   it('should have correct tool metadata', () => {
@@ -14,18 +15,14 @@ describe('searchBlogContent', () => {
 
   describe('RAG integration', () => {
     it('should return results for a topic covered in the blog', async () => {
-      const result = (await searchBlogContent.handler(
-        { query: 'Vue Nuxt development' },
-        undefined,
-      )) as {
-        content: Array<{ text: string }>;
-      };
+      const result = await searchBlogContent.handler({ query: 'Vue Nuxt development' }, undefined);
 
-      const data = JSON.parse(result.content[0]!.text);
+      const data = JSON.parse(toolText(result));
 
       expect(data.results).toBeDefined();
       expect(Array.isArray(data.results)).toBe(true);
       expect(data.hint).toBeDefined();
+
       // When DB has content, hint contains 'markdown links'; when empty, a different message
       if (data.results.length > 0) {
         expect(data.hint).toContain('markdown links');
@@ -33,11 +30,9 @@ describe('searchBlogContent', () => {
     });
 
     it('should return results with required fields', async () => {
-      const result = (await searchBlogContent.handler({ query: 'TypeScript' }, undefined)) as {
-        content: Array<{ text: string }>;
-      };
+      const result = await searchBlogContent.handler({ query: 'TypeScript' }, undefined);
 
-      const data = JSON.parse(result.content[0]!.text);
+      const data = JSON.parse(toolText(result));
 
       if (data.results.length > 0) {
         const firstResult = data.results[0];
@@ -48,14 +43,12 @@ describe('searchBlogContent', () => {
     });
 
     it('should handle nonsense query gracefully', async () => {
-      const result = (await searchBlogContent.handler(
+      const result = await searchBlogContent.handler(
         { query: 'xyzzy123nonsensequery456' },
         undefined,
-      )) as {
-        content: Array<{ text: string }>;
-      };
+      );
 
-      const data = JSON.parse(result.content[0]!.text);
+      const data = JSON.parse(toolText(result));
 
       // RAG may still return low-relevance results, just verify structure
       expect(data.results).toBeDefined();
@@ -63,16 +56,12 @@ describe('searchBlogContent', () => {
     });
 
     it('should find AI/Claude related content', async () => {
-      const result = (await searchBlogContent.handler(
-        { query: 'Claude AI assistant' },
-        undefined,
-      )) as {
-        content: Array<{ text: string }>;
-      };
+      const result = await searchBlogContent.handler({ query: 'Claude AI assistant' }, undefined);
 
-      const data = JSON.parse(result.content[0]!.text);
+      const data = JSON.parse(toolText(result));
 
       expect(data.results).toBeDefined();
+
       if (data.results.length > 0) {
         const hasAIContent = data.results.some(
           (r: { content: string; source: string }) =>
@@ -80,19 +69,18 @@ describe('searchBlogContent', () => {
             r.content.toLowerCase().includes('claude') ||
             r.source.toLowerCase().includes('ai'),
         );
+
         expect(hasAIContent).toBe(true);
       }
     });
 
     it('should respect topK limit of 5', async () => {
-      const result = (await searchBlogContent.handler(
+      const result = await searchBlogContent.handler(
         { query: 'development programming code' },
         undefined,
-      )) as {
-        content: Array<{ text: string }>;
-      };
+      );
 
-      const data = JSON.parse(result.content[0]!.text);
+      const data = JSON.parse(toolText(result));
 
       expect(data.results.length).toBeLessThanOrEqual(5);
     });
@@ -102,14 +90,12 @@ describe('searchBlogContent', () => {
       const { retrieveRAG: _retrieveRAG } = await import('../../rag/retrieve');
 
       // Test with query unlikely to match anything
-      const result = (await searchBlogContent.handler(
+      const result = await searchBlogContent.handler(
         { query: 'ZZZZUNLIKELYTOEXIST999' },
         undefined,
-      )) as {
-        content: Array<{ text: string }>;
-      };
+      );
 
-      const data = JSON.parse(result.content[0]!.text);
+      const data = JSON.parse(toolText(result));
 
       // Should return empty results array with helpful hint
       expect(data.results).toBeDefined();
