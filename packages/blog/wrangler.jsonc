@@ -12,13 +12,13 @@
   "assets": {
     "binding": "ASSETS",
     "directory": ".output/public",
+    "html_handling": "drop-trailing-slash",
   },
   "observability": { "enabled": true },
   "routes": [{ "pattern": "chris.towles.dev", "custom_domain": true }],
   "d1_databases": [
     {
       "binding": "DB",
-      // Placeholder: the orchestrator replaces this with the real D1 id.
       "database_name": "towles-blog",
       "database_id": "83fa5b15-19f2-4dc9-bb04-287b54a20f5f",
       "migrations_dir": "server/database/migrations",
@@ -90,6 +90,7 @@
       "assets": {
         "binding": "ASSETS",
         "directory": ".output/public",
+        "html_handling": "drop-trailing-slash",
       },
       "d1_databases": [
         {

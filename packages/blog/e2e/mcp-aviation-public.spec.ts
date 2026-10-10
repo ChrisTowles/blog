@@ -15,35 +15,11 @@ function rpc(id: number, method: string, params: JsonObject = {}) {
 }
 
 test.describe('MCP aviation — public surface', () => {
-  test('unauthenticated POST returns a JSON-RPC initialize + tools/list', async ({ request }) => {
-    // 1. Initialize. Streamable HTTP expects a first `initialize` to mint the session id.
-    const initRes = await request.post(MCP_URL, {
-      data: rpc(1, 'initialize', {
-        protocolVersion: '2025-06-18',
-        capabilities: {},
-        clientInfo: { name: 'playwright-public-hit', version: '0.0.0' },
-      }),
-      headers: { Accept: 'application/json, text/event-stream' },
-    });
-
-    expect(initRes.status(), 'initialize accepted').toBeLessThan(400);
-    const sessionId = initRes.headers()['mcp-session-id'];
-    expect(sessionId, 'server minted a session id').toBeTruthy();
-
-    // 2. Initialized notification (required by the protocol before tool calls).
-    await request.post(MCP_URL, {
-      data: { jsonrpc: '2.0', method: 'notifications/initialized' },
-      headers: {
-        'mcp-session-id': sessionId!,
-        Accept: 'application/json, text/event-stream',
-      },
-    });
-
-    // 3. tools/list using the session.
+  test('unauthenticated POST returns a JSON-RPC tools/list', async ({ request }) => {
+    // The endpoint is stateless: no initialize handshake or session id is needed.
     const listRes = await request.post(MCP_URL, {
       data: rpc(2, 'tools/list'),
       headers: {
-        'mcp-session-id': sessionId!,
         Accept: 'application/json, text/event-stream',
       },
     });
