@@ -25,8 +25,7 @@ server/
 ├── database/           # Drizzle ORM schema + migrations
 └── utils/
     ├── ai/                 # Anthropic client, tools, streaming
-    │   ├── tools.ts            # Tool registry + executeTool()
-    │   └── tools/              # Individual tool definitions (Agent SDK format)
+    │   └── tools.ts            # Tool registry + executeTool()
     └── rag/                # Chunking, ingestion, retrieval
 
 # Typing app lives in packages/layers/typing — see that layer's files for /typing routes,
@@ -137,9 +136,8 @@ The blog hosts MCP servers at sibling route paths under `/mcp/*`. Currently:
 
 - `/mcp/aviation` — Streamable HTTP endpoint for the aviation demo (Unit 3). Tools:
   `ask_aviation`, `list_questions`, `schema`. Implementation: `server/routes/mcp/aviation/index.ts` +
-  tools in `server/utils/mcp/aviation/*.ts` (mirrors the existing "tools in two places"
-  pattern below — MCP tools live alongside `server/utils/ai/tools/` but are registered via
-  the MCP SDK, not the chat tool registry).
+  tools in `server/utils/mcp/aviation/*.ts` (registered via the MCP SDK, not the chat tool
+  registry).
 - `/mcp/aviation/query` — POST SSE endpoint the iframe calls to stream the answer.
   `ask_aviation` returns fast with `{ question, pending: true, queryUrl }`; the iframe
   POSTs `{ question }` here and reads progress + final `AviationToolResult` over SSE.
@@ -149,10 +147,9 @@ The blog hosts MCP servers at sibling route paths under `/mcp/*`. Currently:
 - `/mcp/aviation/resource?uri=ui://aviation-answer` — HTTP-cached UI-bundle fetcher used
   by the chat iframe on persisted-replay hydration.
 
-All `/mcp/*` requests are rate-limited via `server/middleware/mcp-rate-limit.ts`
-(per-IP token bucket, default 60/5min, tunable via `MCP_RATE_LIMIT_RPM`).
-`Mcp-Session-Id` lives in-process; Cloud Run `min_instances=1` + session-affinity keep it
-mostly-sticky. The chat agent calls aviation tools through the shared `client-pool.ts`
+All `/mcp/*` requests are rate-limited via `server/middleware/mcp-rate-limit.ts` (per-IP, using
+the `MCP_RATE_LIMITER` Workers binding; limit and period live in `wrangler.jsonc`). The endpoint
+is stateless: there is no `initialize` handshake or `Mcp-Session-Id`. The chat agent calls aviation tools through the shared `client-pool.ts`
 (see `MCP_ENDPOINTS` in `server/api/chats/[id].post.ts`); there is no aviation-specific
 client composable.
 
@@ -162,17 +159,13 @@ Operational notes: `docs/mcp-aviation-ops.md`.
 
 ### Tool Pattern
 
-Tools are defined in two places (being consolidated):
-
-- `server/utils/ai/tools.ts` — Anthropic SDK format tool definitions + `executeTool()` switch
-- `server/utils/ai/tools/*.ts` — Agent SDK format tools (used for MCP server)
+Chat tools live in `server/utils/ai/tools.ts` (Anthropic SDK format definitions + `executeTool()` switch).
 
 When adding a new chat tool:
 
 1. Add tool definition to `chatTools` array in `tools.ts`
 2. Add execution case to `executeTool()` switch
-3. Optionally create Agent SDK tool in `tools/` directory
-4. Add UI renderer in `components/tool/` if the tool needs rich display
+3. Add UI renderer in `components/tool/` if the tool needs rich display
 
 ### SSE Streaming Pattern
 
@@ -240,9 +233,8 @@ DB test helpers in `server/test-utils/db-helper.ts`: `cleanupDatabase()`, `creat
 
 OpenTelemetry-native, Boris-Tané-style. Spans are wide events; logs become span events; New Relic derives metrics from spans server-side.
 
-- **SDK init**: none yet. `NodeSDK` (and `server/plugins/00-otel-sdk.ts`) was removed because it cannot run on Workers; the otel wave replaces it.
+- **SDK init**: none. There is no `NodeSDK` or exporter (it cannot run on Workers), so spans from `@opentelemetry/api` are no-ops until a Workers-compatible SDK is added.
 - **Request enrichment**: `server/middleware/01-trace-enrich.ts` — derives `request.id` from `x-cloud-trace-context` (or `x-request-id`, then `crypto.randomUUID()`), attaches `request.id`/`user.id`/`session.id`/`route.name` to the active root HTTP span. Echoes `x-request-id` response header.
-- **evlog bridge**: `server/utils/observability/evlog-bridge.ts` routes every `evlog.{info,warn,error}` call site into `span.addEvent(name, attrs)` when an active span exists, stdout fallback otherwise. The 36 existing evlog call sites need no per-call refactor.
 - **Anthropic spans**: `server/utils/observability/anthropic.ts` exports `withAnthropicSpan` (non-streaming) and `withAnthropicStreamSpan` (streaming, span ends on `finalMessage`/`error`/`end`). Writes `gen_ai.*` semconv attrs including the Anthropic input-tokens sum (`input_tokens + cache_read_input_tokens + cache_creation_input_tokens`). The same helpers cover Gemini via `{ provider: 'google.gemini' }`.
 - **No application metrics in app code.** Let New Relic NRDB derive RED/USE from span data. The custom-metric pipeline is an explicit non-goal.
 - **Content capture is opt-in.** Set `OTEL_GENAI_CAPTURE_CONTENT=1` to attach truncated prompts/completions to spans for debugging. Off by default to avoid PII drift and the 4095-char attr cap.

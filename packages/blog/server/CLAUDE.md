@@ -39,7 +39,7 @@ Event types are defined in `shared/chat-types.ts` and `shared/artifact-types.ts`
 ## AI / Anthropic
 
 - **Client**: `getAnthropicClient()` in `utils/ai/anthropic.ts` — singleton, wrapped with Braintrust observability
-- **Tools**: Defined in `utils/ai/tools.ts` (Anthropic SDK format) and `utils/ai/tools/*.ts` (Agent SDK format)
+- **Tools**: Defined in `utils/ai/tools.ts` (Anthropic SDK format)
 - **Thread safety**: Tool execution must be stateless. No module-level mutable state — pass context as parameters.
 
 ### Beta Streaming (Chat + Artifacts)
