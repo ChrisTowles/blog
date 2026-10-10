@@ -5,9 +5,6 @@ export const envSchema = z.object({
   GIT_SHA: z.string().default('dev'),
   BUILD_TAG: z.string().default('local'),
 
-  // Database
-  DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
-
   // Nuxt Auth
   NUXT_SESSION_PASSWORD: z.string().min(32, 'NUXT_SESSION_PASSWORD must be at least 32 characters'),
 
@@ -43,14 +40,9 @@ export const envSchema = z.object({
 
 export type EnvConfig = z.infer<typeof envSchema>;
 
-const SENSITIVE_KEYS = new Set([
-  'DATABASE_URL', // Database connection string can have password info
-]);
-
 const SENSITIVE_PATTERNS = ['SECRET', 'KEY', 'PASSWORD', 'TOKEN'];
 
 function isSensitiveKey(key: string): boolean {
-  if (SENSITIVE_KEYS.has(key)) return true;
   const upperKey = key.toUpperCase();
 
   return SENSITIVE_PATTERNS.some((pattern) => upperKey.includes(pattern));

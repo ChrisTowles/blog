@@ -50,50 +50,43 @@ type ChunkCandidate = {
 };
 
 /**
- * Semantic search using pgvector cosine similarity
+ * Semantic search. TODO(cloudflare-rag): query Vectorize with the embedding and hydrate
+ * the chunk rows from D1. Until then it returns nothing and retrieval is keyword-only.
  */
 async function semanticSearch(
-  queryEmbedding: number[],
-  limit: number,
+  _queryEmbedding: number[],
+  _limit: number,
 ): Promise<Array<ChunkCandidate & { distance: number }>> {
-  try {
-    const db = useDrizzle();
+  return [];
+}
 
-    // Use raw SQL for pgvector cosine distance operator
-    const embeddingStr = `[${queryEmbedding.join(',')}]`;
+const MAX_QUERY_TERMS = 8;
 
-    const results = await db.execute<ChunkCandidate & { distance: number }>(sql`
-        SELECT
-            dc.id,
-            dc."documentId",
-            dc.content,
-            dc."contextualContent",
-            dc."chunkIndex",
-            d.title as "documentTitle",
-            d.url as "documentUrl",
-            d.slug as "documentSlug",
-            dc.embedding <=> ${embeddingStr}::vector AS distance
-        FROM document_chunks dc
-        JOIN documents d ON dc."documentId" = d.id
-        WHERE dc.embedding IS NOT NULL
-        ORDER BY distance
-        LIMIT ${limit}
-    `);
+export function keywordTerms(query: string): string[] {
+  return [
+    ...new Set(
+      query
+        .toLowerCase()
+        .split(/\s+/)
+        .map((t) => t.replace(/[%_\\]/g, ''))
+        .filter((t) => t.length >= 3),
+    ),
+  ].slice(0, MAX_QUERY_TERMS);
+}
 
-    if (!results?.rows) {
-      return [];
-    }
-
-    return results.rows;
-  } catch {
-    log.error('rag', 'Semantic search failed');
-
-    return [];
-  }
+/** Number of query terms a chunk contains, as a SQL expression over `dc`. */
+export function keywordRank(terms: string[]) {
+  return sql.join(
+    terms.map(
+      (t) =>
+        sql`(CASE WHEN lower(dc.content) LIKE ${`%${t}%`} OR lower(dc."contextualContent") LIKE ${`%${t}%`} THEN 1 ELSE 0 END)`,
+    ),
+    sql` + `,
+  );
 }
 
 /**
- * BM25 full-text search using PostgreSQL tsvector
+ * Keyword search. TODO(cloudflare-rag): replace the LIKE scan with the FTS5 trigram table.
  */
 async function bm25Search(
   query: string,
@@ -101,8 +94,13 @@ async function bm25Search(
 ): Promise<Array<ChunkCandidate & { rank: number }>> {
   try {
     const db = useDrizzle();
+    const terms = keywordTerms(query);
 
-    const results = await db.execute<ChunkCandidate & { rank: number }>(sql`
+    if (terms.length === 0) return [];
+
+    const rank = keywordRank(terms);
+
+    return await db.all<ChunkCandidate & { rank: number }>(sql`
         SELECT
             dc.id,
             dc."documentId",
@@ -112,21 +110,15 @@ async function bm25Search(
             d.title as "documentTitle",
             d.url as "documentUrl",
             d.slug as "documentSlug",
-            ts_rank(dc."searchVector", plainto_tsquery('english', ${query})) AS rank
+            (${rank}) AS rank
         FROM document_chunks dc
         JOIN documents d ON dc."documentId" = d.id
-        WHERE dc."searchVector" @@ plainto_tsquery('english', ${query})
+        WHERE (${rank}) > 0
         ORDER BY rank DESC
         LIMIT ${limit}
     `);
-
-    if (!results?.rows) {
-      return [];
-    }
-
-    return results.rows;
   } catch {
-    log.error('rag', 'BM25 search failed');
+    log.error('rag', 'Keyword search failed');
 
     return [];
   }

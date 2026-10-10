@@ -55,7 +55,8 @@ export default defineEventHandler(async (event) => {
       content: chunk.content,
       contentPreview: chunk.content.slice(0, 200) + (chunk.content.length > 200 ? '...' : ''),
       contextualContent: chunk.contextualContent,
-      hasEmbedding: chunk.embedding !== null,
+      // TODO(cloudflare-rag): look the vector up in Vectorize
+      hasEmbedding: false,
       contentLength: chunk.content.length,
       contextLength: chunk.contextualContent.length,
       createdAt: chunk.createdAt,
@@ -64,7 +65,7 @@ export default defineEventHandler(async (event) => {
       totalChunks: chunks.length,
       totalContentLength: chunks.reduce((sum, c) => sum + c.content.length, 0),
       totalContextLength: chunks.reduce((sum, c) => sum + c.contextualContent.length, 0),
-      allEmbedded: chunks.every((c) => c.embedding !== null),
+      allEmbedded: false,
     },
   };
 });

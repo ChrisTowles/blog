@@ -7,7 +7,7 @@ type SemanticRow = {
   url: string;
   chunkIndex: number;
   preview: string;
-  distance: string;
+  distance: number;
 };
 
 type BM25Row = {
@@ -16,7 +16,7 @@ type BM25Row = {
   url: string;
   chunkIndex: number;
   preview: string;
-  rank: string;
+  rank: number;
 };
 
 defineRouteMeta({
@@ -59,47 +59,33 @@ export default defineEventHandler(async (event) => {
   const results = await retrieveRAG(query, { topK, skipRerank });
   timings.retrieval = Date.now() - retrieveStart;
 
-  // Get raw semantic and BM25 results for debugging
+  // Get raw keyword results for debugging
   const db = useDrizzle();
-  const embeddingStr = `[${queryEmbedding.join(',')}]`;
 
-  // Raw semantic results
-  const semanticStart = Date.now();
+  // TODO(cloudflare-rag): query Vectorize for raw semantic matches
+  const semanticRows: SemanticRow[] = [];
+  timings.semanticSearch = 0;
 
-  const semanticRaw = await db.execute<SemanticRow>(sql`
-    SELECT
-      dc.id,
-      d.title,
-      d.url,
-      dc."chunkIndex",
-      LEFT(dc.content, 100) as preview,
-      dc.embedding <=> ${embeddingStr}::vector AS distance
-    FROM document_chunks dc
-    JOIN documents d ON dc."documentId" = d.id
-    WHERE dc.embedding IS NOT NULL
-    ORDER BY distance
-    LIMIT 10
-  `);
-
-  timings.semanticSearch = Date.now() - semanticStart;
-
-  // Raw BM25 results
   const bm25Start = Date.now();
+  const terms = keywordTerms(query);
 
-  const bm25Raw = await db.execute<BM25Row>(sql`
-    SELECT
-      dc.id,
-      d.title,
-      d.url,
-      dc."chunkIndex",
-      LEFT(dc.content, 100) as preview,
-      ts_rank(dc."searchVector", plainto_tsquery('english', ${query})) AS rank
-    FROM document_chunks dc
-    JOIN documents d ON dc."documentId" = d.id
-    WHERE dc."searchVector" @@ plainto_tsquery('english', ${query})
-    ORDER BY rank DESC
-    LIMIT 10
-  `);
+  const bm25Rows =
+    terms.length === 0
+      ? []
+      : await db.all<BM25Row>(sql`
+          SELECT
+            dc.id,
+            d.title,
+            d.url,
+            dc."chunkIndex",
+            substr(dc.content, 1, 100) as preview,
+            (${keywordRank(terms)}) AS rank
+          FROM document_chunks dc
+          JOIN documents d ON dc."documentId" = d.id
+          WHERE (${keywordRank(terms)}) > 0
+          ORDER BY rank DESC
+          LIMIT 10
+        `);
 
   timings.bm25Search = Date.now() - bm25Start;
 
@@ -117,18 +103,18 @@ export default defineEventHandler(async (event) => {
       chunkIndex: r.chunkIndex,
     })),
     pipeline: {
-      semanticResults: semanticRaw.rows.map((r, i) => ({
+      semanticResults: semanticRows.map((r, i) => ({
         rank: i + 1,
         title: r.title,
         url: r.url,
-        distance: parseFloat(r.distance).toFixed(4),
+        distance: r.distance.toFixed(4),
         preview: r.preview,
       })),
-      bm25Results: bm25Raw.rows.map((r, i) => ({
+      bm25Results: bm25Rows.map((r, i) => ({
         rank: i + 1,
         title: r.title,
         url: r.url,
-        score: parseFloat(r.rank).toFixed(4),
+        score: r.rank.toFixed(4),
         preview: r.preview,
       })),
     },

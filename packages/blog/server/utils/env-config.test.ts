@@ -3,7 +3,6 @@ import { envSchema, maskValue, getMaskedConfig } from './env-config';
 
 describe('envSchema', () => {
   const validEnv = {
-    DATABASE_URL: 'postgres://localhost:5432/test',
     NUXT_SESSION_PASSWORD: 'a'.repeat(32),
     ANTHROPIC_API_KEY: 'sk-ant-test-key',
     BRAINTRUST_API_KEY: 'sk-braintrust-test-key',
@@ -33,8 +32,8 @@ describe('envSchema', () => {
   });
 
   it('fails on missing required field', () => {
-    const { DATABASE_URL: _, ...envWithoutDb } = validEnv;
-    const result = envSchema.safeParse(envWithoutDb);
+    const { ANTHROPIC_API_KEY: _, ...envWithoutKey } = validEnv;
+    const result = envSchema.safeParse(envWithoutKey);
     expect(result.success).toBe(false);
   });
 
@@ -50,7 +49,7 @@ describe('envSchema', () => {
 
 describe('maskValue', () => {
   it('masks sensitive keys with first 2 and last 4 chars', () => {
-    expect(maskValue('DATABASE_URL', 'postgres://user:pass@host/db')).toBe('po***t/db');
+    expect(maskValue('BRAINTRUST_API_KEY', 'sk-braintrust-test-key')).toBe('sk***-key');
     expect(maskValue('NUXT_SESSION_PASSWORD', 'supersecretpassword123')).toBe('su***d123');
     expect(maskValue('ANTHROPIC_API_KEY', 'sk-ant-api03-xxxxx')).toBe('sk***xxxx');
     expect(maskValue('NUXT_OAUTH_GITHUB_CLIENT_SECRET', 'ghsecret123')).toBe('gh***t123');
@@ -58,7 +57,7 @@ describe('maskValue', () => {
   });
 
   it('returns *** for short sensitive values', () => {
-    expect(maskValue('DATABASE_URL', 'short')).toBe('***');
+    expect(maskValue('NUXT_SESSION_PASSWORD', 'short')).toBe('***');
     expect(maskValue('ANTHROPIC_API_KEY', 'abc')).toBe('***');
   });
 
@@ -73,7 +72,6 @@ describe('getMaskedConfig', () => {
     const config = {
       GIT_SHA: 'abc1234',
       BUILD_TAG: '2025-01-15-12-30',
-      DATABASE_URL: 'postgres://localhost:5432/test',
       NUXT_SESSION_PASSWORD: 'a'.repeat(32),
       ANTHROPIC_API_KEY: 'sk-ant-test-key',
       BRAINTRUST_API_KEY: 'sk-braintrust-test-key',
@@ -97,7 +95,6 @@ describe('getMaskedConfig', () => {
     expect(keys).toEqual([...keys].sort());
 
     // Verify sensitive values are masked
-    expect(masked.DATABASE_URL).toBe('po***test');
     expect(masked.ANTHROPIC_API_KEY).toBe('sk***-key');
 
     // Verify non-sensitive values are not masked

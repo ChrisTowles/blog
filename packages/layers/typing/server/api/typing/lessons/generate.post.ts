@@ -72,54 +72,51 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 422, statusMessage: result.reason });
   }
 
-  // Persist as `topic` lesson if we have a DB. Even if the DB is unset
-  // we still return the generated text for ephemeral runs.
+  // Persist as `topic` lesson; if the write fails we still return the generated text.
   let savedLesson: LessonRow | null = null;
 
-  if (process.env.DATABASE_URL) {
-    try {
-      const db = useDrizzle();
+  try {
+    const db = useDrizzle();
 
-      const slug = `topic-${body.stage}-${Date.now().toString(36)}-${Math.random()
-        .toString(36)
-        .slice(2, 8)}`;
+    const slug = `topic-${body.stage}-${Date.now().toString(36)}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
 
-      const title = `${body.topic} (stage ${body.stage})`;
+    const title = `${body.topic} (stage ${body.stage})`;
 
-      const [row] = await db
-        .insert(tables.typingLessons)
-        .values({
-          slug,
-          stage: body.stage,
-          kind: 'topic',
-          title,
-          text: result.text,
-          targetWpm: 10,
-          targetAccuracy: 0.95,
-          topic: body.topic,
-          generatedBy: 'ai',
-        })
-        .returning();
+    const [row] = await db
+      .insert(tables.typingLessons)
+      .values({
+        slug,
+        stage: body.stage,
+        kind: 'topic',
+        title,
+        text: result.text,
+        targetWpm: 10,
+        targetAccuracy: 0.95,
+        topic: body.topic,
+        generatedBy: 'ai',
+      })
+      .returning();
 
-      if (row) {
-        savedLesson = {
-          id: row.id,
-          slug: row.slug,
-          stage: row.stage,
-          kind: 'topic',
-          title: row.title,
-          text: row.text,
-          targetWpm: row.targetWpm,
-          targetAccuracy: row.targetAccuracy,
-          topic: row.topic,
-          spellingListId: row.spellingListId,
-          generatedBy: 'ai',
-          createdAt: row.createdAt.toISOString(),
-        };
-      }
-    } catch {
-      // fall through to ephemeral lesson below
+    if (row) {
+      savedLesson = {
+        id: row.id,
+        slug: row.slug,
+        stage: row.stage,
+        kind: 'topic',
+        title: row.title,
+        text: row.text,
+        targetWpm: row.targetWpm,
+        targetAccuracy: row.targetAccuracy,
+        topic: row.topic,
+        spellingListId: row.spellingListId,
+        generatedBy: 'ai',
+        createdAt: row.createdAt.toISOString(),
+      };
     }
+  } catch {
+    // fall through to ephemeral lesson below
   }
 
   if (!savedLesson) {

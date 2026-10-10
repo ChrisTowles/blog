@@ -1,37 +1,28 @@
-import {
-  pgTable,
-  varchar,
-  pgEnum,
-  timestamp,
-  index,
-  uniqueIndex,
-  json,
-  text,
-  integer,
-} from 'drizzle-orm/pg-core';
-import { vector } from 'drizzle-orm/pg-core/columns/vector_extension/vector';
+import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { relations } from 'drizzle-orm';
 
+import { timestampMs, uuidPk } from './columns';
+
+import type { LoanApplicationData } from '../../../shared/loan-types';
+
 const timestamps = {
-  createdAt: timestamp().defaultNow().notNull(),
+  createdAt: timestampMs(),
 };
 
-export const providerEnum = pgEnum('provider', ['github', 'google']);
+export const PROVIDERS = ['github', 'google'] as const;
 
-export const roleEnum = pgEnum('role', ['user', 'assistant']);
+export const ROLES = ['user', 'assistant'] as const;
 
-export const users = pgTable(
+export const users = sqliteTable(
   'users',
   {
-    id: varchar({ length: 36 })
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    email: varchar({ length: 255 }).notNull(),
-    name: varchar({ length: 100 }).notNull(),
-    avatar: varchar({ length: 500 }).notNull(),
-    username: varchar({ length: 50 }).notNull(),
-    provider: providerEnum().notNull(),
-    providerId: varchar({ length: 50 }).notNull(),
+    id: uuidPk(),
+    email: text().notNull(),
+    name: text().notNull(),
+    avatar: text().notNull(),
+    username: text().notNull(),
+    provider: text({ enum: PROVIDERS }).notNull(),
+    providerId: text().notNull(),
     ...timestamps,
   },
   (table) => [uniqueIndex('users_provider_id_idx').on(table.provider, table.providerId)],
@@ -41,15 +32,13 @@ export const usersRelations = relations(users, ({ many }) => ({
   chats: many(chats),
 }));
 
-export const chats = pgTable(
+export const chats = sqliteTable(
   'chats',
   {
-    id: varchar({ length: 36 })
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    title: varchar({ length: 200 }),
-    userId: varchar({ length: 36 }).notNull(),
-    containerId: varchar({ length: 100 }),
+    id: uuidPk(),
+    title: text(),
+    userId: text().notNull(),
+    containerId: text(),
     ...timestamps,
   },
   (table) => [index('chats_user_id_idx').on(table.userId)],
@@ -63,17 +52,15 @@ export const chatsRelations = relations(chats, ({ one, many }) => ({
   messages: many(messages),
 }));
 
-export const messages = pgTable(
+export const messages = sqliteTable(
   'messages',
   {
-    id: varchar({ length: 36 })
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    chatId: varchar({ length: 36 })
+    id: uuidPk(),
+    chatId: text()
       .notNull()
       .references(() => chats.id, { onDelete: 'cascade' }),
-    role: roleEnum().notNull(),
-    parts: json(),
+    role: text({ enum: ROLES }).notNull(),
+    parts: text({ mode: 'json' }),
     ...timestamps,
   },
   (table) => [index('messages_chat_id_idx').on(table.chatId)],
@@ -87,19 +74,17 @@ export const messagesRelations = relations(messages, ({ one }) => ({
 }));
 
 // RAG Tables for contextual retrieval
-export const documents = pgTable(
+export const documents = sqliteTable(
   'documents',
   {
-    id: varchar({ length: 36 })
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    slug: varchar({ length: 200 }).notNull().unique(),
-    title: varchar({ length: 500 }).notNull(),
-    path: varchar({ length: 500 }).notNull(), // source file path
-    url: varchar({ length: 500 }).notNull(), // e.g., "/blog/tips-for-claude-code"
-    contentHash: varchar({ length: 64 }).notNull(), // SHA-256 for change detection
+    id: uuidPk(),
+    slug: text().notNull().unique(),
+    title: text().notNull(),
+    path: text().notNull(), // source file path
+    url: text().notNull(), // e.g., "/blog/tips-for-claude-code"
+    contentHash: text().notNull(), // SHA-256 for change detection
     ...timestamps,
-    updatedAt: timestamp().defaultNow().notNull(),
+    updatedAt: timestampMs().$onUpdate(() => new Date()),
   },
   (table) => [index('documents_slug_idx').on(table.slug)],
 );
@@ -108,30 +93,21 @@ export const documentsRelations = relations(documents, ({ many }) => ({
   chunks: many(documentChunks),
 }));
 
-// Titan Text v2 produces 1024-dimensional embeddings
-const EMBEDDING_DIMENSIONS = 1024;
-
-export const documentChunks = pgTable(
+export const documentChunks = sqliteTable(
   'document_chunks',
   {
-    id: varchar({ length: 36 })
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    documentId: varchar({ length: 36 })
+    id: uuidPk(),
+    documentId: text()
       .notNull()
       .references(() => documents.id, { onDelete: 'cascade' }),
     chunkIndex: integer().notNull(),
     content: text().notNull(), // original chunk text
     contextualContent: text().notNull(), // Claude-generated situating context
-    embedding: vector({ dimensions: EMBEDDING_DIMENSIONS }), // pgvector for semantic search
-    // tsvector generated column for BM25 full-text search
-    searchVector: text().$type<string>(), // We'll use raw SQL for tsvector
     ...timestamps,
   },
   (table) => [
     index('document_chunks_document_id_idx').on(table.documentId),
     index('document_chunks_chunk_index_idx').on(table.documentId, table.chunkIndex),
-    // HNSW and GIN indexes will be created in migration SQL
   ],
 );
 
@@ -144,27 +120,19 @@ export const documentChunksRelations = relations(documentChunks, ({ one }) => ({
 
 // --- Loan workflow tables ---
 
-export const loanStatusEnum = pgEnum('loan_status', [
-  'intake',
-  'reviewing',
-  'approved',
-  'denied',
-  'flagged',
-]);
+export const LOAN_STATUSES = ['intake', 'reviewing', 'approved', 'denied', 'flagged'] as const;
 
-export const reviewerEnum = pgEnum('reviewer', ['the-bank', 'loan-market', 'background-checks']);
+export const REVIEWERS = ['the-bank', 'loan-market', 'background-checks'] as const;
 
-export const reviewDecisionEnum = pgEnum('review_decision', ['approved', 'denied', 'flagged']);
+export const REVIEW_DECISIONS = ['approved', 'denied', 'flagged'] as const;
 
-export const loanApplications = pgTable(
+export const loanApplications = sqliteTable(
   'loan_applications',
   {
-    id: varchar({ length: 36 })
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    userId: varchar({ length: 36 }).notNull(),
-    status: loanStatusEnum().default('intake'),
-    applicationData: json().$type<import('~~/shared/loan-types').LoanApplicationData>().default({}),
+    id: uuidPk(),
+    userId: text().notNull(),
+    status: text({ enum: LOAN_STATUSES }).default('intake'),
+    applicationData: text({ mode: 'json' }).$type<LoanApplicationData>().default({}),
     ...timestamps,
   },
   (table) => [index('loan_applications_user_id_idx').on(table.userId)],
@@ -179,19 +147,17 @@ export const loanApplicationsRelations = relations(loanApplications, ({ one, man
   messages: many(loanMessages),
 }));
 
-export const loanReviews = pgTable(
+export const loanReviews = sqliteTable(
   'loan_reviews',
   {
-    id: varchar({ length: 36 })
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    applicationId: varchar({ length: 36 })
+    id: uuidPk(),
+    applicationId: text()
       .notNull()
       .references(() => loanApplications.id, { onDelete: 'cascade' }),
-    reviewer: reviewerEnum(),
-    decision: reviewDecisionEnum(),
+    reviewer: text({ enum: REVIEWERS }),
+    decision: text({ enum: REVIEW_DECISIONS }),
     analysis: text(),
-    flags: json().$type<string[]>().default([]),
+    flags: text({ mode: 'json' }).$type<string[]>().default([]),
     ...timestamps,
   },
   (table) => [index('loan_reviews_application_id_idx').on(table.applicationId)],
@@ -204,17 +170,15 @@ export const loanReviewsRelations = relations(loanReviews, ({ one }) => ({
   }),
 }));
 
-export const loanMessages = pgTable(
+export const loanMessages = sqliteTable(
   'loan_messages',
   {
-    id: varchar({ length: 36 })
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    applicationId: varchar({ length: 36 })
+    id: uuidPk(),
+    applicationId: text()
       .notNull()
       .references(() => loanApplications.id, { onDelete: 'cascade' }),
-    role: roleEnum(),
-    parts: json(),
+    role: text({ enum: ROLES }),
+    parts: text({ mode: 'json' }),
     ...timestamps,
   },
   (table) => [index('loan_messages_application_id_idx').on(table.applicationId)],

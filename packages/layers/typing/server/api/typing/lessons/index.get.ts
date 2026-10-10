@@ -16,8 +16,7 @@ export default defineEventHandler(async (event) => {
   const filteredBuiltIn = stage ? builtIn.filter((l) => l.stage === stage) : builtIn;
 
   // Built-in lessons live in code; AI-generated lessons live in the DB.
-  // For anonymous reads we still try the DB but fall back gracefully if
-  // DATABASE_URL is unset (e.g. local-only static dev). Errors are silent —
+  // Anonymous reads still try the DB but fall back gracefully. Errors are silent —
   // the curriculum is the source of truth and ships with the build.
   let dbLessons: Array<{
     id: number;
@@ -34,18 +33,16 @@ export default defineEventHandler(async (event) => {
     createdAt: Date;
   }> = [];
 
-  if (process.env.DATABASE_URL) {
-    try {
-      const db = useDrizzle();
+  try {
+    const db = useDrizzle();
 
-      const rows = stage
-        ? await db.select().from(tables.typingLessons).where(eq(tables.typingLessons.stage, stage))
-        : await db.select().from(tables.typingLessons);
+    const rows = stage
+      ? await db.select().from(tables.typingLessons).where(eq(tables.typingLessons.stage, stage))
+      : await db.select().from(tables.typingLessons);
 
-      dbLessons = rows;
-    } catch {
-      dbLessons = [];
-    }
+    dbLessons = rows;
+  } catch {
+    dbLessons = [];
   }
 
   // Built-in lessons get synthetic ids derived from slug ordering. AI lessons

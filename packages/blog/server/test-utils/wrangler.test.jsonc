@@ -1,0 +1,13 @@
+// D1 only. The real config also binds AI, which makes wrangler open a remote session.
+{
+  "name": "towles-blog-test",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "towles-blog-test",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+    },
+  ],
+}

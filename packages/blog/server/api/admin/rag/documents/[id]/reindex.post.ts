@@ -79,12 +79,12 @@ export default defineEventHandler(async (event) => {
       throw new Error(`Failed to generate embedding for chunk ${chunk.index}`);
     }
 
+    // TODO(cloudflare-rag): upsert embeddingResult.embedding into Vectorize; D1 keeps text only
     await db.insert(tables.documentChunks).values({
       documentId: id,
       chunkIndex: chunk.index,
       content: chunk.content,
       contextualContent,
-      embedding: embeddingResult.embedding,
     });
 
     chunksCreated++;
