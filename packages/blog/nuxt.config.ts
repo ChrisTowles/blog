@@ -127,13 +127,33 @@ export default defineNuxtConfig({
     viewTransition: true,
   },
 
-  compatibilityDate: '2026-01-02',
+  compatibilityDate: {
+    default: '2026-01-02',
+    cloudflare: '2026-10-01',
+  },
 
   nitro: {
-    preset: 'node-server',
+    preset: 'cloudflare_module',
+    cloudflare: {
+      nodeCompat: true,
+      dev: { environment: 'dev' },
+    },
+    rollupConfig: {
+      plugins: [
+        {
+          // A rollup-level swap keeps the real package's types for typecheck, unlike `alias`.
+          name: 'stub-duckdb-node-api',
+          resolveId: (id) =>
+            id === '@duckdb/node-api'
+              ? resolve(__dirname, 'server/stubs/duckdb-node-api.ts')
+              : null,
+        },
+      ],
+    },
     ignore: ['**/*.test.ts', '**/*.spec.ts', '**/*.test.js', '**/*.spec.js'],
     experimental: {
       openAPI: true,
+      asyncContext: true,
     },
     esbuild: {
       options: {
@@ -149,62 +169,6 @@ export default defineNuxtConfig({
     },
 
     imports: {},
-    hooks: {
-      async compiled(nitro) {
-        const { rollup } = await import('rollup');
-        const { default: typescript } = await import('@rollup/plugin-typescript');
-        const { default: rollupResolve } = await import('@rollup/plugin-node-resolve');
-        const { cp, mkdir } = await import('node:fs/promises');
-        const { join } = await import('node:path');
-
-        const rootDir = nitro.options.rootDir;
-        const outputDir = nitro.options.output.dir;
-
-        // Ensure database output dir exists
-        await mkdir(join(outputDir, 'database'), { recursive: true });
-
-        // Bundle migrate script with rollup.
-        //
-        // The resolution options are overridden rather than inherited: the
-        // tsconfig resolves to `moduleResolution: node10`, which TypeScript
-        // deprecated, so every build printed a TS5107 warning. Dropping the
-        // tsconfig entirely is not the fix — without its `paths` and generated
-        // Nuxt types the same pass emits ~550 TS2304/TS2307 errors. Keep the
-        // tsconfig, override just the resolution; output is byte-identical.
-        const bundle = await rollup({
-          input: join(rootDir, 'scripts/migrate.ts'),
-          plugins: [
-            rollupResolve(),
-            typescript({
-              tsconfig: join(rootDir, 'tsconfig.json'),
-              module: 'esnext',
-              moduleResolution: 'bundler',
-              target: 'es2022',
-              skipLibCheck: true,
-              // Types are checked by `nuxt typecheck`; this pass only emits.
-              declaration: false,
-              sourceMap: false,
-            }),
-          ],
-          external: ['pg', /^node:/],
-        });
-
-        await bundle.write({
-          file: join(outputDir, 'database/migrate.mjs'),
-          format: 'esm',
-        });
-        await bundle.close();
-        console.log('✓ Built migrate script');
-
-        // Copy migrations
-        await cp(
-          join(rootDir, 'server/database/migrations'),
-          join(outputDir, 'database/migrations'),
-          { recursive: true },
-        );
-        console.log('✓ Copied migrations');
-      },
-    },
   },
 
   typescript: {

@@ -63,41 +63,23 @@ Both chat and artifacts use Anthropic beta APIs. Chat uses `beta.messages.stream
 
 ## Database
 
-PostgreSQL with Drizzle ORM.
+Cloudflare D1 (SQLite) with Drizzle ORM.
 
 - **Schema**: `database/schema/` — barrel `index.ts`, feature files `blog.ts`, `typing.ts`, `workflow.ts`
-- **Access**: `useDrizzle()` from `utils/drizzle.ts` (creates connection per call)
+- **Access**: `useDrizzle()` from `utils/drizzle.ts` — wraps the `DB` binding from the current event (needs Nitro `asyncContext`), so call it inside a handler
 - **Tables**: `tables.chats` (with `containerId` for container reuse), `tables.messages`, `tables.users`, `tables.documents`, `tables.documentChunks`, plus the `typing_*` and `workflow_*` sets
-- **Migrations**: `pnpm db:generate` → `pnpm db:migrate`
+- **Migrations**: `pnpm db:generate` writes SQL under `database/migrations/`; `wrangler d1 migrations apply` runs it (`pnpm db:migrate` locally)
+- **Atomic writes**: `db.batch([...])`; there are no interactive transactions
+- **Bulk inserts**: D1 allows 100 bound parameters per statement — build statements with `insertChunked(db, table, rows)` and pass them to `db.batch`
 
 UUID primary keys generated via `crypto.randomUUID()`. All tables have `createdAt` timestamp.
 
-### Custom SQL Migrations
-
-Never hand-edit anything under `migrations/meta/` (journal or snapshots). Hand-copied
-snapshots caused real drift once: migrations 0011/0012 changed tables but shipped
-copies of the 0010 snapshot, so every later `drizzle-kit generate` diffed against a
-fictional schema and hung on rename prompts (repaired in PR #275). Pick the path that
-matches the change:
-
-- **Change expressible in the Drizzle schema** (tables, columns, constraints):
-  update `database/schema/*.ts`, run `pnpm db:generate` — it writes the SQL,
-  journal entry, and snapshot together. Then edit the generated SQL if the change
-  needs extras (backfills, `IF NOT EXISTS` guards); the snapshot stays correct.
-- **Change Drizzle can't express** (`tsvector` columns, triggers, GIN indexes,
-  data-only seeds): run `npx drizzle-kit generate --custom --name <name>` — it
-  scaffolds an empty SQL file with the journal entry and snapshot handled — then
-  write the SQL in the generated file. Keep the Drizzle schema on its
-  `text().$type<string>()`-style workaround; don't change it.
-
-The `document_chunks.searchVector` column is `text()` in Drizzle but `tsvector` in
-PostgreSQL (via custom migration). A trigger auto-populates it from `content` +
-`contextualContent`.
+Never hand-edit anything under `migrations/meta/` (journal or snapshots). For SQL Drizzle cannot express (FTS5 tables, triggers), use `npx drizzle-kit generate --custom --name <name>` and write the SQL in the scaffolded file.
 
 ## RAG (Retrieval-Augmented Generation)
 
 - **Ingest**: `utils/rag/ingest.ts` — chunks blog content, generates contextual summaries with Claude, embeds with AWS Titan
-- **Retrieve**: `utils/rag/retrieve.ts` — hybrid search (pgvector cosine similarity + BM25 full-text), RRF fusion
+- **Retrieve**: `utils/rag/retrieve.ts` — hybrid search, RRF fusion. TODO(cloudflare-rag): semantic search is stubbed until Vectorize lands; keyword search is a LIKE scan until FTS5
 - **Embeddings**: AWS Bedrock Titan Text v2, 1024 dimensions
 
 ## Adding a New API Route

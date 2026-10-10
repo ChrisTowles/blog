@@ -102,16 +102,17 @@ Props: `language`, `title`, `prompt`, `code`, `readonly`
 
 ## Database
 
-PostgreSQL with Drizzle ORM. Schema directory at `server/database/schema/` (barrel `index.ts`, feature files: `blog.ts`, `typing.ts`, `workflow.ts`). Migrations in `server/database/migrations/`.
+Cloudflare D1 (SQLite) with Drizzle ORM. Schema directory at `server/database/schema/` (barrel `index.ts`, feature files: `blog.ts`, `typing.ts`, `workflow.ts`, shared column helpers in `columns.ts`). Migrations in `server/database/migrations/`.
 
 Key tables: `users`, `chats`, `messages`, `documents`, `document_chunks`, `typing_groups`, `typing_group_members`, `typing_group_invites`, `typing_learners`, `typing_lessons`, `typing_attempts`, `typing_key_stats`, `typing_spelling_lists`, `typing_spelling_progress`.
 
 ```bash
-pnpm db:migrate   # Run migrations (from root)
-pnpm db:generate  # Generate migration after schema change
+pnpm db:generate  # Generate a migration after a schema change (drizzle-kit)
+pnpm db:migrate   # Apply migrations to the local D1 (wrangler, --env dev)
+pnpm cf:types     # Regenerate server/worker-configuration.d.ts after editing wrangler.jsonc
 ```
 
-Drizzle config: `drizzle.config.ts`. Uses `DATABASE_URL` env var.
+`useDrizzle()` resolves the `DB` binding from `useEvent().context.cloudflare.env`, so it only works inside a request. D1 has no interactive transactions (use `db.batch([...])`) and caps statements at 100 bound parameters (use `insertChunked` for bulk inserts). Timestamps are `integer({ mode: 'timestamp_ms' })`; JSON columns are `text({ mode: 'json' })`. Bindings live in `wrangler.jsonc`; `env.dev` omits AI/Vectorize because those only run remotely. `nuxt dev` exposes bindings through Nitro's built-in Cloudflare dev proxy, persisting state in `.wrangler/state/v3`.
 
 ## RAG Pipeline
 
@@ -189,14 +190,13 @@ Both chat and artifacts use SSE with the same pattern:
 Required env vars (see `server/utils/env-config.ts`):
 
 - `ANTHROPIC_API_KEY` — for all AI features
-- `DATABASE_URL` — PostgreSQL connection
 - `BRAINTRUST_API_KEY` / `BRAINTRUST_PROJECT_NAME` — observability
 
 ## Testing
 
 ```bash
 pnpm test                # Unit tests (excludes *.integration.test.ts)
-pnpm test:integration    # Integration tests (needs DATABASE_URL / docker)
+pnpm test:integration    # Integration tests (in-memory local D1; migrations applied in vitest.integration.setup.ts)
 pnpm test:e2e            # Playwright E2E tests
 ```
 
@@ -232,14 +232,14 @@ DB test helpers in `server/test-utils/db-helper.ts`: `cleanupDatabase()`, `creat
 - **Shiki in custom components** — use `ShikiCachedRenderer` from `shiki-stream/vue` with `await useHighlighter()`. See `ChatCodeExecution.vue` and `ProsePre.vue` for the pattern.
 - **Model config** — use `useRuntimeConfig().public.model` instead of hardcoding model strings.
 - **Debugging beta APIs** — beta client methods cast via `AnthropicBetaClient` can silently fail in try/catch. Check `tail /tmp/nuxt-dev.log | grep -i warn` for swallowed errors.
-- **Dev server startup** — always use `pnpm dev` from repo root (runs `docker:up`, `db:migrate`, `kill-port`). Using `pnpm --filter @chris-towles/blog dev` skips those steps and can leave stale servers on other ports.
+- **Dev server startup** — always use `pnpm dev` from repo root (runs `db:migrate`, `kill-port`). Using `pnpm --filter @chris-towles/blog dev` skips those steps and can leave stale servers on other ports.
 - **Vitest 4 has no `--include` CLI flag** — use a separate config file with `-c` flag for different test subsets, not CLI include/exclude.
 
 ## Observability
 
 OpenTelemetry-native, Boris-Tané-style. Spans are wide events; logs become span events; New Relic derives metrics from spans server-side.
 
-- **SDK init**: `server/plugins/00-otel-sdk.ts` — `NodeSDK` with `getNodeAutoInstrumentations` (`instrumentation-fs` disabled), OTLP/HTTP protobuf exporter, `BatchSpanProcessor`, `AlwaysOn` sampler, `K_REVISION` → `service.instance.id`. Throws on missing `OTEL_EXPORTER_OTLP_ENDPOINT`. `SIGTERM` → `sdk.shutdown()` to flush before Cloud Run kills the instance.
+- **SDK init**: none yet. `NodeSDK` (and `server/plugins/00-otel-sdk.ts`) was removed because it cannot run on Workers; the otel wave replaces it.
 - **Request enrichment**: `server/middleware/01-trace-enrich.ts` — derives `request.id` from `x-cloud-trace-context` (or `x-request-id`, then `crypto.randomUUID()`), attaches `request.id`/`user.id`/`session.id`/`route.name` to the active root HTTP span. Echoes `x-request-id` response header.
 - **evlog bridge**: `server/utils/observability/evlog-bridge.ts` routes every `evlog.{info,warn,error}` call site into `span.addEvent(name, attrs)` when an active span exists, stdout fallback otherwise. The 36 existing evlog call sites need no per-call refactor.
 - **Anthropic spans**: `server/utils/observability/anthropic.ts` exports `withAnthropicSpan` (non-streaming) and `withAnthropicStreamSpan` (streaming, span ends on `finalMessage`/`error`/`end`). Writes `gen_ai.*` semconv attrs including the Anthropic input-tokens sum (`input_tokens + cache_read_input_tokens + cache_creation_input_tokens`). The same helpers cover Gemini via `{ provider: 'google.gemini' }`.

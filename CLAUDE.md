@@ -32,7 +32,7 @@ infra/              # infrastructure
 pnpm dev          # Dev server (with remote storage)
 pnpm build        # Build all packages
 pnpm test         # Vitest
-pnpm test:integration  # Integration tests (requires running PostgreSQL)
+pnpm test:integration  # Integration tests (local in-memory D1, no services needed)
 pnpm lint         # oxlint
 pnpm lint:comments # comment-budget gate: comment volume in the lines this branch adds
 pnpm typecheck    # TypeScript checks
@@ -89,7 +89,7 @@ After implementing features, verify with the full stack — not just unit tests:
 
 1. `pnpm test` — unit tests pass
 2. `pnpm lint` + `pnpm lint:comments` + `pnpm typecheck` — no errors
-3. `pnpm test:integration` — integration tests pass (needs `DATABASE_URL`)
+3. `pnpm test:integration` — integration tests pass (local D1 via wrangler, no setup)
 4. **Start dev server** (`pnpm dev`) and verify the feature works in a real browser
 5. `pnpm test:e2e` — E2E Playwright tests pass against the running dev server (uses `UI_PORT` from `.env`)
 6. Take a screenshot (`npx playwright screenshot http://localhost:$UI_PORT/<page> /tmp/screenshot.png`) to visually confirm
