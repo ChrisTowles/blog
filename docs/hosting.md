@@ -17,11 +17,11 @@ Cloudflare Workers. Moved from GCP Cloud Run + Cloud SQL (see [cloudflare-migrat
 
 ## Environments
 
-| Env        | Blog Worker           | Hostname                  | Sandbox host                |
-| ---------- | --------------------- | ------------------------- | --------------------------- |
-| production | `towles-blog`         | `chris.towles.dev`        | `sandbox.towles.dev`        |
-| staging    | `towles-blog-staging` | `stage-chris.towles.dev`  | `stage-sandbox.towles.dev`  |
-| dev        | `towles-blog-dev`     | `localhost` (local state) | `sandbox.localhost:8081`    |
+| Env        | Blog Worker           | Hostname                  | Sandbox host               |
+| ---------- | --------------------- | ------------------------- | -------------------------- |
+| production | `towles-blog`         | `chris.towles.dev`        | `sandbox.towles.dev`       |
+| staging    | `towles-blog-staging` | `stage-chris.towles.dev`  | `stage-sandbox.towles.dev` |
+| dev        | `towles-blog-dev`     | `localhost` (local state) | `sandbox.localhost:8081`   |
 
 Staging has its own D1 (`towles-blog-staging`), R2 bucket (`towles-blog-media-staging`) and Vectorize index (`towles-blog-rag-staging`). The `dev` env is local only: it omits AI and Vectorize because wrangler cannot open remote sessions for them offline.
 
@@ -48,10 +48,10 @@ pnpm cf:tail             # live logs
 
 Repo secrets used by `deploy.yml`:
 
-| Secret                  | Used for                                   |
-| ----------------------- | ------------------------------------------ |
-| `CLOUDFLARE_API_TOKEN`  | wrangler deploy, D1 migrations, Terraform  |
-| `CLOUDFLARE_ACCOUNT_ID` | wrangler account selection                 |
+| Secret                  | Used for                                  |
+| ----------------------- | ----------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`  | wrangler deploy, D1 migrations, Terraform |
+| `CLOUDFLARE_ACCOUNT_ID` | wrangler account selection                |
 
 ```bash
 gh secret set CLOUDFLARE_ACCOUNT_ID --body baf9cdac6eb4d8c477d85ceccae6679d
@@ -85,17 +85,17 @@ done
 pnpm exec wrangler secret list --env staging
 ```
 
-| Secret                                                | Notes                                                                 |
-| ----------------------------------------------------- | --------------------------------------------------------------------- |
-| `ANTHROPIC_API_KEY`                                   | Direct fallback if AI Gateway streaming misbehaves                    |
-| `NUXT_SESSION_PASSWORD`                               | 32+ characters; `openssl rand -base64 32`                             |
-| `NUXT_OG_IMAGE_SECRET`                                | `npx nuxt-og-image generate-secret`                                   |
-| `NUXT_OAUTH_GITHUB_*`, `NUXT_OAUTH_GOOGLE_*`          | One OAuth app per environment; callback `https://<host>/api/auth/...` |
-| `BRAINTRUST_API_KEY`                                  | `BRAINTRUST_PROJECT_NAME` is a plain var                              |
-| `OTEL_EXPORTER_OTLP_HEADERS`                          | `api-key=<New Relic license key>`                                     |
-| `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`            | R2 API token for the aviation container ([ops](mcp-aviation-ops.md)) |
-| `GOOGLE_TTS_KEY`                                      | Chirp3 REST key for typing audio                                      |
-| `ADMIN_SEED_TOKEN`                                    | Guards admin seed/ingest endpoints                                    |
+| Secret                                       | Notes                                                                 |
+| -------------------------------------------- | --------------------------------------------------------------------- |
+| `ANTHROPIC_API_KEY`                          | Direct fallback if AI Gateway streaming misbehaves                    |
+| `NUXT_SESSION_PASSWORD`                      | 32+ characters; `openssl rand -base64 32`                             |
+| `NUXT_OG_IMAGE_SECRET`                       | `npx nuxt-og-image generate-secret`                                   |
+| `NUXT_OAUTH_GITHUB_*`, `NUXT_OAUTH_GOOGLE_*` | One OAuth app per environment; callback `https://<host>/api/auth/...` |
+| `BRAINTRUST_API_KEY`                         | `BRAINTRUST_PROJECT_NAME` is a plain var                              |
+| `OTEL_EXPORTER_OTLP_HEADERS`                 | `api-key=<New Relic license key>`                                     |
+| `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`   | R2 API token for the aviation container ([ops](mcp-aviation-ops.md))  |
+| `GOOGLE_TTS_KEY`                             | Chirp3 REST key for typing audio                                      |
+| `ADMIN_SEED_TOKEN`                           | Guards admin seed/ingest endpoints                                    |
 
 The Anthropic key can also live in AI Gateway as a BYOK provider key; the Worker secret remains the fallback path. Non-secret values (`R2_ACCOUNT_ID`, `R2_BUCKET`, public config) are `vars` in `wrangler.jsonc`.
 

@@ -20,7 +20,7 @@
       "binding": "DB",
       // Placeholder: the orchestrator replaces this with the real D1 id.
       "database_name": "towles-blog",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "83fa5b15-19f2-4dc9-bb04-287b54a20f5f",
       "migrations_dir": "server/database/migrations",
     },
   ],

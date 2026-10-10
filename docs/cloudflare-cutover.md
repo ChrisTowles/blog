@@ -94,12 +94,12 @@ Do staging verification first: sign-in with both OAuth providers, chat, search, 
 
 Old records to remove before the Worker can claim each hostname (Cloudflare dashboard: DNS > Records, or the API):
 
-| Hostname                 | Old record                                       | Owner                            |
-| ------------------------ | ------------------------------------------------ | -------------------------------- |
-| `chris.towles.dev`       | CNAME `ghs.googlehosted.com`                     | manual                           |
-| `stage-chris.towles.dev` | CNAME `ghs.googlehosted.com`                     | manual                           |
-| `sandbox.towles.dev`     | CNAME `ghs.googlehosted.com`                     | was `cloudflare_record.mcp_host` |
-| `stage-sandbox.towles.dev` | CNAME `ghs.googlehosted.com`                   | was `cloudflare_record.mcp_host` |
+| Hostname                   | Old record                   | Owner                            |
+| -------------------------- | ---------------------------- | -------------------------------- |
+| `chris.towles.dev`         | CNAME `ghs.googlehosted.com` | manual                           |
+| `stage-chris.towles.dev`   | CNAME `ghs.googlehosted.com` | manual                           |
+| `sandbox.towles.dev`       | CNAME `ghs.googlehosted.com` | was `cloudflare_record.mcp_host` |
+| `stage-sandbox.towles.dev` | CNAME `ghs.googlehosted.com` | was `cloudflare_record.mcp_host` |
 
 Delete the sandbox CNAMEs by hand, not with `terraform apply`. The GCP stack no longer declares them, so the next plan finds them gone and stays quiet on that point. Leave the Cloud Run domain mappings and services untouched: they are the rollback path. A GCP drift issue for the pending domain-mapping destroy is expected during the soak; do not apply the GCP stacks until step 9.
 
