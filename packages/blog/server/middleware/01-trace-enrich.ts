@@ -1,38 +1,24 @@
 /**
- * Decorate the auto-generated HTTP server span with business attributes.
- * Numbered `01-` so it runs ahead of `mcp-rate-limit.ts` (alphabetical).
+ * Stamps every request with an id and, when an OTel span is active, decorates it with business
+ * attributes (`@opentelemetry/api` is a no-op without an SDK, which is the case on Workers).
  *
- * `request.id` resolution: x-cloud-trace-context (Cloud Run/GCP) → inbound
- * x-request-id → fresh uuid. Echoed in the x-request-id response header.
+ * `request.id` resolution: inbound x-request-id -> Cloudflare `cf-ray` -> fresh uuid. Echoed in
+ * the x-request-id response header.
  */
 
 import { defineEventHandler, getRequestHeader, setResponseHeader } from 'h3';
 import { trace } from '@opentelemetry/api';
 
-const CLOUD_TRACE_HEADER = 'x-cloud-trace-context';
-
 const REQUEST_ID_HEADER = 'x-request-id';
 
-export function deriveRequestId(headers: { cloudTrace?: string; requestId?: string }): string {
-  if (headers.cloudTrace) {
-    // Format: "TRACE_ID/SPAN_ID;o=TRACE_TRUE". Take the trace portion.
-    const tracePart = headers.cloudTrace.split('/')[0];
-
-    if (tracePart) return tracePart;
-  }
-
-  if (headers.requestId) return headers.requestId;
-
-  return crypto.randomUUID();
+export function deriveRequestId(headers: { requestId?: string; cfRay?: string }): string {
+  return headers.requestId || headers.cfRay || crypto.randomUUID();
 }
 
 export default defineEventHandler(async (event) => {
-  const cloudTrace = getRequestHeader(event, CLOUD_TRACE_HEADER);
-  const inboundRequestId = getRequestHeader(event, REQUEST_ID_HEADER);
-
   const requestId = deriveRequestId({
-    cloudTrace,
-    requestId: inboundRequestId,
+    requestId: getRequestHeader(event, REQUEST_ID_HEADER),
+    cfRay: getRequestHeader(event, 'cf-ray'),
   });
 
   setResponseHeader(event, REQUEST_ID_HEADER, requestId);

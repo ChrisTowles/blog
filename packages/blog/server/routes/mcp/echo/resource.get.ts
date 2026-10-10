@@ -22,5 +22,5 @@ export default defineEventHandler(async (event) => {
   setResponseHeader(event, 'Cache-Control', 'public, max-age=31536000, immutable');
   setResponseHeader(event, 'Vary', 'Accept-Encoding');
 
-  return readEchoBundle();
+  return await readEchoBundle();
 });

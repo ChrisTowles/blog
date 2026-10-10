@@ -11,7 +11,6 @@ describe('envSchema', () => {
     NUXT_OAUTH_GITHUB_CLIENT_SECRET: 'github-secret',
     NUXT_OAUTH_GOOGLE_CLIENT_ID: 'google-client-id',
     NUXT_OAUTH_GOOGLE_CLIENT_SECRET: 'google-secret',
-    GCS_BUCKET_NAME: 'blog-towles-test-media',
   };
 
   it('parses valid env', () => {
@@ -70,6 +69,7 @@ describe('getMaskedConfig', () => {
       BUILD_TAG: '2025-01-15-12-30',
       NUXT_SESSION_PASSWORD: 'a'.repeat(32),
       ANTHROPIC_API_KEY: 'sk-ant-test-key',
+      NUXT_ANTHROPIC_BASE_URL: '',
       BRAINTRUST_API_KEY: 'sk-braintrust-test-key',
       BRAINTRUST_PROJECT_NAME: 'blog-towles',
       NUXT_OAUTH_GITHUB_CLIENT_ID: 'github-client-id',
@@ -78,7 +78,6 @@ describe('getMaskedConfig', () => {
       NUXT_OAUTH_GOOGLE_CLIENT_SECRET: 'google-secret',
       NUXT_OG_IMAGE_SECRET: '',
       GOOGLE_AI_API_KEY: '',
-      GCS_BUCKET_NAME: 'blog-towles-test-media',
     };
 
     const masked = getMaskedConfig(config);

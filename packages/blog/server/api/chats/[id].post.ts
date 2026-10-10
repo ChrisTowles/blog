@@ -199,13 +199,13 @@ export default defineEventHandler(async (event) => {
   const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
 
   const skills = getSkillsForAPI();
-  const skillsPrompt = getSkillsSystemPrompt();
+  const skillsPrompt = await getSkillsSystemPrompt();
   const fullSystemPrompt = `${SYSTEM_PROMPT}\n\n${skillsPrompt}`;
 
   // First-discovered wins on name collisions across MCP_ENDPOINTS.
   // Use allSettled so one endpoint failing doesn't tear down tool discovery.
   const settled = await Promise.allSettled(
-    MCP_ENDPOINTS.map((path) => getMcpTools(path, baseUrl).then((tools) => ({ path, tools }))),
+    MCP_ENDPOINTS.map((path) => getMcpTools(path).then((tools) => ({ path, tools }))),
   );
 
   const discovered: Array<{ path: string; tools: Awaited<ReturnType<typeof getMcpTools>> }> = [];
@@ -503,12 +503,7 @@ export default defineEventHandler(async (event) => {
 
                 try {
                   if (endpointPath) {
-                    const outcome = await callMcpTool(
-                      endpointPath,
-                      currentToolName,
-                      toolArgs,
-                      baseUrl,
-                    );
+                    const outcome = await callMcpTool(endpointPath, currentToolName, toolArgs);
 
                     toolResult = outcome.text;
 

@@ -1,5 +1,4 @@
-import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
+import { bundledAssets, type ServerAssets } from '../server-assets';
 import type { LoanApplicationData, ReviewerName, ReviewDecision } from '~~/shared/loan-types';
 
 export const REVIEWER_SKILL_DIRS: Record<ReviewerName, string> = {
@@ -14,18 +13,17 @@ export interface ApproverResponse {
   analysis: string;
 }
 
-export function loadApproverPrompt(reviewer: ReviewerName): string {
+export async function loadApproverPrompt(
+  reviewer: ReviewerName,
+  assets: ServerAssets = bundledAssets,
+): Promise<string> {
   const skillDir = REVIEWER_SKILL_DIRS[reviewer];
-  // Skills live at repo root (.claude/skills/), not in packages/blog/
-  const cwd = process.cwd();
-  const base = cwd.endsWith('packages/blog') ? join(cwd, '..', '..') : cwd;
-  const skillPath = join(base, '.claude', 'skills', skillDir, 'SKILL.md');
+  const content = skillDir ? await assets.readText('skills', `${skillDir}/SKILL.md`) : null;
 
-  if (!existsSync(skillPath)) {
-    throw new Error(`Skill file not found for reviewer ${reviewer}: ${skillPath}`);
+  if (content === null) {
+    throw new Error(`Skill file not found for reviewer ${reviewer}`);
   }
 
-  const content = readFileSync(skillPath, 'utf-8');
   const match = content.match(/^---\s*\n[\s\S]*?\n---\s*\n([\s\S]*)$/);
 
   return match ? match[1]!.trim() : content;

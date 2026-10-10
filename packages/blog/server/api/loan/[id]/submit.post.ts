@@ -73,7 +73,7 @@ export default defineEventHandler(async (event) => {
             displayName: REVIEWER_DISPLAY_NAMES[reviewer],
           });
 
-          const systemPrompt = loadApproverPrompt(reviewer);
+          const systemPrompt = await loadApproverPrompt(reviewer);
           let fullText = '';
 
           const reviewModel = config.public.model;

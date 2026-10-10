@@ -1,11 +1,17 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { join } from 'path';
+import { describe, it, expect } from 'vitest';
+import { join } from 'node:path';
+import { createFsAssets } from '../../test-utils/server-assets';
 import {
   formatApplicationForReview,
   parseApproverResponse,
   loadApproverPrompt,
 } from './loan-review-utils';
 import type { LoanApplicationData } from '~~/shared/loan-types';
+
+const skillAssets = createFsAssets(
+  join(process.cwd(), '..', '..', '.claude', 'skills'),
+  /SKILL\.md$/,
+);
 
 const fullApplication: LoanApplicationData = {
   fullName: 'Jane Doe',
@@ -97,38 +103,26 @@ describe('parseApproverResponse', () => {
 });
 
 describe('loadApproverPrompt', () => {
-  // process.cwd() in vitest is packages/blog/ but skills live at repo root
-  const repoRoot = join(process.cwd(), '..', '..');
-  let cwdSpy: ReturnType<typeof vi.spyOn>;
-
-  beforeEach(() => {
-    cwdSpy = vi.spyOn(process, 'cwd').mockReturnValue(repoRoot);
-  });
-
-  afterEach(() => {
-    cwdSpy.mockRestore();
-  });
-
-  it('loads the-bank skill and returns content after frontmatter', () => {
-    const result = loadApproverPrompt('the-bank');
+  it('loads the-bank skill and returns content after frontmatter', async () => {
+    const result = await loadApproverPrompt('the-bank', skillAssets);
     expect(result.length).toBeGreaterThan(0);
     expect(result).not.toMatch(/^---/);
   });
 
-  it('loads loan-market skill and returns content after frontmatter', () => {
-    const result = loadApproverPrompt('loan-market');
+  it('loads loan-market skill and returns content after frontmatter', async () => {
+    const result = await loadApproverPrompt('loan-market', skillAssets);
     expect(result.length).toBeGreaterThan(0);
     expect(result).not.toMatch(/^---/);
   });
 
-  it('loads background-checks skill and returns content after frontmatter', () => {
-    const result = loadApproverPrompt('background-checks');
+  it('loads background-checks skill and returns content after frontmatter', async () => {
+    const result = await loadApproverPrompt('background-checks', skillAssets);
     expect(result.length).toBeGreaterThan(0);
     expect(result).not.toMatch(/^---/);
   });
 
-  it('throws for nonexistent reviewer', () => {
+  it('throws for nonexistent reviewer', async () => {
     // @ts-expect-error deliberately outside the ReviewerName union
-    expect(() => loadApproverPrompt('nonexistent')).toThrow();
+    await expect(loadApproverPrompt('nonexistent', skillAssets)).rejects.toThrow();
   });
 });

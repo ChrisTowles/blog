@@ -11,6 +11,10 @@ export const envSchema = z.object({
   // Anthropic
   ANTHROPIC_API_KEY: z.string().min(1, 'ANTHROPIC_API_KEY is required'),
 
+  // Optional proxy for Anthropic calls, e.g. Cloudflare AI Gateway's Anthropic endpoint.
+  // Unset means api.anthropic.com.
+  NUXT_ANTHROPIC_BASE_URL: z.string().optional().default(''),
+
   // Braintrust
   BRAINTRUST_API_KEY: z.string().min(1, 'BRAINTRUST_API_KEY is required'),
   BRAINTRUST_PROJECT_NAME: z.string().min(1, 'BRAINTRUST_PROJECT_NAME is required'),
@@ -28,9 +32,6 @@ export const envSchema = z.object({
 
   // Google AI (Gemini) — optional, used for story illustrations
   GOOGLE_AI_API_KEY: z.string().optional().default(''),
-
-  // GCS media bucket for reading illustrations (optional — falls back to error at upload time)
-  GCS_BUCKET_NAME: z.string().optional().default(''),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

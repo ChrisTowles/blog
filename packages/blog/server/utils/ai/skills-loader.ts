@@ -1,8 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk';
-import { readFileSync, readdirSync, existsSync } from 'fs';
-import { join } from 'path';
 import { log } from 'evlog';
-import { getProjectRoot } from './skill-config';
+import { bundledAssets, type ServerAssets } from '../server-assets';
 
 export interface CustomSkill {
   name: string;
@@ -12,39 +10,31 @@ export interface CustomSkill {
 
 let cachedSkills: CustomSkill[] | null = null;
 
+/** @internal test-only cache reset. */
+export function __resetSkillsCache(): void {
+  cachedSkills = null;
+}
+
 /**
- * Load custom SKILL.md files from .claude/skills/ directories.
- * Results are cached at the module level (skills only change on deploy).
+ * Load the bundled `.claude/skills/<name>/SKILL.md` files (shipped via `nitro.serverAssets`).
+ * Cached per isolate: skills only change on deploy.
  */
-export function loadCustomSkills(): CustomSkill[] {
+export async function loadCustomSkills(
+  assets: ServerAssets = bundledAssets,
+): Promise<CustomSkill[]> {
   if (cachedSkills) return cachedSkills;
 
-  const skillsDir = join(getProjectRoot(), '.claude', 'skills');
-
-  if (!existsSync(skillsDir)) {
-    cachedSkills = [];
-
-    return cachedSkills;
-  }
-
-  const entries = readdirSync(skillsDir, { withFileTypes: true });
+  const keys = (await assets.listKeys('skills')).filter((key) => key.endsWith(':SKILL.md'));
   const skills: CustomSkill[] = [];
 
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
-
-    const skillFile = join(skillsDir, entry.name, 'SKILL.md');
-
-    if (!existsSync(skillFile)) continue;
-
+  for (const key of keys) {
     try {
-      const parsed = parseFrontmatter(readFileSync(skillFile, 'utf-8'));
+      const content = await assets.readText('skills', key);
+      const parsed = content ? parseFrontmatter(content) : null;
 
-      if (parsed.name && parsed.description) {
-        skills.push(parsed);
-      }
+      if (parsed?.name && parsed.description) skills.push(parsed);
     } catch {
-      log.warn('skills-loader', `Failed to parse ${skillFile}`);
+      log.warn('skills-loader', `Failed to parse ${key}`);
     }
   }
 
@@ -72,7 +62,7 @@ export function getSkillsForAPI(): Anthropic.Beta.Messages.BetaSkillParams[] {
 /**
  * Get a system prompt snippet describing available skills.
  */
-export function getSkillsSystemPrompt(): string {
+export async function getSkillsSystemPrompt(): Promise<string> {
   const lines = [
     '**CAPABILITIES:**',
     'You have code execution in a sandboxed container. You can:',
@@ -81,7 +71,7 @@ export function getSkillsSystemPrompt(): string {
     '- Create charts, diagrams, and data exports',
   ];
 
-  const skills = loadCustomSkills();
+  const skills = await loadCustomSkills();
 
   if (skills.length > 0) {
     lines.push('');
