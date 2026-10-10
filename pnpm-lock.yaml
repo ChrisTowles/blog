@@ -240,6 +240,9 @@ importers:
       '@types/node':
         specifier: ^24.13.2
         version: 24.13.2
+      '@types/pg':
+        specifier: 8.15.6
+        version: 8.15.6
       '@vue/language-core':
         specifier: ^3.3.6
         version: 3.3.6
@@ -270,6 +273,9 @@ importers:
       nuxt-gtag:
         specifier: ^4.1.0
         version: 4.1.0(magicast@0.5.3)
+      pg:
+        specifier: 8.22.0
+        version: 8.22.0
       playwright-core:
         specifier: ^1.61.1
         version: 1.61.1
@@ -299,7 +305,7 @@ importers:
         version: 0.45.2(@cloudflare/workers-types@5.20261010.1)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(better-sqlite3@12.11.1)(pg@8.22.0)(postgres@3.4.9)
       evlog:
         specifier: ^2.19.2
-        version: 2.19.2(@nuxt/kit@4.4.8(magicast@0.5.3))(express@5.2.1)(h3@1.15.11)(hono@4.12.27)(nitropack@2.13.4(better-sqlite3@12.11.1)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20261010.1)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(better-sqlite3@12.11.1)(pg@8.22.0)(postgres@3.4.9))(oxc-parser@0.137.0)(rolldown@1.1.4)(srvx@0.11.18)(vite@8.1.2(@types/node@25.9.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(ofetch@1.5.1)(vite@8.1.2(@types/node@25.9.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 2.19.2(@nuxt/kit@4.4.8(magicast@0.5.3))(express@5.2.1)(h3@1.15.11)(hono@4.12.27)(nitropack@2.13.4(better-sqlite3@12.11.1)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20261010.1)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(better-sqlite3@12.11.1)(pg@8.22.0)(postgres@3.4.9))(oxc-parser@0.137.0)(rolldown@1.1.4)(vite@8.1.2(@types/node@25.9.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(ofetch@1.5.1)(vite@8.1.2(@types/node@25.9.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
       pixi.js:
         specifier: ^8.19.0
         version: 8.19.0
@@ -311,7 +317,7 @@ importers:
     dependencies:
       evlog:
         specifier: ^2.19.2
-        version: 2.19.2(@nuxt/kit@4.4.8(magicast@0.5.3))(express@5.2.1)(h3@1.15.11)(hono@4.12.27)(nitropack@2.13.4(better-sqlite3@12.11.1)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20261010.1)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(better-sqlite3@12.11.1)(pg@8.22.0)(postgres@3.4.9))(oxc-parser@0.137.0)(rolldown@1.1.4)(srvx@0.11.18)(vite@8.1.2(@types/node@25.9.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(ofetch@1.5.1)(vite@8.1.2(@types/node@25.9.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 2.19.2(@nuxt/kit@4.4.8(magicast@0.5.3))(express@5.2.1)(h3@1.15.11)(hono@4.12.27)(nitropack@2.13.4(better-sqlite3@12.11.1)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20261010.1)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(better-sqlite3@12.11.1)(pg@8.22.0)(postgres@3.4.9))(oxc-parser@0.137.0)(rolldown@1.1.4)(vite@8.1.2(@types/node@25.9.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(ofetch@1.5.1)(vite@8.1.2(@types/node@25.9.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -13310,7 +13316,6 @@ snapshots:
       '@types/node': 24.13.2
       pg-protocol: 1.15.0
       pg-types: 2.2.0
-    optional: true
 
   '@types/pluralize@0.0.33': {}
 
@@ -15027,13 +15032,13 @@ snapshots:
       ofetch: 1.5.1
       vite: 8.1.2(@types/node@24.13.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)
 
-  evlog@2.19.2(@nuxt/kit@4.4.8(magicast@0.5.3))(express@5.2.1)(h3@1.15.11)(hono@4.12.27)(nitropack@2.13.4(better-sqlite3@12.11.1)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20261010.1)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(better-sqlite3@12.11.1)(pg@8.22.0)(postgres@3.4.9))(oxc-parser@0.137.0)(rolldown@1.1.4)(srvx@0.11.18)(vite@8.1.2(@types/node@25.9.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(ofetch@1.5.1)(vite@8.1.2(@types/node@25.9.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)):
+  evlog@2.19.2(@nuxt/kit@4.4.8(magicast@0.5.3))(express@5.2.1)(h3@1.15.11)(hono@4.12.27)(nitropack@2.13.4(better-sqlite3@12.11.1)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20261010.1)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(better-sqlite3@12.11.1)(pg@8.22.0)(postgres@3.4.9))(oxc-parser@0.137.0)(rolldown@1.1.4)(vite@8.1.2(@types/node@25.9.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)))(ofetch@1.5.1)(vite@8.1.2(@types/node@25.9.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)):
     optionalDependencies:
       '@nuxt/kit': 4.4.8(magicast@0.5.3)
       express: 5.2.1
       h3: 1.15.11
       hono: 4.12.27
-      nitropack: 2.13.4(better-sqlite3@12.11.1)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20261010.1)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(better-sqlite3@12.11.1)(pg@8.22.0)(postgres@3.4.9))(oxc-parser@0.137.0)(rolldown@1.1.4)(srvx@0.11.18)(vite@8.1.2(@types/node@25.9.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
+      nitropack: 2.13.4(better-sqlite3@12.11.1)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20261010.1)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(better-sqlite3@12.11.1)(pg@8.22.0)(postgres@3.4.9))(oxc-parser@0.137.0)(rolldown@1.1.4)(vite@8.1.2(@types/node@25.9.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
       ofetch: 1.5.1
       vite: 8.1.2(@types/node@25.9.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)
 
@@ -16819,7 +16824,7 @@ snapshots:
       - webpack
     optional: true
 
-  nitropack@2.13.4(better-sqlite3@12.11.1)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20261010.1)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(better-sqlite3@12.11.1)(pg@8.22.0)(postgres@3.4.9))(oxc-parser@0.137.0)(rolldown@1.1.4)(srvx@0.11.18)(vite@8.1.2(@types/node@25.9.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)):
+  nitropack@2.13.4(better-sqlite3@12.11.1)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20261010.1)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(better-sqlite3@12.11.1)(pg@8.22.0)(postgres@3.4.9))(oxc-parser@0.137.0)(rolldown@1.1.4)(vite@8.1.2(@types/node@25.9.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.4.2
       '@rollup/plugin-alias': 6.0.0(rollup@4.62.2)
@@ -17661,19 +17666,15 @@ snapshots:
   pg-cloudflare@1.4.0:
     optional: true
 
-  pg-connection-string@2.14.0:
-    optional: true
+  pg-connection-string@2.14.0: {}
 
-  pg-int8@1.0.1:
-    optional: true
+  pg-int8@1.0.1: {}
 
   pg-pool@3.14.0(pg@8.22.0):
     dependencies:
       pg: 8.22.0
-    optional: true
 
-  pg-protocol@1.15.0:
-    optional: true
+  pg-protocol@1.15.0: {}
 
   pg-types@2.2.0:
     dependencies:
@@ -17682,7 +17683,6 @@ snapshots:
       postgres-bytea: 1.0.1
       postgres-date: 1.0.7
       postgres-interval: 1.2.0
-    optional: true
 
   pg@8.22.0:
     dependencies:
@@ -17693,12 +17693,10 @@ snapshots:
       pgpass: 1.0.5
     optionalDependencies:
       pg-cloudflare: 1.4.0
-    optional: true
 
   pgpass@1.0.5:
     dependencies:
       split2: 4.2.0
-    optional: true
 
   picocolors@1.1.1: {}
 
@@ -17922,19 +17920,15 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  postgres-array@2.0.0:
-    optional: true
+  postgres-array@2.0.0: {}
 
-  postgres-bytea@1.0.1:
-    optional: true
+  postgres-bytea@1.0.1: {}
 
-  postgres-date@1.0.7:
-    optional: true
+  postgres-date@1.0.7: {}
 
   postgres-interval@1.2.0:
     dependencies:
       xtend: 4.0.2
-    optional: true
 
   postgres@3.4.9:
     optional: true
@@ -18770,8 +18764,7 @@ snapshots:
 
   space-separated-tokens@2.0.2: {}
 
-  split2@4.2.0:
-    optional: true
+  split2@4.2.0: {}
 
   srvx@0.11.18: {}
 
@@ -19832,8 +19825,7 @@ snapshots:
       cssfilter: 0.0.10
     optional: true
 
-  xtend@4.0.2:
-    optional: true
+  xtend@4.0.2: {}
 
   y-protocols@1.0.7(yjs@13.6.30):
     dependencies:
