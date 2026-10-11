@@ -120,7 +120,7 @@ jobs:
         run: pnpm --filter @chris-towles/blog exec wrangler deploy
 
       - name: Deploy sandbox Worker
-        run: pnpm --filter @chris-towles/mcp deploy
+        run: pnpm --filter @chris-towles/mcp run deploy
 
       - name: Smoke test
         run: |

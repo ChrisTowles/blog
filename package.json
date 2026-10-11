@@ -15,7 +15,7 @@
     "ui-bundle:watch": "pnpm --filter @chris-towles/blog build:ui-bundle:watch",
     "dev": "pnpm db:migrate && pnpm kill-port && pnpm ui-bundle:build && (pnpm mcp:dev &) && (pnpm ui-bundle:watch &) && pnpm --filter @chris-towles/blog dev",
     "dev:no-remote": "pnpm db:migrate && pnpm kill-port && pnpm ui-bundle:build && (pnpm mcp:dev &) && (pnpm ui-bundle:watch &) && pnpm --filter @chris-towles/blog dev:no-remote",
-    "cf:deploy": "pnpm build && pnpm --filter @chris-towles/blog exec wrangler deploy && pnpm --filter @chris-towles/mcp deploy",
+    "cf:deploy": "pnpm build && pnpm --filter @chris-towles/blog exec wrangler deploy && pnpm --filter @chris-towles/mcp run deploy",
     "cf:deploy:staging": "pnpm build && pnpm --filter @chris-towles/blog exec wrangler deploy --env staging && pnpm --filter @chris-towles/mcp deploy:staging",
     "cf:migrate": "pnpm --filter @chris-towles/blog db:migrate:prod",
     "cf:migrate:staging": "pnpm --filter @chris-towles/blog db:migrate:staging",
