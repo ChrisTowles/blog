@@ -109,6 +109,8 @@ export default defineNuxtConfig({
     // authenticated endpoints, so a prerendered copy is a build-time cost that
     // ships an empty shell. The crawler reached these from links on `/`.
     '/admin/**': { prerender: false },
+    // A prerendered copy hydrates with the build-time route and drops `?q=`.
+    '/search': { prerender: false },
     // Chat pages don't need SSR (no SEO benefit, authenticated feature)
     // Note: There's a pre-existing Vite 8 beta + debug ESM issue affecting chat pages
     '/chat': { ssr: false },
