@@ -34,7 +34,7 @@ Hard cutover. No dual-write, no Postgres compatibility shims, no feature flags t
 | AI Gateway     | `towles-blog`                            | `towles-blog`                                        |
 | Hostnames      | `chris.towles.dev`, `sandbox.towles.dev` | `stage-chris.towles.dev`, `stage-sandbox.towles.dev` |
 
-Account `baf9cdac6eb4d8c477d85ceccae6679d`. The account also holds legacy `blog` / `blog-preview` Workers and D1 databases from 2025: do not touch or reuse them.
+Account `baf9cdac6eb4d8c477d85ceccae6679d`. The legacy 2025 `blog` / `blog-preview` Workers and D1 databases were deleted after the cutover (see [cloudflare-cutover.md](cloudflare-cutover.md) step 9).
 
 ## Bindings (same names in every env)
 

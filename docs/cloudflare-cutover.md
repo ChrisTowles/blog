@@ -132,4 +132,4 @@ GCP was decommissioned in step 9, so there is no DNS rollback. For a bad Worker 
 - [x] Billing unlinked from `blog-towles-production` and `blog-towles-staging`. The projects are not deleted: each owns the Google OAuth client its environment signs in with.
 - [x] Removed `infra/terraform/`, `infra/gcp-billing/`, the GCP drift jobs and the `GCP_*` repo variables. The Cloudflare stack moved to local state.
 - [ ] Delete the AWS Bedrock IAM users and the stack in `infra/aws_cloudformation`; nothing on Cloudflare calls Bedrock.
-- [ ] Delete the unused legacy `blog` / `blog-preview` Workers and D1 databases only after confirming nothing uses them.
+- [x] Deleted the legacy `blog` / `blog-preview` Workers and D1 databases (no domains or routes, nothing in the repo used them). D1 exports: `towles-blog-archive/legacy-cf-blog-2026-10-11.tar.gz`.
