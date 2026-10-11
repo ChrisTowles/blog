@@ -35,7 +35,6 @@
     },
   ],
   "vars": {
-    "R2_ACCOUNT_ID": "baf9cdac6eb4d8c477d85ceccae6679d",
     "R2_BUCKET": "towles-blog-media",
     "BRAINTRUST_PROJECT_NAME": "blog-prod",
     "NUXT_PUBLIC_SITE_URL": "https://chris.towles.dev",
@@ -77,8 +76,7 @@
     "staging": {
       "name": "towles-blog-staging",
       "vars": {
-        "R2_ACCOUNT_ID": "baf9cdac6eb4d8c477d85ceccae6679d",
-        "R2_BUCKET": "towles-blog-media-staging",
+            "R2_BUCKET": "towles-blog-media-staging",
         "BRAINTRUST_PROJECT_NAME": "blog-stage",
         "NUXT_PUBLIC_SITE_URL": "https://stage-chris.towles.dev",
         "NUXT_PUBLIC_GTAG_ID": "G-KNKR69G927",

@@ -47,15 +47,16 @@ async function bootstrap(conn: DuckDBConnection, config: AviationConfig): Promis
   await conn.run('SET allow_community_extensions = false');
   await conn.run('SET allow_unsigned_extensions = false');
   await conn.run('LOAD httpfs');
+  // httpfs insists on a key pair; the Worker that answers this endpoint ignores signatures.
   await conn.run(
     `CREATE OR REPLACE SECRET aviation_r2 (
       TYPE S3,
-      KEY_ID ${sqlQuote(config.keyId)},
-      SECRET ${sqlQuote(config.secret)},
+      KEY_ID 'unused',
+      SECRET 'unused',
       ENDPOINT ${sqlQuote(config.endpoint)},
       REGION 'auto',
       URL_STYLE 'path',
-      USE_SSL ${config.useSsl}
+      USE_SSL false
     )`,
   );
   await conn.run(`SET allowed_directories = [${sqlQuote(`s3://${config.bucket}/aviation/`)}]`);

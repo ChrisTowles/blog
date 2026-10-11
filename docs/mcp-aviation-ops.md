@@ -10,12 +10,16 @@ The Worker cannot host DuckDB, so queries run in a Cloudflare Container:
 ```
 Worker (sql-safety.ts)  ->  env.AVIATION (AviationContainer DO)  ->  services/aviation (Node + DuckDB)
                                                                         |
-                                                                        v  httpfs over R2's S3 API
-                                                                      R2: s3://<bucket>/aviation/**/*.parquet
+                                                                        v  httpfs, plain HTTP to r2.internal
+Worker outbound handler (aviation-r2-s3.ts)  ->  env.MEDIA (R2: aviation/**/*.parquet)
 ```
 
 - `packages/blog/server/utils/aviation-container.ts` exports `AviationContainer`
-  (`defaultPort 8080`, `sleepAfter 10m`, R2 settings forwarded as container env).
+  (`defaultPort 8080`, `sleepAfter 10m`, `enableInternet = false`, only `R2_BUCKET` forwarded
+  as container env) and intercepts the container's outbound traffic.
+- `packages/blog/server/utils/aviation-r2-s3.ts` answers that traffic from the `MEDIA`
+  binding: `GET`/`HEAD` of `/<bucket>/aviation/...` with `Range`, and `ListObjectsV2`
+  for globs. Other buckets or prefixes get 403, other methods 405.
 - `packages/blog/server/utils/mcp/aviation/duckdb.ts` is the client: one named
   instance (`primary`), `POST /query` and `POST /parse`, `GET /health`.
 - `services/aviation/` is the image: an HTTP server on 8080 around `@duckdb/node-api`.
@@ -84,52 +88,42 @@ Worker's `sql-safety.ts`:
 Status codes from the container: `403` rejected SQL, `422` DuckDB error,
 `504` timeout, `400` bad request, `413` body over 64 KB.
 
-## Bucket auth
+## Bucket access
 
 The Parquet lives in the app's R2 bucket (`towles-blog-media`, staging
-`towles-blog-media-staging`) under `aviation/`. The container reads it through R2's
-S3 API with an R2 API token, and the ETL writes with the same token family.
+`towles-blog-media-staging`) under `aviation/`. The container holds no R2 credentials and
+has no internet. DuckDB's httpfs is pointed at `r2.internal` over plain HTTP (dummy key
+pair, path-style, `AVIATION_S3_ENDPOINT` overrides the host); the Worker intercepts that
+host through `@cloudflare/containers` outbound interception and serves it from `env.MEDIA`.
+`ContainerProxy` must stay exported from the Worker entry (see `nuxt.config.ts`).
 
-- Create an R2 API token scoped to the one bucket: **Object Read only** for the
-  container, **Object Read & Write** for the ETL. R2 shows the access key id and
-  secret once.
-- Worker config: `R2_ACCOUNT_ID` and `R2_BUCKET` are `vars` in `wrangler.jsonc`;
-  `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` are secrets
-  (`wrangler secret put R2_ACCESS_KEY_ID`, per environment).
-- Rotate: create a new token, `wrangler secret put` both values, then delete the old
-  token. The container reads them when it next starts; redeploy, or wait out `sleepAfter`,
-  to force that.
+- Worker config: `R2_BUCKET` is a `vars` entry in `wrangler.jsonc`; there are no R2
+  secrets.
+- Only the ETL needs an R2 API token (Object Read & Write), because it runs on a laptop
+  and uploads through the S3 API.
 
 ## Local dev setup
 
-The bucket is not shared. Either point at a real R2 bucket or a local S3 server:
-
-1. Create an R2 bucket and a Read & Write API token (see above).
-2. Run the ETL (writes under the `aviation/` prefix):
+1. Run the ETL against a real bucket (writes under the `aviation/` prefix):
    `R2_ACCOUNT_ID=… R2_BUCKET=… R2_ACCESS_KEY_ID=… R2_SECRET_ACCESS_KEY=… pnpm etl:aviation`
    (`packages/blog/scripts/etl-aviation.ts`). This auto-downloads FAA
    Registry (one zip) and drives BTS's ASP.NET form via headless Playwright
    to pull the latest 12 months of T-100 Market data (one download per
    month, skipping unpublished periods). Override the month count with
    `AVIATION_ETL_MONTHS=N`. Expect 5–10 min end-to-end on a healthy
-   network; BTS's form is the long pole.
-3. Build and run the container against it:
-
-   ```bash
-   docker build -t towles-aviation services/aviation
-   docker run --rm -p 8080:8080 -e R2_ACCOUNT_ID -e R2_BUCKET \
-     -e R2_ACCESS_KEY_ID -e R2_SECRET_ACCESS_KEY towles-aviation
-   curl -s localhost:8080/query -H 'content-type: application/json' \
-     -d '{"sql":"SELECT COUNT(*) AS n FROM '"'"'aviation://dims/aircraft.parquet'"'"'"}'
-   ```
-
-   `R2_ENDPOINT=http://host:port` (container and ETL) targets any S3-compatible
-   server instead of R2, e.g. SeaweedFS for an offline loop. With
-   `AVIATION_ETL_FIXTURE_DIR=packages/blog/scripts/__fixtures__/aviation` the ETL
-   builds a tiny dataset with the real schema.
-
-4. Smoke-test a running container: `cd services/aviation && npm install &&
-AVIATION_SMOKE_URL=http://localhost:8080 npm test`.
+   network; BTS's form is the long pole. `R2_ENDPOINT=http://host:port` targets any
+   S3-compatible server instead, and
+   `AVIATION_ETL_FIXTURE_DIR=packages/blog/scripts/__fixtures__/aviation` builds a tiny
+   dataset with the real schema.
+2. To run the container locally, give `wrangler dev` an environment that has the
+   `containers`, `durable_objects` and `migrations` blocks (Docker required), copy Parquet
+   into the local bucket with `wrangler r2 object put <bucket>/aviation/<file> --file …
+--local`, and call the container through the Worker. Local `wrangler dev` supports
+   outbound interception.
+3. Smoke-test a running container: `cd services/aviation && npm install &&
+AVIATION_SMOKE_URL=http://localhost:8080 npm test`. A bare `docker run` cannot reach
+   data (nothing answers `r2.internal`), so point the smoke test at the `wrangler dev`
+   container port.
 
 ## BTS T-100 download
 

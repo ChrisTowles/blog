@@ -15,7 +15,7 @@ Hard cutover. No dual-write, no Postgres compatibility shims, no feature flags t
 | Embeddings / rerank | Workers AI: `@cf/qwen/qwen3-embedding-0.6b` (1024-d) and `@cf/baai/bge-reranker-base` (verify ids in docs) |
 | Claude              | Anthropic SDK pointed at AI Gateway (BYOK); fall back to direct Anthropic if streaming breaks              |
 | Files               | R2 (TTS cache, aviation Parquet)                                                                           |
-| Aviation            | Cloudflare Container running DuckDB, reading Parquet from R2 over the S3 API                               |
+| Aviation            | Cloudflare Container running DuckDB; the Worker serves its S3 reads from the `MEDIA` binding               |
 | MCP                 | Stateless MCP handlers; Workers Rate Limiting binding replaces the in-memory limiter                       |
 | Typing TTS          | Keep Google Chirp3 REST; cache audio in R2                                                                 |
 | Typing data         | Single D1 database                                                                                         |

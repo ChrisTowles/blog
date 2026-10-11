@@ -1,29 +1,33 @@
 import { Container } from '@cloudflare/containers';
+import { AVIATION_S3_HOST, handleAviationS3, type AviationS3Env } from './aviation-r2-s3';
 
-/** Bindings the Worker passes through to the container. Secrets come from `wrangler secret put`. */
-export interface AviationContainerEnv {
-  R2_ACCOUNT_ID: string;
-  R2_BUCKET: string;
-  R2_ACCESS_KEY_ID: string;
-  R2_SECRET_ACCESS_KEY: string;
-}
+export { ContainerProxy } from '@cloudflare/containers';
 
 /**
- * DuckDB over R2 Parquet (`services/aviation`). Egress stays on because DuckDB reaches R2 through
- * its public S3 endpoint; the container itself only accepts SELECTs under `aviation://`.
+ * DuckDB over R2 Parquet (`services/aviation`). The container has no credentials and no
+ * internet: its S3 client talks plain HTTP to a fake host that the Worker answers from the
+ * `MEDIA` bucket binding (see `aviation-r2-s3.ts`). It only accepts SELECTs under `aviation://`.
  */
-export class AviationContainer extends Container<AviationContainerEnv> {
+export class AviationContainer extends Container<AviationS3Env> {
   override defaultPort = 8080;
 
   override sleepAfter = '10m';
 
-  constructor(ctx: ConstructorParameters<typeof Container>[0], env: AviationContainerEnv) {
-    super(ctx, env);
-    this.envVars = {
-      R2_ACCOUNT_ID: env.R2_ACCOUNT_ID,
-      R2_BUCKET: env.R2_BUCKET,
-      R2_ACCESS_KEY_ID: env.R2_ACCESS_KEY_ID,
-      R2_SECRET_ACCESS_KEY: env.R2_SECRET_ACCESS_KEY,
+  override enableInternet = false;
+
+  // Assigned, not declared: a static field would shadow the base class setter that fills the
+  // registry ContainerProxy reads.
+  static {
+    AviationContainer.outboundByHost = {
+      [AVIATION_S3_HOST]: (request: Request, env: AviationS3Env) => handleAviationS3(request, env),
     };
+  }
+
+  constructor(ctx: ConstructorParameters<typeof Container>[0], env: AviationS3Env) {
+    super(ctx, env);
+
+    if (!env.R2_BUCKET) throw new Error('aviation: R2_BUCKET var is missing from this environment');
+
+    this.envVars = { R2_BUCKET: env.R2_BUCKET };
   }
 }

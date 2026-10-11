@@ -154,7 +154,7 @@ export default defineNuxtConfig({
 
             const source = resolve(__dirname, 'server/utils/aviation-container.ts');
 
-            return `${code}\nexport { AviationContainer } from ${JSON.stringify(source)};\n`;
+            return `${code}\nexport { AviationContainer, ContainerProxy } from ${JSON.stringify(source)};\n`;
           },
         },
       ],

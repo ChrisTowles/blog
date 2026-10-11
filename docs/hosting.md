@@ -79,7 +79,7 @@ for name in ANTHROPIC_API_KEY NUXT_SESSION_PASSWORD NUXT_OG_IMAGE_SECRET \
   NUXT_OAUTH_GITHUB_CLIENT_ID NUXT_OAUTH_GITHUB_CLIENT_SECRET \
   NUXT_OAUTH_GOOGLE_CLIENT_ID NUXT_OAUTH_GOOGLE_CLIENT_SECRET \
   BRAINTRUST_API_KEY OTEL_EXPORTER_OTLP_HEADERS \
-  R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY GOOGLE_TTS_KEY ADMIN_SEED_TOKEN; do
+  GOOGLE_TTS_KEY ADMIN_SEED_TOKEN; do
   pnpm exec wrangler secret put "$name" --env staging
 done
 pnpm exec wrangler secret list --env staging
@@ -93,11 +93,10 @@ pnpm exec wrangler secret list --env staging
 | `NUXT_OAUTH_GITHUB_*`, `NUXT_OAUTH_GOOGLE_*` | One OAuth app per environment; callback `https://<host>/api/auth/...` |
 | `BRAINTRUST_API_KEY`                         | `BRAINTRUST_PROJECT_NAME` is a plain var                              |
 | `OTEL_EXPORTER_OTLP_HEADERS`                 | `api-key=<New Relic license key>`                                     |
-| `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`   | R2 API token for the aviation container ([ops](mcp-aviation-ops.md))  |
 | `GOOGLE_TTS_KEY`                             | Chirp3 REST key for typing audio                                      |
 | `ADMIN_SEED_TOKEN`                           | Guards admin seed/ingest endpoints                                    |
 
-The Anthropic key can also live in AI Gateway as a BYOK provider key; the Worker secret remains the fallback path. Non-secret values (`R2_ACCOUNT_ID`, `R2_BUCKET`, public config) are `vars` in `wrangler.jsonc`.
+The Anthropic key can also live in AI Gateway as a BYOK provider key; the Worker secret remains the fallback path. Non-secret values (`R2_BUCKET`, public config) are `vars` in `wrangler.jsonc`.
 
 Local dev reads `.env` (see `.env.example`). `wrangler dev --env dev` reads `packages/blog/.dev.vars.dev`, which replaces `.dev.vars` when it exists.
 

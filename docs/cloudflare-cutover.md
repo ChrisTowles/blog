@@ -33,8 +33,6 @@ $W vectorize create towles-blog-rag-staging --dimensions 1024 --metric cosine
 
 AI Gateway has no wrangler command. Dashboard: AI > AI Gateway > Create Gateway, id `towles-blog`. Enable authentication if the app sends a gateway token, then add the Anthropic key under Provider Keys (BYOK). Staging shares this gateway.
 
-Create an R2 API token with Object Read & Write on both buckets for the aviation container and the ETL; its key pair becomes `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` below.
-
 Commit the real D1 ids.
 
 ## 2. Secrets
