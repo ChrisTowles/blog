@@ -612,9 +612,9 @@ const tabs = [
             <li>Compute SHA-256 hash → skip unchanged files</li>
             <li>Split into ~500 token chunks with 100 token overlap</li>
             <li>Generate contextual descriptions (Claude Haiku + prompt caching)</li>
-            <li>Create embeddings (Amazon Titan Text v2, 1024 dims)</li>
-            <li>Store in PostgreSQL + pgvector with HNSW index</li>
-            <li>Auto-generate tsvector for BM25 full-text search</li>
+            <li>Create embeddings (Workers AI Qwen3, 1024 dims)</li>
+            <li>Store vectors in Vectorize, keyed by chunk id</li>
+            <li>Index chunks in D1 FTS5 for BM25 full-text search</li>
           </ol>
         </UCard>
       </div>

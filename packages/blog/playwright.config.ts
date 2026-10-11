@@ -44,7 +44,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 1,
   // Unbounded local workers oversubscribe the on-demand-compiling dev server. When runs
   // fail anyway, suspect leftover workflow rows — specs don't clean up, and only CI gets
-  // a fresh Postgres per run.
+  // a fresh local D1 per run.
   workers: process.env.CI ? 1 : 4,
   reporter: 'html',
   // A route's first hit compiles it, which runs well past Playwright's 5s default.
