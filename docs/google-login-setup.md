@@ -19,11 +19,11 @@ User clicks "Sign in with Google" on /login
 - GCP project with Google Auth Platform configured
 - OAuth consent screen (External, published)
 - OAuth 2.0 Client ID (Web application type)
-- Secrets stored in GCP Secret Manager
+- Client ID and secret stored as Worker secrets
 
 ## Setup Per Environment
 
-Each GCP project (prod, staging) needs its own OAuth client with environment-specific redirect URIs.
+Each environment has its own OAuth client: production in GCP project `blog-towles-production`, staging in `blog-towles-staging`. Both projects are billing-free shells kept only for these clients.
 
 ### 1. Configure OAuth Consent Screen
 
@@ -50,49 +50,27 @@ Go to: `https://console.cloud.google.com/auth/clients/create?project=<PROJECT_ID
 
 #### Redirect URIs by Environment
 
-| Environment | Redirect URI                                   |
-| ----------- | ---------------------------------------------- |
-| Production  | `https://chris.towles.dev/auth/google`         |
-| Staging     | `https://staging-chris.towles.dev/auth/google` |
-| Local dev   | `http://localhost:3000/auth/google`            |
+| Environment | Redirect URI                                 |
+| ----------- | -------------------------------------------- |
+| Production  | `https://chris.towles.dev/auth/google`       |
+| Staging     | `https://stage-chris.towles.dev/auth/google` |
+| Local dev   | `http://localhost:3000/auth/google`          |
 
 Add the local dev URI to whichever OAuth client you use for development.
 
-### 3. Store Secrets in GCP Secret Manager
+### 3. Store Secrets on the Worker
 
 ```bash
-# Create secrets
-echo -n "<CLIENT_ID>" | gcloud secrets create google-oauth-client-id \
-  --project=<PROJECT_ID> --data-file=- --replication-policy=automatic
-
-echo -n "<CLIENT_SECRET>" | gcloud secrets create google-oauth-client-secret \
-  --project=<PROJECT_ID> --data-file=- --replication-policy=automatic
-
-# Grant Cloud Run service account access
-gcloud secrets add-iam-policy-binding google-oauth-client-id \
-  --project=<PROJECT_ID> \
-  --member="serviceAccount:cloud-run@<PROJECT_ID>.iam.gserviceaccount.com" \
-  --role="roles/secretmanager.secretAccessor"
-
-gcloud secrets add-iam-policy-binding google-oauth-client-secret \
-  --project=<PROJECT_ID> \
-  --member="serviceAccount:cloud-run@<PROJECT_ID>.iam.gserviceaccount.com" \
-  --role="roles/secretmanager.secretAccessor"
+cd packages/blog
+pnpm exec wrangler secret put NUXT_OAUTH_GOOGLE_CLIENT_ID                   # production
+pnpm exec wrangler secret put NUXT_OAUTH_GOOGLE_CLIENT_SECRET
+pnpm exec wrangler secret put NUXT_OAUTH_GOOGLE_CLIENT_ID --env staging
+pnpm exec wrangler secret put NUXT_OAUTH_GOOGLE_CLIENT_SECRET --env staging
 ```
 
-### 4. Terraform
+Secrets apply to the running Worker immediately and persist across deploys.
 
-The secrets are wired through Terraform modules:
-
-- `modules/shared/main.tf` — `data` sources for Secret Manager secrets
-- `modules/shared/outputs.tf` — exposes secret IDs
-- `modules/cloud-run/variables.tf` — accepts secret ID variables
-- `modules/cloud-run/main.tf` — injects as `NUXT_OAUTH_GOOGLE_CLIENT_ID` and `NUXT_OAUTH_GOOGLE_CLIENT_SECRET` env vars
-- `environments/*/main.tf` — passes secret IDs from shared to cloud-run
-
-Run `terraform apply` after adding secrets to deploy.
-
-### 5. Local Development
+### 4. Local Development
 
 Add to your `.env`:
 
