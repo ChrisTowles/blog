@@ -1,14 +1,11 @@
 /** Learners are pre-fetched so the client can render a learner switcher without a second round-trip. */
-import type {
-  Learner,
-  TypingGroup,
-  TypingGroupKind,
-} from '../../../../../../blog/shared/typing-types';
-import { listGroupLearners, listGuardianGroups } from '../../../utils/typing/groups';
+import type { Learner, TypingGroup } from '../../../../../../blog/shared/typing-types';
+import { listGroupLearners, listGuardianGroups, toTypingGroup } from '../../../utils/typing/groups';
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event);
   const userId = session.user?.id;
+
   if (!userId) {
     throw createError({ statusCode: 401, statusMessage: 'Sign in required' });
   }
@@ -19,14 +16,7 @@ export default defineEventHandler(async (event) => {
   for (const g of groups) {
     const learners = await listGroupLearners(g.id);
     out.push({
-      group: {
-        id: g.id,
-        slug: g.slug,
-        name: g.name,
-        kind: g.kind as TypingGroupKind,
-        createdAt: g.createdAt.toISOString(),
-        updatedAt: g.updatedAt.toISOString(),
-      },
+      group: toTypingGroup(g),
       learners: learners.map((l) => ({
         id: l.id,
         groupId: l.groupId,

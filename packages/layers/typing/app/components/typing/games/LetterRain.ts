@@ -35,6 +35,7 @@ type FallingLetter = {
 export function createLetterRain(config: LetterRainConfig = {}): GameScene {
   const letters =
     config.letters ?? Array.from({ length: 26 }, (_, i) => String.fromCharCode(97 + i));
+
   const durationMs = config.durationMs ?? 60_000;
   let spawnMs = config.initialSpawnMs ?? 1500;
   let fallSpeed = config.initialFallSpeed ?? 90;
@@ -60,6 +61,7 @@ export function createLetterRain(config: LetterRainConfig = {}): GameScene {
   function spawnLetter() {
     if (!app || !stage) return;
     const ch = letters[Math.floor(Math.random() * letters.length)] ?? 'a';
+
     const t = new PixiText({
       text: ch,
       style: {
@@ -69,6 +71,7 @@ export function createLetterRain(config: LetterRainConfig = {}): GameScene {
         fontWeight: '700',
       },
     });
+
     t.anchor.set(0.5, 0.5);
     const w = app.renderer.width;
     t.x = 30 + Math.random() * Math.max(1, w - 60);
@@ -86,11 +89,14 @@ export function createLetterRain(config: LetterRainConfig = {}): GameScene {
   function endRound(ctx: GameSceneContext) {
     if (endedAt) return;
     endedAt = Date.now();
+
     if (tickHandler && app) app.ticker.remove(tickHandler);
+
     if (endText && stage) {
       endText.visible = true;
       endText.text = `Round over!\n${zapped} zapped`;
     }
+
     const durationActualMs = endedAt - startedAt;
     const minutes = durationActualMs / 60_000;
     // Approximate "words per minute" at 1 letter ~= 0.2 words.
@@ -162,21 +168,28 @@ export function createLetterRain(config: LetterRainConfig = {}): GameScene {
       tickHandler = (delta: { deltaMS: number }) => {
         if (!app || !stage) return;
         const now = Date.now();
+
         if (now - startedAt >= durationMs) {
           endRound(ctx);
+
           return;
         }
+
         spawnAccumMs += delta.deltaMS;
+
         if (spawnAccumMs >= spawnMs) {
           spawnAccumMs = 0;
           spawnLetter();
           ramp();
         }
+
         const dtSec = delta.deltaMS / 1000;
         const h = app.renderer.height;
+
         for (let i = falling.length - 1; i >= 0; i--) {
           const f = falling[i]!;
           f.text.y += f.vy * dtSec;
+
           if (f.text.y > h - 20) {
             // Letter hit the ground — miss.
             stage.removeChild(f.text);
@@ -184,11 +197,14 @@ export function createLetterRain(config: LetterRainConfig = {}): GameScene {
             falling.splice(i, 1);
             missed++;
             errorsByKey[f.ch] = (errorsByKey[f.ch] ?? 0) + 1;
+
             if (scoreText) scoreText.text = `${zapped} zapped · ${missed} misses`;
+
             if (missed >= maxMisses) endRound(ctx);
           }
         }
       };
+
       app.ticker.add(tickHandler);
 
       unsubKey = ctx.onKey(({ key }) => {
@@ -197,13 +213,16 @@ export function createLetterRain(config: LetterRainConfig = {}): GameScene {
         // Find the lowest matching letter.
         let bestIdx = -1;
         let bestY = -Infinity;
+
         for (let i = 0; i < falling.length; i++) {
           const f = falling[i]!;
+
           if (f.ch === key && f.text.y > bestY) {
             bestY = f.text.y;
             bestIdx = i;
           }
         }
+
         if (bestIdx >= 0) {
           const f = falling[bestIdx]!;
           // Tiny "zap" effect — flash the letter color, then remove next tick.
@@ -220,12 +239,14 @@ export function createLetterRain(config: LetterRainConfig = {}): GameScene {
         } else {
           errorsByKey[key] = (errorsByKey[key] ?? 0) + 1;
         }
+
         if (scoreText) scoreText.text = `${zapped} zapped · ${missed} misses`;
       });
     },
     unmount() {
       if (unsubKey) unsubKey();
       unsubKey = null;
+
       if (tickHandler && app) app.ticker.remove(tickHandler);
       tickHandler = null;
       falling.length = 0;

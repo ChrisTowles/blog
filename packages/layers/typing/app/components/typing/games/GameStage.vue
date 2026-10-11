@@ -21,7 +21,9 @@ useGameRunner({
 
 const testId = computed(() => {
   if (props.slug === 'letter-rain') return TEST_IDS.TYPING.GAME_LETTER_RAIN;
+
   if (props.slug === 'letter-tic-tac-toe') return TEST_IDS.TYPING.GAME_TIC_TAC_TOE;
+
   return TEST_IDS.TYPING.GAME_LAKE_LEAP;
 });
 </script>

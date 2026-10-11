@@ -20,12 +20,16 @@ export default defineEventHandler(async (event) => {
     .from(tables.typingSpellingLists)
     .where(eq(tables.typingSpellingLists.id, id))
     .limit(1);
+
   const list = rows[0];
+
   if (!list) {
     throw createError({ statusCode: 404, statusMessage: 'List not found' });
   }
+
   await requireGuardian(event, { learnerId: list.learnerId });
 
   await db.delete(tables.typingSpellingLists).where(eq(tables.typingSpellingLists.id, id));
+
   return { ok: true };
 });

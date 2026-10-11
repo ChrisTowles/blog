@@ -1,13 +1,7 @@
 <script setup lang="ts">
-import type { DefineComponent } from 'vue';
 import type { LoanApplicationData } from '~~/shared/loan-types';
 import { isApplicationComplete } from '~~/shared/loan-types';
 import { TEST_IDS } from '~~/shared/test-ids';
-import ProsePre from '../../../components/prose/ProsePre.vue';
-
-const components = {
-  pre: ProsePre as unknown as DefineComponent,
-};
 
 definePageMeta({
   layout: 'loan',
@@ -20,7 +14,9 @@ useSeoMeta({
 });
 
 const route = useRoute();
+
 const toast = useToast();
+
 const { model } = useModels();
 
 const { data } = await useFetch(`/api/loan/${route.params.id}`);
@@ -33,15 +29,14 @@ if (data.value.status !== 'intake') {
   await navigateTo(`/loan/${route.params.id}/review`, { replace: true });
 }
 
-const applicationData = ref<LoanApplicationData>(
-  (data.value.applicationData as LoanApplicationData) || {},
-);
+const applicationData = ref<LoanApplicationData>(data.value.applicationData || {});
+
 const input = ref('');
 
 const canSubmit = computed(() => isApplicationComplete(applicationData.value));
 
 const loanChat = useLoanChat({
-  id: route.params.id as string,
+  id: String(route.params.id),
   model,
   onError(error) {
     toast.add({ description: error.message, color: 'error' });
@@ -53,6 +48,7 @@ const loanChat = useLoanChat({
 
 function handleSubmitMessage(e: Event) {
   e.preventDefault();
+
   if (input.value.trim()) {
     loanChat.sendMessage(input.value);
     input.value = '';
@@ -100,7 +96,6 @@ function submitForReview() {
                   v-if="part.type === 'text'"
                   :value="part.text"
                   :cache-key="`${message.id}-${index}`"
-                  :components="components"
                   :parser-options="{ highlight: false }"
                   class="*:first:mt-0 *:last:mb-0"
                 />

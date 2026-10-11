@@ -11,6 +11,7 @@ describe('deriveRequestId', () => {
     const id = deriveRequestId({
       cloudTrace: '105445aa7843bc8bf206b12000100000/1;o=1',
     });
+
     expect(id).toBe('105445aa7843bc8bf206b12000100000');
   });
 
@@ -24,6 +25,7 @@ describe('deriveRequestId', () => {
       cloudTrace: 'aaaa1111bbbb2222/9;o=1',
       requestId: 'should-be-ignored',
     });
+
     expect(id).toBe('aaaa1111bbbb2222');
   });
 

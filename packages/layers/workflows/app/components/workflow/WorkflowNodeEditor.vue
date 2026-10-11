@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Node } from '@vue-flow/core';
-import type { WorkflowNodeType } from '../../../shared/workflow-types';
+import type { OutputSchema, WorkflowNodeType } from '../../../shared/workflow-types';
 import { NODE_TYPE_DEFAULTS } from '../../../shared/workflow-types';
 import { MODEL_HAIKU, MODEL_SONNET, MODEL_OPUS } from '~~/shared/models';
 
@@ -20,7 +20,7 @@ const MODELS = [
   { label: 'Opus', value: MODEL_OPUS },
 ];
 
-function updateData(key: string, value: unknown) {
+function updateData(key: string, value: string | number | OutputSchema) {
   if (!props.node) return;
   emit('update:node', {
     ...props.node,
@@ -61,7 +61,7 @@ function updateData(key: string, value: unknown) {
         :value="node.data.model"
         :options="MODELS"
         :disabled="readonly"
-        @change="updateData('model', $event)"
+        @update:model-value="updateData('model', String($event))"
       />
     </UFormGroup>
 

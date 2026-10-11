@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { z } from 'zod';
 import { chatTools, toolRegistry, executeTool, getToolsByNames, getAllToolNames } from './tools';
 
 // Register tools before tests
@@ -21,31 +22,31 @@ describe('executeTool', () => {
 
   describe('getCurrentDateTime', () => {
     it('returns date time info', async () => {
-      const result = (await executeTool('getCurrentDateTime')) as Record<string, unknown>;
-      expect(result).toHaveProperty('date');
-      expect(result).toHaveProperty('time');
-      expect(result).toHaveProperty('iso');
-      expect(result).toHaveProperty('timestamp');
-      expect(typeof result.timestamp).toBe('number');
+      const result = await executeTool('getCurrentDateTime');
+      expect(result).toMatchObject({
+        date: expect.any(String),
+        time: expect.any(String),
+        iso: expect.any(String),
+        timestamp: expect.any(Number),
+      });
     });
   });
 
   describe('getAuthorInfo', () => {
     it('returns author information', async () => {
-      const result = (await executeTool('getAuthorInfo')) as Record<string, unknown>;
-      expect(result).toHaveProperty('name', 'Chris Towles');
-      expect(result).toHaveProperty('role');
-      expect(result).toHaveProperty('topics');
-      expect(Array.isArray(result.topics)).toBe(true);
+      const result = await executeTool('getAuthorInfo');
+      expect(result).toMatchObject({
+        name: 'Chris Towles',
+        role: expect.any(String),
+        topics: expect.any(Array),
+      });
     });
   });
 
   describe('getBlogTopics', () => {
     it('returns blog topics', async () => {
-      const result = (await executeTool('getBlogTopics')) as Record<string, unknown>;
-      expect(result).toHaveProperty('topics');
-      expect(result).toHaveProperty('blogPath', '/blog');
-      expect(Array.isArray(result.topics)).toBe(true);
+      const result = await executeTool('getBlogTopics');
+      expect(result).toMatchObject({ topics: expect.any(Array), blogPath: '/blog' });
     });
   });
 
@@ -68,23 +69,20 @@ describe('executeTool', () => {
     });
 
     it('rolls dice with valid notation', async () => {
-      const result = (await executeTool('rollDice', { notation: '2d6' })) as Record<
-        string,
-        unknown
-      >;
-      expect(result).toHaveProperty('total');
-      expect(result).toHaveProperty('rolls');
-      expect(result).toHaveProperty('notation', '2d6');
-      expect(typeof result.total).toBe('number');
-      expect(result.total as number).toBeGreaterThanOrEqual(2);
-      expect(result.total as number).toBeLessThanOrEqual(12);
+      const result = await executeTool('rollDice', { notation: '2d6' });
+      const { total } = z.object({ total: z.number() }).parse(result);
+
+      expect(result).toMatchObject({ rolls: expect.any(Array), notation: '2d6' });
+      expect(total).toBeGreaterThanOrEqual(2);
+      expect(total).toBeLessThanOrEqual(12);
     });
 
     it('includes label when provided', async () => {
-      const result = (await executeTool('rollDice', {
+      const result = await executeTool('rollDice', {
         notation: '1d20',
         label: 'Attack roll',
-      })) as Record<string, unknown>;
+      });
+
       expect(result).toHaveProperty('label', 'Attack roll');
     });
   });
@@ -103,6 +101,7 @@ describe('executeTool', () => {
         {},
         { baseUrl: 'https://example.com' },
       );
+
       expect(result).toHaveProperty('date');
     });
 

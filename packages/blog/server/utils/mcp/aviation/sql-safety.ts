@@ -71,27 +71,33 @@ const BANNED_TABLE_FNS = [
 ];
 
 const BANNED_KEYWORDS_RE = new RegExp(`\\b(${BANNED_KEYWORDS.join('|')})\\b`, 'i');
+
 const BANNED_TABLE_FNS_RE = new RegExp(`\\b(${BANNED_TABLE_FNS.join('|')})\\s*\\(`, 'i');
 
 export async function validateSql(sql: string): Promise<SqlValidationResult> {
   if (!sql || !sql.trim()) {
     return { ok: false, error: 'SQL is empty' };
   }
+
   const trimmed = sql.trim().replace(/;\s*$/, '');
 
   // Layer 1: raw-text banned-keyword scan. Runs before parsing so we fail fast.
   const kwMatch = BANNED_KEYWORDS_RE.exec(trimmed);
+
   if (kwMatch) {
     return { ok: false, error: `statement type not allowed (found: ${kwMatch[1]})` };
   }
 
   // Parse with DuckDB's own parser.
   const conn = await openAviationConnection();
+
   try {
     let statementCount: number;
+
     try {
       const extracted = await conn.extractStatements(trimmed);
       statementCount = extracted.count;
+
       if (statementCount !== 1) {
         return {
           ok: false,
@@ -104,6 +110,7 @@ export async function validateSql(sql: string): Promise<SqlValidationResult> {
 
     // getTableNames surfaces every table reference (CTE names + physical/functional relations).
     let tableNames: readonly string[];
+
     try {
       tableNames = conn.getTableNames(trimmed, true);
     } catch (e) {
@@ -114,6 +121,7 @@ export async function validateSql(sql: string): Promise<SqlValidationResult> {
     // doesn't surface via getTableNames (it returns a file path for read_parquet,
     // nothing for read_csv). Scan textually instead.
     const fnMatch = BANNED_TABLE_FNS_RE.exec(trimmed);
+
     if (fnMatch) {
       return {
         ok: false,
@@ -132,6 +140,7 @@ export async function validateSql(sql: string): Promise<SqlValidationResult> {
             error: `external URL not allowed in read_parquet: ${name}. Only ${AVIATION_BUCKET_URL_PREFIX}* is permitted`,
           };
         }
+
         continue; // allowlisted
       }
       // Any other entry is a bare identifier (CTE, or — if you forgot to use read_parquet —
@@ -141,8 +150,10 @@ export async function validateSql(sql: string): Promise<SqlValidationResult> {
     // Extra belt check: if any read_parquet(...) appears textually, confirm its URL is
     // allowlisted. Catches the case where getTableNames collapses a URL differently.
     const rpMatches = trimmed.matchAll(/read_parquet\s*\(\s*(['"])([^'"]+)\1/gi);
+
     for (const match of rpMatches) {
       const url = match[2]!;
+
       if (!url.startsWith(AVIATION_BUCKET_URL_PREFIX)) {
         return {
           ok: false,
@@ -153,6 +164,7 @@ export async function validateSql(sql: string): Promise<SqlValidationResult> {
 
     // Layer 4: LIMIT injection.
     const { sql: withLimit, limitInjected } = injectLimit(trimmed);
+
     return { ok: true, sql: withLimit, limitInjected };
   } finally {
     conn.closeSync();
@@ -163,13 +175,20 @@ function looksLikeUrl(name: string): boolean {
   return /^[a-z][a-z0-9+.-]*:\/\//i.test(name);
 }
 
+interface LimitInjection {
+  sql: string;
+  limitInjected: boolean;
+}
+
 /**
  * If the top-level query has no LIMIT clause, wrap it in one. Uses a simple textual
  * test: if the last non-trailing token is `LIMIT <n>` (optionally with OFFSET), leave
  * it alone; otherwise wrap.
  */
-function injectLimit(sql: string): { sql: string; limitInjected: boolean } {
+function injectLimit(sql: string): LimitInjection {
   const hasLimit = /\blimit\s+\d+\s*(offset\s+\d+\s*)?$/i.test(sql.trim());
+
   if (hasLimit) return { sql, limitInjected: false };
+
   return { sql: `SELECT * FROM (${sql}) LIMIT 10000`, limitInjected: true };
 }

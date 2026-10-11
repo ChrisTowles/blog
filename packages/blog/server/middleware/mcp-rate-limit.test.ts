@@ -15,16 +15,19 @@ describe('mcp rate limit token bucket', () => {
 
   it('allows up to the configured burst then rejects with remaining seconds', () => {
     const now = 1_700_000_000_000;
+
     for (let i = 0; i < 60; i++) {
       const r = consumeToken({ ip: '1.2.3.4', limit: 60, windowMs: WINDOW_MS, now });
       expect(r.allowed).toBe(true);
     }
+
     const blocked = consumeToken({
       ip: '1.2.3.4',
       limit: 60,
       windowMs: WINDOW_MS,
       now,
     });
+
     expect(blocked.allowed).toBe(false);
     expect(blocked.retryAfterSeconds).toBeGreaterThan(0);
     expect(blocked.retryAfterSeconds).toBeLessThanOrEqual(WINDOW_MS / 1000);
@@ -32,10 +35,12 @@ describe('mcp rate limit token bucket', () => {
 
   it('does not leak buckets across IPs — same burst from a second IP still passes', () => {
     const now = 1_700_000_000_000;
+
     // Exhaust IP-A.
     for (let i = 0; i < 60; i++) {
       consumeToken({ ip: 'a', limit: 60, windowMs: WINDOW_MS, now });
     }
+
     // IP-B still has a full bucket.
     const other = consumeToken({ ip: 'b', limit: 60, windowMs: WINDOW_MS, now });
     expect(other.allowed).toBe(true);
@@ -44,9 +49,11 @@ describe('mcp rate limit token bucket', () => {
 
   it('refills after the window elapses', () => {
     const t0 = 1_700_000_000_000;
+
     for (let i = 0; i < 60; i++) {
       consumeToken({ ip: 'c', limit: 60, windowMs: WINDOW_MS, now: t0 });
     }
+
     const blocked = consumeToken({ ip: 'c', limit: 60, windowMs: WINDOW_MS, now: t0 });
     expect(blocked.allowed).toBe(false);
 

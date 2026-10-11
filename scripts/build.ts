@@ -10,13 +10,18 @@ dotenv.config({
 });
 
 const args = process.argv.slice(2);
+
 const command = args[0];
+
 const environment = args[1] || 'staging';
 
 // Configuration
 const IMAGE_NAME = 'blog-test';
+
 const CONTAINER_NAME = 'blog-test-container';
+
 const TEST_UI_PORT = parseInt(process.env.UI_PORT!) + 50; // Use a different port to avoid conflicts
+
 const MAX_WAIT = 60;
 
 function printUsage() {
@@ -57,9 +62,11 @@ async function waitForHealthy(): Promise<boolean> {
     const psResult = await $`docker ps --filter name=${CONTAINER_NAME} --format {{.Names}}`
       .quiet()
       .nothrow();
+
     if (!psResult.stdout.includes(CONTAINER_NAME)) {
       consola.error('Container stopped unexpectedly');
       await $`docker logs ${CONTAINER_NAME}`;
+
       return false;
     }
 
@@ -73,9 +80,11 @@ async function waitForHealthy(): Promise<boolean> {
         consola.success('Container is ready and home page is accessible');
         consola.success(`Home page returned HTTP ${response.status}`);
         consola.success('All tests passed');
+
         return true;
       } else {
         consola.error(`Home page returned HTTP ${response.status} (expected 200)`);
+
         return false;
       }
     } catch {
@@ -90,6 +99,7 @@ async function waitForHealthy(): Promise<boolean> {
   consola.error('Timeout waiting for container to respond');
   consola.info('Container logs:');
   await $`docker logs ${CONTAINER_NAME}`;
+
   return false;
 }
 
@@ -113,14 +123,17 @@ async function testContainer() {
     } else {
       consola.info('Skipping cleanup as requested (--keep)');
     }
+
     process.exit(success ? 0 : 1);
   } catch (error) {
     consola.error('Error:', error);
+
     if (!argv.keep) {
       await cleanup();
     } else {
       consola.info('Skipping cleanup as requested (--keep)');
     }
+
     process.exit(1);
   }
 }
@@ -140,6 +153,7 @@ async function deployContainer() {
 
   // Generate date-time tag: YYYY-MM-DD-HH-mm
   const now = new Date();
+
   const dateTag = [
     now.getFullYear(),
     String(now.getMonth() + 1).padStart(2, '0'),
@@ -157,6 +171,7 @@ async function deployContainer() {
   cd(terraformDir);
   await $`terraform init -backend-config=${environment}.backend.tfvars -reconfigure`.quiet();
   let registry = '';
+
   try {
     registry = (await $`terraform output -raw container_image_base`).stdout.trim();
   } catch {
@@ -164,6 +179,7 @@ async function deployContainer() {
     await $`terraform apply -target=module.shared -auto-approve -var-file=${environment}.tfvars -lock=false`; // setting -lock=false to avoid lock issues every single time.
     registry = (await $`terraform output -raw container_image_base`).stdout.trim();
   }
+
   cd(rootDir);
   consola.info(`Registry: ${registry}`);
 
@@ -188,7 +204,9 @@ async function deployContainer() {
   const imageWithLatest = `${registry}/blog:latest`;
   consola.start(`Building Docker image: ${imageWithDateTag}`);
   consola.info(`Git SHA: ${gitSha}`);
+
   if (gtagId) consola.info(`Gtag ID: ${gtagId}`);
+
   if (mcpSandboxUrl) consola.info(`MCP sandbox URL: ${mcpSandboxUrl}`);
   await $`docker build -f infra/container/blog.Dockerfile --build-arg GIT_SHA=${gitSha} --build-arg BUILD_TAG=${dateTag} --build-arg NUXT_PUBLIC_GTAG_ID=${gtagId} --build-arg NUXT_PUBLIC_MCP_SANDBOX_URL=${mcpSandboxUrl} -t ${imageWithDateTag} -t ${imageWithLatest} .`;
 

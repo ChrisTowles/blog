@@ -1,6 +1,7 @@
 #!/usr/bin/env -S pnpx tsx
 import { spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline';
+import { Writable } from 'node:stream';
 import { consola } from 'consola';
 import { defineCommand, runMain } from 'citty';
 
@@ -12,30 +13,38 @@ import { defineCommand, runMain } from 'citty';
  */
 
 const REPO = 'ChrisTowles/blog';
+
 const SECRET_NAME = 'ANTHROPIC_API_KEY';
+
 const CONSOLE_URL = 'https://console.anthropic.com/settings/keys';
 
 /** Read a line without echoing it to the terminal. */
 function promptHidden(question: string): Promise<string> {
   return new Promise((resolve) => {
-    const rl = createInterface({ input: process.stdin, output: process.stdout });
-    const output = rl.output as NodeJS.WriteStream & { muted?: boolean };
+    let muted = false;
 
-    output.muted = false;
     // readline writes each keystroke back to the terminal; swallow them while
     // muted so the key never appears on screen or in a scrollback buffer.
-    const write = output.write.bind(output);
-    output.write = ((chunk: string, ...rest: unknown[]) =>
-      output.muted ? true : write(chunk, ...(rest as []))) as typeof output.write;
+    const output = new Writable({
+      write(chunk, encoding, callback) {
+        if (!muted) process.stdout.write(chunk, encoding);
+        callback();
+      },
+    });
+
+    const rl = createInterface({
+      input: process.stdin,
+      output,
+      terminal: process.stdout.isTTY,
+    });
 
     rl.question(question, (answer) => {
-      output.muted = false;
-      output.write = write;
+      muted = false;
       rl.close();
       process.stdout.write('\n');
       resolve(answer.trim());
     });
-    output.muted = true;
+    muted = true;
   });
 }
 
@@ -43,6 +52,7 @@ function requireCommand(name: string, hint: string): void {
   // Invoked directly rather than via `command -v` under a shell: passing args
   // with `shell: true` trips Node's DEP0190 deprecation warning.
   const probe = spawnSync(name, ['--version'], { stdio: 'ignore' });
+
   if (probe.error || probe.status !== 0) {
     consola.error(`\`${name}\` is not on PATH. ${hint}`);
     process.exit(1);
@@ -65,6 +75,7 @@ async function verifyKey(apiKey: string): Promise<boolean> {
   } else {
     consola.error(`Unexpected response verifying the key: HTTP ${response.status}`);
   }
+
   return false;
 }
 
@@ -95,27 +106,32 @@ const main = defineCommand({
       consola.error('No key entered; nothing to do.');
       process.exit(1);
     }
+
     if (!apiKey.startsWith('sk-ant-')) {
       consola.error('That does not look like an Anthropic key (expected an sk-ant- prefix).');
       process.exit(1);
     }
 
     consola.start('Verifying the key against the Anthropic API...');
+
     if (!(await verifyKey(apiKey))) process.exit(1);
     consola.success('Key is valid.');
 
     consola.start(`Storing it as ${SECRET_NAME} on ${REPO}...`);
+
     // Passed over stdin, not as --body, so the key stays out of argv.
     const set = spawnSync('gh', ['secret', 'set', SECRET_NAME, '--repo', REPO], {
       input: apiKey,
       stdio: ['pipe', 'inherit', 'inherit'],
     });
+
     if (set.status !== 0) {
       consola.error('gh secret set failed.');
       process.exit(1);
     }
 
     const list = spawnSync('gh', ['secret', 'list', '--repo', REPO], { encoding: 'utf-8' });
+
     if (!list.stdout?.includes(SECRET_NAME)) {
       consola.error(`${SECRET_NAME} is not showing up in \`gh secret list\`.`);
       process.exit(1);

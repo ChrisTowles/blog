@@ -26,6 +26,7 @@ export default defineNitroPlugin(() => {
   void (async () => {
     try {
       const { ms, skipped } = await prewarmAviationDuckDb();
+
       if (!skipped) {
         log.info({
           tag: 'mcp-aviation',

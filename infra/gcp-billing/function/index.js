@@ -1,7 +1,9 @@
 const functions = require('@google-cloud/functions-framework');
+
 const { google } = require('googleapis');
 
 const PROJECT_PREFIX = 'projects/';
+
 const DISPLAY_NAME_PREFIX = 'spend-cap-';
 
 // Allowlist of project IDs this function is permitted to disable billing on.
@@ -31,16 +33,21 @@ functions.cloudEvent('killSwitch', async (cloudEvent) => {
   // the event trigger it would storm (~24h of retries per Google's default).
   // We catch, log, and return cleanly so the event is acked.
   let payload;
+
   try {
     const rawData = cloudEvent?.data?.message?.data;
+
     if (!rawData) {
       console.log('No Pub/Sub message payload; ignoring');
+
       return;
     }
+
     payload = JSON.parse(Buffer.from(rawData, 'base64').toString('utf-8'));
     console.log('Budget notification:', JSON.stringify(payload));
   } catch (err) {
     console.error(`Non-retriable: failed to parse Pub/Sub payload: ${err.message}`);
+
     return;
   }
 
@@ -50,16 +57,19 @@ functions.cloudEvent('killSwitch', async (cloudEvent) => {
     console.log(
       `Ignoring: budgetDisplayName "${budgetDisplayName}" does not match ${DISPLAY_NAME_PREFIX}<project>`,
     );
+
     return;
   }
 
-  if (typeof costAmount !== 'number' || typeof budgetAmount !== 'number') {
-    console.log('Ignoring: costAmount/budgetAmount missing or non-numeric');
+  if (!Number.isFinite(costAmount) || !Number.isFinite(budgetAmount)) {
+    console.log('Ignoring: costAmount/budgetAmount missing or non-finite');
+
     return;
   }
 
   if (costAmount < budgetAmount) {
     console.log(`Below cap (cost=${costAmount} < budget=${budgetAmount}); no action`);
+
     return;
   }
 
@@ -67,6 +77,7 @@ functions.cloudEvent('killSwitch', async (cloudEvent) => {
 
   if (!ALLOWED_PROJECTS.has(projectId)) {
     console.log(`Refusing: projectId "${projectId}" not in ALLOWED_PROJECTS allowlist`);
+
     return;
   }
 
@@ -79,12 +90,15 @@ functions.cloudEvent('killSwitch', async (cloudEvent) => {
   const auth = new google.auth.GoogleAuth({
     scopes: ['https://www.googleapis.com/auth/cloud-billing'],
   });
+
   const billing = google.cloudbilling({ version: 'v1', auth });
 
   // Idempotency: if billing is already disabled, exit cleanly.
   const current = await billing.projects.getBillingInfo({ name: projectName });
+
   if (current.data.billingEnabled !== true) {
     console.log(`Billing already disabled on ${projectId}; exiting idempotently`);
+
     return;
   }
 

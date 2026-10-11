@@ -39,10 +39,12 @@ const STAGE_INTRODUCTIONS: Array<{ stage: number; name: string; keys: string[] }
 const STAGES: StageDefinition[] = (() => {
   const out: StageDefinition[] = [];
   const cumulative: string[] = [];
+
   for (const s of STAGE_INTRODUCTIONS) {
     cumulative.push(...s.keys);
     // Stage 16's shifted letters stay out of `unlocked` — the engine tracks shift itself.
     const unlocked = [...cumulative];
+
     if (!unlocked.includes(SPACE)) unlocked.unshift(SPACE);
     out.push({
       stage: s.stage,
@@ -53,6 +55,7 @@ const STAGES: StageDefinition[] = (() => {
       targetAccuracy: 0.95,
     });
   }
+
   return out;
 })();
 
@@ -91,6 +94,7 @@ export function getBuiltInLessons(): BuiltInLesson[] {
     const stage = def.stage;
 
     const drillText = drillForStage(def);
+
     if (drillText) {
       lessons.push({
         slug: `stage-${stage}-drill`,
@@ -104,6 +108,7 @@ export function getBuiltInLessons(): BuiltInLesson[] {
     }
 
     const bigramText = bigramForStage(def);
+
     if (bigramText) {
       lessons.push({
         slug: `stage-${stage}-bigram`,
@@ -117,6 +122,7 @@ export function getBuiltInLessons(): BuiltInLesson[] {
     }
 
     const wordText = wordForStage(stage);
+
     if (wordText) {
       lessons.push({
         slug: `stage-${stage}-words`,
@@ -130,6 +136,7 @@ export function getBuiltInLessons(): BuiltInLesson[] {
     }
 
     const sentenceText = sentenceForStage(stage);
+
     if (sentenceText) {
       lessons.push({
         slug: `stage-${stage}-sentence`,
@@ -144,6 +151,7 @@ export function getBuiltInLessons(): BuiltInLesson[] {
 
     if (stage >= 11) {
       const paragraphText = paragraphForStage(stage);
+
       if (paragraphText) {
         lessons.push({
           slug: `stage-${stage}-paragraph`,
@@ -160,6 +168,7 @@ export function getBuiltInLessons(): BuiltInLesson[] {
     // Blends every prior key rather than the newest pair: blocked drills alone
     // produce brittle skill that doesn't transfer to mixed input.
     const accumulationText = accumulationForStage(stage);
+
     if (accumulationText) {
       lessons.push({
         slug: `stage-${stage}-accumulation`,
@@ -175,6 +184,7 @@ export function getBuiltInLessons(): BuiltInLesson[] {
     // Row-boundary review. The 95%-accuracy + target-WPM mastery gate already forces
     // a pass before advancing, so this needs no extra progression logic.
     const consolidationText = consolidationForStage(stage);
+
     if (consolidationText) {
       lessons.push({
         slug: `stage-${stage}-consolidation`,
@@ -193,7 +203,9 @@ export function getBuiltInLessons(): BuiltInLesson[] {
 
 function repeat(s: string, n: number): string {
   let out = '';
+
   for (let i = 0; i < n; i++) out += s;
+
   return out;
 }
 
@@ -202,139 +214,175 @@ function drillForStage(def: StageDefinition): string {
   if (def.stage === 16) {
     return 'Asdf Jkl; Asdf Jkl; The Big Cat. The Red Hen. Owl And Mole.';
   }
+
   if (def.keys.length === 0) return '';
   const groups = def.keys.map((k) => repeat(k, 4)).join(' ');
+
   return `${groups} ${groups} ${groups}`;
 }
 
 function bigramForStage(def: StageDefinition): string {
   if (def.keys.length < 2) return '';
   const [a, b] = def.keys;
+
   if (a === undefined || b === undefined) return '';
   const prior = def.unlocked.filter((c) => c !== ' ' && !def.keys.includes(c));
   const partner = prior.find((c) => /[a-z]/.test(c)) ?? a;
   const bigrams = [a + b, b + a, a + partner, partner + b];
+
   return bigrams.join(' ').repeat(3).trim();
 }
 
 // Every string below is limited to its stage's cumulative unlocked set, so the
 // omissions are deliberate: capitals only from 16, digits 17, punctuation 18, symbols 19.
-const STAGE_WORDS: Record<number, string> = {
-  1: 'fjf jfj fjj jff jjj fff',
-  2: 'jjd ddk fjk kjd dfk kfj',
-  3: 'sls lsl jsl ksd dlk fls',
-  4: 'a;a ;a; ask add all fall',
-  5: 'has had gag gas flag fall',
-  6: 'rug ugh ruff guru sash hush',
-  7: 'fire here dies dire fries firs',
-  8: 'wow row sow word woods foods',
-  9: 'pop pup quip pip pep papa',
-  10: 'try yet tip toy type teary',
-  11: 'vim warm move time mate vow',
-  12: 'cat car cot cake comes, comes,',
-  13: 'fox six exit fix. exit. fixes.',
-  14: 'zip zoo. fizz. quiz. zest.',
-  15: 'big bun ban ben nib nan',
-  16: 'Cat Dog Owl Pig Bee Ant',
-  17: '1 2 3 4 5 6 7 8 9 10',
-  18: "don't can't won't 'why?' 'wow!'",
-  19: 'a@b #1 $5 50% (six) & * (cat)',
-  20: 'today: nine-pin marble-run high-five',
-};
+const STAGE_WORDS = new Map<number, string>([
+  [1, 'fjf jfj fjj jff jjj fff'],
+  [2, 'jjd ddk fjk kjd dfk kfj'],
+  [3, 'sls lsl jsl ksd dlk fls'],
+  [4, 'a;a ;a; ask add all fall'],
+  [5, 'has had gag gas flag fall'],
+  [6, 'rug ugh ruff guru sash hush'],
+  [7, 'fire here dies dire fries firs'],
+  [8, 'wow row sow word woods foods'],
+  [9, 'pop pup quip pip pep papa'],
+  [10, 'try yet tip toy type teary'],
+  [11, 'vim warm move time mate vow'],
+  [12, 'cat car cot cake comes, comes,'],
+  [13, 'fox six exit fix. exit. fixes.'],
+  [14, 'zip zoo. fizz. quiz. zest.'],
+  [15, 'big bun ban ben nib nan'],
+  [16, 'Cat Dog Owl Pig Bee Ant'],
+  [17, '1 2 3 4 5 6 7 8 9 10'],
+  [18, "don't can't won't 'why?' 'wow!'"],
+  [19, 'a@b #1 $5 50% (six) & * (cat)'],
+  [20, 'today: nine-pin marble-run high-five'],
+]);
 
 function wordForStage(stage: number): string {
-  return STAGE_WORDS[stage] ?? '';
+  return STAGE_WORDS.get(stage) ?? '';
 }
 
-const STAGE_SENTENCES: Record<number, string> = {
-  1: 'fff jjj fjf jfj fjj jff fjf',
-  2: 'jjd ddk fjk kjd dfk kfj jdk',
-  3: 'sls lsl ksd dlk fls jsk lds',
-  4: 'a sad lad asks all alaska;',
-  5: 'a glass had a glass; a flask had a flag',
-  6: 'a flush has all glass; gulls hush;',
-  7: 'a fish dish here is a fresh dish;',
-  8: 'a fresh wood; folks see a wee owl;',
-  9: 'a pup quips; a paper popper; a paper popper;',
-  10: 'try a toy yet; type a paper too;',
-  11: 'mom moves a warm vim; a vim warms a mat;',
-  12: 'a cat, a car, a cake, a cot, comes home,',
-  13: 'fix six fox. fix six. fix it. fix it.',
-  14: 'zip a zoo, fizz a quiz, zest a / zest.',
-  15: 'a big bun, a big ben, a big nib;',
-  16: 'A Big Cat Sat On A Mat.',
-  17: 'I have 12 cats and 3 dogs.',
-  18: "Don't worry, why not? Wow! Yes!",
-  19: 'Buy 5 apples for $1 (a # of them).',
-  20: 'Today: nine-pin, high-five, marble-run.',
-};
+const STAGE_SENTENCES = new Map<number, string>([
+  [1, 'fff jjj fjf jfj fjj jff fjf'],
+  [2, 'jjd ddk fjk kjd dfk kfj jdk'],
+  [3, 'sls lsl ksd dlk fls jsk lds'],
+  [4, 'a sad lad asks all alaska;'],
+  [5, 'a glass had a glass; a flask had a flag'],
+  [6, 'a flush has all glass; gulls hush;'],
+  [7, 'a fish dish here is a fresh dish;'],
+  [8, 'a fresh wood; folks see a wee owl;'],
+  [9, 'a pup quips; a paper popper; a paper popper;'],
+  [10, 'try a toy yet; type a paper too;'],
+  [11, 'mom moves a warm vim; a vim warms a mat;'],
+  [12, 'a cat, a car, a cake, a cot, comes home,'],
+  [13, 'fix six fox. fix six. fix it. fix it.'],
+  [14, 'zip a zoo, fizz a quiz, zest a / zest.'],
+  [15, 'a big bun, a big ben, a big nib;'],
+  [16, 'A Big Cat Sat On A Mat.'],
+  [17, 'I have 12 cats and 3 dogs.'],
+  [18, "Don't worry, why not? Wow! Yes!"],
+  [19, 'Buy 5 apples for $1 (a # of them).'],
+  [20, 'Today: nine-pin, high-five, marble-run.'],
+]);
 
 function sentenceForStage(stage: number): string {
-  return STAGE_SENTENCES[stage] ?? '';
+  return STAGE_SENTENCES.get(stage) ?? '';
 }
 
-const STAGE_PARAGRAPHS: Record<number, string> = {
-  11:
+const STAGE_PARAGRAPHS = new Map<number, string>([
+  [
+    11,
     'mom moves a warm vim; a vim warms a mat; mom moves it; ' +
-    'a warm vim makes fires warm too; mom moves a warm vim',
-  12:
+      'a warm vim makes fires warm too; mom moves a warm vim',
+  ],
+  [
+    12,
     'a cat, a car, a cake, a cot, come here, come too, ' +
-    'a cat came, a car came, a cake came too',
-  13: 'fix six fox. exit, exit, exit. fixes the room. six fox exits. fix six fox too.',
-  14: 'zip the zoo. fizz, fizz, the zest is fixed. a zip, a zoo, a fizz, a quiz, a zest. / / /',
-  15:
+      'a cat came, a car came, a cake came too',
+  ],
+  [13, 'fix six fox. exit, exit, exit. fixes the room. six fox exits. fix six fox too.'],
+  [14, 'zip the zoo. fizz, fizz, the zest is fixed. a zip, a zoo, a fizz, a quiz, a zest. / / /'],
+  [
+    15,
     'a big bun, a big ben, a big nib. ben can run, nan can run. ' +
-    'big buns, big nibs, big bens, big nans run by.',
-  16:
+      'big buns, big nibs, big bens, big nans run by.',
+  ],
+  [
+    16,
     'A Big Cat Sat On A Big Mat. A Red Hen Saw A Big Owl. ' +
-    'Owls Are Wise And Big. Cats Are Soft And Quick.',
-  17:
+      'Owls Are Wise And Big. Cats Are Soft And Quick.',
+  ],
+  [
+    17,
     'I have 12 cats and 3 dogs. There are 5 birds in the tree. ' +
-    'It is now 7 30 in the morning. I see 9 stars at night.',
-  18:
+      'It is now 7 30 in the morning. I see 9 stars at night.',
+  ],
+  [
+    18,
     "Don't worry, why not try? Wow! Yes! Why not? It's okay. " +
-    "Don't fall, can't stop, won't quit, that's why!",
-  19:
+      "Don't fall, can't stop, won't quit, that's why!",
+  ],
+  [
+    19,
     'Buy 5 apples for $1 (a fair price). Use & save (#cool & #fun). ' +
-    'A * marks a star (every * counts).',
-  20:
+      'A * marks a star (every * counts).',
+  ],
+  [
+    20,
     'Today the weather is fine: a nine-pin bowling game, a high-five from a friend, ' +
-    'a marble-run that loops and turns. Practice, practice, then practice some more.',
-};
+      'a marble-run that loops and turns. Practice, practice, then practice some more.',
+  ],
+]);
 
 function paragraphForStage(stage: number): string {
-  return STAGE_PARAGRAPHS[stage] ?? '';
+  return STAGE_PARAGRAPHS.get(stage) ?? '';
 }
 
 // Odd stages from 5 up only — below that the unlocked set is too sparse for real English.
-const STAGE_ACCUMULATIONS: Record<number, string> = {
-  5: 'a sad lad has a flask; a flag has a glass; dad asks all glad lads; a hall has half a flag',
-  7: 'she hides her fresh red fries; his idea is here; jade fled; she sells sails; sad deer flees',
-  9: 'our wise pup wishes; she shows her queer papers; he hops up; we used proud quails; fresh frog spoke up',
-  11: 'the merry team types my story; we try every vivid happy poem; she sees my pretty puppy; have a steady ride',
-  13: 'the cat sat. six cats came home. exit, fox. quick fix. extra credit, mr. cute code crews.',
-  15: 'the big brown box ran. zip, nine balloons zoom. zebras nod. brave bunnies in barns. quick zigzag.',
-};
+const STAGE_ACCUMULATIONS = new Map<number, string>([
+  [5, 'a sad lad has a flask; a flag has a glass; dad asks all glad lads; a hall has half a flag'],
+  [
+    7,
+    'she hides her fresh red fries; his idea is here; jade fled; she sells sails; sad deer flees',
+  ],
+  [
+    9,
+    'our wise pup wishes; she shows her queer papers; he hops up; we used proud quails; fresh frog spoke up',
+  ],
+  [
+    11,
+    'the merry team types my story; we try every vivid happy poem; she sees my pretty puppy; have a steady ride',
+  ],
+  [13, 'the cat sat. six cats came home. exit, fox. quick fix. extra credit, mr. cute code crews.'],
+  [
+    15,
+    'the big brown box ran. zip, nine balloons zoom. zebras nod. brave bunnies in barns. quick zigzag.',
+  ],
+]);
 
 function accumulationForStage(stage: number): string {
-  return STAGE_ACCUMULATIONS[stage] ?? '';
+  return STAGE_ACCUMULATIONS.get(stage) ?? '';
 }
 
 // Long passages at the row boundaries: home row completes at 5, top row at 10, which
 // is where the text first reads like prose. Both predate the comma and period.
-const STAGE_CONSOLIDATIONS: Record<number, string> = {
-  5:
+const STAGE_CONSOLIDATIONS = new Map<number, string>([
+  [
+    5,
     'a sad lad had a flask; a glass had a flag; dad asks all glad lads; ' +
-    'half a glass falls; all gas falls; half a slash; a lass has a sash; ' +
-    'ask dad; lads ask all sad dads; glass has a flag; half glass falls; ' +
-    'all lads gag; ask half; a sash had a flag',
-  10:
+      'half a glass falls; all gas falls; half a slash; a lass has a sash; ' +
+      'ask dad; lads ask all sad dads; glass has a flag; half glass falls; ' +
+      'all lads gag; ask half; a sash had a flag',
+  ],
+  [
+    10,
     'the two writers type their stories; we wait quietly today; ' +
-    'your fresh idea fits us; the puppy paws at her ride; ' +
-    'quiet group sits here; their party is ready; we type pretty poetry; ' +
-    'our story has a swift frog; today we ride;',
-};
+      'your fresh idea fits us; the puppy paws at her ride; ' +
+      'quiet group sits here; their party is ready; we type pretty poetry; ' +
+      'our story has a swift frog; today we ride;',
+  ],
+]);
 
 function consolidationForStage(stage: number): string {
-  return STAGE_CONSOLIDATIONS[stage] ?? '';
+  return STAGE_CONSOLIDATIONS.get(stage) ?? '';
 }

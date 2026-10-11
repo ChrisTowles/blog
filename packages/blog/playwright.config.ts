@@ -5,9 +5,11 @@ import { findUpSync } from 'find-up';
 
 // Load package .env, then root .env (root values fill in missing vars)
 const packageEnv = findUpSync('.env');
+
 if (packageEnv) {
   dotenv.config({ path: packageEnv });
   const rootEnv = findUpSync('.env', { cwd: join(dirname(packageEnv), '..') });
+
   if (rootEnv && rootEnv !== packageEnv) {
     dotenv.config({ path: rootEnv });
   }
@@ -22,11 +24,16 @@ const uiPort = process.env.UI_PORT || '3000';
 // it silently, so every authenticated request gets a fresh anonymous session and the
 // specs fail with 401s that look like a broken sign-in endpoint.
 const uiHost = 'localhost';
+
 const baseURL = `http://${uiHost}:${uiPort}`;
 
 // Unlocks POST /api/_dev/session. The fallback matches what .env.example ships, so a
 // reused dev server and the one webServer starts agree; both processes need it.
 const devSessionSecret = (process.env.NUXT_DEV_SESSION_SECRET ||= 'local-e2e-dev-session-secret');
+
+const serverEnv = process.env.CI
+  ? { NUXT_DEV_SESSION_SECRET: devSessionSecret, PORT: uiPort, NITRO_PORT: uiPort }
+  : { NUXT_DEV_SESSION_SECRET: devSessionSecret };
 
 export default defineConfig({
   testDir: './e2e',
@@ -64,10 +71,7 @@ export default defineConfig({
     command: process.env.CI ? 'node .output/server/index.mjs' : `UI_PORT=${uiPort} bun run dev`,
     // HOST is deliberately left unset so Nitro binds every interface; pinning it
     // to one loopback address is what made the stack mismatch possible before.
-    env: {
-      NUXT_DEV_SESSION_SECRET: devSessionSecret,
-      ...(process.env.CI ? { PORT: uiPort, NITRO_PORT: uiPort } : {}),
-    },
+    env: serverEnv,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,

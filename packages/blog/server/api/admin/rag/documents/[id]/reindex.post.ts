@@ -11,6 +11,7 @@ defineRouteMeta({
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event);
+
   if (!session.user) {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized' });
   }
@@ -35,6 +36,7 @@ export default defineEventHandler(async (event) => {
 
   // Read file from disk
   let content: string;
+
   try {
     content = await readFile(existingDoc.path, 'utf-8');
   } catch {

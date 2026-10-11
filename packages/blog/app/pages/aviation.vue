@@ -24,8 +24,10 @@
 import { TEST_IDS } from '~~/shared/test-ids';
 
 const runtimeConfig = useRuntimeConfig();
+
 const mcpEndpoint = computed(() => {
   const base = runtimeConfig.public.siteUrl || 'https://chris.towles.dev';
+
   return `${base.replace(/\/$/, '')}/mcp/aviation`;
 });
 
@@ -54,6 +56,7 @@ const configNative = computed(
 );
 
 const toast = useToast();
+
 async function copy(text: string, label: string) {
   try {
     await navigator.clipboard.writeText(text);

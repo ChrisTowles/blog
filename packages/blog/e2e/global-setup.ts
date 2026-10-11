@@ -23,9 +23,11 @@ const ROUTES = [
 
 export default async function globalSetup(config: FullConfig) {
   const baseURL = config.projects[0]?.use?.baseURL;
+
   if (!baseURL) return;
 
   const context = await request.newContext({ baseURL });
+
   try {
     for (const route of ROUTES) {
       try {

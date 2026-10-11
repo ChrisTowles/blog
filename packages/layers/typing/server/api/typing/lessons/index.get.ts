@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import type { LessonRow } from '../../../../../../blog/shared/typing-types';
 import { getBuiltInLessons } from '../../../utils/typing/curriculum';
+import { toLessonRow } from '../../../utils/typing/lesson-row';
 
 const querySchema = z.object({
   stage: z.coerce.number().int().min(1).max(20).optional(),
@@ -32,12 +33,15 @@ export default defineEventHandler(async (event) => {
     generatedBy: string;
     createdAt: Date;
   }> = [];
+
   if (process.env.DATABASE_URL) {
     try {
       const db = useDrizzle();
+
       const rows = stage
         ? await db.select().from(tables.typingLessons).where(eq(tables.typingLessons.stage, stage))
         : await db.select().from(tables.typingLessons);
+
       dbLessons = rows;
     } catch {
       dbLessons = [];
@@ -61,22 +65,7 @@ export default defineEventHandler(async (event) => {
     createdAt: new Date(0).toISOString(),
   }));
 
-  const lessonsAi: LessonRow[] = dbLessons
-    .filter((l) => l.generatedBy === 'ai')
-    .map((l) => ({
-      id: l.id,
-      slug: l.slug,
-      stage: l.stage,
-      kind: l.kind as LessonRow['kind'],
-      title: l.title,
-      text: l.text,
-      targetWpm: l.targetWpm,
-      targetAccuracy: l.targetAccuracy,
-      topic: l.topic,
-      spellingListId: l.spellingListId,
-      generatedBy: 'ai',
-      createdAt: l.createdAt.toISOString(),
-    }));
+  const lessonsAi = dbLessons.filter((l) => l.generatedBy === 'ai').map(toLessonRow);
 
   return { lessons: [...lessonsBuiltIn, ...lessonsAi] };
 });

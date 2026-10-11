@@ -15,7 +15,7 @@ describe('executeLoanTool', () => {
     it('returns incomplete when fields are missing', () => {
       const result = executeLoanTool('checkCompleteness', {}, { applicationData: {} });
       expect(result).toMatchObject({ complete: false });
-      expect((result.missingFields as string[]).length).toBeGreaterThan(0);
+      expect(result.missingFields?.length).toBeGreaterThan(0);
     });
 
     it('returns complete when all fields present', () => {
@@ -33,6 +33,7 @@ describe('executeLoanTool', () => {
         propertyType: 'single-family',
         loanPurpose: 'purchase',
       };
+
       const result = executeLoanTool('checkCompleteness', {}, { applicationData: fullData });
       expect(result).toMatchObject({ complete: true, missingFields: [] });
     });
@@ -60,6 +61,7 @@ describe('executeLoanTool', () => {
         propertyType: 'single-family',
         // loanPurpose intentionally missing
       };
+
       const result = executeLoanTool('checkCompleteness', {}, { applicationData: almostComplete });
       expect(result.complete).toBe(false);
       expect(result.missingFields).toEqual(['loanPurpose']);
@@ -73,6 +75,7 @@ describe('executeLoanTool', () => {
         { fields: { fullName: 'Jane Doe', income: 95000 } },
         { applicationData: { fullName: 'Old Name' } },
       );
+
       expect(result.updated).toEqual({ fullName: 'Jane Doe', income: 95000 });
     });
 
@@ -82,6 +85,7 @@ describe('executeLoanTool', () => {
         { fields: { fullName: 'Jane', socialSecurityNumber: '123' } },
         { applicationData: {} },
       );
+
       expect(result.updated).toEqual({ fullName: 'Jane' });
       expect(result.rejected).toContain('socialSecurityNumber');
     });
@@ -107,11 +111,13 @@ describe('executeLoanTool', () => {
         propertyType: 'condo',
         loanPurpose: 'refinance',
       };
+
       const result = executeLoanTool(
         'updateApplication',
         { fields: allFields },
         { applicationData: {} },
       );
+
       expect(result.updated).toEqual(allFields);
       expect(result.rejected).toEqual([]);
     });
@@ -122,6 +128,7 @@ describe('executeLoanTool', () => {
         { fields: { fullName: 'Test', income: 80000, ssn: '999', favoriteColor: 'blue' } },
         { applicationData: {} },
       );
+
       expect(result.updated).toEqual({ fullName: 'Test', income: 80000 });
       expect(result.rejected).toContain('ssn');
       expect(result.rejected).toContain('favoriteColor');
@@ -134,6 +141,7 @@ describe('executeLoanTool', () => {
         { fields: { income: 50000, loanAmount: 200000, monthlyDebt: 1500 } },
         { applicationData: {} },
       );
+
       expect(result.updated).toEqual({ income: 50000, loanAmount: 200000, monthlyDebt: 1500 });
     });
 
@@ -149,6 +157,7 @@ describe('executeLoanTool', () => {
         },
         { applicationData: {} },
       );
+
       expect(result.updated).toEqual({
         employmentType: 'self-employed',
         creditScoreRange: '670-739',

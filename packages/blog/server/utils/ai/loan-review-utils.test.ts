@@ -59,6 +59,7 @@ describe('parseApproverResponse', () => {
       flags: ['low risk'],
       analysis: 'Looks good.',
     });
+
     const result = parseApproverResponse(text);
     expect(result.decision).toBe('approved');
     expect(result.flags).toEqual(['low risk']);
@@ -68,6 +69,7 @@ describe('parseApproverResponse', () => {
   it('extracts JSON embedded in surrounding text', () => {
     const text =
       'Here is my analysis:\n\n{"decision":"denied","flags":["high DTI"],"analysis":"DTI too high."}\n\nThank you.';
+
     const result = parseApproverResponse(text);
     expect(result.decision).toBe('denied');
     expect(result.flags).toEqual(['high DTI']);
@@ -126,6 +128,7 @@ describe('loadApproverPrompt', () => {
   });
 
   it('throws for nonexistent reviewer', () => {
-    expect(() => loadApproverPrompt('nonexistent' as never)).toThrow();
+    // @ts-expect-error deliberately outside the ReviewerName union
+    expect(() => loadApproverPrompt('nonexistent')).toThrow();
   });
 });

@@ -6,8 +6,8 @@ import { SpanStatusCode, type Span } from '@opentelemetry/api';
  * make NR's error views light up, and `error.type` is the only stable attr in
  * the GenAI namespace.
  */
-export function recordSpanError(span: Span, err: unknown): void {
-  const error = err instanceof Error ? err : new Error(String(err));
+export function recordSpanError(span: Span, cause: unknown): void {
+  const error = cause instanceof Error ? cause : new Error(String(cause));
   span.recordException(error);
   span.setAttribute('error.type', error.name || 'Error');
   span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });

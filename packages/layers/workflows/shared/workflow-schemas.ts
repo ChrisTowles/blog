@@ -27,6 +27,23 @@ export const viewportSchema = z.object({
   zoom: z.number(),
 });
 
+// ── JSON values and output schemas ──
+
+export const jsonObjectSchema = z.record(z.string(), z.json());
+
+export const outputSchemaSchema = z.object({
+  type: z.literal('object'),
+  properties: z.record(
+    z.string(),
+    z.object({
+      type: z.string(),
+      description: z.string().optional(),
+      enum: z.array(z.string()).optional(),
+    }),
+  ),
+  required: z.array(z.string()).optional(),
+});
+
 // ── Node data shape (matches what the GET /api/workflows/:id endpoint returns) ──
 
 export const workflowNodeDataSchema = z.object({
@@ -35,7 +52,7 @@ export const workflowNodeDataSchema = z.object({
   model: z.string(),
   temperature: z.number(),
   maxTokens: z.number(),
-  outputSchema: z.record(z.string(), z.unknown()),
+  outputSchema: outputSchemaSchema,
   inputMapping: z.record(z.string(), z.string()).optional(),
 });
 
@@ -102,7 +119,7 @@ export const sseNodeStartSchema = z.object({
 
 export const sseNodeCompleteSchema = z.object({
   nodeId: z.string(),
-  output: z.record(z.string(), z.unknown()),
+  output: jsonObjectSchema,
   tokensIn: z.number(),
   tokensOut: z.number(),
   latencyMs: z.number(),
@@ -114,7 +131,7 @@ export const sseNodeErrorSchema = z.object({
 });
 
 export const sseRunCompleteSchema = z.object({
-  output: z.record(z.string(), z.record(z.string(), z.unknown())),
+  output: z.record(z.string(), jsonObjectSchema),
 });
 
 export const sseRunErrorSchema = z.object({

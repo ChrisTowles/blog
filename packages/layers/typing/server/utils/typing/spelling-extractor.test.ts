@@ -1,25 +1,18 @@
 import { describe, it, expect, vi } from 'vitest';
-import {
-  extractSpellingWords,
-  validateExtractedWords,
-  type AnthropicVisionLike,
-} from './spelling-extractor';
+import type { AnthropicLike } from './anthropic-like';
+import { extractSpellingWords, validateExtractedWords } from './spelling-extractor';
 
 describe('validateExtractedWords', () => {
   it('accepts a normal list', () => {
     const result = validateExtractedWords(['cat', 'dog', 'fish']);
     expect(result.ok).toBe(true);
+
     if (result.ok) expect(result.words).toEqual(['cat', 'dog', 'fish']);
   });
 
   it("accepts apostrophes (e.g. don't, can't)", () => {
     const result = validateExtractedWords(["don't", "can't"]);
     expect(result.ok).toBe(true);
-  });
-
-  it('rejects when not an array', () => {
-    const result = validateExtractedWords('not an array' as unknown);
-    expect(result.ok).toBe(false);
   });
 
   it('rejects empty arrays', () => {
@@ -50,11 +43,14 @@ describe('extractSpellingWords (mocked client)', () => {
     const create = vi.fn().mockResolvedValueOnce({
       content: [{ type: 'text', text: '{"words": ["cat", "dog", "fish"]}' }],
     });
-    const stub: AnthropicVisionLike = { messages: { create } };
+
+    const stub: AnthropicLike = { messages: { create } };
     process.env.ANTHROPIC_API_KEY = 'k';
+
     try {
       const result = await extractSpellingWords('AAAA', 'image/png', stub);
       expect(result.ok).toBe(true);
+
       if (result.ok) expect(result.words).toEqual(['cat', 'dog', 'fish']);
     } finally {
       delete process.env.ANTHROPIC_API_KEY;
@@ -65,11 +61,14 @@ describe('extractSpellingWords (mocked client)', () => {
     const create = vi.fn().mockResolvedValueOnce({
       content: [{ type: 'text', text: 'not json' }],
     });
-    const stub: AnthropicVisionLike = { messages: { create } };
+
+    const stub: AnthropicLike = { messages: { create } };
     process.env.ANTHROPIC_API_KEY = 'k';
+
     try {
       const result = await extractSpellingWords('AAAA', 'image/png', stub);
       expect(result.ok).toBe(false);
+
       if (!result.ok) expect(result.raw).toBe('not json');
     } finally {
       delete process.env.ANTHROPIC_API_KEY;
@@ -78,9 +77,11 @@ describe('extractSpellingWords (mocked client)', () => {
 
   it('errors when ANTHROPIC_API_KEY is missing', async () => {
     delete process.env.ANTHROPIC_API_KEY;
+
     const result = await extractSpellingWords('AAAA', 'image/png', {
       messages: { create: vi.fn() },
     });
+
     expect(result.ok).toBe(false);
   });
 });

@@ -1,11 +1,7 @@
 /** Seeds an optional initial learner so the user lands on a usable home immediately. */
 import { z } from 'zod';
-import type {
-  TypingGroup,
-  TypingGroupKind,
-  Learner,
-} from '../../../../../../blog/shared/typing-types';
-import { generateUniqueGroupSlug } from '../../../utils/typing/groups';
+import type { Learner } from '../../../../../../blog/shared/typing-types';
+import { generateUniqueGroupSlug, toTypingGroup } from '../../../utils/typing/groups';
 
 const bodySchema = z.object({
   name: z.string().min(1).max(120),
@@ -16,6 +12,7 @@ const bodySchema = z.object({
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event);
   const userId = session.user?.id;
+
   if (!userId) {
     throw createError({ statusCode: 401, statusMessage: 'Sign in required' });
   }
@@ -29,6 +26,7 @@ export default defineEventHandler(async (event) => {
     .insert(tables.typingGroups)
     .values({ slug, name: body.name, kind: body.kind })
     .returning();
+
   if (!group) {
     throw createError({ statusCode: 500, statusMessage: 'Failed to create group' });
   }
@@ -40,11 +38,13 @@ export default defineEventHandler(async (event) => {
   });
 
   let learner: Learner | null = null;
+
   if (body.initialLearnerName) {
     const [created] = await db
       .insert(tables.typingLearners)
       .values({ groupId: group.id, displayName: body.initialLearnerName })
       .returning();
+
     if (created) {
       learner = {
         id: created.id,
@@ -60,13 +60,5 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const out: TypingGroup = {
-    id: group.id,
-    slug: group.slug,
-    name: group.name,
-    kind: group.kind as TypingGroupKind,
-    createdAt: group.createdAt.toISOString(),
-    updatedAt: group.updatedAt.toISOString(),
-  };
-  return { group: out, learner };
+  return { group: toTypingGroup(group), learner };
 });

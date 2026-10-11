@@ -3,8 +3,20 @@
  * Tests the logic that maps Anthropic beta response blocks to SSE events.
  */
 import { describe, it, expect } from 'vitest';
+import { z } from 'zod';
 import type { ArtifactSSEEvent } from '~~/shared/artifact-types';
 import type { CodeExecutionResponse } from '~~/server/utils/ai/anthropic-beta-types';
+
+const bashInputSchema = z.object({ command: z.string().min(1) });
+
+const textEditorInputSchema = z.object({
+  file_text: z.string().min(1),
+  path: z.string().optional(),
+});
+
+function findEvent<T extends ArtifactSSEEvent['type']>(events: ArtifactSSEEvent[], type: T) {
+  return events.find((e): e is Extract<ArtifactSSEEvent, { type: T }> => e.type === type);
+}
 
 /**
  * Replicate the content block processing logic from the route handler.
@@ -23,17 +35,21 @@ function processContentBlocks(response: CodeExecutionResponse): ArtifactSSEEvent
       events.push({ type: 'artifact_text', text: block.text });
     } else if (block.type === 'server_tool_use') {
       events.push({ type: 'artifact_execution_start' });
-      if (block.name === 'bash_code_execution' && block.input?.command) {
+
+      const bashInput = bashInputSchema.safeParse(block.input);
+      const editorInput = textEditorInputSchema.safeParse(block.input);
+
+      if (block.name === 'bash_code_execution' && bashInput.success) {
         events.push({
           type: 'artifact_code',
-          code: block.input.command as string,
+          code: bashInput.data.command,
           language: 'bash',
         });
-      } else if (block.name === 'text_editor_code_execution' && block.input?.file_text) {
+      } else if (block.name === 'text_editor_code_execution' && editorInput.success) {
         events.push({
           type: 'artifact_code',
-          code: block.input.file_text as string,
-          language: (block.input.path as string)?.split('.').pop() || 'text',
+          code: editorInput.data.file_text,
+          language: editorInput.data.path?.split('.').pop() || 'text',
         });
       }
     } else if (
@@ -41,6 +57,7 @@ function processContentBlocks(response: CodeExecutionResponse): ArtifactSSEEvent
       block.type === 'text_editor_code_execution_tool_result'
     ) {
       const result = block.content;
+
       if (result?.stdout !== undefined || result?.stderr !== undefined) {
         events.push({
           type: 'artifact_execution_result',
@@ -49,6 +66,7 @@ function processContentBlocks(response: CodeExecutionResponse): ArtifactSSEEvent
           exitCode: result.return_code ?? 0,
         });
       }
+
       if (Array.isArray(result?.content)) {
         for (const item of result.content) {
           if (item.file_id && !seenFileIds.has(item.file_id)) {
@@ -69,6 +87,7 @@ function processContentBlocks(response: CodeExecutionResponse): ArtifactSSEEvent
   }
 
   events.push({ type: 'artifact_done' });
+
   return events;
 }
 
@@ -139,9 +158,9 @@ describe('artifact response content block processing', () => {
 
     const events = processContentBlocks(response);
 
-    const codeEvent = events.find((e) => e.type === 'artifact_code');
+    const codeEvent = findEvent(events, 'artifact_code');
     expect(codeEvent).toBeDefined();
-    expect((codeEvent as { language: string }).language).toBe('js');
+    expect(codeEvent?.language).toBe('js');
   });
 
   it('defaults to text language when no path extension', () => {
@@ -196,10 +215,10 @@ describe('artifact response content block processing', () => {
 
     const events = processContentBlocks(response);
 
-    const resultEvent = events.find((e) => e.type === 'artifact_execution_result');
+    const resultEvent = findEvent(events, 'artifact_execution_result');
     expect(resultEvent).toBeDefined();
-    expect((resultEvent as { exitCode: number }).exitCode).toBe(1);
-    expect((resultEvent as { stderr: string }).stderr).toContain('NameError');
+    expect(resultEvent?.exitCode).toBe(1);
+    expect(resultEvent?.stderr).toContain('NameError');
   });
 
   it('extracts file references from result content', () => {
@@ -220,12 +239,10 @@ describe('artifact response content block processing', () => {
 
     const events = processContentBlocks(response);
 
-    const fileEvent = events.find((e) => e.type === 'artifact_file');
+    const fileEvent = findEvent(events, 'artifact_file');
     expect(fileEvent).toBeDefined();
-    expect((fileEvent as { file: { fileId: string } }).file.fileId).toBe('file-abc123');
-    expect((fileEvent as { file: { url: string } }).file.url).toBe(
-      '/api/artifacts/files/file-abc123',
-    );
+    expect(fileEvent?.file.fileId).toBe('file-abc123');
+    expect(fileEvent?.file.url).toBe('/api/artifacts/files/file-abc123');
   });
 
   it('deduplicates file IDs across multiple result blocks', () => {

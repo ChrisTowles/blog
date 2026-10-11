@@ -1,4 +1,6 @@
+import { z } from 'zod';
 import type { SSEEvent } from '~~/shared/chat-types';
+import type { JsonObject } from '~~/shared/json-types';
 
 // TODO: all of this file is likely a mistake and there are better ways to do this.
 //       but for now, this works to adapt the Agent SDK streams to SSE for the blog chatbot.
@@ -25,7 +27,7 @@ export interface AgentAssistantMessage {
       thinking?: string;
       id?: string;
       name?: string;
-      input?: unknown;
+      input?: JsonObject;
     }>;
     stop_reason: 'end_turn' | 'tool_use' | 'max_tokens';
   };
@@ -76,6 +78,12 @@ export type AgentMessage =
   | AgentResultMessage
   | AgentStreamEvent;
 
+const toolResultPartSchema = z.object({
+  type: z.literal('tool_result'),
+  tool_use_id: z.string(),
+  content: z.unknown(),
+});
+
 /**
  * State for tracking tool calls during streaming
  */
@@ -121,6 +129,7 @@ export async function* adaptAgentToSSE(
     }
 
     const events = processMessage(message, state);
+
     for (const event of events) {
       yield event;
     }
@@ -163,30 +172,36 @@ function processMessage(message: AgentMessage, state: StreamState): SSEEvent[] {
             type: 'tool_start',
             tool: block.name,
             toolCallId: block.id,
-            args: block.input as Record<string, unknown>,
+            args: block.input ?? {},
           });
         }
       }
+
       break;
 
     case 'user':
       // User messages with tool results - extract tool results
       if (Array.isArray(message.message.content)) {
         for (const part of message.message.content) {
-          const partObj = part as unknown as Record<string, unknown>;
-          if (partObj.type === 'tool_result' && typeof partObj.tool_use_id === 'string') {
-            const toolUseId = partObj.tool_use_id;
-            const content =
-              typeof partObj.content === 'string'
-                ? partObj.content
-                : JSON.stringify(partObj.content);
+          const toolResultPart = toolResultPartSchema.safeParse(part);
+
+          if (toolResultPart.success) {
+            const toolUseId = toolResultPart.data.tool_use_id;
+            const textContent = z.string().safeParse(toolResultPart.data.content);
+
+            const content = textContent.success
+              ? textContent.data
+              : JSON.stringify(toolResultPart.data.content);
+
             // Parse the result if it's JSON
             let result: unknown;
+
             try {
               result = JSON.parse(content);
             } catch {
               result = content;
             }
+
             events.push({
               type: 'tool_end',
               tool: state.currentToolName || 'unknown',
@@ -196,12 +211,14 @@ function processMessage(message: AgentMessage, state: StreamState): SSEEvent[] {
           }
         }
       }
+
       break;
 
     case 'stream_event':
       // Handle streaming events for incremental updates
       if (message.event.type === 'content_block_start') {
         const block = message.event.content_block;
+
         if (block?.type === 'tool_use') {
           state.currentToolId = block.id || null;
           state.currentToolName = block.name || null;
@@ -209,6 +226,7 @@ function processMessage(message: AgentMessage, state: StreamState): SSEEvent[] {
         }
       } else if (message.event.type === 'content_block_delta') {
         const delta = message.event.delta;
+
         if (delta?.type === 'text_delta' && delta.text) {
           state.fullText += delta.text;
           events.push({ type: 'text', text: delta.text });
@@ -221,7 +239,8 @@ function processMessage(message: AgentMessage, state: StreamState): SSEEvent[] {
       } else if (message.event.type === 'content_block_stop') {
         if (state.currentToolId && state.currentToolName) {
           // Parse accumulated tool input
-          let toolArgs: Record<string, unknown> = {};
+          let toolArgs: JsonObject = {};
+
           try {
             if (state.toolInputJson) {
               toolArgs = JSON.parse(state.toolInputJson);
@@ -229,6 +248,7 @@ function processMessage(message: AgentMessage, state: StreamState): SSEEvent[] {
           } catch {
             // Invalid JSON, use empty args
           }
+
           events.push({
             type: 'tool_start',
             tool: state.currentToolName,
@@ -240,6 +260,7 @@ function processMessage(message: AgentMessage, state: StreamState): SSEEvent[] {
           state.toolInputJson = '';
         }
       }
+
       break;
 
     case 'result':
@@ -247,6 +268,7 @@ function processMessage(message: AgentMessage, state: StreamState): SSEEvent[] {
       if (message.is_error) {
         events.push({ type: 'error', error: message.result });
       }
+
       break;
   }
 

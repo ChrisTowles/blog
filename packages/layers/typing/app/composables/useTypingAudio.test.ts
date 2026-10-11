@@ -40,6 +40,7 @@ function makeFakeOscillator(): FakeOscillator {
     onended: null,
     startedAt: null,
   };
+
   return osc;
 }
 
@@ -59,7 +60,9 @@ function makeFakeGain(): FakeGain {
 const destination = { connect: vi.fn() };
 
 let constructedContexts = 0;
+
 let oscillators: FakeOscillator[] = [];
+
 let currentTime = 0;
 
 class FakeAudioContext {
@@ -74,6 +77,7 @@ class FakeAudioContext {
   createOscillator() {
     const osc = makeFakeOscillator();
     oscillators.push(osc);
+
     return osc;
   }
   createGain() {
@@ -81,6 +85,7 @@ class FakeAudioContext {
   }
   resume() {
     this.state = 'running';
+
     return Promise.resolve();
   }
 }
@@ -90,6 +95,7 @@ class FakeAudioContext {
 // to reset it.
 async function loadFresh() {
   vi.resetModules();
+
   return await import('./useTypingAudio');
 }
 
@@ -101,12 +107,16 @@ beforeEach(() => {
   // fake directly on `window` (which the composable reads from). A
   // `vi.stubGlobal` call alone misses this because `window.AudioContext`
   // isn't a tracked global — it's a missing property.
-  (window as unknown as { AudioContext: typeof FakeAudioContext }).AudioContext = FakeAudioContext;
+  Object.defineProperty(window, 'AudioContext', {
+    configurable: true,
+    writable: true,
+    value: FakeAudioContext,
+  });
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  delete (window as unknown as { AudioContext?: unknown }).AudioContext;
+  Reflect.deleteProperty(window, 'AudioContext');
 });
 
 describe('useTypingAudio — synth helpers', () => {

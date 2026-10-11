@@ -8,24 +8,39 @@
  * - server_tool_use with name "bash_code_execution" or "text_editor_code_execution"
  */
 
+import type Anthropic from '@anthropic-ai/sdk';
+
 /** Content block types from the Code Execution beta response */
 export interface CodeExecutionTextBlock {
   type: 'text';
   text: string;
 }
 
+/** Input of a server-side bash or text editor tool call */
+export interface CodeExecutionToolInput {
+  command?: string;
+  file_text?: string;
+  path?: string;
+}
+
 export interface CodeExecutionToolUseBlock {
   type: 'server_tool_use';
   name: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  input: Record<string, any>;
+  input: CodeExecutionToolInput;
+}
+
+/** Result payload of a bash or text editor tool call */
+export interface CodeExecutionResult {
+  stdout?: string;
+  stderr?: string;
+  return_code?: number;
+  content?: Array<{ file_id?: string }>;
 }
 
 export interface CodeExecutionToolResultBlock {
   type: 'bash_code_execution_tool_result' | 'text_editor_code_execution_tool_result';
   tool_use_id: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  content: any;
+  content?: CodeExecutionResult | null;
 }
 
 export type CodeExecutionContentBlock =
@@ -53,18 +68,30 @@ export interface StreamableResponse {
 }
 
 /** Stream event types from the beta messages.stream() API */
+export type BetaStartedBlock =
+  | { type: 'tool_use' | 'server_tool_use'; id?: string; name?: string }
+  | {
+      type: 'bash_code_execution_tool_result' | 'text_editor_code_execution_tool_result';
+      content?: CodeExecutionResult | null;
+    }
+  | { type: 'text' | 'thinking' | 'redacted_thinking' };
+
 export interface BetaContentBlockStart {
   type: 'content_block_start';
   index: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  content_block: { type: string; id?: string; name?: string; [key: string]: any };
+  content_block: BetaStartedBlock;
 }
+
+export type BetaBlockDelta =
+  | { type: 'thinking_delta'; thinking: string }
+  | { type: 'signature_delta'; signature: string }
+  | { type: 'text_delta'; text: string }
+  | { type: 'input_json_delta'; partial_json: string };
 
 export interface BetaContentBlockDelta {
   type: 'content_block_delta';
   index: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  delta: { type: string; [key: string]: any };
+  delta: BetaBlockDelta;
 }
 
 export interface BetaContentBlockStop {
@@ -74,16 +101,13 @@ export interface BetaContentBlockStop {
 
 export interface BetaMessageStart {
   type: 'message_start';
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  message: { container?: { id: string }; [key: string]: any };
+  message: { container?: { id: string } };
 }
 
 export interface BetaMessageDelta {
   type: 'message_delta';
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  delta: { [key: string]: any };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  usage?: { [key: string]: any };
+  delta: { stop_reason?: string | null; stop_sequence?: string | null };
+  usage?: { input_tokens?: number | null; output_tokens?: number | null };
 }
 
 export type BetaStreamEvent =
@@ -102,8 +126,10 @@ export interface BetaStreamResponse extends AsyncIterable<BetaStreamEvent> {
 export interface AnthropicBetaClient {
   beta: {
     messages: {
-      create(params: Record<string, unknown>): Promise<CodeExecutionResponse>;
-      stream(params: Record<string, unknown>): BetaStreamResponse;
+      create(
+        params: Anthropic.Beta.Messages.MessageCreateParamsNonStreaming,
+      ): Promise<CodeExecutionResponse>;
+      stream(params: Anthropic.Beta.Messages.MessageCreateParamsNonStreaming): BetaStreamResponse;
     };
     files: {
       download(

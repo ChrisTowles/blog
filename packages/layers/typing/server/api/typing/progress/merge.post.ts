@@ -33,6 +33,7 @@ export default defineEventHandler(async (event) => {
   const db = useDrizzle();
 
   let attemptsInserted = 0;
+
   for (const a of body.attempts) {
     await db.insert(tables.typingAttempts).values({
       learnerId: body.learnerId,
@@ -49,8 +50,10 @@ export default defineEventHandler(async (event) => {
   }
 
   let keysUpdated = 0;
+
   for (const [key, stat] of Object.entries(body.keyStats)) {
     if (stat.attempts === 0) continue;
+
     const existing = await db
       .select()
       .from(tables.typingKeyStats)
@@ -61,14 +64,18 @@ export default defineEventHandler(async (event) => {
         ),
       )
       .limit(1);
+
     const prev = existing[0];
+
     if (prev) {
       const totalAttempts = prev.attempts + stat.attempts;
       const totalErrors = prev.errors + stat.errors;
+
       const weightedAvg =
         totalAttempts > 0
           ? (prev.avgMs * prev.attempts + stat.avgMs * stat.attempts) / totalAttempts
           : 0;
+
       await db
         .update(tables.typingKeyStats)
         .set({ attempts: totalAttempts, errors: totalErrors, avgMs: weightedAvg })
@@ -82,6 +89,7 @@ export default defineEventHandler(async (event) => {
         avgMs: stat.avgMs,
       });
     }
+
     keysUpdated++;
   }
 

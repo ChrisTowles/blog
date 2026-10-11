@@ -1,3 +1,8 @@
+import type Anthropic from '@anthropic-ai/sdk';
+import type {
+  BetaContainerParams,
+  BetaTool,
+} from '@anthropic-ai/sdk/resources/beta/messages/messages';
 import type { MessageParam } from '@anthropic-ai/sdk/resources/messages';
 import { z } from 'zod';
 import { log } from 'evlog';
@@ -11,7 +16,6 @@ import type {
   SSEEvent,
   UiResourcePart,
 } from '~~/shared/chat-types';
-import type { AnthropicBetaClient, BetaStreamEvent } from '~~/server/utils/ai/anthropic-beta-types';
 import { getSkillsForAPI, getSkillsSystemPrompt } from '~~/server/utils/ai/skills-loader';
 import { callMcpTool, getMcpTools } from '~~/server/utils/mcp/client-pool';
 import {
@@ -22,6 +26,16 @@ import {
 const chatTracer = trace.getTracer('blog.chat');
 
 const MCP_ENDPOINTS = ['/mcp/echo', '/mcp/aviation'] as const;
+
+const toolArgsSchema = z.record(z.string(), z.json());
+
+type ToolArgs = z.infer<typeof toolArgsSchema>;
+
+const serverToolInputSchema = z.object({
+  command: z.string().optional(),
+  file_text: z.string().optional(),
+  path: z.string().optional(),
+});
 
 defineRouteMeta({
   openAPI: {
@@ -68,16 +82,15 @@ function sendSSE(controller: ReadableStreamDefaultController, event: SSEEvent): 
   controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
 }
 
-async function resolveFileMetadata(
-  betaClient: AnthropicBetaClient,
-  fileId: string,
-): Promise<FilePart> {
+async function resolveFileMetadata(client: Anthropic, fileId: string): Promise<FilePart> {
   let fileName = 'output';
   let mediaType = 'application/octet-stream';
+
   try {
-    const meta = await betaClient.beta.files.retrieveMetadata(fileId, {
+    const meta = await client.beta.files.retrieveMetadata(fileId, {
       betas: ['files-api-2025-04-14'],
     });
+
     fileName = meta.filename || fileName;
     mediaType = meta.mime_type || mediaType;
   } catch {
@@ -97,6 +110,7 @@ export default defineEventHandler(async (event) => {
   const session = await getUserSession(event);
 
   const config = useRuntimeConfig();
+
   const { id } = await getValidatedRouterParams(
     event,
     z.object({
@@ -115,7 +129,7 @@ export default defineEventHandler(async (event) => {
   const db = useDrizzle();
 
   const chat = await db.query.chats.findFirst({
-    where: (c, { eq }) => and(eq(c.id, id as string), eq(c.userId, session.user?.id || session.id)),
+    where: (c, { eq }) => and(eq(c.id, id), eq(c.userId, session.user?.id || session.id)),
     with: {
       messages: true,
     },
@@ -129,15 +143,17 @@ export default defineEventHandler(async (event) => {
   // already opened it). Promotes the skinny HTTP span to a wide event.
   const requestSpan = trace.getActiveSpan();
   requestSpan?.setAttributes({
-    'chat.id': id as string,
+    'chat.id': id,
     'chat.model': model,
   });
 
   // Generate title if needed
   let generatedTitle: string | null = null;
+
   if (!chat.title && messages.length > 0) {
-    const titleModel = config.public.model_fast as string;
+    const titleModel = config.public.model_fast;
     const client = getAnthropicClient();
+
     const titleResponse = await withAnthropicSpan(
       'chat',
       titleModel,
@@ -155,25 +171,24 @@ export default defineEventHandler(async (event) => {
         }),
       {
         max_tokens: 50,
-        attributes: { 'chat.id': id as string, 'chat.kind': 'title-gen' },
+        attributes: { 'chat.id': id, 'chat.kind': 'title-gen' },
       },
     );
 
     const titleContent = titleResponse.content[0];
+
     if (titleContent?.type === 'text') {
       generatedTitle = titleContent.text.slice(0, 30);
-      await db
-        .update(tables.chats)
-        .set({ title: generatedTitle })
-        .where(eq(tables.chats.id, id as string));
+      await db.update(tables.chats).set({ title: generatedTitle }).where(eq(tables.chats.id, id));
     }
   }
 
   // Save the last user message
   const lastMessage = messages[messages.length - 1];
+
   if (lastMessage?.role === 'user' && messages.length > 1) {
     await db.insert(tables.messages).values({
-      chatId: id as string,
+      chatId: id,
       role: 'user',
       parts: lastMessage.parts,
     });
@@ -192,7 +207,8 @@ export default defineEventHandler(async (event) => {
   const settled = await Promise.allSettled(
     MCP_ENDPOINTS.map((path) => getMcpTools(path, baseUrl).then((tools) => ({ path, tools }))),
   );
-  const discovered: Array<{ path: string; tools: unknown[] }> = [];
+
+  const discovered: Array<{ path: string; tools: Awaited<ReturnType<typeof getMcpTools>> }> = [];
   settled.forEach((result, idx) => {
     if (result.status === 'fulfilled') {
       discovered.push(result.value);
@@ -202,17 +218,11 @@ export default defineEventHandler(async (event) => {
     }
   });
   const mcpToolRoute = new Map<string, string>();
-  const mcpToolDefs: Array<{
-    name: string;
-    description: string;
-    input_schema: Record<string, unknown>;
-  }> = [];
+
+  const mcpToolDefs: BetaTool[] = [];
+
   for (const { path, tools } of discovered) {
-    for (const tool of tools as unknown as Array<{
-      name: string;
-      description?: string;
-      input_schema: Record<string, unknown>;
-    }>) {
+    for (const tool of tools) {
       if (mcpToolRoute.has(tool.name)) {
         log.warn(
           'chat',
@@ -220,6 +230,7 @@ export default defineEventHandler(async (event) => {
         );
         continue;
       }
+
       mcpToolRoute.set(tool.name, path);
       mcpToolDefs.push({
         name: tool.name,
@@ -237,7 +248,6 @@ export default defineEventHandler(async (event) => {
         }
 
         const client = getAnthropicClient();
-        const betaClient = client as unknown as AnthropicBetaClient;
         const anthropicMessages = convertToAnthropicMessages(messages);
 
         let fullText = '';
@@ -266,11 +276,15 @@ export default defineEventHandler(async (event) => {
         while (turnCount < maxTurns) {
           turnCount++;
 
+          const container: BetaContainerParams = { skills };
+
+          if (containerId) container.id = containerId;
+
           const streamResponse = withAnthropicStreamSpan(
             'chat',
             model,
             () =>
-              betaClient.beta.messages.stream({
+              client.beta.messages.stream({
                 model,
                 max_tokens: 16000,
                 system: fullSystemPrompt,
@@ -284,10 +298,7 @@ export default defineEventHandler(async (event) => {
                     name: 'code_execution',
                   },
                 ],
-                container: {
-                  ...(containerId ? { id: containerId } : {}),
-                  skills,
-                },
+                container,
                 thinking: model.includes('haiku')
                   ? { type: 'enabled' as const, budget_tokens: 4096 }
                   : { type: 'adaptive' as const },
@@ -295,7 +306,7 @@ export default defineEventHandler(async (event) => {
             {
               max_tokens: 16000,
               attributes: {
-                'chat.id': id as string,
+                'chat.id': id,
                 'chat.turn': turnCount,
                 'chat.kind': 'stream',
               },
@@ -306,11 +317,12 @@ export default defineEventHandler(async (event) => {
           let turnThinking = '';
           let turnThinkingSignature = '';
           const toolResults: { type: 'tool_result'; tool_use_id: string; content: string }[] = [];
-          const toolUses: { id: string; name: string; input: Record<string, unknown> }[] = [];
+          const toolUses: { id: string; name: string; input: ToolArgs }[] = [];
 
-          for await (const streamEvent of streamResponse as AsyncIterable<BetaStreamEvent>) {
+          for await (const streamEvent of streamResponse) {
             if (streamEvent.type === 'message_start') {
-              const msgContainerId = streamEvent.message?.container?.id;
+              const msgContainerId = streamEvent.message.container?.id;
+
               if (msgContainerId && msgContainerId !== containerId) {
                 containerId = msgContainerId;
                 sendSSE(controller, { type: 'container', containerId: msgContainerId });
@@ -332,24 +344,29 @@ export default defineEventHandler(async (event) => {
                 block.type === 'bash_code_execution_tool_result' ||
                 block.type === 'text_editor_code_execution_tool_result'
               ) {
-                const result = block.content;
+                const result =
+                  block.type === 'bash_code_execution_tool_result' &&
+                  block.content.type === 'bash_code_execution_result'
+                    ? block.content
+                    : null;
+
                 const stdout = result?.stdout || '';
                 const stderr = result?.stderr || '';
                 const exitCode = result?.return_code ?? 0;
 
                 const resultFiles: FilePart[] = [];
-                if (Array.isArray(result?.content)) {
-                  for (const item of result.content) {
-                    if (item.file_id && !seenFileIds.has(item.file_id)) {
-                      seenFileIds.add(item.file_id);
-                      const filePart = await resolveFileMetadata(betaClient, item.file_id);
-                      resultFiles.push(filePart);
-                      fileParts.push(filePart);
-                    }
+
+                for (const item of result?.content ?? []) {
+                  if (item.file_id && !seenFileIds.has(item.file_id)) {
+                    seenFileIds.add(item.file_id);
+                    const filePart = await resolveFileMetadata(client, item.file_id);
+                    resultFiles.push(filePart);
+                    fileParts.push(filePart);
                   }
                 }
 
                 const lastRunning = codeExecutions.findLast((ce) => ce.state === 'running');
+
                 if (lastRunning) {
                   lastRunning.stdout = stdout;
                   lastRunning.stderr = stderr;
@@ -388,8 +405,12 @@ export default defineEventHandler(async (event) => {
               if (isServerToolBlock && currentServerToolName) {
                 let code = '';
                 let language = 'bash';
+
                 try {
-                  const input = currentServerToolInput ? JSON.parse(currentServerToolInput) : {};
+                  const input = serverToolInputSchema.parse(
+                    currentServerToolInput ? JSON.parse(currentServerToolInput) : {},
+                  );
+
                   if (
                     currentServerToolName === 'bash_code_execution' ||
                     currentServerToolName === 'bash'
@@ -401,7 +422,7 @@ export default defineEventHandler(async (event) => {
                     currentServerToolName === 'text_editor'
                   ) {
                     code = input.file_text || '';
-                    language = (input.path as string)?.split('.').pop() || 'python';
+                    language = input.path?.split('.').pop() || 'python';
                   }
                 } catch {
                   // Input parsing failed — still send what we have
@@ -424,10 +445,11 @@ export default defineEventHandler(async (event) => {
                 currentServerToolInput = '';
                 isServerToolBlock = false;
               } else if (currentToolUseId && currentToolName) {
-                let toolArgs: Record<string, unknown> = {};
+                let toolArgs: ToolArgs = {};
+
                 try {
                   if (toolInputJson) {
-                    toolArgs = JSON.parse(toolInputJson);
+                    toolArgs = toolArgsSchema.parse(JSON.parse(toolInputJson));
                   }
                 } catch (parseError) {
                   log.error({
@@ -464,17 +486,21 @@ export default defineEventHandler(async (event) => {
                 let toolResult: unknown;
                 const endpointPath = mcpToolRoute.get(currentToolName);
                 const toolKind = endpointPath ? 'mcp' : 'local';
+
                 const toolSpan = chatTracer.startSpan(`tool ${currentToolName}`, {
                   kind: SpanKind.CLIENT,
                   attributes: {
                     'tool.name': currentToolName,
                     'tool.call.id': currentToolUseId,
                     'tool.kind': toolKind,
-                    'chat.id': id as string,
-                    ...(endpointPath ? { 'mcp.endpoint': endpointPath } : {}),
+                    'chat.id': id,
                   },
                 });
+
+                if (endpointPath) toolSpan.setAttribute('mcp.endpoint', endpointPath);
+
                 toolsInvoked++;
+
                 try {
                   if (endpointPath) {
                     const outcome = await callMcpTool(
@@ -483,9 +509,12 @@ export default defineEventHandler(async (event) => {
                       toolArgs,
                       baseUrl,
                     );
+
                     toolResult = outcome.text;
+
                     if (outcome.uiResource) {
                       toolSpan.setAttribute('mcp.ui_resource.uri', outcome.uiResource.uri);
+
                       const uiPart: UiResourcePart = {
                         type: 'ui-resource',
                         toolCallId: currentToolUseId,
@@ -495,6 +524,7 @@ export default defineEventHandler(async (event) => {
                         permissions: outcome.uiResource.permissions,
                         error: outcome.isError,
                       };
+
                       uiResourceParts.push(uiPart);
                       sendSSE(controller, {
                         type: 'ui_resource',
@@ -502,6 +532,7 @@ export default defineEventHandler(async (event) => {
                         html: outcome.uiResource.html,
                       });
                     }
+
                     if (outcome.isError) {
                       recordSpanError(
                         toolSpan,
@@ -517,10 +548,15 @@ export default defineEventHandler(async (event) => {
                 } finally {
                   toolSpan.end();
                 }
+
+                const toolResultText = z.string().safeParse(toolResult);
+
                 toolResults.push({
                   type: 'tool_result',
                   tool_use_id: currentToolUseId,
-                  content: typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult),
+                  content: toolResultText.success
+                    ? toolResultText.data
+                    : JSON.stringify(toolResult),
                 });
 
                 sendSSE(controller, {
@@ -539,6 +575,7 @@ export default defineEventHandler(async (event) => {
 
           try {
             const finalMessage = await streamResponse.finalMessage();
+
             if (finalMessage.container?.id && finalMessage.container.id !== containerId) {
               containerId = finalMessage.container.id;
               sendSSE(controller, { type: 'container', containerId: finalMessage.container.id });
@@ -555,7 +592,7 @@ export default defineEventHandler(async (event) => {
           const assistantContent: Array<
             | { type: 'thinking'; thinking: string; signature: string }
             | { type: 'text'; text: string }
-            | { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> }
+            | { type: 'tool_use'; id: string; name: string; input: ToolArgs }
           > = [
             ...(turnThinking && turnThinkingSignature
               ? [
@@ -596,10 +633,9 @@ export default defineEventHandler(async (event) => {
 
         // Final tally on the request span — `chat.tools.invoked` lets you
         // ask "how many tool-using chats" without joining the child spans.
-        requestSpan?.setAttributes({
-          'chat.tools.invoked': toolsInvoked,
-          ...(containerId ? { 'chat.container.id': containerId } : {}),
-        });
+        requestSpan?.setAttributes({ 'chat.tools.invoked': toolsInvoked });
+
+        if (containerId) requestSpan?.setAttribute('chat.container.id', containerId);
 
         const messageParts: MessagePart[] = [
           ...(reasoningText
@@ -622,6 +658,7 @@ export default defineEventHandler(async (event) => {
       } catch (error) {
         log.error('chat', 'Stream error');
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
         if (requestSpan) recordSpanError(requestSpan, error);
         sendSSE(controller, { type: 'error', error: errorMessage });
         controller.close();

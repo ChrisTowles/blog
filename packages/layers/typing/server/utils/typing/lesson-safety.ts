@@ -8,18 +8,14 @@
  * The route caller decides what to do on failure; this module only
  * inspects.
  */
+import { z } from 'zod';
 import { getAnthropicClient } from '../../../../../blog/server/utils/ai/anthropic';
+import type { AnthropicLike } from './anthropic-like';
 
-type AnthropicLike = {
-  messages: {
-    create: (args: {
-      model: string;
-      max_tokens: number;
-      temperature?: number;
-      messages: Array<{ role: 'user'; content: string }>;
-    }) => Promise<{ content: Array<{ type: string; text: string }> }>;
-  };
-};
+const safetyVerdictSchema = z.object({
+  safe: z.boolean().optional(),
+  reason: z.string().optional(),
+});
 
 const BLOCK_LIST = [
   // Profanity / slurs (deliberately short — vision is for typos in topic
@@ -55,11 +51,13 @@ export type SafetyCheckResult =
 
 export function blockListCheck(text: string): SafetyCheckResult {
   const lower = text.toLowerCase();
+
   for (const term of BLOCK_LIST) {
     if (lower.includes(term)) {
       return { safe: false, reason: `blocked term: ${term}`, source: 'block-list' };
     }
   }
+
   return { safe: true };
 }
 
@@ -74,7 +72,9 @@ export async function aiSafetyReview(
     // No API key — best we can do is the block list, which already passed.
     return { safe: true };
   }
-  const ai = client ?? (getAnthropicClient() as unknown as AnthropicLike);
+
+  const ai = client ?? getAnthropicClient();
+
   const prompt = `You are a content safety reviewer for a children's typing app for kids aged 6-10.
 
 Topic: "${topic}"
@@ -93,13 +93,18 @@ Is this text appropriate for a 7-year-old to read while learning to type? Reply 
   });
 
   const block = response.content[0];
+
   if (!block || block.type !== 'text') {
     return { safe: false, reason: 'no response from safety model', source: 'ai-review' };
   }
+
   const raw = block.text.trim();
+
   try {
-    const parsed = JSON.parse(raw) as { safe?: boolean; reason?: string };
+    const parsed = safetyVerdictSchema.parse(JSON.parse(raw));
+
     if (parsed.safe === true) return { safe: true };
+
     return {
       safe: false,
       reason: parsed.reason ?? 'AI marked unsafe',
@@ -116,6 +121,8 @@ export async function reviewLesson(
   client?: AnthropicLike,
 ): Promise<SafetyCheckResult> {
   const block = blockListCheck(text);
+
   if (!block.safe) return block;
+
   return aiSafetyReview(text, topic, client);
 }

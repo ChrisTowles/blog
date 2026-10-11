@@ -12,6 +12,7 @@ import { getAnthropicClient } from '../../ai/anthropic';
 import { withAnthropicSpan } from '../../observability/anthropic';
 import { MODEL_SONNET } from '../../../../shared/models';
 import { extractErrorMessage } from '../../../../shared/error-util';
+import type { JsonObject } from '../../../../shared/json-types';
 import {
   AVIATION_TOOL_NAMES,
   type AviationPendingResult,
@@ -30,7 +31,7 @@ import {
   runWithTimeout,
   DEFAULT_QUERY_TIMEOUT_MS,
 } from './duckdb';
-import { resolveChartOption } from './chart-bindings';
+import { resolveChartOptionObject } from './chart-bindings';
 import { validateSql } from './sql-safety';
 
 const LIMIT_ROW_CAP = 10_000;
@@ -44,13 +45,15 @@ export interface AskAviationArgs {
 }
 
 /** Structured payload emitted by the model via the `emit_answer` tool_use. */
-interface LlmStructuredOutput {
-  sql: string;
-  answer: string;
-  hero_number?: string;
-  chart_option: Record<string, unknown>;
-  followups: [string, string, string];
-}
+const llmStructuredOutputSchema = z.object({
+  sql: z.string(),
+  answer: z.string(),
+  hero_number: z.string().optional().catch(undefined),
+  chart_option: z.record(z.string(), z.json()),
+  followups: z.tuple([z.string(), z.string(), z.string()]),
+});
+
+type LlmStructuredOutput = z.infer<typeof llmStructuredOutputSchema>;
 
 // ---------------- ask_aviation (fast return) ----------------
 
@@ -76,16 +79,10 @@ export function executeAskAviation(
     `suggestions are already visible to the user in the iframe — the model ` +
     `does not need to repeat or summarize them. Proceed with the conversation.`;
 
-  const pending: AviationPendingResult = {
-    pending: true,
-    question: args.question,
-    queryUrl,
-  };
-
   return {
     content: [{ type: 'text', text: llmSummary }],
-    structuredContent: pending as unknown as Record<string, unknown>,
-  } as CallToolResult & { structuredContent: AviationPendingResult };
+    structuredContent: { pending: true, question: args.question, queryUrl },
+  };
 }
 
 // ---------------- aviation pipeline (slow, runs in SSE endpoint) ----------------
@@ -108,16 +105,19 @@ export async function runAviationPipeline(
 
   onProgress?.('validating');
   const validation = await validateSql(llmOutput.sql);
+
   if (!validation.ok) {
     return emptyAnswer(
       `I wasn't able to produce a safe query for that question: ${validation.error}. ` +
         `Try rephrasing, e.g. "which US operators fly the most Boeing aircraft?"`,
     );
   }
+
   const sqlToRun = validation.sql;
 
   onProgress?.('querying');
-  let rows: Array<Record<string, unknown>>;
+  let rows: JsonObject[];
+
   try {
     rows = await runSelect(sqlToRun);
   } catch (e) {
@@ -128,6 +128,7 @@ export async function runAviationPipeline(
       error: errorMessage,
       sql: sqlToRun,
     });
+
     return emptyAnswer(
       `The query failed to execute: ${errorMessage}. Try rephrasing or narrowing the question.`,
     );
@@ -135,10 +136,8 @@ export async function runAviationPipeline(
 
   onProgress?.('rendering');
   const truncated = validation.limitInjected && rows.length >= LIMIT_ROW_CAP;
-  const resolvedChartOption = resolveChartOption(llmOutput.chart_option, rows) as Record<
-    string,
-    unknown
-  >;
+
+  const resolvedChartOption = resolveChartOptionObject(llmOutput.chart_option, rows);
 
   return {
     sql: sqlToRun,
@@ -153,6 +152,7 @@ export async function runAviationPipeline(
 
 async function callAnthropicForStructuredOutput(question: string): Promise<LlmStructuredOutput> {
   const client = getAnthropicClient();
+
   const response = await withAnthropicSpan(
     'chat',
     MODEL_SONNET,
@@ -165,9 +165,9 @@ async function callAnthropicForStructuredOutput(question: string): Promise<LlmSt
           {
             name: 'emit_answer',
             description: 'Emit the final structured answer for the aviation question.',
-            input_schema: AVIATION_STRUCTURED_OUTPUT_SCHEMA as unknown as {
-              type: 'object';
-              properties?: Record<string, unknown>;
+            input_schema: {
+              ...AVIATION_STRUCTURED_OUTPUT_SCHEMA,
+              required: [...AVIATION_STRUCTURED_OUTPUT_SCHEMA.required],
             },
           },
         ],
@@ -184,37 +184,31 @@ async function callAnthropicForStructuredOutput(question: string): Promise<LlmSt
   );
 
   const block = response.content.find((b) => b.type === 'tool_use');
+
   if (!block || block.type !== 'tool_use' || block.name !== 'emit_answer') {
     throw new Error('LLM did not emit a structured answer');
   }
-  const input = block.input as Partial<LlmStructuredOutput>;
-  if (
-    typeof input.sql !== 'string' ||
-    typeof input.answer !== 'string' ||
-    !input.chart_option ||
-    !Array.isArray(input.followups) ||
-    input.followups.length !== 3
-  ) {
+
+  const output = llmStructuredOutputSchema.safeParse(block.input);
+
+  if (!output.success) {
     throw new Error('LLM structured output failed shape check');
   }
-  return {
-    sql: input.sql,
-    answer: input.answer,
-    hero_number: input.hero_number,
-    chart_option: input.chart_option,
-    followups: input.followups as [string, string, string],
-  };
+
+  return output.data;
 }
 
-async function runSelect(sql: string): Promise<Array<Record<string, unknown>>> {
+async function runSelect(sql: string): Promise<JsonObject[]> {
   const conn = await openAviationConnection();
+
   try {
     const reader = await runWithTimeout(
       conn,
       (c) => c.runAndReadAll(sql),
       DEFAULT_QUERY_TIMEOUT_MS,
     );
-    return reader.getRowObjectsJson() as Array<Record<string, unknown>>;
+
+    return reader.getRowObjectsJson();
   } finally {
     conn.closeSync();
   }
@@ -239,6 +233,7 @@ function emptyAnswer(message: string): AviationToolResult {
 
 export function executeListQuestions(): CallToolResult {
   const lines = AVIATION_STARTER_QUESTIONS.map((q, i) => `${i + 1}. ${q}`).join('\n');
+
   return {
     content: [{ type: 'text', text: lines }],
     structuredContent: { questions: AVIATION_STARTER_QUESTIONS },

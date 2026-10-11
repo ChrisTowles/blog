@@ -4,31 +4,34 @@ import { extractUiResource, extractUiResourceFromRead, toolUiResourceUri } from 
 
 describe('toolUiResourceUri', () => {
   it('returns the ui:// uri when _meta.ui.resourceUri is set', () => {
-    const tool = {
+    const tool: Tool = {
       name: 'ask_aviation',
       description: '',
       inputSchema: { type: 'object', properties: {} },
       _meta: { ui: { resourceUri: 'ui://aviation-answer' } },
-    } as unknown as Tool;
+    };
+
     expect(toolUiResourceUri(tool)).toBe('ui://aviation-answer');
   });
 
   it('returns undefined when the tool has no _meta', () => {
-    const tool = {
+    const tool: Tool = {
       name: 'list_questions',
       description: '',
       inputSchema: { type: 'object', properties: {} },
-    } as unknown as Tool;
+    };
+
     expect(toolUiResourceUri(tool)).toBeUndefined();
   });
 
   it('rejects non-ui:// schemes as a guard against spoofed references', () => {
-    const tool = {
+    const tool: Tool = {
       name: 'x',
       description: '',
       inputSchema: { type: 'object', properties: {} },
       _meta: { ui: { resourceUri: 'https://evil.test/bundle.html' } },
-    } as unknown as Tool;
+    };
+
     expect(toolUiResourceUri(tool)).toBeUndefined();
   });
 
@@ -53,6 +56,7 @@ describe('extractUiResource (inline EmbeddedResource)', () => {
         },
       ],
     };
+
     const extracted = extractUiResource(result);
     expect(extracted).toEqual({
       uri: 'ui://aviation-answer',
@@ -66,6 +70,7 @@ describe('extractUiResource (inline EmbeddedResource)', () => {
     const result: CallToolResult = {
       content: [{ type: 'text', text: 'pending' }],
     };
+
     expect(extractUiResource(result)).toBeUndefined();
   });
 
@@ -82,6 +87,7 @@ describe('extractUiResource (inline EmbeddedResource)', () => {
         },
       ],
     };
+
     expect(extractUiResource(result)).toBeUndefined();
   });
 });
@@ -98,6 +104,7 @@ describe('extractUiResourceFromRead (resources/read response)', () => {
         },
       ],
     };
+
     const extracted = extractUiResourceFromRead('ui://aviation-answer', read);
     expect(extracted).toEqual({
       uri: 'ui://aviation-answer',
@@ -116,6 +123,7 @@ describe('extractUiResourceFromRead (resources/read response)', () => {
         },
       ],
     };
+
     expect(extractUiResourceFromRead('ui://aviation-answer', read)).toBeUndefined();
   });
 });

@@ -20,6 +20,7 @@ export function useLoanChat(options: UseLoanChatOptions) {
       },
     ],
   };
+
   const messages = ref<ChatMessage[]>([welcomeMessage]);
   const status = ref<ChatStatus>('ready');
   const error = ref<Error | null>(null);
@@ -33,6 +34,7 @@ export function useLoanChat(options: UseLoanChatOptions) {
       role: 'user',
       parts: [{ type: 'text', text }],
     };
+
     messages.value = [...messages.value, userMessage];
 
     const assistantMessageId = crypto.randomUUID();
@@ -56,6 +58,7 @@ export function useLoanChat(options: UseLoanChatOptions) {
       if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
 
       const reader = response.body?.getReader();
+
       if (!reader) throw new Error('No response body');
 
       const decoder = new TextDecoder();
@@ -64,6 +67,7 @@ export function useLoanChat(options: UseLoanChatOptions) {
 
       while (true) {
         const { done, value } = await reader.read();
+
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
@@ -72,6 +76,7 @@ export function useLoanChat(options: UseLoanChatOptions) {
 
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
+
           try {
             const event = JSON.parse(line.slice(6));
 
@@ -95,8 +100,10 @@ export function useLoanChat(options: UseLoanChatOptions) {
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
         status.value = 'ready';
+
         return;
       }
+
       error.value = err instanceof Error ? err : new Error('Unknown error');
       status.value = 'error';
       options.onError?.(error.value);
@@ -110,6 +117,7 @@ export function useLoanChat(options: UseLoanChatOptions) {
     text: { type: 'text'; text: string } | null,
   ): void {
     const parts: MessagePart[] = [];
+
     if (text) parts.push(text);
     messages.value = messages.value.map((msg) => (msg.id === messageId ? { ...msg, parts } : msg));
   }

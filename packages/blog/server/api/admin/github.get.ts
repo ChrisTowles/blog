@@ -3,7 +3,7 @@ import type { GitHubDashboardData, GitHubIssue, GitHubLabel } from '~~/shared/gi
 interface GitHubApiIssue {
   number: number;
   title: string;
-  state: string;
+  state: 'open' | 'closed';
   labels: Array<{ name: string; color: string }>;
   created_at: string;
   closed_at: string | null;
@@ -18,8 +18,10 @@ async function fetchAllIssues(): Promise<GitHubApiIssue[]> {
 
   for (const state of ['open', 'closed'] as const) {
     let page = 1;
+
     while (true) {
       const url = `https://api.github.com/repos/${REPO}/issues?state=${state}&per_page=${perPage}&page=${page}&sort=created&direction=desc`;
+
       const response = await fetch(url, {
         headers: {
           Accept: 'application/vnd.github.v3+json',
@@ -50,6 +52,7 @@ async function fetchAllIssues(): Promise<GitHubApiIssue[]> {
 function computeHoursToClose(created: string, closed: string | null): number | null {
   if (!closed) return null;
   const diff = new Date(closed).getTime() - new Date(created).getTime();
+
   return Math.round((diff / (1000 * 60 * 60)) * 10) / 10;
 }
 
@@ -57,6 +60,7 @@ function median(values: number[]): number | null {
   if (values.length === 0) return null;
   const sorted = [...values].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
+
   return sorted.length % 2 !== 0 ? sorted[mid]! : (sorted[mid - 1]! + sorted[mid]!) / 2;
 }
 
@@ -66,6 +70,7 @@ function toMonthKey(dateStr: string): string {
 
 export default defineEventHandler(async (event): Promise<GitHubDashboardData> => {
   const session = await getUserSession(event);
+
   if (!session.user) {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized' });
   }
@@ -75,7 +80,7 @@ export default defineEventHandler(async (event): Promise<GitHubDashboardData> =>
   const issues: GitHubIssue[] = rawIssues.map((i) => ({
     number: i.number,
     title: i.title,
-    state: i.state as 'open' | 'closed',
+    state: i.state,
     labels: i.labels.map((l) => l.name),
     created_at: i.created_at,
     closed_at: i.closed_at,
@@ -84,9 +89,11 @@ export default defineEventHandler(async (event): Promise<GitHubDashboardData> =>
 
   // Label counts
   const labelMap = new Map<string, { color: string; count: number }>();
+
   for (const raw of rawIssues) {
     for (const label of raw.labels) {
       const existing = labelMap.get(label.name);
+
       if (existing) {
         existing.count++;
       } else {
@@ -94,15 +101,17 @@ export default defineEventHandler(async (event): Promise<GitHubDashboardData> =>
       }
     }
   }
+
   const labels: GitHubLabel[] = Array.from(labelMap.entries())
     .map(([name, { color, count }]) => ({ name, color, count }))
     .sort((a, b) => b.count - a.count);
 
   // Summary
   const closedIssues = issues.filter((i) => i.state === 'closed');
-  const closeTimes = closedIssues
-    .map((i) => i.hours_to_close)
-    .filter((h): h is number => h !== null);
+
+  const closeTimes = closedIssues.flatMap((i) =>
+    i.hours_to_close === null ? [] : [i.hours_to_close],
+  );
 
   const summary = {
     total_issues: issues.length,

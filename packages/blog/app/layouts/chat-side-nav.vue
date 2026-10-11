@@ -4,9 +4,13 @@ import { LazyModalConfirm } from '#components';
 import { TEST_IDS } from '~~/shared/test-ids';
 
 const route = useRoute();
+
 const toast = useToast();
+
 const overlay = useOverlay();
-const appConfig = useAppConfig() as { author: { name: string; github: string } };
+
+const appConfig = useAppConfig();
+
 const { loggedIn } = useUserSession();
 
 const open = ref(false);
@@ -37,6 +41,7 @@ const { data: chats, refresh: refreshChats } = await useFetch('/api/chats', {
 
 onNuxtReady(async () => {
   const first10 = (chats.value || []).slice(0, 10);
+
   for (const chat of first10) {
     // prefetch the chat and let the browser cache it
     await $fetch(`/api/chats/${chat.id}`);
@@ -71,6 +76,7 @@ const items = computed(() =>
 async function deleteChat(id: string) {
   const instance = deleteModal.open();
   const result = await instance.result;
+
   if (!result) {
     return;
   }
@@ -93,6 +99,7 @@ async function deleteChat(id: string) {
 async function deleteChatsAll() {
   const instance = deleteModal.open();
   const result = await instance.result;
+
   if (!result) {
     return;
   }

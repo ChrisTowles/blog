@@ -2,15 +2,8 @@
  * Unit tests for Agent SDK to SSE stream adapter
  */
 import { describe, it, expect } from 'vitest';
-import {
-  adaptAgentToSSE,
-  sendSSE,
-  type AgentMessage,
-  type AgentAssistantMessage,
-  type AgentSystemMessage,
-  type AgentResultMessage,
-  type AgentStreamEvent,
-} from './stream-adapter';
+import type { SSEEvent } from '~~/shared/chat-types';
+import { adaptAgentToSSE, sendSSE, type AgentMessage } from './stream-adapter';
 
 describe('stream-adapter', () => {
   describe('adaptAgentToSSE', () => {
@@ -24,10 +17,11 @@ describe('stream-adapter', () => {
             content: [{ type: 'text', text: 'Hello world' }],
             stop_reason: 'end_turn',
           },
-        } as AgentAssistantMessage,
+        },
       ];
 
       const events = [];
+
       for await (const event of adaptAgentToSSE(asyncIterator(messages))) {
         events.push(event);
       }
@@ -46,10 +40,11 @@ describe('stream-adapter', () => {
             content: [{ type: 'thinking', thinking: 'Let me think...' }],
             stop_reason: 'end_turn',
           },
-        } as AgentAssistantMessage,
+        },
       ];
 
       const events = [];
+
       for await (const event of adaptAgentToSSE(asyncIterator(messages))) {
         events.push(event);
       }
@@ -74,10 +69,11 @@ describe('stream-adapter', () => {
             ],
             stop_reason: 'tool_use',
           },
-        } as AgentAssistantMessage,
+        },
       ];
 
       const events = [];
+
       for await (const event of adaptAgentToSSE(asyncIterator(messages))) {
         events.push(event);
       }
@@ -100,10 +96,11 @@ describe('stream-adapter', () => {
           result: 'Something went wrong',
           total_cost_usd: 0.01,
           num_turns: 1,
-        } as AgentResultMessage,
+        },
       ];
 
       const events = [];
+
       for await (const event of adaptAgentToSSE(asyncIterator(messages))) {
         events.push(event);
       }
@@ -119,17 +116,18 @@ describe('stream-adapter', () => {
             type: 'content_block_delta',
             delta: { type: 'text_delta', text: 'Hello ' },
           },
-        } as AgentStreamEvent,
+        },
         {
           type: 'stream_event',
           event: {
             type: 'content_block_delta',
             delta: { type: 'text_delta', text: 'world!' },
           },
-        } as AgentStreamEvent,
+        },
       ];
 
       const events = [];
+
       for await (const event of adaptAgentToSSE(asyncIterator(messages))) {
         events.push(event);
       }
@@ -146,10 +144,11 @@ describe('stream-adapter', () => {
             type: 'content_block_delta',
             delta: { type: 'thinking_delta', thinking: 'Processing...' },
           },
-        } as AgentStreamEvent,
+        },
       ];
 
       const events = [];
+
       for await (const event of adaptAgentToSSE(asyncIterator(messages))) {
         events.push(event);
       }
@@ -165,28 +164,29 @@ describe('stream-adapter', () => {
             type: 'content_block_start',
             content_block: { type: 'tool_use', id: 'tool-456', name: 'getWeather' },
           },
-        } as AgentStreamEvent,
+        },
         {
           type: 'stream_event',
           event: {
             type: 'content_block_delta',
             delta: { type: 'input_json_delta', partial_json: '{"location":' },
           },
-        } as AgentStreamEvent,
+        },
         {
           type: 'stream_event',
           event: {
             type: 'content_block_delta',
             delta: { type: 'input_json_delta', partial_json: '"London"}' },
           },
-        } as AgentStreamEvent,
+        },
         {
           type: 'stream_event',
           event: { type: 'content_block_stop' },
-        } as AgentStreamEvent,
+        },
       ];
 
       const events = [];
+
       for await (const event of adaptAgentToSSE(asyncIterator(messages))) {
         events.push(event);
       }
@@ -212,11 +212,12 @@ describe('stream-adapter', () => {
             ],
             stop_reason: 'end_turn',
           },
-        } as AgentAssistantMessage,
+        },
       ];
 
       let completionResult: { text: string; reasoning: string } | null = null;
       const events = [];
+
       for await (const event of adaptAgentToSSE(asyncIterator(messages), {
         onComplete: (result) => {
           completionResult = result;
@@ -239,10 +240,11 @@ describe('stream-adapter', () => {
           session_id: 'test-session',
           tools: ['Read', 'Write'],
           model: 'sonnet',
-        } as AgentSystemMessage,
+        },
       ];
 
       const events = [];
+
       for await (const event of adaptAgentToSSE(asyncIterator(messages))) {
         events.push(event);
       }
@@ -254,34 +256,20 @@ describe('stream-adapter', () => {
   });
 
   describe('sendSSE', () => {
-    it('should encode SSE event correctly', () => {
-      const chunks: Uint8Array[] = [];
-      const mockController = {
-        enqueue: (chunk: Uint8Array) => chunks.push(chunk),
-      } as unknown as ReadableStreamDefaultController;
+    it('should encode SSE event correctly', async () => {
+      const encoded = await encodeSSE({ type: 'text', text: 'Hello' });
 
-      sendSSE(mockController, { type: 'text', text: 'Hello' });
-
-      const decoder = new TextDecoder();
-      const encoded = decoder.decode(chunks[0]);
       expect(encoded).toBe('data: {"type":"text","text":"Hello"}\n\n');
     });
 
-    it('should handle complex SSE events', () => {
-      const chunks: Uint8Array[] = [];
-      const mockController = {
-        enqueue: (chunk: Uint8Array) => chunks.push(chunk),
-      } as unknown as ReadableStreamDefaultController;
-
-      sendSSE(mockController, {
+    it('should handle complex SSE events', async () => {
+      const encoded = await encodeSSE({
         type: 'tool_start',
         tool: 'searchBlogContent',
         toolCallId: 'abc-123',
         args: { query: 'test' },
       });
 
-      const decoder = new TextDecoder();
-      const encoded = decoder.decode(chunks[0]);
       expect(encoded).toContain('"type":"tool_start"');
       expect(encoded).toContain('"tool":"searchBlogContent"');
       expect(encoded).toContain('"toolCallId":"abc-123"');
@@ -294,4 +282,15 @@ async function* asyncIterator<T>(items: T[]): AsyncIterable<T> {
   for (const item of items) {
     yield item;
   }
+}
+
+async function encodeSSE(event: SSEEvent): Promise<string> {
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      sendSSE(controller, event);
+      controller.close();
+    },
+  });
+
+  return new Response(stream).text();
 }

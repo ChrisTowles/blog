@@ -1,6 +1,16 @@
 import { expect, test } from '@playwright/test';
 
+type ReceivedMessage = { method?: string; ts?: number };
+
+declare global {
+  interface Window {
+    __mark?: { navStart: number };
+    __received?: ReceivedMessage[];
+  }
+}
+
 const HOST_URL = `http://127.0.0.1:${process.env.HOST_PORT || 8080}`;
+
 const SANDBOX_URL = `http://localhost:${process.env.SANDBOX_PORT || 8081}`;
 
 test.describe('mcp sandbox e2e', () => {
@@ -9,28 +19,25 @@ test.describe('mcp sandbox e2e', () => {
     // measured interval is (iframe-embed → proxy-ready) and does not include
     // Playwright's navigation overhead.
     await page.addInitScript(() => {
-      (window as any).__mark = { navStart: Date.now() };
+      window.__mark = { navStart: Date.now() };
     });
     await page.goto(`${HOST_URL}/host.html`);
 
     await page.waitForFunction(
-      () =>
-        (window as any).__received?.some(
-          (m: { method?: string }) => m.method === 'ui/notifications/sandbox-proxy-ready',
-        ),
+      () => window.__received?.some((m) => m.method === 'ui/notifications/sandbox-proxy-ready'),
       null,
       { timeout: 2000 },
     );
 
     const readyLatencyMs = await page.evaluate(() => {
-      const received = (window as any).__received || [];
-      const hit = received.find(
-        (m: { method?: string; ts?: number }) =>
-          m.method === 'ui/notifications/sandbox-proxy-ready',
-      );
+      const received = window.__received || [];
+
+      const hit = received.find((m) => m.method === 'ui/notifications/sandbox-proxy-ready');
+
       // The host.html script stamps ts when it receives messages.
-      return hit?.ts ? hit.ts - (window as any).__mark.navStart : null;
+      return hit?.ts ? hit.ts - window.__mark!.navStart : null;
     });
+
     // Plan R/verification: within 500ms of load. Assert the latency bound we
     // actually care about — parent navStart → proxy-ready receipt.
     if (readyLatencyMs !== null) {
@@ -62,6 +69,7 @@ test.describe('mcp sandbox e2e', () => {
         connectDomains: ["https://evil.com; script-src 'unsafe-eval'"],
       }),
     );
+
     const r = await request.get(`${SANDBOX_URL}/sandbox.html?csp=${malicious}`);
     expect(r.status()).toBe(200);
     const csp = r.headers()['content-security-policy'];
@@ -78,6 +86,7 @@ test.describe('mcp sandbox e2e', () => {
         connectDomains: ['https://api.example.com'],
       }),
     );
+
     const r = await request.get(`${SANDBOX_URL}/sandbox.html?csp=${config}`);
     const csp = r.headers()['content-security-policy'];
     expect(csp).toContain("connect-src 'self' https://api.example.com");
@@ -94,13 +103,14 @@ test.describe('mcp sandbox e2e', () => {
     // Attempting cross-origin access from the inner frame MUST throw.
     const threw = await innerFrame.locator('body').evaluate(() => {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window.top as any).alert('leak');
+        window.top!.alert('leak');
+
         return false;
       } catch {
         return true;
       }
     });
+
     expect(threw).toBe(true);
   });
 });

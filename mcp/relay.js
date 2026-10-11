@@ -52,18 +52,30 @@ export function validateReferrer(referrer) {
   if (!referrer) {
     throw new Error('No referrer, cannot validate embedding site.');
   }
+
   let origin;
+
   try {
     origin = new URL(referrer).origin;
   } catch {
     throw new Error(`Invalid referrer URL: ${referrer}`);
   }
+
   if (!ALLOWED_HOST_ORIGIN_PATTERNS.some((p) => p.test(origin))) {
     throw new Error(
       `Embedding origin not allowed: ${origin}. Update ALLOWED_HOST_ORIGIN_PATTERNS in relay.js to permit this host.`,
     );
   }
+
   return origin;
+}
+
+/**
+ * @param {unknown} value
+ * @returns {value is string}
+ */
+function isString(value) {
+  return Object.prototype.toString.call(value) === '[object String]';
 }
 
 /**
@@ -76,12 +88,17 @@ export function validateReferrer(referrer) {
  * @returns {string}
  */
 function buildAllowAttribute(permissions) {
-  if (!permissions || typeof permissions !== 'object') return '';
+  if (!(permissions instanceof Object)) return '';
   const out = [];
+
   if (permissions.camera) out.push('camera');
+
   if (permissions.microphone) out.push('microphone');
+
   if (permissions.geolocation) out.push('geolocation');
+
   if (permissions.clipboardWrite) out.push('clipboard-write');
+
   return out.join('; ');
 }
 
@@ -132,25 +149,29 @@ export function createSandboxRelay(opts) {
             expectedHostOrigin,
           );
         }
+
         return;
       }
 
       const data = /** @type {any} */ (event.data);
+
       if (data && data.method === RESOURCE_READY_METHOD) {
         const params = data.params ?? {};
 
-        if (typeof params.sandbox === 'string') {
+        if (isString(params.sandbox)) {
           inner.setAttribute('sandbox', params.sandbox);
         }
 
         const allow = buildAllowAttribute(params.permissions);
+
         if (allow) {
           inner.setAttribute('allow', allow);
         }
 
-        if (typeof params.html === 'string') {
+        if (isString(params.html)) {
           inner.writeHtml(params.html);
         }
+
         return;
       }
 
@@ -172,8 +193,10 @@ export function createSandboxRelay(opts) {
             ownOrigin,
           );
         }
+
         return;
       }
+
       parent.postMessage(event.data, expectedHostOrigin);
     },
   };

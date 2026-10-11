@@ -20,44 +20,59 @@ export type CspConfig = Partial<Record<CspDomainKey, string[]>>;
 
 const DOMAIN_PATTERN = /^https?:\/\/[^\s;'"<>\\/]+(?:\/[^\s;'"<>\\]*)?$/;
 
-export function sanitizeCspDomains(domains: unknown): string[] {
+function isString(value: unknown): value is string {
+  return Object.prototype.toString.call(value) === '[object String]';
+}
+
+export function sanitizeCspDomains(domains: readonly string[] | undefined): string[] {
   if (!Array.isArray(domains)) return [];
   const out: string[] = [];
+
   for (const d of domains) {
-    if (typeof d !== 'string') continue;
+    if (!isString(d)) continue;
+
     if (d.length === 0 || d.length > 512) continue;
+
     if (!DOMAIN_PATTERN.test(d)) continue;
+
     // Re-check for control chars belt-and-suspenders (regex already forbids, but
     // an explicit second pass catches encoding shenanigans).
     if (/[;\r\n'"\s<>]/.test(d)) continue;
     out.push(d);
   }
+
   return out;
 }
 
 export function parseCspParam(raw: string | null | undefined): CspConfig | undefined {
-  if (typeof raw !== 'string') return undefined;
-  if (raw.length === 0) return undefined;
+  if (!raw) return undefined;
+
   if (raw.length > MAX_CSP_PARAM_LENGTH) return undefined;
 
   let parsed: unknown;
+
   try {
     parsed = JSON.parse(raw);
   } catch {
     return undefined;
   }
 
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+  if (!(parsed instanceof Object) || Array.isArray(parsed)) {
     return undefined;
   }
 
+  const fields = new Map(Object.entries(parsed));
   const out: CspConfig = {};
+
   for (const key of ALLOWED_DOMAIN_KEYS) {
-    const value = (parsed as Record<string, unknown>)[key];
+    const value = fields.get(key);
+
     if (value === undefined) continue;
+
     if (!Array.isArray(value)) continue; // non-array → drop
     out[key] = sanitizeCspDomains(value);
   }
+
   return out;
 }
 
@@ -96,10 +111,12 @@ export function buildCspHeader(csp: CspConfig | undefined): string {
   ];
 
   const header = directives.join('; ');
+
   // Defense-in-depth: header MUST NOT contain CR/LF.
   if (/[\r\n]/.test(header)) {
     return DEFAULT_CSP_HEADER;
   }
+
   return header;
 }
 

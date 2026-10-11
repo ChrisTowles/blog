@@ -29,6 +29,7 @@ describe.skipIf(!shouldRun)('extractSpellingWords (live Anthropic vision)', () =
     const base64 = buffer.toString('base64');
     const result = await extractSpellingWords(base64, 'image/png');
     expect(result.ok).toBe(true);
+
     if (result.ok) expect(result.words.length).toBeGreaterThan(0);
   }, 60_000);
 });

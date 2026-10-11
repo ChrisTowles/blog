@@ -14,6 +14,7 @@ describe('resolveChartOption', () => {
       xAxis: { type: 'category', data: ['a', 'b'] },
       series: [{ type: 'bar', data: [1, 2] }],
     };
+
     expect(resolveChartOption(opt, ROWS)).toEqual(opt);
   });
 
@@ -35,6 +36,7 @@ describe('resolveChartOption', () => {
     const opt = {
       series: [{ type: 'pie', data: { $rows: { name: 'operator', value: 'fleet' } } }],
     };
+
     expect(resolveChartOption(opt, ROWS)).toEqual({
       series: [
         {
@@ -72,11 +74,18 @@ describe('resolveChartOption', () => {
 
   it('object template unknown columns resolve to null (not the column name)', () => {
     const opt = { series: [{ data: { $rows: { name: 'nonexistent', value: 'fleet' } } }] };
-    const result = resolveChartOption(opt, ROWS) as {
-      series: Array<{ data: Array<{ name: unknown; value: unknown }> }>;
-    };
-    expect(result.series[0]!.data[0]).toEqual({ name: null, value: 120 });
-    expect(result.series[0]!.data[1]).toEqual({ name: null, value: 95 });
+
+    expect(resolveChartOption(opt, ROWS)).toEqual({
+      series: [
+        {
+          data: [
+            { name: null, value: 120 },
+            { name: null, value: 95 },
+            { name: null, value: 860 },
+          ],
+        },
+      ],
+    });
   });
 
   it('leaves non-$rows strings alone', () => {
@@ -97,13 +106,17 @@ describe('resolveChartOption', () => {
         },
       ],
     };
-    const result = resolveChartOption(opt, ROWS) as {
-      series: Array<{ data: Array<{ name: string; value: number; itemStyle: { color: string } }> }>;
-    };
-    expect(result.series[0]!.data[0]).toEqual({
-      name: 'FEDEX',
-      value: 120,
-      itemStyle: { color: '#f00' },
+
+    expect(resolveChartOption(opt, ROWS)).toMatchObject({
+      series: [
+        {
+          data: [
+            { name: 'FEDEX', value: 120, itemStyle: { color: '#f00' } },
+            { name: 'UPS', value: 95, itemStyle: { color: '#f00' } },
+            { name: 'DELTA', value: 860, itemStyle: { color: '#f00' } },
+          ],
+        },
+      ],
     });
   });
 });

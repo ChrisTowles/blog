@@ -11,6 +11,7 @@ useHead({
 });
 
 const { audioOn } = useTypingAudio();
+
 const { progress, setCurrentStage } = useTypingProgress();
 </script>
 

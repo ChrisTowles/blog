@@ -16,6 +16,7 @@ function deduplicateResults(
   }>,
 ) {
   const seenSlugs = new Map<string, (typeof dedupedResults)[number]>();
+
   const dedupedResults: Array<{
     title: string;
     url: string;
@@ -38,6 +39,7 @@ function deduplicateResults(
     };
 
     const existing = seenSlugs.get(r.documentSlug);
+
     if (!existing) {
       seenSlugs.set(r.documentSlug, entry);
       dedupedResults.push(entry);
@@ -129,6 +131,7 @@ describe('search deduplication', () => {
 
   it('truncates long content to 300 char snippet', () => {
     const longContent = 'A'.repeat(500);
+
     const results = deduplicateResults([
       {
         content: longContent,

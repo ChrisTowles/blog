@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { TEST_IDS } from '~~/shared/test-ids';
+import { fetchErrorMessage } from '../../utils/typing/fetch-error';
 import { MAX_STAGE, MIN_TOPIC_STAGE, type LessonRow } from '~~/shared/typing-types';
 
 const emit = defineEmits<{
@@ -12,17 +13,22 @@ const STAGE_OPTIONS = Array.from(
 );
 
 const topic = ref('');
+
 const stage = ref(MIN_TOPIC_STAGE);
+
 const kind = ref<'sentence' | 'paragraph'>('sentence');
+
 const length = ref<'short' | 'medium'>('short');
 
 const generating = ref(false);
+
 const error = ref<string | null>(null);
 
 async function submit() {
   if (!topic.value.trim() || generating.value) return;
   generating.value = true;
   error.value = null;
+
   try {
     const result = await $fetch<{ lesson: LessonRow }>('/api/typing/lessons/generate', {
       method: 'POST',
@@ -33,10 +39,10 @@ async function submit() {
         length: length.value,
       },
     });
+
     emit('generated', result.lesson);
   } catch (e: unknown) {
-    const err = e as { statusMessage?: string; data?: { statusMessage?: string } };
-    error.value = err.statusMessage ?? err.data?.statusMessage ?? 'Generation failed';
+    error.value = fetchErrorMessage(e, 'Generation failed');
   } finally {
     generating.value = false;
   }

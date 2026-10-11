@@ -18,15 +18,21 @@ useHead({
 const { progress, reset } = useTypingProgress();
 
 const totalAttempts = computed(() => progress.value.attempts.length);
+
 const recentAttempts = computed(() => progress.value.attempts.slice(-5).reverse());
+
 const lastWpm = computed(() => {
   const a = progress.value.attempts.at(-1);
+
   return a ? Math.round(a.wpm) : null;
 });
+
 const avgAccuracy = computed(() => {
   const xs = progress.value.attempts;
+
   if (xs.length === 0) return null;
   const sum = xs.reduce((acc, a) => acc + a.accuracy, 0);
+
   return Math.round((sum / xs.length) * 100);
 });
 

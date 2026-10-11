@@ -12,9 +12,11 @@ useHead({
 });
 
 const route = useRoute();
+
 const groupSlug = computed(() => String(route.query.groupSlug ?? ''));
 
 const newName = ref('');
+
 const newBirthYear = ref<number | null>(null);
 
 // useFetch keyed by slug, client-only — auth cookie isn't forwarded
@@ -28,13 +30,14 @@ const {
   () => `/api/typing/groups/${groupSlug.value}/learners`,
   {
     key: () => `typing:learners:${groupSlug.value}`,
-    default: () => ({ learners: [] as Learner[] }),
+    default: () => ({ learners: [] }),
     ignoreResponseError: true,
     server: false,
     watch: [groupSlug],
     immediate: true,
   },
 );
+
 const learners = computed(() => learnersData.value?.learners ?? []);
 
 async function add() {
@@ -53,6 +56,7 @@ async function add() {
 
 async function bumpStage(learner: Learner, delta: number) {
   const nextStage = Math.max(1, Math.min(20, learner.currentStage + delta));
+
   if (nextStage === learner.currentStage) return;
   await $fetch(`/api/typing/groups/${groupSlug.value}/learners/${learner.id}`, {
     method: 'PUT',
@@ -64,11 +68,15 @@ async function bumpStage(learner: Learner, delta: number) {
 // --- Delete with type-the-name confirm ---------------------------------
 
 const deleting = ref<Learner | null>(null);
+
 const deleteTyped = ref('');
+
 const deletePending = ref(false);
+
 const deleteMatches = computed(() => {
   if (!deleting.value) return false;
   const expected = `delete ${deleting.value.displayName.trim().toLowerCase()}`;
+
   return deleteTyped.value.trim().toLowerCase() === expected;
 });
 
@@ -85,6 +93,7 @@ function cancelDelete() {
 async function confirmDelete() {
   if (!deleting.value || !deleteMatches.value || deletePending.value) return;
   deletePending.value = true;
+
   try {
     await $fetch(`/api/typing/groups/${groupSlug.value}/learners/${deleting.value.id}`, {
       method: 'DELETE',

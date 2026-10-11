@@ -9,7 +9,9 @@ describe('lake-leap', () => {
         source: ['apple', 'banana'],
         count: 5,
       });
+
       expect(words).toHaveLength(5);
+
       for (const w of words) {
         expect(['apple', 'banana']).toContain(w);
       }
@@ -18,8 +20,9 @@ describe('lake-leap', () => {
     it('falls back to defaults when source is empty', () => {
       const words = pickWordsForRound({ mode: 'curriculum', source: [], count: 3 });
       expect(words).toHaveLength(3);
+
       for (const w of words) {
-        expect(typeof w).toBe('string');
+        expect(w).toBeTypeOf('string');
         expect(w.length).toBeGreaterThan(0);
       }
     });

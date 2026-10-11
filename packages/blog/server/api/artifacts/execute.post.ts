@@ -1,7 +1,7 @@
+import type { BetaContainerParams } from '@anthropic-ai/sdk/resources/beta/messages/messages';
 import { z } from 'zod';
 import { log } from 'evlog';
 import type { ArtifactSSEEvent, ArtifactFile } from '~~/shared/artifact-types';
-import type { AnthropicBetaClient } from '~~/server/utils/ai/anthropic-beta-types';
 import { withAnthropicSpan } from '~~/server/utils/observability/anthropic';
 
 defineRouteMeta({
@@ -20,6 +20,13 @@ const SYSTEM_PROMPT = `You are a code execution assistant embedded in a blog. Us
 - When creating files, use descriptive filenames
 - Keep explanations brief — focus on running the code and producing output
 - If the user provides initial code, execute it directly (fix obvious errors if needed)`;
+
+const bashInputSchema = z.object({ command: z.string().min(1) });
+
+const textEditorInputSchema = z.object({
+  file_text: z.string().min(1),
+  path: z.string().optional(),
+});
 
 const encoder = new TextEncoder();
 
@@ -51,6 +58,7 @@ export default defineEventHandler(async (event) => {
 
   // Build the user message
   let userContent = prompt;
+
   if (code) {
     const lang = language || 'python';
     userContent = `${prompt}\n\nHere is the code to execute:\n\`\`\`${lang}\n${code}\n\`\`\``;
@@ -63,31 +71,30 @@ export default defineEventHandler(async (event) => {
       try {
         const client = getAnthropicClient();
 
-        // Build container config (only included if there's something to set)
-        const hasContainer = containerId || (skills && skills.length > 0);
-        const containerConfig = hasContainer
-          ? {
-              ...(containerId ? { id: containerId } : {}),
-              ...(skills?.length
-                ? {
-                    skills: skills.map((s) => ({
-                      type: s.type,
-                      skill_id: s.skillId,
-                      version: s.version || 'latest',
-                    })),
-                  }
-                : {}),
-            }
-          : undefined;
+        let containerConfig: BetaContainerParams | undefined;
+
+        if (containerId || (skills && skills.length > 0)) {
+          containerConfig = {};
+
+          if (containerId) containerConfig.id = containerId;
+
+          if (skills?.length) {
+            containerConfig.skills = skills.map((s) => ({
+              type: s.type,
+              skill_id: s.skillId,
+              version: s.version || 'latest',
+            }));
+          }
+        }
 
         // Call Anthropic Messages API with code execution tool
-        const betaClient = client as unknown as AnthropicBetaClient;
-        const artifactModel = config.public.model as string;
+        const artifactModel = config.public.model;
+
         const response = await withAnthropicSpan(
           'chat',
           artifactModel,
           () =>
-            betaClient.beta.messages.create({
+            client.beta.messages.create({
               model: artifactModel,
               max_tokens: 16000,
               system: SYSTEM_PROMPT,
@@ -96,7 +103,7 @@ export default defineEventHandler(async (event) => {
                 'files-api-2025-04-14',
                 ...(skills?.length ? ['skills-2025-10-02'] : []),
               ],
-              ...(containerConfig ? { container: containerConfig } : {}),
+              container: containerConfig,
               tools: [
                 {
                   type: 'code_execution_20250825',
@@ -117,6 +124,7 @@ export default defineEventHandler(async (event) => {
 
         // Extract container ID from response for reuse
         const responseContainerId = response.container?.id;
+
         if (responseContainerId) {
           sendSSE(controller, {
             type: 'artifact_container',
@@ -133,21 +141,25 @@ export default defineEventHandler(async (event) => {
           // Fetch actual metadata from the Files API
           let fileName = 'output';
           let mediaType = 'application/octet-stream';
+
           try {
-            const meta = await betaClient.beta.files.retrieveMetadata(fileId, {
+            const meta = await client.beta.files.retrieveMetadata(fileId, {
               betas: ['files-api-2025-04-14'],
             });
+
             fileName = meta.filename || fileName;
             mediaType = meta.mime_type || mediaType;
           } catch {
             log.warn('artifact', `Failed to fetch metadata for file ${fileId}`);
           }
+
           const file: ArtifactFile = {
             fileId,
             fileName,
             mediaType,
             url: `/api/artifacts/files/${fileId}`,
           };
+
           sendSSE(controller, { type: 'artifact_file', file });
         }
 
@@ -157,38 +169,40 @@ export default defineEventHandler(async (event) => {
           } else if (block.type === 'server_tool_use') {
             // Handle both bash and text_editor tool use blocks
             sendSSE(controller, { type: 'artifact_execution_start' });
-            if (block.name === 'bash_code_execution' && block.input?.command) {
+
+            const bashInput = bashInputSchema.safeParse(block.input);
+            const editorInput = textEditorInputSchema.safeParse(block.input);
+
+            if (block.name === 'bash_code_execution' && bashInput.success) {
               sendSSE(controller, {
                 type: 'artifact_code',
-                code: block.input.command as string,
+                code: bashInput.data.command,
                 language: 'bash',
               });
-            } else if (block.name === 'text_editor_code_execution' && block.input?.file_text) {
+            } else if (block.name === 'text_editor_code_execution' && editorInput.success) {
               sendSSE(controller, {
                 type: 'artifact_code',
-                code: block.input.file_text as string,
-                language: (block.input.path as string)?.split('.').pop() || 'text',
+                code: editorInput.data.file_text,
+                language: editorInput.data.path?.split('.').pop() || 'text',
               });
             }
           } else if (
-            block.type === 'bash_code_execution_tool_result' ||
-            block.type === 'text_editor_code_execution_tool_result'
+            block.type === 'bash_code_execution_tool_result' &&
+            block.content.type === 'bash_code_execution_result'
           ) {
             const result = block.content;
-            if (result?.stdout !== undefined || result?.stderr !== undefined) {
-              sendSSE(controller, {
-                type: 'artifact_execution_result',
-                stdout: result.stdout || '',
-                stderr: result.stderr || '',
-                exitCode: result.return_code ?? 0,
-              });
-            }
+
+            sendSSE(controller, {
+              type: 'artifact_execution_result',
+              stdout: result.stdout || '',
+              stderr: result.stderr || '',
+              exitCode: result.return_code ?? 0,
+            });
+
             // Files are nested in result.content[] array
-            if (Array.isArray(result?.content)) {
-              for (const item of result.content) {
-                if (item.file_id) {
-                  await emitFile(item.file_id);
-                }
+            for (const item of result.content) {
+              if (item.file_id) {
+                await emitFile(item.file_id);
               }
             }
           }

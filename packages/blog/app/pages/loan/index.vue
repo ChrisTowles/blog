@@ -13,10 +13,12 @@ useSeoMeta({
 });
 
 const toast = useToast();
+
 const loading = ref(false);
 
 async function startApplication() {
   loading.value = true;
+
   try {
     const result = await $fetch('/api/loan', { method: 'POST' });
     await navigateTo(`/loan/${result.id}`);

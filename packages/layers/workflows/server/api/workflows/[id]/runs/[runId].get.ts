@@ -10,6 +10,7 @@ export default defineEventHandler(async (event) => {
     event,
     z.object({ id: z.string(), runId: z.string() }).parse,
   );
+
   await requireWorkflowOrTemplate(event, id);
   const db = useDrizzle();
 

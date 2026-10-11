@@ -8,11 +8,13 @@ import { eq, and } from 'drizzle-orm';
  */
 export async function requireWorkflowOwner(event: H3Event, workflowId: string) {
   const session = await getUserSession(event);
+
   if (!session.user) {
     throw createError({ statusCode: 401, message: 'Unauthorized' });
   }
 
   const db = useDrizzle();
+
   const [workflow] = await db
     .select()
     .from(tables.workflows)

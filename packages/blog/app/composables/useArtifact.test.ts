@@ -8,13 +8,11 @@ import type { ArtifactSSEEvent, ArtifactFile, CodeExecutionResult } from '~~/sha
 /**
  * Replicate handleContainerError for testing
  */
-function handleContainerError(
-  msg: string,
-  hasContainerId: boolean,
-): { msg: string; cleared: boolean } {
+function handleContainerError(msg: string, hasContainerId: boolean) {
   if (/container|expired|not found/i.test(msg) && hasContainerId) {
     return { msg: `${msg} (container cleared — try again)`, cleared: true };
   }
+
   return { msg, cleared: false };
 }
 
@@ -59,6 +57,7 @@ function processEvents(events: ArtifactSSEEvent[]) {
       case 'artifact_error': {
         const result = handleContainerError(event.error, !!containerId);
         error = result.msg;
+
         if (result.cleared) containerId = null;
         status = 'error';
         break;
@@ -258,6 +257,7 @@ describe('artifact request body construction', () => {
 
   it('omits empty code', () => {
     const code = '';
+
     const body = {
       prompt: 'Generate a chart',
       code: code || undefined,

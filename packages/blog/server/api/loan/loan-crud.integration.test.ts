@@ -61,6 +61,7 @@ describe.skipIf(!hasDatabase)('Loan CRUD Integration', () => {
       const app = await createTestLoanApplication(testUser.id, {
         applicationData: COMPLETE_APPLICATION_DATA,
       });
+
       await createTestLoanReview(app.id, { reviewer: 'the-bank' });
       await createTestLoanMessage(app.id, {
         role: 'user',
@@ -154,6 +155,7 @@ describe.skipIf(!hasDatabase)('Loan CRUD Integration', () => {
       const final = await db.query.loanApplications.findFirst({
         where: (a, { eq: e }) => e(a.id, app.id),
       });
+
       expect(final!.status).toBe('approved');
     });
 
@@ -173,6 +175,7 @@ describe.skipIf(!hasDatabase)('Loan CRUD Integration', () => {
       const final = await db.query.loanApplications.findFirst({
         where: (a, { eq: e }) => e(a.id, app.id),
       });
+
       expect(final!.status).toBe('denied');
     });
 
@@ -192,6 +195,7 @@ describe.skipIf(!hasDatabase)('Loan CRUD Integration', () => {
       const final = await db.query.loanApplications.findFirst({
         where: (a, { eq: e }) => e(a.id, app.id),
       });
+
       expect(final!.status).toBe('flagged');
     });
   });
@@ -208,6 +212,7 @@ describe.skipIf(!hasDatabase)('Loan CRUD Integration', () => {
         .select()
         .from(tables.loanReviews)
         .where(eq(tables.loanReviews.applicationId, app.id));
+
       expect(reviews).toHaveLength(0);
     });
 
@@ -222,6 +227,7 @@ describe.skipIf(!hasDatabase)('Loan CRUD Integration', () => {
         .select()
         .from(tables.loanMessages)
         .where(eq(tables.loanMessages.applicationId, app.id));
+
       expect(messages).toHaveLength(0);
     });
   });
@@ -229,6 +235,7 @@ describe.skipIf(!hasDatabase)('Loan CRUD Integration', () => {
   describe('Reviews', () => {
     it('inserts review with all fields', async () => {
       const app = await createTestLoanApplication(testUser.id);
+
       const review = await createTestLoanReview(app.id, {
         reviewer: 'loan-market',
         decision: 'flagged',
@@ -252,6 +259,7 @@ describe.skipIf(!hasDatabase)('Loan CRUD Integration', () => {
         .select()
         .from(tables.loanReviews)
         .where(eq(tables.loanReviews.applicationId, app.id));
+
       expect(reviews).toHaveLength(3);
     });
 
@@ -263,6 +271,7 @@ describe.skipIf(!hasDatabase)('Loan CRUD Integration', () => {
       const review = await db.query.loanReviews.findFirst({
         where: (r, { eq: e }) => e(r.applicationId, app.id),
       });
+
       expect(review!.flags).toEqual(flags);
     });
   });
@@ -270,6 +279,7 @@ describe.skipIf(!hasDatabase)('Loan CRUD Integration', () => {
   describe('Messages', () => {
     it('inserts loan message correctly', async () => {
       const app = await createTestLoanApplication(testUser.id);
+
       const msg = await createTestLoanMessage(app.id, {
         role: 'assistant',
         parts: [{ type: 'text', text: 'Welcome to your loan application.' }],
@@ -281,11 +291,14 @@ describe.skipIf(!hasDatabase)('Loan CRUD Integration', () => {
 
     it('messages ordered by createdAt', async () => {
       const app = await createTestLoanApplication(testUser.id);
+
       const msg1 = await createTestLoanMessage(app.id, {
         role: 'user',
         parts: [{ type: 'text', text: 'First' }],
       });
+
       await new Promise((r) => setTimeout(r, 10));
+
       const msg2 = await createTestLoanMessage(app.id, {
         role: 'assistant',
         parts: [{ type: 'text', text: 'Second' }],

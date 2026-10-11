@@ -27,17 +27,21 @@ export function loadApproverPrompt(reviewer: ReviewerName): string {
 
   const content = readFileSync(skillPath, 'utf-8');
   const match = content.match(/^---\s*\n[\s\S]*?\n---\s*\n([\s\S]*)$/);
+
   return match ? match[1]!.trim() : content;
 }
 
 export function formatApplicationForReview(data: LoanApplicationData): string {
   const monthlyIncome = (data.income || 0) / 12;
+
   const dti =
     monthlyIncome > 0 ? (((data.monthlyDebt || 0) / monthlyIncome) * 100).toFixed(1) : 'N/A';
+
   const ltv =
     (data.propertyValue || 0) > 0
       ? (((data.loanAmount || 0) / (data.propertyValue || 1)) * 100).toFixed(1)
       : 'N/A';
+
   const downPct =
     (data.propertyValue || 0) > 0
       ? (((data.downPayment || 0) / (data.propertyValue || 1)) * 100).toFixed(1)
@@ -67,8 +71,10 @@ export function formatApplicationForReview(data: LoanApplicationData): string {
 export function parseApproverResponse(text: string): ApproverResponse {
   try {
     const jsonMatch = text.match(/\{[\s\S]*\}/);
+
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
+
       return {
         decision: parsed.decision || 'flagged',
         flags: Array.isArray(parsed.flags) ? parsed.flags : [],
@@ -78,5 +84,6 @@ export function parseApproverResponse(text: string): ApproverResponse {
   } catch {
     // Fall through
   }
+
   return { decision: 'flagged', flags: ['Could not parse structured response'], analysis: text };
 }

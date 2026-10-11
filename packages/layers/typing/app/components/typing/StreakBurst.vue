@@ -21,6 +21,7 @@ const particles = Array.from({ length: props.count }, (_, i) => {
   const angle = (i / props.count) * 360 + (Math.random() * 18 - 9);
   const distance = 70 + Math.round(Math.random() * 28);
   const color = COLORS[i % COLORS.length] ?? '#fff';
+
   return { angle, distance, color, delay: Math.round(Math.random() * 60) };
 });
 </script>

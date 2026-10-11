@@ -1,12 +1,10 @@
 /**
- * Unit tests for the iframe client logic. `App` is mocked as a plain object: the
- * bootstrap module assigns `ontoolinput`, `ontoolresult`, `onhostcontextchanged`,
- * `ontoolcancelled` and `onerror` as properties and calls `app.connect()` only
- * when not under test, so the fake just exposes those as writable fields.
+ * Unit tests for the iframe client logic. `FakeApp` is a real `App` subclass that records
+ * `sendMessage` calls instead of talking to a host transport.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import type { App } from '@modelcontextprotocol/ext-apps';
+import { App } from '@modelcontextprotocol/ext-apps';
 import { createBootstrap } from './aviation-answer';
 import {
   BAR_FIXTURE,
@@ -16,31 +14,24 @@ import {
   TRUNCATED_FIXTURE,
 } from './test-fixture';
 
-function makeFakeApp(): {
-  app: App;
-  sends: Array<unknown>;
-} {
-  const sends: Array<unknown> = [];
-  // We use `as unknown as App` because we only touch the public surface the
-  // bootstrap actually exercises: the `on*` setters + sendMessage.
-  const app = {
-    ontoolinput: undefined,
-    ontoolresult: undefined,
-    onhostcontextchanged: undefined,
-    ontoolcancelled: undefined,
-    onerror: undefined,
-    sendMessage(params: unknown) {
-      sends.push(params);
-      return Promise.resolve({ isError: false });
-    },
-    connect() {
-      return Promise.resolve();
-    },
-    getHostContext() {
-      return undefined;
-    },
-  } as unknown as App;
-  return { app, sends };
+type SentMessage = Parameters<App['sendMessage']>[0];
+
+class FakeApp extends App {
+  readonly sends: SentMessage[] = [];
+
+  constructor() {
+    super({ name: 'fake-app', version: '0.0.0' });
+  }
+
+  override sendMessage(params: SentMessage) {
+    this.sends.push(params);
+
+    return Promise.resolve({ isError: false });
+  }
+
+  override connect() {
+    return Promise.resolve();
+  }
 }
 
 function makeMount(): HTMLElement {
@@ -49,6 +40,7 @@ function makeMount(): HTMLElement {
   const el = document.createElement('div');
   el.id = 'app';
   document.body.appendChild(el);
+
   return el;
 }
 
@@ -58,7 +50,7 @@ describe('aviation-answer iframe bundle', () => {
   });
 
   it('renders hero + chart container + chips + SQL toggle for a bar fixture', async () => {
-    const { app, sends } = makeFakeApp();
+    const app = new FakeApp();
     const mount = makeMount();
     const boot = createBootstrap({ app, mount });
 
@@ -77,9 +69,11 @@ describe('aviation-answer iframe bundle', () => {
     // the canvas is rendered. What we assert here is that the routing decided
     // "chart path" (not table).
     expect(mount.querySelector('[data-testid="aviation-table"]')).toBeNull();
+
     const chartOrFallback =
       mount.querySelector('[data-testid="aviation-chart"]') ??
       mount.querySelector('[data-testid="aviation-chart-fallback"]');
+
     expect(chartOrFallback).toBeTruthy();
 
     const chipEls = mount.querySelectorAll<HTMLButtonElement>('.chip');
@@ -94,18 +88,15 @@ describe('aviation-answer iframe bundle', () => {
 
     // Chip click dispatches ui/message.
     chipEls[0].click();
-    expect(sends.length).toBe(1);
-    const sent = sends[0] as {
-      role: string;
-      content: Array<{ type: string; text: string }>;
-    };
-    expect(sent.role).toBe('user');
-    expect(sent.content[0].type).toBe('text');
-    expect(sent.content[0].text).toContain('Which US operators');
+    expect(app.sends).toHaveLength(1);
+    expect(app.sends[0]).toMatchObject({
+      role: 'user',
+      content: [{ type: 'text', text: expect.stringContaining('Which US operators') }],
+    });
   });
 
   it('routes table-shaped results to a table (no chart)', async () => {
-    const { app } = makeFakeApp();
+    const app = new FakeApp();
     const mount = makeMount();
     const boot = createBootstrap({ app, mount });
 
@@ -119,7 +110,7 @@ describe('aviation-answer iframe bundle', () => {
   });
 
   it('renders empty-state for an empty rows table', async () => {
-    const { app } = makeFakeApp();
+    const app = new FakeApp();
     const mount = makeMount();
     const boot = createBootstrap({ app, mount });
 
@@ -130,7 +121,7 @@ describe('aviation-answer iframe bundle', () => {
   });
 
   it('shows truncation banner when truncated is true', async () => {
-    const { app } = makeFakeApp();
+    const app = new FakeApp();
     const mount = makeMount();
     const boot = createBootstrap({ app, mount });
 
@@ -141,7 +132,7 @@ describe('aviation-answer iframe bundle', () => {
   });
 
   it('falls back to answer-as-text when chart_option is broken', async () => {
-    const { app } = makeFakeApp();
+    const app = new FakeApp();
     const mount = makeMount();
     const boot = createBootstrap({ app, mount });
 
@@ -154,7 +145,7 @@ describe('aviation-answer iframe bundle', () => {
   });
 
   it('disables chips on streaming=streaming, re-enables on streaming=idle', async () => {
-    const { app } = makeFakeApp();
+    const app = new FakeApp();
     const mount = makeMount();
     const boot = createBootstrap({ app, mount });
 
@@ -167,26 +158,29 @@ describe('aviation-answer iframe bundle', () => {
     }
 
     // Host sends streaming=streaming (local extension).
-    boot.handleHostContextChanged({ status: 'streaming' } as never);
+    boot.handleHostContextChanged({ status: 'streaming' });
+
     for (const c of mount.querySelectorAll<HTMLButtonElement>('.chip')) {
       expect(c.getAttribute('aria-disabled')).toBe('true');
     }
 
     // Host sends streaming=idle.
-    boot.handleHostContextChanged({ status: 'idle' } as never);
+    boot.handleHostContextChanged({ status: 'idle' });
+
     for (const c of mount.querySelectorAll<HTMLButtonElement>('.chip')) {
       expect(c.getAttribute('aria-disabled')).toBeNull();
     }
 
     // Unknown status — no change.
-    boot.handleHostContextChanged({ status: 'weird' } as never);
+    boot.handleHostContextChanged({ status: 'weird' });
+
     for (const c of mount.querySelectorAll<HTMLButtonElement>('.chip')) {
       expect(c.getAttribute('aria-disabled')).toBeNull();
     }
   });
 
   it('renders the truncation banner with semantic role=note', async () => {
-    const { app } = makeFakeApp();
+    const app = new FakeApp();
     const mount = makeMount();
     const boot = createBootstrap({ app, mount });
     boot.handleToolResult({ structuredContent: TRUNCATED_FIXTURE });

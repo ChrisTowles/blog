@@ -17,9 +17,11 @@ const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 export default defineEventHandler(async (event) => {
   const { slug } = await getValidatedRouterParams(event, paramsSchema.parse);
   const group = await findGroupBySlug(slug);
+
   if (!group) {
     throw createError({ statusCode: 404, statusMessage: 'Group not found' });
   }
+
   await requireGuardian(event, { groupId: group.id });
 
   const body = await readValidatedBody(event, bodySchema.parse);

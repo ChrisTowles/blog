@@ -13,6 +13,7 @@ describe('chunkText', () => {
       'This is a paragraph with enough content to exceed the minimum size threshold. ' +
       'We need at least 200 characters for the chunker to consider this valid content.\n\n' +
       'Another paragraph here to add more text and make this chunk substantial enough.';
+
     const chunks = chunkText(text);
     expect(chunks).toHaveLength(1);
     expect(chunks[0]?.content).toBe(text);
@@ -46,11 +47,13 @@ describe('chunkText', () => {
 
   it('respects custom options', () => {
     const text = 'Short paragraph.\n\nAnother short one.';
+
     const chunks = chunkText(text, {
       targetSize: 100,
       overlap: 10,
       minSize: 5,
     });
+
     expect(chunks).toHaveLength(1);
   });
 
@@ -126,6 +129,7 @@ Some content here.`;
       markdown,
       '20240630.Why-you-should-make-a-toolbox-repository.md',
     );
+
     expect(result.slug).toBe('why-you-should-make-a-toolbox-repository');
   });
 
@@ -136,6 +140,7 @@ Some content here.`;
       markdown,
       '20250422.debugging local-packages-with-pnpm-link.md',
     );
+
     expect(result.slug).toBe('debugging-local-packages-with-pnpm-link');
   });
 

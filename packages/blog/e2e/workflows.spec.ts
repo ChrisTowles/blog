@@ -44,6 +44,7 @@ test.describe('Workflow Builder', () => {
     const createRes = await page.request.post('/api/workflows', {
       data: { name: 'E2E Test Workflow' },
     });
+
     expect(createRes.ok()).toBeTruthy();
     const { id } = await createRes.json();
 
@@ -67,6 +68,7 @@ test.describe('Workflow Builder', () => {
     const createRes = await page.request.post('/api/workflows', {
       data: { name: 'E2E Multi-Node Workflow' },
     });
+
     const { id } = await createRes.json();
 
     // Save 4 nodes and 3 edges via PUT
@@ -148,6 +150,7 @@ test.describe('Workflow Builder', () => {
         viewport: { x: 0, y: 0, zoom: 0.8 },
       },
     });
+
     expect(saveRes.ok()).toBeTruthy();
 
     // Navigate to editor and verify nodes rendered
@@ -174,6 +177,7 @@ test.describe('Workflow Builder', () => {
       page.request.post('/api/workflows', { data: { name: alpha } }),
       page.request.post('/api/workflows', { data: { name: beta } }),
     ]);
+
     const ids = await Promise.all(created.map(async (res) => (await res.json()).id));
 
     try {

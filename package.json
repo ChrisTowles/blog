@@ -52,7 +52,6 @@
     "test": "pnpm --filter @chris-towles/blog test",
     "test:integration": "pnpm --filter @chris-towles/blog test:integration",
     "test:e2e": "pnpm --filter @chris-towles/blog test:e2e",
-    "eval:stories": "tsx packages/evals/run-eval.ts eval -c packages/evals/promptfooconfig.stories.yaml",
     "prepare": "simple-git-hooks",
     "mcp:inspect": "pnpm dlx @modelcontextprotocol/inspector",
     "deps:update": "pnpm dlx taze --interactive --recursive",
@@ -64,6 +63,7 @@
     "youtube-transcript": "^1.3.1"
   },
   "devDependencies": {
+    "@oxlint/plugins": "1.72.0",
     "@third-option/comment-budget": "^0.1.0",
     "@types/node": "^24.13.2",
     "citty": "^0.2.2",

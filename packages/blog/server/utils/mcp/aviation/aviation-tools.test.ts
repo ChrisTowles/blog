@@ -8,12 +8,14 @@ describe('list_questions tool', () => {
     expect(result.content).toHaveLength(1);
     const content = result.content[0];
     expect(content?.type).toBe('text');
+
     if (content?.type !== 'text') throw new Error('type narrow');
+
     for (const q of AVIATION_STARTER_QUESTIONS) {
       expect(content.text).toContain(q);
     }
-    const structured = result.structuredContent as { questions: string[] };
-    expect(structured.questions).toEqual(AVIATION_STARTER_QUESTIONS);
+
+    expect(result.structuredContent).toEqual({ questions: AVIATION_STARTER_QUESTIONS });
   });
 });
 
@@ -56,6 +58,7 @@ describe('schema tool', () => {
     const result = executeSchemaTool();
     const content = result.content[0];
     expect(content?.type).toBe('text');
+
     if (content?.type !== 'text') throw new Error('type narrow');
     expect(content.text).toContain('dims/aircraft.parquet');
     expect(content.text).toContain('bts_t100');

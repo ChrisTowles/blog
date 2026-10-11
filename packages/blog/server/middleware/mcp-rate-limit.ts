@@ -32,6 +32,7 @@ export interface ConsumeResult {
 // Sweep stale buckets every Nth call so the Map stays bounded under
 // long-lived processes seeing many unique IPs.
 const SWEEP_EVERY_N_CALLS = 256;
+
 let callsSinceSweep = 0;
 
 function sweepStale(now: number, windowMs: number): void {
@@ -42,25 +43,32 @@ function sweepStale(now: number, windowMs: number): void {
 
 export function consumeToken(input: ConsumeInput): ConsumeResult {
   const { ip, limit, windowMs, now } = input;
+
   if (++callsSinceSweep >= SWEEP_EVERY_N_CALLS) {
     callsSinceSweep = 0;
     sweepStale(now, windowMs);
   }
+
   let b = buckets.get(ip);
+
   if (!b || now - b.windowStartedAt >= windowMs) {
     b = { remaining: limit, windowStartedAt: now };
     buckets.set(ip, b);
   }
+
   if (b.remaining <= 0) {
     const elapsed = now - b.windowStartedAt;
     const retryAfterMs = Math.max(0, windowMs - elapsed);
+
     return {
       allowed: false,
       remaining: 0,
       retryAfterSeconds: Math.ceil(retryAfterMs / 1000),
     };
   }
+
   b.remaining -= 1;
+
   return { allowed: true, remaining: b.remaining, retryAfterSeconds: 0 };
 }
 
@@ -74,6 +82,7 @@ export function __resetRateLimitForTests(): void {
 function readLimit(): number {
   const raw = process.env.MCP_RATE_LIMIT_RPM;
   const parsed = raw ? Number.parseInt(raw, 10) : Number.NaN;
+
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 60;
 }
 
@@ -81,21 +90,26 @@ const WINDOW_MS = 5 * 60 * 1000;
 
 export default defineEventHandler(async (event) => {
   const path = event.path ?? event.node.req.url ?? '';
+
   if (!path.startsWith('/mcp/')) return;
 
   const ip = getRequestIP(event, { xForwardedFor: true }) ?? 'unknown';
   const limit = readLimit();
   const decision = consumeToken({ ip, limit, windowMs: WINDOW_MS, now: Date.now() });
+
   if (decision.allowed) {
     setResponseHeader(event, 'X-RateLimit-Limit', String(limit));
     setResponseHeader(event, 'X-RateLimit-Remaining', String(decision.remaining));
+
     return;
   }
+
   setResponseStatus(event, 429);
   setResponseHeader(event, 'Retry-After', decision.retryAfterSeconds);
   setResponseHeader(event, 'X-RateLimit-Limit', String(limit));
   setResponseHeader(event, 'X-RateLimit-Remaining', '0');
   setResponseHeader(event, 'Content-Type', 'application/json');
+
   // Short-circuit the request — return JSON body and let h3 flush.
   return {
     error: {

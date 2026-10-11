@@ -3,6 +3,7 @@ import { createHighlighter } from 'shiki';
 import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
 
 let highlighter: Highlighter | null = null;
+
 let promise: Promise<Highlighter> | null = null;
 
 export async function useHighlighter(): Promise<Highlighter> {
@@ -14,6 +15,7 @@ export async function useHighlighter(): Promise<Highlighter> {
       engine: createJavaScriptRegexEngine(),
     });
   }
+
   if (!highlighter) {
     highlighter = await promise;
   }

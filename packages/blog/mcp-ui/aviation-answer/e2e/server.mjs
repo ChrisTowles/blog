@@ -20,12 +20,14 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
 const BUNDLE = resolve(__dirname, '..', 'dist', 'index.html');
 
 const PORT = Number(process.env.AVIATION_E2E_PORT || 8182);
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', `http://localhost:${PORT}`);
+
   if (url.pathname === '/' || url.pathname === '/bundle.html') {
     try {
       const body = await readFile(BUNDLE);
@@ -38,12 +40,15 @@ const server = createServer(async (req, res) => {
       res.writeHead(500);
       res.end(`bundle not built — run 'pnpm build:ui-bundle' first\n${err.message}`);
     }
+
     return;
   }
+
   res.writeHead(404);
   res.end('not found');
 });
 
 await new Promise((r) => server.listen(PORT, '127.0.0.1', r));
+
 // eslint-disable-next-line no-console
 console.log(`[aviation-answer-e2e] http://127.0.0.1:${PORT}/bundle.html`);

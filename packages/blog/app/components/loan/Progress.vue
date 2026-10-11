@@ -16,6 +16,7 @@ const fields = computed(() =>
 
 const progress = computed(() => {
   const filled = fields.value.filter((f) => f.filled).length;
+
   return Math.round((filled / fields.value.length) * 100);
 });
 </script>

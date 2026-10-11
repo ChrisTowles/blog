@@ -1,4 +1,5 @@
 export type Suit = 'h' | 'd' | 'c' | 's';
+
 export type Rank = 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14;
 
 export interface Card {
@@ -7,6 +8,7 @@ export interface Card {
 }
 
 export const SUITS: Suit[] = ['h', 'd', 'c', 's'];
+
 export const RANKS: Rank[] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
 
 export const SUIT_GLYPH: Record<Suit, string> = {
@@ -25,10 +27,15 @@ export const SUIT_NAME: Record<Suit, string> = {
 
 export function rankLabel(r: Rank): string {
   if (r === 14) return 'A';
+
   if (r === 13) return 'K';
+
   if (r === 12) return 'Q';
+
   if (r === 11) return 'J';
+
   if (r === 10) return '10';
+
   return String(r);
 }
 
@@ -75,6 +82,7 @@ export interface HandRank {
 }
 
 export type Stage = 'preflop' | 'flop' | 'turn' | 'river' | 'showdown';
+
 export type Actor = 'player' | 'ai';
 
 export interface PlayerState {

@@ -7,6 +7,7 @@
  */
 
 import { SpanKind, trace, type Span, type Tracer } from '@opentelemetry/api';
+import { z } from 'zod';
 import { recordSpanError } from './span-helpers';
 
 const TRACER_NAME = 'blog.observability.anthropic';
@@ -16,15 +17,25 @@ function getTracer(): Tracer {
 }
 
 const ATTR_GEN_AI_PROVIDER_NAME = 'gen_ai.provider.name';
+
 const ATTR_GEN_AI_OPERATION_NAME = 'gen_ai.operation.name';
+
 const ATTR_GEN_AI_REQUEST_MODEL = 'gen_ai.request.model';
+
 const ATTR_GEN_AI_REQUEST_TEMPERATURE = 'gen_ai.request.temperature';
+
 const ATTR_GEN_AI_REQUEST_MAX_TOKENS = 'gen_ai.request.max_tokens';
+
 const ATTR_GEN_AI_RESPONSE_MODEL = 'gen_ai.response.model';
+
 const ATTR_GEN_AI_RESPONSE_FINISH_REASONS = 'gen_ai.response.finish_reasons';
+
 const ATTR_GEN_AI_USAGE_INPUT_TOKENS = 'gen_ai.usage.input_tokens';
+
 const ATTR_GEN_AI_USAGE_OUTPUT_TOKENS = 'gen_ai.usage.output_tokens';
+
 const ATTR_GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS = 'gen_ai.usage.cache_read.input_tokens';
+
 const ATTR_GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS = 'gen_ai.usage.cache_creation.input_tokens';
 
 const MAX_CONTENT_LEN = 3500;
@@ -61,8 +72,21 @@ interface AnthropicMessageLike {
  * without narrowing.
  */
 interface StreamEmitterLike {
-  on?: (event: string, listener: (arg?: unknown) => void) => unknown;
+  on?(event: string, listener: (arg?: AnthropicMessageLike | Error) => void): void;
 }
+
+const messageLikeSchema = z.object({
+  model: z.string().optional(),
+  stop_reason: z.string().nullish(),
+  usage: z
+    .object({
+      input_tokens: z.number().nullish(),
+      output_tokens: z.number().nullish(),
+      cache_read_input_tokens: z.number().nullish(),
+      cache_creation_input_tokens: z.number().nullish(),
+    })
+    .nullish(),
+});
 
 function shouldCaptureContent(): boolean {
   return process.env.OTEL_GENAI_CAPTURE_CONTENT === '1';
@@ -76,6 +100,7 @@ export function captureContentIfEnabled(
   if (!shouldCaptureContent()) return;
   const truncated = text.length > MAX_CONTENT_LEN;
   span.setAttribute(`gen_ai.${kind}.0.content`, text.slice(0, MAX_CONTENT_LEN));
+
   if (truncated) span.setAttribute(`gen_ai.${kind}.0.truncated`, true);
 }
 
@@ -88,12 +113,15 @@ function applyRequestAttrs(
   span.setAttribute(ATTR_GEN_AI_PROVIDER_NAME, opts?.provider ?? 'anthropic');
   span.setAttribute(ATTR_GEN_AI_OPERATION_NAME, operation);
   span.setAttribute(ATTR_GEN_AI_REQUEST_MODEL, model);
+
   if (opts?.temperature !== undefined) {
     span.setAttribute(ATTR_GEN_AI_REQUEST_TEMPERATURE, opts.temperature);
   }
+
   if (opts?.max_tokens !== undefined) {
     span.setAttribute(ATTR_GEN_AI_REQUEST_MAX_TOKENS, opts.max_tokens);
   }
+
   if (opts?.attributes) {
     for (const [k, v] of Object.entries(opts.attributes)) {
       span.setAttribute(k, v);
@@ -116,12 +144,15 @@ export function applyUsageAttrs(span: Span, usage?: AnthropicUsage | null): void
   if (totalInput > 0) {
     span.setAttribute(ATTR_GEN_AI_USAGE_INPUT_TOKENS, totalInput);
   }
+
   if (usage.cache_read_input_tokens !== undefined) {
     span.setAttribute(ATTR_GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cacheRead);
   }
+
   if (usage.cache_creation_input_tokens !== undefined) {
     span.setAttribute(ATTR_GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS, cacheCreate);
   }
+
   if (usage.output_tokens !== undefined && usage.output_tokens !== null) {
     span.setAttribute(ATTR_GEN_AI_USAGE_OUTPUT_TOKENS, usage.output_tokens);
   }
@@ -129,29 +160,33 @@ export function applyUsageAttrs(span: Span, usage?: AnthropicUsage | null): void
 
 function applyResponseAttrs(span: Span, message: AnthropicMessageLike): void {
   if (message.model) span.setAttribute(ATTR_GEN_AI_RESPONSE_MODEL, message.model);
+
   if (message.stop_reason) {
     span.setAttribute(ATTR_GEN_AI_RESPONSE_FINISH_REASONS, [message.stop_reason]);
   }
+
   applyUsageAttrs(span, message.usage);
 }
 
-export async function withAnthropicSpan<T extends AnthropicMessageLike | unknown>(
+export async function withAnthropicSpan<T extends AnthropicMessageLike>(
   operation: string,
   model: string,
   fn: () => Promise<T>,
   opts?: AnthropicSpanOptions,
 ): Promise<T> {
   const tracer = getTracer();
+
   return tracer.startActiveSpan(
     `${operation} ${model}`,
     { kind: SpanKind.CLIENT },
     async (span) => {
       applyRequestAttrs(span, operation, model, opts);
+
       try {
         const result = await fn();
-        if (result && typeof result === 'object') {
-          applyResponseAttrs(span, result as AnthropicMessageLike);
-        }
+
+        applyResponseAttrs(span, result);
+
         return result;
       } catch (err) {
         recordSpanError(span, err);
@@ -165,7 +200,7 @@ export async function withAnthropicSpan<T extends AnthropicMessageLike | unknown
 
 /** Span lifetime ties to the stream's `finalMessage`/`error`/`end` events
  * — critical for SSE chats where the response is open for many seconds. */
-export function withAnthropicStreamSpan<T>(
+export function withAnthropicStreamSpan<T extends StreamEmitterLike>(
   operation: string,
   model: string,
   factory: () => T,
@@ -176,6 +211,7 @@ export function withAnthropicStreamSpan<T>(
   applyRequestAttrs(span, operation, model, opts);
 
   let stream: T;
+
   try {
     stream = factory();
   } catch (err) {
@@ -185,6 +221,7 @@ export function withAnthropicStreamSpan<T>(
   }
 
   let ended = false;
+
   const finish = () => {
     if (ended) return;
     ended = true;
@@ -195,14 +232,18 @@ export function withAnthropicStreamSpan<T>(
   // MessageStream<T> (SDK) expose `.on` at runtime; only type declarations
   // differ. Loud failure on missing `.on` mirrors the OTLP-endpoint rule —
   // silent close would mask SDK shape regressions.
-  const emitter = stream as unknown as StreamEmitterLike;
-  if (typeof emitter.on !== 'function') {
+  const emitter: StreamEmitterLike = stream;
+
+  if (!emitter.on) {
     span.setAttribute('error.type', 'StreamShapeError');
     span.end();
     throw new Error('withAnthropicStreamSpan: stream lacks .on emitter');
   }
+
   emitter.on('finalMessage', (msg) => {
-    applyResponseAttrs(span, msg as AnthropicMessageLike);
+    const message = messageLikeSchema.safeParse(msg);
+
+    if (message.success) applyResponseAttrs(span, message.data);
     finish();
   });
   emitter.on('error', (err) => {

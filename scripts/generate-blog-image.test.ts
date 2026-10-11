@@ -1,28 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { generateBlogImage } from './generate-blog-image';
 
-// Mock @google/genai before importing
-vi.mock('@google/genai', () => {
-  const mockGenerateContent = vi.fn().mockResolvedValue({
+const fakeModels = {
+  generateContent: vi.fn().mockResolvedValue({
     candidates: [
       {
         content: {
-          parts: [
-            { text: 'Generated image description' },
-            { inlineData: { mimeType: 'image/png', data: 'iVBORw0KGgo=' } },
-          ],
+          parts: [{ inlineData: { mimeType: 'image/png', data: 'iVBORw0KGgo=' } }],
         },
       },
     ],
-  });
-  return {
-    GoogleGenAI: vi.fn().mockImplementation(function () {
-      return { models: { generateContent: mockGenerateContent } };
-    }),
-    Modality: { TEXT: 'TEXT', IMAGE: 'IMAGE' },
-  };
-});
-
-import { generateBlogImage } from './generate-blog-image';
+  }),
+};
 
 describe('generateBlogImage', () => {
   beforeEach(() => {
@@ -33,7 +22,9 @@ describe('generateBlogImage', () => {
     const result = await generateBlogImage({
       prompt: 'A test image',
       outputPath: '/tmp/test-blog-image.png',
+      models: fakeModels,
     });
+
     expect(result.success).toBe(true);
     expect(result.path).toBe('/tmp/test-blog-image.png');
   });
@@ -44,6 +35,7 @@ describe('generateBlogImage', () => {
       generateBlogImage({
         prompt: 'test',
         outputPath: '/tmp/test.png',
+        models: fakeModels,
       }),
     ).rejects.toThrow('GOOGLE_AI_API_KEY');
   });

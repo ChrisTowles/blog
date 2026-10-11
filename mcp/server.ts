@@ -5,7 +5,7 @@ import {
   createApp,
   createRouter,
   defineEventHandler,
-  getQuery,
+  getRequestURL,
   setResponseHeaders,
   setResponseStatus,
   toNodeListener,
@@ -13,6 +13,7 @@ import {
 import { buildCspHeader, DEFAULT_CSP_HEADER, parseCspParam } from './csp.ts';
 
 const ROOT = resolve(import.meta.dirname);
+
 const PORT = Number(process.env.PORT ?? 8080);
 
 const BASELINE_HEADERS = {
@@ -41,6 +42,7 @@ const app = createApp({
     console.error('mcp service error:', error);
     setResponseStatus(event, 500);
     setResponseHeaders(event, { ...BASELINE_HEADERS, 'Content-Type': 'text/plain' });
+
     return 'internal error';
   },
 });
@@ -57,6 +59,7 @@ router.get(
       'X-Frame-Options': 'DENY',
       'Content-Security-Policy': LANDING_CSP,
     });
+
     return ASSETS.index;
   }),
 );
@@ -64,8 +67,8 @@ router.get(
 router.get(
   '/sandbox.html',
   defineEventHandler((event) => {
-    const raw = getQuery(event).csp;
-    const cspConfig = typeof raw === 'string' ? parseCspParam(raw) : undefined;
+    const rawCsp = getRequestURL(event).searchParams.getAll('csp');
+    const cspConfig = rawCsp.length === 1 ? parseCspParam(rawCsp[0]) : undefined;
     const cspHeader = cspConfig ? buildCspHeader(cspConfig) : DEFAULT_CSP_HEADER;
 
     setResponseHeaders(event, {
@@ -80,6 +83,7 @@ router.get(
       // Framing restrictions come from the per-request CSP (frame-ancestors
       // can be added via the ?csp= channel when we want to whitelist origins).
     });
+
     return ASSETS.sandbox;
   }),
 );
@@ -91,11 +95,13 @@ function scriptHandler(body: Buffer) {
       'Content-Type': 'application/javascript; charset=utf-8',
       'Cache-Control': 'public, max-age=300, must-revalidate',
     });
+
     return body;
   });
 }
 
 router.get('/sandbox.js', scriptHandler(ASSETS.sandboxJs));
+
 router.get('/relay.js', scriptHandler(ASSETS.relayJs));
 
 app.use(router);
@@ -104,6 +110,7 @@ app.use(
   defineEventHandler((event) => {
     setResponseStatus(event, 404);
     setResponseHeaders(event, { ...BASELINE_HEADERS, 'Content-Type': 'text/plain' });
+
     return 'not found';
   }),
 );

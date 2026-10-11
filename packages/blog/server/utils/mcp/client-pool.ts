@@ -4,33 +4,65 @@
  * text content from a tool call.
  *
  * The Anthropic SDK's `mcpTools()` helper drops `EmbeddedResource` blocks, so
- * the chat streaming handler can't use it directly when a UI resource matters.
+ * the chat streaming handler dispatches through `callMcpTool` instead.
  */
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { mcpTools, type MCPClientLike } from '@anthropic-ai/sdk/helpers/beta/mcp';
-import type { BetaRunnableTool } from '@anthropic-ai/sdk/lib/tools/BetaRunnableTool';
-import type {
-  CallToolResult,
-  EmbeddedResource,
-  ReadResourceResult,
-  Tool,
+import type { BetaTool } from '@anthropic-ai/sdk/resources/beta/messages/messages';
+import {
+  CallToolResultSchema,
+  type CallToolRequest,
+  type CallToolResult,
+  type ReadResourceResult,
+  type Tool,
 } from '@modelcontextprotocol/sdk/types.js';
 import { log } from 'evlog';
+import { z } from 'zod';
 import type { McpUiResourceCsp, McpUiResourcePermissions } from '../../../shared/chat-types';
+import type { JsonObject } from '../../../shared/json-types';
+
+const jsonObjectSchema = z.record(z.string(), z.json());
+
+const uiMetaSchema = z
+  .object({
+    ui: z
+      .object({
+        csp: z
+          .looseObject({
+            connectDomains: z.array(z.string()).optional(),
+            resourceDomains: z.array(z.string()).optional(),
+            frameDomains: z.array(z.string()).optional(),
+          })
+          .optional()
+          .catch(undefined),
+        permissions: z.record(z.string(), z.json()).optional().catch(undefined),
+      })
+      .optional()
+      .catch(undefined),
+  })
+  .catch({});
+
+const toolUiMetaSchema = z.object({ ui: z.object({ resourceUri: z.string() }) });
 
 interface CachedMcpClient {
   client: Client;
-  tools: BetaRunnableTool<Record<string, unknown>>[];
   rawTools: Tool[];
   resources: Map<string, ExtractedUiResource>;
 }
 
 const pool = new Map<string, CachedMcpClient>();
 
+async function callToolParsed(
+  client: Client,
+  params: CallToolRequest['params'],
+): Promise<CallToolResult> {
+  return CallToolResultSchema.parse(await client.callTool(params));
+}
+
 async function connect(endpointPath: string, baseUrl?: string): Promise<CachedMcpClient | null> {
   const cached = pool.get(endpointPath);
+
   if (cached) return cached;
 
   const origin = baseUrl || `http://localhost:${process.env.PORT || 3000}`;
@@ -40,18 +72,19 @@ async function connect(endpointPath: string, baseUrl?: string): Promise<CachedMc
     const client = new Client({ name: 'blog-chat-mcp-pool', version: '0.1.0' });
     await client.connect(new StreamableHTTPClientTransport(url));
     const { tools: mcpToolList } = await client.listTools();
-    const tools = mcpTools(mcpToolList, client as unknown as MCPClientLike);
+
     const entry: CachedMcpClient = {
       client,
-      tools,
       rawTools: mcpToolList,
       resources: new Map(),
     };
+
     pool.set(endpointPath, entry);
     log.info({
       tag: 'mcp-pool',
-      message: `Connected to ${endpointPath}, discovered ${tools.length} tool(s)`,
+      message: `Connected to ${endpointPath}, discovered ${mcpToolList.length} tool(s)`,
     });
+
     return entry;
   } catch (err) {
     log.warn({
@@ -59,16 +92,19 @@ async function connect(endpointPath: string, baseUrl?: string): Promise<CachedMc
       message: `Failed to connect to MCP server at ${endpointPath}`,
       error: err instanceof Error ? err.message : String(err),
     });
+
     return null;
   }
 }
 
-export async function getMcpTools(
-  endpointPath: string,
-  baseUrl?: string,
-): Promise<BetaRunnableTool<Record<string, unknown>>[]> {
+export async function getMcpTools(endpointPath: string, baseUrl?: string): Promise<BetaTool[]> {
   const entry = await connect(endpointPath, baseUrl);
-  return entry?.tools ?? [];
+
+  return (entry?.rawTools ?? []).map((tool) => ({
+    name: tool.name,
+    description: tool.description,
+    input_schema: tool.inputSchema,
+  }));
 }
 
 export interface ExtractedUiResource {
@@ -81,45 +117,37 @@ export interface ExtractedUiResource {
 export interface McpToolCallOutcome {
   /** Concatenated text content suitable for feeding back to the model. */
   text: string;
-  structuredContent: Record<string, unknown>;
+  structuredContent: JsonObject;
   uiResource?: ExtractedUiResource;
   isError: boolean;
+}
+
+function toUiResource(uri: string, html: string, meta: Tool['_meta']): ExtractedUiResource {
+  const uiMeta = uiMetaSchema.parse(meta).ui;
+
+  return { uri, html, csp: uiMeta?.csp, permissions: uiMeta?.permissions };
 }
 
 /** @internal exported for unit tests */
 export function extractUiResource(result: CallToolResult): ExtractedUiResource | undefined {
   for (const block of result.content ?? []) {
     if (block.type !== 'resource') continue;
-    const resource = (block as EmbeddedResource).resource;
-    if (!resource || typeof resource !== 'object') continue;
-    const uri = (resource as { uri?: unknown }).uri;
-    if (typeof uri !== 'string' || !uri.startsWith('ui://')) continue;
-    const text = (resource as { text?: unknown }).text;
-    const meta =
-      (resource as { _meta?: unknown; meta?: unknown })._meta ??
-      (resource as { meta?: unknown }).meta;
-    const uiMeta =
-      meta && typeof meta === 'object' && 'ui' in meta
-        ? (meta as { ui?: { csp?: McpUiResourceCsp; permissions?: McpUiResourcePermissions } }).ui
-        : undefined;
-    return {
-      uri,
-      html: typeof text === 'string' ? text : '',
-      csp: uiMeta?.csp,
-      permissions: uiMeta?.permissions,
-    };
+    const { resource } = block;
+
+    if (!resource.uri.startsWith('ui://')) continue;
+
+    return toUiResource(resource.uri, 'text' in resource ? resource.text : '', resource._meta);
   }
+
   return undefined;
 }
 
 /** @internal exported for unit tests */
 export function toolUiResourceUri(tool: Tool | undefined): string | undefined {
-  const meta = tool?._meta;
-  if (!meta || typeof meta !== 'object') return undefined;
-  const ui = (meta as { ui?: unknown }).ui;
-  if (!ui || typeof ui !== 'object') return undefined;
-  const uri = (ui as { resourceUri?: unknown }).resourceUri;
-  return typeof uri === 'string' && uri.startsWith('ui://') ? uri : undefined;
+  const parsed = toolUiMetaSchema.safeParse(tool?._meta);
+  const uri = parsed.data?.ui.resourceUri;
+
+  return uri?.startsWith('ui://') ? uri : undefined;
 }
 
 /** @internal exported for unit tests */
@@ -128,21 +156,11 @@ export function extractUiResourceFromRead(
   read: ReadResourceResult,
 ): ExtractedUiResource | undefined {
   for (const content of read.contents ?? []) {
-    const cUri = (content as { uri?: unknown }).uri;
-    if (typeof cUri !== 'string' || cUri !== uri) continue;
-    const text = (content as { text?: unknown }).text;
-    const meta = (content as { _meta?: unknown })._meta;
-    const uiMeta =
-      meta && typeof meta === 'object' && 'ui' in meta
-        ? (meta as { ui?: { csp?: McpUiResourceCsp; permissions?: McpUiResourcePermissions } }).ui
-        : undefined;
-    return {
-      uri,
-      html: typeof text === 'string' ? text : '',
-      csp: uiMeta?.csp,
-      permissions: uiMeta?.permissions,
-    };
+    if (content.uri !== uri) continue;
+
+    return toUiResource(uri, 'text' in content ? content.text : '', content._meta);
   }
+
   return undefined;
 }
 
@@ -154,33 +172,40 @@ async function resolveUiResource(
   if (inline) return inline;
   const tool = entry.rawTools.find((t) => t.name === toolName);
   const uri = toolUiResourceUri(tool);
+
   if (!uri) return undefined;
   const cached = entry.resources.get(uri);
+
   if (cached) return cached;
+
   try {
-    const read = (await entry.client.readResource({ uri })) as ReadResourceResult;
+    const read = await entry.client.readResource({ uri });
     const resolved = extractUiResourceFromRead(uri, read);
+
     if (resolved) entry.resources.set(uri, resolved);
+
     return resolved;
   } catch (err) {
     log.warn({
       tag: 'mcp-pool',
       message: `readResource ${uri} failed: ${err instanceof Error ? err.message : String(err)}`,
     });
+
     return undefined;
   }
 }
 
 function extractText(result: CallToolResult): string {
   const parts: string[] = [];
+
   for (const block of result.content ?? []) {
-    if (block.type === 'text' && typeof (block as { text?: unknown }).text === 'string') {
-      parts.push((block as { text: string }).text);
-    }
+    if (block.type === 'text') parts.push(block.text);
   }
+
   if (parts.length > 0) return parts.join('\n');
-  const sc = (result as { structuredContent?: unknown }).structuredContent;
-  return sc && typeof sc === 'object' ? JSON.stringify(sc) : '';
+  const sc = result.structuredContent;
+
+  return sc ? JSON.stringify(sc) : '';
 }
 
 /**
@@ -191,7 +216,7 @@ function extractText(result: CallToolResult): string {
 export async function callMcpTool(
   endpointPath: string,
   name: string,
-  args: Record<string, unknown>,
+  args: JsonObject,
   baseUrl?: string,
 ): Promise<McpToolCallOutcome> {
   // No dedicated span here — the chat handler wraps every tool dispatch in
@@ -199,22 +224,25 @@ export async function callMcpTool(
   // and the OTLP HTTP exporter's auto-instrumented undici span covers the
   // actual hop. Adding a span here just double-counts in NRQL.
   const entry = await connect(endpointPath, baseUrl);
+
   if (!entry) {
     return errorOutcome(`MCP endpoint ${endpointPath} is unavailable`);
   }
+
   try {
-    const result = (await entry.client.callTool({ name, arguments: args })) as CallToolResult;
+    const result = await callToolParsed(entry.client, { name, arguments: args });
     const uiResource = await resolveUiResource(entry, name, extractUiResource(result));
+
     return {
       text: extractText(result),
-      structuredContent:
-        (result as { structuredContent?: Record<string, unknown> }).structuredContent ?? {},
+      structuredContent: jsonObjectSchema.catch({}).parse(result.structuredContent),
       uiResource,
-      isError: Boolean((result as { isError?: boolean }).isError),
+      isError: Boolean(result.isError),
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     log.warn({ tag: 'mcp-pool', message: `MCP tool ${name} threw: ${message}` });
+
     return errorOutcome(`MCP tool ${name} failed: ${message}`);
   }
 }
@@ -230,12 +258,14 @@ export async function disposeMcpClients(): Promise<void> {
     } catch {
       // swallow
     }
+
     pool.delete(path);
   }
 }
 
 export function invalidateMcpClient(endpointPath: string): void {
   const cached = pool.get(endpointPath);
+
   if (cached) {
     void cached.client.close().catch(() => {});
     pool.delete(endpointPath);

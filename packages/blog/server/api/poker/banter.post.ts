@@ -70,6 +70,7 @@ export default defineEventHandler(async (event) => {
     };
   } catch (err) {
     log.warn('poker', `banter failed persona=${persona.id} event=${body.event} err=${String(err)}`);
+
     // Don't fail the game UI if Haiku hiccups — return an empty line.
     return { personaId: persona.id, event: body.event, text: '' };
   }

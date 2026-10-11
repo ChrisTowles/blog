@@ -6,7 +6,9 @@ import { dirname, resolve } from 'path';
 import { MODEL_HAIKU, MODEL_SONNET } from './shared/models';
 
 const __filename = fileURLToPath(import.meta.url);
+
 const __dirname = dirname(__filename);
+
 dotenv.config({
   path: resolve(__dirname, '../../.env'),
   quiet: true,
@@ -186,6 +188,7 @@ export default defineNuxtConfig({
           ],
           external: ['pg', /^node:/],
         });
+
         await bundle.write({
           file: join(outputDir, 'database/migrate.mjs'),
           format: 'esm',

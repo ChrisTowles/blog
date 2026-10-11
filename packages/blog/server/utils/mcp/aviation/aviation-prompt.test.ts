@@ -9,6 +9,7 @@ import {
 describe('aviation-prompt', () => {
   it('starter questions: 10 non-empty strings', () => {
     expect(AVIATION_STARTER_QUESTIONS.length).toBe(10);
+
     for (const q of AVIATION_STARTER_QUESTIONS) {
       expect(q).toBeTruthy();
       expect(q.length).toBeGreaterThan(15);
@@ -25,6 +26,7 @@ describe('aviation-prompt', () => {
       'facts/bts_t100',
       'ref/carrier_to_operator.parquet',
     ];
+
     for (const p of required) {
       expect(AVIATION_SCHEMA_BLOCK).toContain(p);
     }
@@ -34,9 +36,11 @@ describe('aviation-prompt', () => {
     const prompt = buildAviationSystemPrompt();
     expect(prompt).toContain('ask_aviation');
     expect(prompt).toContain(AVIATION_SCHEMA_BLOCK);
+
     for (const kw of ['ATTACH', 'INSTALL', 'LOAD', 'PRAGMA', 'SET']) {
       expect(prompt).toContain(kw);
     }
+
     // Chart selection should forbid geo at launch
     expect(prompt.toLowerCase()).toContain('no geo');
   });

@@ -39,6 +39,7 @@ const { data: navigation } = await useAsyncData(
     getCachedData: (key, nuxtApp) => nuxtApp.payload?.data?.[key] ?? nuxtApp.static?.data?.[key],
   },
 );
+
 const { data: files } = useLazyAsyncData('search', () => queryCollectionSearchSections('posts'), {
   server: false,
   // See note on the navigation useAsyncData above: same payload.data undefined

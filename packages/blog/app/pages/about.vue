@@ -2,11 +2,10 @@
 import { TEST_IDS } from '~~/shared/test-ids';
 import { hostedExperiments } from '~/utils/experiments';
 
-const appConfig = useAppConfig() as {
-  author: { name: string; github: string; twitter: string; bluesky: string };
-};
+const appConfig = useAppConfig();
 
 const title = 'About';
+
 const description =
   "I'm Chris Towles — Principal Architect for Cloud AI at GE Aerospace, and a full stack developer who never stopped shipping side projects.";
 

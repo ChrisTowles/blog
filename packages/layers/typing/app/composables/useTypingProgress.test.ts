@@ -2,33 +2,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { effectScope } from 'vue';
 
-// Stub the active-learner composable so the test doesn't need a Nuxt
-// cookie state machine or to issue real fetches. We mock the underlying
-// module file rather than rely on @nuxt/test-utils' mockNuxtImport so
-// the test compiles from the typing layer (no test-utils dep there).
-vi.mock('./useActiveLearner', () => ({
-  useActiveLearner: () => ({
-    activeLearnerId: { value: 'anon' as const },
-    active: { value: null },
-    learners: { value: [] },
-    setActive: () => {},
-    setLearners: () => {},
-  }),
-}));
-
 const TYPING_BESTS_LOCAL_STORAGE_KEY = 'typing:bests:v1';
 
 type StoreMap = Map<string, string>;
 
-function installLocalStorage(): { store: StoreMap; getItem: ReturnType<typeof vi.fn> } {
+function installLocalStorage() {
   const store: StoreMap = new Map();
   const getItem = vi.fn((key: string) => (store.has(key) ? store.get(key)! : null));
+
   const setItem = vi.fn((key: string, value: string) => {
     store.set(key, String(value));
   });
+
   const removeItem = vi.fn((key: string) => {
     store.delete(key);
   });
+
   const clear = vi.fn(() => {
     store.clear();
   });
@@ -50,6 +39,7 @@ function installLocalStorage(): { store: StoreMap; getItem: ReturnType<typeof vi
 async function loadFreshComposable() {
   vi.resetModules();
   const mod = await import('./useTypingProgress');
+
   return mod.useTypingProgress;
 }
 
@@ -61,8 +51,10 @@ describe('useTypingProgress.recordLessonBest', () => {
   it('records the first attempt as a new best with previous=null', async () => {
     const useFresh = await loadFreshComposable();
     const scope = effectScope();
+
     const result = scope.run(() => {
       const { recordLessonBest } = useFresh();
+
       return recordLessonBest('foo', { wpm: 10, accuracy: 0.9, durationMs: 1000 });
     })!;
 
@@ -74,9 +66,11 @@ describe('useTypingProgress.recordLessonBest', () => {
   it('returns isNewBest=false when wpm ties the existing best', async () => {
     const useFresh = await loadFreshComposable();
     const scope = effectScope();
+
     const out = scope.run(() => {
       const { recordLessonBest } = useFresh();
       recordLessonBest('foo', { wpm: 10, accuracy: 0.9, durationMs: 1000 });
+
       return recordLessonBest('foo', { wpm: 10, accuracy: 0.95, durationMs: 900 });
     })!;
 
@@ -89,9 +83,11 @@ describe('useTypingProgress.recordLessonBest', () => {
   it('records a new best when wpm beats the previous', async () => {
     const useFresh = await loadFreshComposable();
     const scope = effectScope();
+
     const out = scope.run(() => {
       const { recordLessonBest } = useFresh();
       recordLessonBest('foo', { wpm: 10, accuracy: 0.9, durationMs: 1000 });
+
       return recordLessonBest('foo', { wpm: 15, accuracy: 0.92, durationMs: 800 });
     })!;
 
@@ -104,10 +100,13 @@ describe('useTypingProgress.recordLessonBest', () => {
   it('getLessonBest returns null for an unknown slug', async () => {
     const useFresh = await loadFreshComposable();
     const scope = effectScope();
+
     const out = scope.run(() => {
       const { getLessonBest } = useFresh();
+
       return getLessonBest('never-seen-this-slug');
     })!;
+
     expect(out).toBeNull();
     scope.stop();
   });
@@ -118,10 +117,12 @@ describe('useTypingProgress.recordLessonBest', () => {
 
     const useFresh = await loadFreshComposable();
     const scope = effectScope();
+
     const out = scope.run(() => {
       const { getLessonBest, recordLessonBest } = useFresh();
       const before = getLessonBest('foo');
       const recorded = recordLessonBest('foo', { wpm: 10, accuracy: 0.9, durationMs: 1000 });
+
       return { before, recorded };
     })!;
 
@@ -137,10 +138,13 @@ describe('useTypingProgress.recordLessonBest', () => {
 
     const useFresh = await loadFreshComposable();
     const scope = effectScope();
+
     const out = scope.run(() => {
       const { getLessonBest } = useFresh();
+
       return getLessonBest('foo');
     })!;
+
     expect(out).toBeNull();
     scope.stop();
   });
@@ -161,8 +165,10 @@ describe('useTypingProgress.recordLessonBest', () => {
 
     const useFresh = await loadFreshComposable();
     const scope = effectScope();
+
     const out = scope.run(() => {
       const { getLessonBest } = useFresh();
+
       return {
         good: getLessonBest('good'),
         bad: getLessonBest('bad'),
@@ -193,6 +199,7 @@ describe('useTypingProgress.recordLessonBest', () => {
     const bestsReads = getItem.mock.calls.filter(
       (call) => call[0] === TYPING_BESTS_LOCAL_STORAGE_KEY,
     );
+
     expect(bestsReads.length).toBe(1);
     scope.stop();
   });

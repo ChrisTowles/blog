@@ -1,6 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
 const HOST_PORT = process.env.HOST_PORT || '8080';
+
 const SANDBOX_PORT = process.env.SANDBOX_PORT || '8081';
 
 export default defineConfig({

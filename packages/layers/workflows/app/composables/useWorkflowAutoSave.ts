@@ -21,15 +21,13 @@ export function useWorkflowAutoSave(
 
   const save = useDebounceFn(async () => {
     saveStatus.value = 'saving';
+
     try {
+      const graph = { nodes: nodes.value, edges: edges.value, viewport: viewport.value };
+
       await $fetch(`/api/workflows/${workflowId}`, {
         method: 'PUT',
-        body: {
-          ...(name ? { name: name.value } : {}),
-          nodes: nodes.value,
-          edges: edges.value,
-          viewport: viewport.value,
-        },
+        body: name ? { name: name.value, ...graph } : graph,
       });
       saveStatus.value = 'saved';
       resetToIdle();

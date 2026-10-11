@@ -7,6 +7,7 @@ async function runMigrations() {
   // In Docker, env vars are passed directly - no dotenv needed
 
   const connectionString = process.env.DATABASE_URL;
+
   if (!connectionString) {
     console.error('DATABASE_URL is not set');
     process.exit(1);

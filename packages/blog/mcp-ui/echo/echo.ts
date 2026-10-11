@@ -4,12 +4,18 @@ import {
   applyHostFonts,
   applyHostStyleVariables,
   type McpUiHostContext,
+  type McpUiToolResultNotification,
 } from '@modelcontextprotocol/ext-apps';
+import { z } from 'zod';
 
-interface EchoToolResult {
-  message: string;
-  timestamp: string;
-}
+const echoToolResultSchema = z.object({
+  message: z.string(),
+  timestamp: z.string(),
+});
+
+type EchoToolResult = z.infer<typeof echoToolResultSchema>;
+
+type ToolResultParams = Pick<McpUiToolResultNotification['params'], 'structuredContent'>;
 
 const STYLES = /* css */ `
 :root {
@@ -136,7 +142,9 @@ function renderError(mount: HTMLElement, message: string): void {
 
 function handleHostContextChanged(ctx: McpUiHostContext): void {
   if (ctx.theme) applyDocumentTheme(ctx.theme);
+
   if (ctx.styles?.variables) applyHostStyleVariables(ctx.styles.variables);
+
   if (ctx.styles?.css?.fonts) applyHostFonts(ctx.styles.css.fonts);
 }
 
@@ -145,26 +153,44 @@ export interface BootstrapDeps {
   mount?: HTMLElement;
 }
 
+function requireMount(): HTMLElement {
+  const mount = document.getElementById('app');
+
+  if (!mount) throw new Error('echo: #app mount element is missing');
+
+  return mount;
+}
+
 export function createBootstrap(deps: BootstrapDeps = {}) {
-  const mount = deps.mount ?? (document.getElementById('app') as HTMLElement);
+  const mount = deps.mount ?? requireMount();
   const app = deps.app ?? new App({ name: 'echo-result', version: '0.1.0' });
 
   mountStyle();
   renderLoading(mount);
 
-  function handleToolResult(raw: unknown): void {
-    const params = (raw ?? {}) as { structuredContent?: unknown };
+  function handleToolResult(params: ToolResultParams): void {
     const sc = params.structuredContent;
-    if (!sc || typeof sc !== 'object') {
+
+    if (!sc) {
       renderError(mount, 'Tool result missing structuredContent');
+
       return;
     }
-    renderResult(mount, sc as EchoToolResult);
+
+    const result = echoToolResultSchema.safeParse(sc);
+
+    if (!result.success) {
+      renderError(mount, 'Tool result has an unexpected shape');
+
+      return;
+    }
+
+    renderResult(mount, result.data);
   }
 
   app.ontoolinput = () => renderLoading(mount);
   app.ontoolresult = (params) => handleToolResult(params);
-  app.onhostcontextchanged = (params) => handleHostContextChanged(params as McpUiHostContext);
+  app.onhostcontextchanged = (params) => handleHostContextChanged(params);
   app.ontoolcancelled = () => renderError(mount, 'Tool call cancelled.');
   app.onerror = (err: Error) => console.error('[echo] app error:', err);
 
@@ -175,7 +201,7 @@ declare global {
   interface Window {
     __MCP_UI_TEST__?: boolean;
     __ECHO__?: {
-      handleToolResult: (r: unknown) => void;
+      handleToolResult: (params: ToolResultParams) => void;
       handleHostContextChanged: (ctx: McpUiHostContext) => void;
     };
   }
@@ -210,7 +236,9 @@ if (
       /* best-effort */
     }
   };
+
   notifySize();
+
   if (typeof ResizeObserver !== 'undefined') {
     const ro = new ResizeObserver(() => notifySize());
     ro.observe(document.documentElement);
@@ -224,6 +252,7 @@ if (
   };
   void boot.app.connect().then(() => {
     const ctx = boot.app.getHostContext();
+
     if (ctx) handleHostContextChanged(ctx);
   });
 }

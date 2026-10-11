@@ -1,5 +1,6 @@
 import { resolve } from 'path';
 import { homedir } from 'os';
+import { z } from 'zod';
 
 /**
  * Skill source configuration
@@ -37,8 +38,11 @@ export function getSkillSources(config: SkillConfig = defaultSkillConfig): ('pro
     { enabled: config.enabled.project, source: 'project' },
     { enabled: config.enabled.global, source: 'user' },
   ];
-  return mapping.filter((m) => m.enabled).map((m) => m.source);
+
+  return mapping.flatMap((m) => (m.enabled ? [m.source] : []));
 }
+
+const optionalPath = z.string().catch('');
 
 /**
  * Get runtime skill configuration from environment/runtime config
@@ -47,8 +51,8 @@ export function getSkillConfigFromEnv(): SkillConfig {
   const config = useRuntimeConfig();
 
   return {
-    projectPath: (config.skillProjectPath as string) || defaultSkillConfig.projectPath,
-    globalPath: (config.skillGlobalPath as string) || defaultSkillConfig.globalPath,
+    projectPath: optionalPath.parse(config.skillProjectPath) || defaultSkillConfig.projectPath,
+    globalPath: optionalPath.parse(config.skillGlobalPath) || defaultSkillConfig.globalPath,
     enabled: {
       project: config.skillProjectEnabled !== false,
       global: config.skillGlobalEnabled !== false,

@@ -52,19 +52,22 @@ const SENSITIVE_PATTERNS = ['SECRET', 'KEY', 'PASSWORD', 'TOKEN'];
 function isSensitiveKey(key: string): boolean {
   if (SENSITIVE_KEYS.has(key)) return true;
   const upperKey = key.toUpperCase();
+
   return SENSITIVE_PATTERNS.some((pattern) => upperKey.includes(pattern));
 }
 
 export function maskValue(key: string, value: string): string {
   if (!isSensitiveKey(key)) return value;
+
   if (value.length >= 6) return `${value.slice(0, 2)}***${value.slice(-4)}`;
+
   return '***';
 }
 
-export function getMaskedConfig(config: EnvConfig): Record<string, string> {
-  const masked: Record<string, string> = {};
-  for (const [key, value] of Object.entries(config).sort(([a], [b]) => a.localeCompare(b))) {
-    masked[key] = maskValue(key, String(value));
-  }
-  return masked;
+export function getMaskedConfig(config: EnvConfig) {
+  return Object.fromEntries(
+    Object.entries(config)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, value]) => [key, maskValue(key, String(value))]),
+  );
 }

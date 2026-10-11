@@ -14,12 +14,17 @@ definePageMeta({
 });
 
 const { state, playerLegal, matchOver, personaId, banter, newHand, playerAct } = usePokerGame();
+
 const currentPersona = computed(() => getPersona(personaId.value));
 
 const betAmount = ref(0);
+
 const minBetSlider = computed(() => Math.max(state.bigBlind, playerLegal.value.minBet));
+
 const maxBetSlider = computed(() => playerLegal.value.maxBetTo - state.player.committed);
+
 const minRaiseToSlider = computed(() => playerLegal.value.minRaiseTo);
+
 const maxRaiseToSlider = computed(() => playerLegal.value.maxBetTo);
 
 watch(
@@ -52,18 +57,23 @@ function nextHand() {
 function fold() {
   playerAct({ kind: 'fold' });
 }
+
 function check() {
   playerAct({ kind: 'check' });
 }
+
 function call() {
   playerAct({ kind: 'call' });
 }
+
 function bet() {
   playerAct({ kind: 'bet', amount: betAmount.value });
 }
+
 function raise() {
   playerAct({ kind: 'raise', toAmount: betAmount.value });
 }
+
 function allIn() {
   if (state.currentBet === 0) {
     playerAct({ kind: 'bet', amount: state.player.chips });
@@ -73,6 +83,7 @@ function allIn() {
 }
 
 const hasStarted = computed(() => state.handNumber > 0);
+
 const showResult = computed(() => state.handOver && !!state.result);
 
 const recentLog = computed(() => state.log.slice(-12));

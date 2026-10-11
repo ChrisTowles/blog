@@ -3,6 +3,7 @@ import { wrapAnthropic, initLogger } from 'braintrust';
 import { envSchema } from '../env-config';
 
 let _client: Anthropic | null = null;
+
 let _logger: ReturnType<typeof initLogger> | null = null;
 
 /**
@@ -17,12 +18,14 @@ export function getBraintrustLogger() {
       apiKey: result.BRAINTRUST_API_KEY,
     });
   }
+
   return _logger;
 }
 
 export function getAnthropicClient(): Anthropic {
   if (!_client) {
     const result = envSchema.parse(process.env);
+
     const rawClient = new Anthropic({
       apiKey: result.ANTHROPIC_API_KEY,
       // happy-dom in Vitest sets window, which triggers the Anthropic browser guard.
@@ -34,5 +37,6 @@ export function getAnthropicClient(): Anthropic {
     getBraintrustLogger();
     _client = wrapAnthropic(rawClient);
   }
+
   return _client;
 }

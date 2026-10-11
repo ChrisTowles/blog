@@ -46,6 +46,7 @@ export default defineEventHandler(async (event) => {
       errorsByKey: body.errorsByKey,
     })
     .returning();
+
   if (!attempt) {
     throw createError({ statusCode: 500, statusMessage: 'Failed to record attempt' });
   }
@@ -53,6 +54,7 @@ export default defineEventHandler(async (event) => {
   // Update key stats — one row per (learner, key). Running mean for avgMs.
   for (const [key, stat] of Object.entries(body.perKeyStats)) {
     if (stat.attempts === 0) continue;
+
     const existing = await db
       .select()
       .from(tables.typingKeyStats)
@@ -63,14 +65,18 @@ export default defineEventHandler(async (event) => {
         ),
       )
       .limit(1);
+
     const prev = existing[0];
+
     if (prev) {
       const totalAttempts = prev.attempts + stat.attempts;
       const totalErrors = prev.errors + stat.errors;
+
       const weightedAvg =
         totalAttempts > 0
           ? (prev.avgMs * prev.attempts + stat.avgMs * stat.attempts) / totalAttempts
           : 0;
+
       await db
         .update(tables.typingKeyStats)
         .set({ attempts: totalAttempts, errors: totalErrors, avgMs: weightedAvg })
@@ -90,20 +96,24 @@ export default defineEventHandler(async (event) => {
   // (either via lessonId on a spelling-* lesson or via spellingListId on
   // a Lake Leap round), bump consecutive-correct counts.
   let resolvedSpellingListId = body.spellingListId ?? null;
+
   if (!resolvedSpellingListId && body.lessonId) {
     const lessonRows = await db
       .select({ spellingListId: tables.typingLessons.spellingListId })
       .from(tables.typingLessons)
       .where(eq(tables.typingLessons.id, body.lessonId))
       .limit(1);
+
     resolvedSpellingListId = lessonRows[0]?.spellingListId ?? null;
   }
 
   if (resolvedSpellingListId) {
     const cleared = body.wordsCleared ?? [];
     const errored = new Set((body.wordsErrored ?? []).map((w) => w.toLowerCase()));
+
     for (const wordRaw of cleared) {
       const word = wordRaw.toLowerCase();
+
       const existing = await db
         .select()
         .from(tables.typingSpellingProgress)
@@ -114,7 +124,9 @@ export default defineEventHandler(async (event) => {
           ),
         )
         .limit(1);
+
       const prev = existing[0];
+
       if (errored.has(word)) {
         // Streak reset.
         if (prev) {
@@ -123,10 +135,13 @@ export default defineEventHandler(async (event) => {
             .set({ consecutiveCorrect: 0 })
             .where(eq(tables.typingSpellingProgress.id, prev.id));
         }
+
         continue;
       }
+
       const nextStreak = (prev?.consecutiveCorrect ?? 0) + 1;
       const mastered = nextStreak >= 3;
+
       if (prev) {
         await db
           .update(tables.typingSpellingProgress)
@@ -160,5 +175,6 @@ export default defineEventHandler(async (event) => {
     errorsByKey: attempt.errorsByKey,
     completedAt: attempt.completedAt.toISOString(),
   };
+
   return { attempt: out };
 });

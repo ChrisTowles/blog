@@ -30,10 +30,13 @@ export default defineEventHandler(async (event) => {
     .from(tables.typingLearners)
     .where(eq(tables.typingLearners.id, learnerId))
     .limit(1);
+
   const prev = existing[0];
+
   if (!prev) {
     throw createError({ statusCode: 404, statusMessage: 'Learner not found' });
   }
+
   if (body.currentStage <= prev.currentStage) {
     return { currentStage: prev.currentStage, changed: false };
   }

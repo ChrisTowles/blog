@@ -3,18 +3,20 @@
  * has to land on both sides at once.
  */
 
-export interface AviationToolResult {
+import type { JsonObject } from './json-types';
+
+export type AviationToolResult = {
   /** May be wrapped in a LIMIT 10000 guard. */
   sql: string;
   answer: string;
   hero_number?: string;
   /** Passed to `chart.setOption` verbatim. */
-  chart_option: Record<string, unknown>;
+  chart_option: JsonObject;
   followups: [string, string, string];
-  rows: Array<Record<string, unknown>>;
+  rows: JsonObject[];
   /** True if the LIMIT cap was reached. */
   truncated: boolean;
-}
+};
 
 /**
  * Returned by `ask_aviation` immediately so the host can mount the iframe against a

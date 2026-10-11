@@ -6,15 +6,19 @@
 // --- Const arrays + derived types ---
 
 export const EMPLOYMENT_TYPES = ['employed', 'self-employed', 'retired', 'unemployed'] as const;
+
 export type EmploymentType = (typeof EMPLOYMENT_TYPES)[number];
 
 export const CREDIT_SCORE_RANGES = ['300-579', '580-669', '670-739', '740-799', '800-850'] as const;
+
 export type CreditScoreRange = (typeof CREDIT_SCORE_RANGES)[number];
 
 export const PROPERTY_TYPES = ['single-family', 'condo', 'townhouse', 'multi-family'] as const;
+
 export type PropertyType = (typeof PROPERTY_TYPES)[number];
 
 export const LOAN_PURPOSES = ['purchase', 'refinance'] as const;
+
 export type LoanPurpose = (typeof LOAN_PURPOSES)[number];
 
 // --- Loan application data ---
@@ -49,7 +53,9 @@ export const LOAN_APPLICATION_FIELDS: (keyof LoanApplicationData)[] = [
   'loanPurpose',
 ];
 
-export function isApplicationComplete(data: LoanApplicationData): boolean {
+export function isApplicationComplete(data: {
+  [K in keyof LoanApplicationData]?: LoanApplicationData[K] | null;
+}): boolean {
   return LOAN_APPLICATION_FIELDS.every(
     (field) => data[field] !== undefined && data[field] !== null,
   );
@@ -58,11 +64,13 @@ export function isApplicationComplete(data: LoanApplicationData): boolean {
 // --- Loan status ---
 
 export const LOAN_STATUSES = ['intake', 'reviewing', 'approved', 'denied', 'flagged'] as const;
+
 export type LoanStatus = (typeof LOAN_STATUSES)[number];
 
 // --- Reviewers ---
 
 export const REVIEWERS = ['the-bank', 'loan-market', 'background-checks'] as const;
+
 export type ReviewerName = (typeof REVIEWERS)[number];
 
 export const REVIEWER_DISPLAY_NAMES: Record<ReviewerName, string> = {
@@ -74,6 +82,7 @@ export const REVIEWER_DISPLAY_NAMES: Record<ReviewerName, string> = {
 // --- Review decisions ---
 
 export const REVIEW_DECISIONS = ['approved', 'denied', 'flagged'] as const;
+
 export type ReviewDecision = (typeof REVIEW_DECISIONS)[number];
 
 // --- SSE event types for review phase ---

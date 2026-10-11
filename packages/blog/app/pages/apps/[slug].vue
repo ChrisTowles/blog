@@ -4,6 +4,7 @@ const route = useRoute();
 const { data: appEntry } = await useAsyncData(route.path, () =>
   queryCollection('appEntry').path(route.path).first(),
 );
+
 if (!appEntry.value) {
   throw createError({ statusCode: 404, statusMessage: 'Post not found', fatal: true });
 }

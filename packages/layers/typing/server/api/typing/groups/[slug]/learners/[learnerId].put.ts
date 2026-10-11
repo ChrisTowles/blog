@@ -20,19 +20,26 @@ const bodySchema = z.object({
 export default defineEventHandler(async (event) => {
   const { slug, learnerId } = await getValidatedRouterParams(event, paramsSchema.parse);
   const group = await findGroupBySlug(slug);
+
   if (!group) {
     throw createError({ statusCode: 404, statusMessage: 'Group not found' });
   }
+
   await requireGuardian(event, { groupId: group.id });
 
   const body = await readValidatedBody(event, bodySchema.parse);
   const db = useDrizzle();
 
   const set: Partial<typeof tables.typingLearners.$inferInsert> = {};
+
   if (body.displayName !== undefined) set.displayName = body.displayName;
+
   if (body.birthYear !== undefined) set.birthYear = body.birthYear;
+
   if (body.avatarUrl !== undefined) set.avatarUrl = body.avatarUrl;
+
   if (body.currentStage !== undefined) set.currentStage = body.currentStage;
+
   if (body.preferredVoice !== undefined) set.preferredVoice = body.preferredVoice;
 
   if (Object.keys(set).length === 0) {
@@ -46,6 +53,7 @@ export default defineEventHandler(async (event) => {
       and(eq(tables.typingLearners.id, learnerId), eq(tables.typingLearners.groupId, group.id)),
     )
     .returning();
+
   if (!updated) {
     throw createError({ statusCode: 404, statusMessage: 'Learner not found' });
   }
@@ -61,5 +69,6 @@ export default defineEventHandler(async (event) => {
     createdAt: updated.createdAt.toISOString(),
     updatedAt: updated.updatedAt.toISOString(),
   };
+
   return { learner };
 });

@@ -27,10 +27,13 @@ export default defineEventHandler(async (event) => {
     .from(tables.typingSpellingLists)
     .where(eq(tables.typingSpellingLists.id, id))
     .limit(1);
+
   const list = rows[0];
+
   if (!list) {
     throw createError({ statusCode: 404, statusMessage: 'List not found' });
   }
+
   await requireGuardian(event, { learnerId: list.learnerId });
 
   const [updated] = await db
@@ -54,7 +57,9 @@ export default defineEventHandler(async (event) => {
     .from(tables.typingLearners)
     .where(eq(tables.typingLearners.id, list.learnerId))
     .limit(1);
+
   const learnerStage = learnerRows[0]?.currentStage ?? 5;
+
   try {
     await autoGenerateSpellingLessons(id, body.words, learnerStage);
   } catch {

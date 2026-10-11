@@ -54,7 +54,7 @@ export function suitColor(suit: Suit, palette: { red: string; black: string }): 
  * Pip positions (col 0..2, row 0..6) for ranks 2-10. Pips placed below row 3.5
  * are drawn upside-down so the card looks identical when flipped.
  */
-export const PIP_LAYOUTS: Record<number, Array<[number, number]>> = {
+export const PIP_LAYOUTS: Partial<Record<Rank, Array<[number, number]>>> = {
   2: [
     [1, 0],
     [1, 6],
@@ -152,19 +152,24 @@ export function pipUseElements(
   pipScale: number,
   suitSymbolId: string,
 ): string {
-  const layout = PIP_LAYOUTS[card.rank as keyof typeof PIP_LAYOUTS];
+  const layout = PIP_LAYOUTS[card.rank];
+
   if (!layout) return '';
   const out: string[] = [];
+
   for (const [col, row] of layout) {
     const cx = frame.x + (col / 2) * frame.w;
     const cy = frame.y + (row / 6) * frame.h;
     const flipped = row > 3.5;
     const halfSize = (pipScale * 100) / 2;
+
     const transform = flipped
       ? `translate(${cx + halfSize} ${cy + halfSize}) rotate(180) scale(${pipScale})`
       : `translate(${cx - halfSize} ${cy - halfSize}) scale(${pipScale})`;
+
     out.push(`<use href="#${suitSymbolId}" transform="${transform}" />`);
   }
+
   return out.join('');
 }
 

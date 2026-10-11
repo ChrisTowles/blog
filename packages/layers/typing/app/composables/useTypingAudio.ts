@@ -26,21 +26,27 @@ export function useTypingAudio() {
   async function ensure(phrase: string): Promise<CacheEntry | null> {
     if (!import.meta.client) return null;
     const c = cache.value[phrase];
+
     if (c) return c;
+
     try {
       const result = await $fetch<{ url?: string; fallback?: 'web-speech' }>(
         `/api/typing/audio/${encodeURIComponent(phrase)}`,
       );
+
       if (result.url) {
         const el = new Audio(result.url);
         cache.value[phrase] = el;
+
         return el;
       }
     } catch {
       // 404 / network — fall through to Web Speech
     }
+
     const fallback: CacheEntry = { kind: 'web-speech' };
     cache.value[phrase] = fallback;
+
     return fallback;
   }
 
@@ -54,20 +60,24 @@ export function useTypingAudio() {
 
   function getAudioCtx(): AudioContext | null {
     if (!audioOn.value || !import.meta.client) return null;
+
     if (sharedAudioCtx) {
       // Browsers suspend the context on inactivity or a tab switch.
       if (sharedAudioCtx.state === 'suspended') void sharedAudioCtx.resume();
+
       return sharedAudioCtx;
     }
-    const AudioCtx =
-      window.AudioContext ??
-      (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+
+    const AudioCtx = window.AudioContext;
+
     if (!AudioCtx) return null;
+
     try {
       sharedAudioCtx = new AudioCtx();
     } catch {
       return null;
     }
+
     return sharedAudioCtx;
   }
 
@@ -78,7 +88,9 @@ export function useTypingAudio() {
     opts: { type?: OscillatorType; gain?: number; startOffsetMs?: number } = {},
   ) {
     const ctx = getAudioCtx();
+
     if (!ctx) return;
+
     try {
       const osc = ctx.createOscillator();
       const gainNode = ctx.createGain();
@@ -94,6 +106,7 @@ export function useTypingAudio() {
       osc.onended = () => {
         activeOscillators.delete(osc);
       };
+
       osc.start(startAt);
       osc.stop(startAt + durationMs / 1000 + 0.01);
       // Never close the shared context here — the oscillator disconnects itself.
@@ -110,12 +123,14 @@ export function useTypingAudio() {
       } catch {
         // already stopped
       }
+
       try {
         osc.disconnect();
       } catch {
         // already disconnected
       }
     }
+
     activeOscillators.clear();
   }
 
@@ -134,7 +149,9 @@ export function useTypingAudio() {
     const t = Math.max(1, Math.min(tier, 5));
     const base = 523.25; // C5
     const notes = [base, base * 1.25, base * 1.5];
+
     if (t >= 4) notes.push(base * 2);
+
     if (t >= 5) notes.push(base * 2.5);
     notes.forEach((freq, i) => {
       playTone(freq * (1 + (t - 1) * 0.05), 140, {
@@ -160,14 +177,19 @@ export function useTypingAudio() {
   async function play(phrase: string) {
     if (!audioOn.value) return;
     const entry = await ensure(phrase);
+
     if (!entry) {
       playWebSpeech(phrase);
+
       return;
     }
+
     if ('kind' in entry) {
       playWebSpeech(phrase);
+
       return;
     }
+
     try {
       entry.currentTime = 0;
       await entry.play();
@@ -180,15 +202,18 @@ export function useTypingAudio() {
   async function preload() {
     if (!import.meta.client) return;
     const phrases: string[] = [];
+
     for (let i = 0; i < 26; i++) {
       phrases.push(String.fromCharCode(97 + i));
     }
+
     phrases.push(...ENCOURAGEMENT);
     await Promise.all(phrases.map((p) => ensure(p).catch(() => null)));
   }
 
   function playEncouragement() {
     const choice = ENCOURAGEMENT[Math.floor(Math.random() * ENCOURAGEMENT.length)];
+
     if (choice !== undefined) void play(choice);
   }
 

@@ -51,6 +51,7 @@ const {
 onMounted(() => {
   if (code.value) return;
   const text = slotRef.value?.textContent?.trim();
+
   if (text) {
     code.value = text;
   }
@@ -68,6 +69,7 @@ function handleRun() {
 
 const editorRows = computed(() => {
   const lines = (code.value || '').split('\n').length;
+
   return Math.max(4, Math.min(lines + 1, 20));
 });
 
@@ -77,8 +79,10 @@ const highlightedHtml = ref('');
 async function highlight(text: string) {
   if (!text) {
     highlightedHtml.value = '';
+
     return;
   }
+
   const highlighter = await useHighlighter();
   const lang = language.value || 'python';
   highlightedHtml.value = highlighter.codeToHtml(text, {

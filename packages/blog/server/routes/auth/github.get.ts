@@ -8,6 +8,7 @@ export default defineOAuthGitHubEventHandler({
     let user = await db.query.users.findFirst({
       where: (u, { eq }) => and(eq(u.provider, 'github'), eq(u.providerId, ghUser.id.toString())),
     });
+
     if (!user) {
       [user] = await db
         .insert(tables.users)
@@ -38,11 +39,13 @@ export default defineOAuthGitHubEventHandler({
     // before bouncing to GitHub. Read it back here.
     const redirectTo = getCookie(event, 'oauth_redirect') || '/';
     deleteCookie(event, 'oauth_redirect');
+
     return sendRedirect(event, redirectTo);
   },
   // Optional, will return a json error and 401 status code by default
   onError(event, error) {
     log.error({ tag: 'auth', message: 'GitHub OAuth error', error: String(error) });
+
     return sendRedirect(event, '/login');
   },
 });

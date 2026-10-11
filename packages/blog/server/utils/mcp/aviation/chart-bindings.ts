@@ -5,50 +5,78 @@
  * `{ $rows: [colA, colB] }`. Unknown columns resolve to null, so charts blank out.
  */
 
-export type Row = Record<string, unknown>;
+import { z } from 'zod';
+import type { JsonObject, JsonValue } from '../../../../shared/json-types';
 
-function resolveString(template: string, rows: readonly Row[]): unknown[] | string {
+export type Row = JsonObject;
+
+const columnNameSchema = z.string();
+
+const jsonObjectSchema = z.record(z.string(), z.json());
+
+function cell(row: Row, template: JsonValue): JsonValue {
+  const column = columnNameSchema.safeParse(template);
+
+  return column.success ? (row[column.data] ?? null) : template;
+}
+
+function resolveString(template: string, rows: readonly Row[]): JsonValue[] | string {
   const match = /^\$rows\.(.+)$/.exec(template);
+
   if (!match) return template;
   const col = match[1]!;
+
   return rows.map((r) => r[col] ?? null);
 }
 
-function resolveObject(obj: Record<string, unknown>, rows: readonly Row[]): unknown {
+function resolveObject(obj: JsonObject, rows: readonly Row[]): JsonValue | undefined {
   if (!Object.hasOwn(obj, '$rows')) return undefined;
   const spec = obj.$rows;
+
   if (Array.isArray(spec)) {
     // [colA, colB] → rows.map(r => [r.colA, r.colB])
-    return rows.map((r) => spec.map((c) => (typeof c === 'string' ? (r[c] ?? null) : c)));
+    return rows.map((r) => spec.map((c) => cell(r, c)));
   }
-  if (spec && typeof spec === 'object') {
+
+  const tmpl = jsonObjectSchema.safeParse(spec);
+
+  if (tmpl.success) {
     // { name: colA, value: colB } → rows.map(r => ({ name: r.colA, value: r.colB }))
     // Non-string leaves (numbers, objects, arrays) pass through as literals;
     // string leaves are treated as column names and resolve to null when the
     // column is missing (same contract as the string-array path).
-    const tmpl = spec as Record<string, unknown>;
-    return rows.map((r) => {
-      const out: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(tmpl)) {
-        out[k] = typeof v === 'string' ? (r[v] ?? null) : v;
-      }
-      return out;
-    });
+    const entries = Object.entries(tmpl.data);
+
+    return rows.map((r) => Object.fromEntries(entries.map(([k, v]) => [k, cell(r, v)])));
   }
+
   return undefined;
 }
 
-export function resolveChartOption(option: unknown, rows: readonly Row[]): unknown {
-  if (option == null) return option;
-  if (typeof option === 'string') return resolveString(option, rows);
+export function resolveChartOption(option: JsonValue, rows: readonly Row[]): JsonValue {
+  if (option === null) return option;
+  const str = columnNameSchema.safeParse(option);
+
+  if (str.success) return resolveString(str.data, rows);
+
   if (Array.isArray(option)) return option.map((v) => resolveChartOption(v, rows));
-  if (typeof option === 'object') {
-    const obj = option as Record<string, unknown>;
-    const resolvedRows = resolveObject(obj, rows);
+  const obj = jsonObjectSchema.safeParse(option);
+
+  if (obj.success) {
+    const resolvedRows = resolveObject(obj.data, rows);
+
     if (resolvedRows !== undefined) return resolvedRows;
-    const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(obj)) out[k] = resolveChartOption(v, rows);
-    return out;
+
+    return Object.fromEntries(
+      Object.entries(obj.data).map(([k, v]) => [k, resolveChartOption(v, rows)]),
+    );
   }
+
   return option;
+}
+
+export function resolveChartOptionObject(option: JsonObject, rows: readonly Row[]): JsonObject {
+  return Object.fromEntries(
+    Object.entries(option).map(([k, v]) => [k, resolveChartOption(v, rows)]),
+  );
 }

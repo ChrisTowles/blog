@@ -8,14 +8,20 @@ definePageMeta({
 });
 
 const route = useRoute();
+
 const router = useRouter();
+
 const slug = computed(() => String(route.params.slug ?? ''));
 
 const allLessons = getBuiltInLessons();
+
 const lesson = computed(() => allLessons.find((l) => l.slug === slug.value));
+
 const nextLesson = computed(() => {
   const idx = allLessons.findIndex((l) => l.slug === slug.value);
+
   if (idx < 0 || idx === allLessons.length - 1) return null;
+
   return allLessons[idx + 1] ?? null;
 });
 
@@ -32,23 +38,33 @@ useHead(() => ({
 }));
 
 const { recordAttempt, recordLessonBest } = useTypingProgress();
+
 const toast = useToast();
+
 const isNewBest = ref(false);
+
 const previousBest = ref<{ wpm: number; accuracy: number } | null>(null);
 
 const AUTO_ADVANCE_SECONDS = 5;
+
 const lastResult = ref<LessonCompleteResult | null>(null);
+
 const advanceCountdown = ref<number | null>(null);
+
 const runnerKey = ref(0);
+
 const lessonDone = computed(() => lastResult.value !== null);
+
 // True once goToNextLesson has been called this run, false until slug
 // changes. Prevents Enter/Space spam from firing router.push twice
 // before lastResult clears via watch(slug).
 const navigating = ref(false);
+
 let advanceTimer: ReturnType<typeof setInterval> | null = null;
 
 function clearAdvance() {
   advanceCountdown.value = null;
+
   if (advanceTimer) {
     clearInterval(advanceTimer);
     advanceTimer = null;
@@ -58,6 +74,7 @@ function clearAdvance() {
 function goToNextLesson() {
   if (navigating.value) return;
   clearAdvance();
+
   if (nextLesson.value) {
     navigating.value = true;
     router.push(`/typing/lesson/${nextLesson.value.slug}`);
@@ -75,20 +92,24 @@ function tryAgain() {
 
 function startAutoAdvance() {
   clearAdvance();
+
   if (!nextLesson.value) return;
   advanceCountdown.value = AUTO_ADVANCE_SECONDS;
   advanceTimer = setInterval(() => {
     if (advanceCountdown.value === null) return;
+
     // Background tabs keep firing setInterval; skip the tick rather than
     // silently navigating the kid away while they're looking elsewhere.
     if (import.meta.client && document.visibilityState === 'hidden') return;
     advanceCountdown.value--;
+
     if (advanceCountdown.value <= 0) goToNextLesson();
   }, 1000);
 }
 
 const passed = computed(() => {
   if (!lesson.value || !lastResult.value) return false;
+
   return (
     lastResult.value.accuracy >= lesson.value.targetAccuracy &&
     lastResult.value.wpm >= lesson.value.targetWpm
@@ -110,6 +131,7 @@ function onComplete(result: LessonCompleteResult) {
   // engine on the next remount.
   if (result.cancelled) return;
   lastResult.value = result;
+
   // Lessons fire both recorders: recordAttempt logs the per-attempt event
   // and runs the stage-gate (mastery) check, while recordLessonBest writes
   // the per-slug PR shown above. Games have no per-slug PR table, so
@@ -124,6 +146,7 @@ function onComplete(result: LessonCompleteResult) {
     errorsByKey: result.errorsByKey,
     completedAt: new Date().toISOString(),
   });
+
   if (outcome.stageAdvanced) {
     toast.add({
       title: `Stage ${outcome.currentStage} unlocked! 🎉`,
@@ -133,15 +156,18 @@ function onComplete(result: LessonCompleteResult) {
       duration: 6000,
     });
   }
+
   const best = recordLessonBest(slug.value, {
     wpm: result.wpm,
     accuracy: result.accuracy,
     durationMs: result.durationMs,
   });
+
   isNewBest.value = best.isNewBest;
   previousBest.value = best.previous
     ? { wpm: best.previous.wpm, accuracy: best.previous.accuracy }
     : null;
+
   if (best.isNewBest && best.previous) {
     toast.add({
       title: 'New personal best! 🏆',
@@ -151,6 +177,7 @@ function onComplete(result: LessonCompleteResult) {
       duration: 5000,
     });
   }
+
   if (passed.value && nextLesson.value) startAutoAdvance();
 }
 
@@ -158,6 +185,7 @@ function onComplete(result: LessonCompleteResult) {
 // so a kid can blow through a stage without ever reaching for the mouse.
 function onKeydown(e: KeyboardEvent) {
   if (!lessonDone.value || !nextLesson.value) return;
+
   if (e.key === 'Enter' || e.key === ' ') {
     e.preventDefault();
     goToNextLesson();
@@ -167,6 +195,7 @@ function onKeydown(e: KeyboardEvent) {
 onMounted(() => {
   if (import.meta.client) window.addEventListener('keydown', onKeydown);
 });
+
 onUnmounted(() => {
   if (import.meta.client) window.removeEventListener('keydown', onKeydown);
   clearAdvance();

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { z } from 'zod';
 import { TEST_IDS } from '~~/shared/test-ids';
 import type { GameResult, GameScene } from '../../../composables/useGameRunner';
 import { createLetterRain } from '../../../components/typing/games/LetterRain';
@@ -14,62 +15,86 @@ definePageMeta({
 const route = useRoute();
 
 const KNOWN_GAME_SLUGS = ['letter-rain', 'letter-tic-tac-toe', 'lake-leap'] as const;
+
 type GameSlug = (typeof KNOWN_GAME_SLUGS)[number];
 
 const slug = computed(() => String(route.params.slug ?? ''));
+
 const knownSlug = computed<GameSlug | null>(() => {
   const s = slug.value;
-  return (KNOWN_GAME_SLUGS as ReadonlyArray<string>).includes(s) ? (s as GameSlug) : null;
+
+  return KNOWN_GAME_SLUGS.find((known) => known === s) ?? null;
 });
+
 const stage = computed(() => Number(route.query.stage ?? 5));
-const mode = computed<LakeLeapMode>(
-  () => (route.query.mode as LakeLeapMode | undefined) ?? 'curriculum',
-);
+
+const lakeLeapModeSchema = z.enum([
+  'curriculum',
+  'topic',
+  'spelling',
+]) satisfies z.ZodType<LakeLeapMode>;
+
+const mode = computed(() => lakeLeapModeSchema.catch('curriculum').parse(route.query.mode));
+
 const sourceWords = computed(() => {
   const raw = route.query.words;
+
   if (Array.isArray(raw)) return raw.map(String);
-  if (typeof raw === 'string' && raw.length > 0) {
-    return raw
+
+  const csv = z.string().min(1).safeParse(raw);
+
+  if (csv.success) {
+    return csv.data
       .split(',')
       .map((s) => s.trim())
       .filter((s) => s.length > 0);
   }
+
   return [];
 });
+
 const spellingListId = computed(() => {
-  const raw = route.query.list;
-  if (typeof raw !== 'string') return null;
-  const n = Number(raw);
+  const raw = z.string().safeParse(route.query.list);
+
+  if (!raw.success) return null;
+  const n = Number(raw.data);
+
   return Number.isFinite(n) && n > 0 ? n : null;
 });
 
-const gameDescriptions: Record<string, string> = {
+const GAME_DESCRIPTIONS = {
   'letter-rain': 'Letter Rain — type falling letters before they hit the ground.',
   'letter-tic-tac-toe': 'Letter Tic-Tac-Toe — type letters to claim the grid against an AI.',
   'lake-leap': 'Lake Leap — type the word on the next platform to leap across the lake.',
-};
+} satisfies Record<GameSlug, string>;
 
 useHead(() => ({
   title: `Typing — ${slug.value}`,
   meta: [
     {
       name: 'description',
-      content: gameDescriptions[slug.value] ?? 'Typing game — practice typing through play.',
+      content: knownSlug.value
+        ? GAME_DESCRIPTIONS[knownSlug.value]
+        : 'Typing game — practice typing through play.',
     },
   ],
 }));
 
 const scene = computed<GameScene | null>(() => {
   const unlocked = unlockedKeysForStage(stage.value).filter((c) => /^[a-z]$/.test(c));
+
   if (slug.value === 'letter-rain') {
     return createLetterRain({
       letters: unlocked.length > 0 ? unlocked : undefined,
     });
   }
+
   if (slug.value === 'letter-tic-tac-toe') {
     const cells = (unlocked.length >= 9 ? unlocked.slice(0, 9) : unlocked).slice();
+
     return createLetterTicTacToe({ stage: stage.value, letters: cells });
   }
+
   if (slug.value === 'lake-leap') {
     return createLakeLeap({
       mode: mode.value,
@@ -77,12 +102,16 @@ const scene = computed<GameScene | null>(() => {
       count: 10,
     });
   }
+
   return null;
 });
 
 const { recordGameAttempt } = useTypingProgress();
+
 const audio = useTypingAudio();
+
 const lastResult = ref<GameResult | null>(null);
+
 const runId = ref(0);
 
 onMounted(() => {

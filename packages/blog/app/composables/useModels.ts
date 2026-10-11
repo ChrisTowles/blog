@@ -1,5 +1,6 @@
 export function useModels() {
   const config = useRuntimeConfig();
+
   const models = [
     // Anthropic Claude Models
     config.public.model,

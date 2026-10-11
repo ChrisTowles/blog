@@ -11,6 +11,7 @@ const colorMode = useColorMode();
 
 const html = computed(() => {
   const theme = colorMode.value === 'dark' ? 'material-theme-palenight' : 'material-theme-lighter';
+
   try {
     return props.highlighter.codeToHtml(props.code, { lang: props.lang, theme });
   } catch {

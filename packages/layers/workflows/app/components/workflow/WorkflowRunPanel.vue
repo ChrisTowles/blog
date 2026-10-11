@@ -1,24 +1,25 @@
 <script setup lang="ts">
 import type { Node } from '@vue-flow/core';
-import type { NodeRunStatus } from '../../../shared/workflow-types';
+import type { JsonObject, NodeRunStatus } from '../../../shared/workflow-types';
 
 const props = defineProps<{
   workflowId: string;
   isRunning: boolean;
-  finalOutput: Record<string, Record<string, unknown>> | null;
+  finalOutput: Record<string, JsonObject> | null;
   runError: string | null;
   runStatus: Map<string, NodeRunStatus>;
   nodes: Node[];
 }>();
 
 const emit = defineEmits<{
-  (e: 'run', input: Record<string, unknown>): void;
+  (e: 'run', input: Record<string, string>): void;
   (e: 'select-node', nodeId: string): void;
 }>();
 
 const { data: runs, refresh } = useFetch(`/api/workflows/${props.workflowId}/runs`);
 
 const expandedNodes = ref<Set<string>>(new Set());
+
 const inputValues = ref<Record<string, string>>({});
 
 // Used only with matchAll() which resets lastIndex — safe as module-level const
@@ -26,12 +27,15 @@ const INPUT_PLACEHOLDER_RE = /\{\{input\.(\w+)\}\}/g;
 
 const inputFields = computed(() => {
   const fields = new Set<string>();
+
   for (const node of props.nodes) {
-    const prompt = (node.data?.prompt as string) ?? '';
+    const prompt: string = node.data?.prompt ?? '';
+
     for (const m of prompt.matchAll(INPUT_PLACEHOLDER_RE)) {
       if (m[1]) fields.add(m[1]);
     }
   }
+
   return Array.from(fields);
 });
 
@@ -40,15 +44,18 @@ const hasEmptyInputs = computed(() =>
 );
 
 function handleRun() {
-  const input: Record<string, unknown> = {};
+  const input: Record<string, string> = {};
+
   for (const field of inputFields.value) {
     input[field] = inputValues.value[field] ?? '';
   }
+
   emit('run', input);
 }
 
 function toggleNode(nodeId: string) {
   const next = new Set(expandedNodes.value);
+
   if (next.has(nodeId)) next.delete(nodeId);
   else next.add(nodeId);
   expandedNodes.value = next;
@@ -60,12 +67,14 @@ watch(
   (status) => {
     const next = new Set(expandedNodes.value);
     let changed = false;
+
     for (const [nodeId, s] of status) {
       if ((s.status === 'completed' || s.status === 'failed') && !next.has(nodeId)) {
         next.add(nodeId);
         changed = true;
       }
     }
+
     if (changed) expandedNodes.value = next;
   },
   { deep: true },
@@ -74,11 +83,12 @@ watch(
 // Get sorted node statuses (in execution order based on when they appear)
 const nodeEntries = computed(() => {
   const entries: Array<{ nodeId: string; label: string; status: NodeRunStatus }> = [];
+
   for (const [nodeId, status] of props.runStatus) {
     const node = props.nodes.find((n) => n.id === nodeId);
-    const data = node?.data as Record<string, unknown> | undefined;
-    entries.push({ nodeId, label: (data?.label as string) ?? nodeId, status });
+    entries.push({ nodeId, label: node?.data?.label ?? nodeId, status });
   }
+
   return entries;
 });
 

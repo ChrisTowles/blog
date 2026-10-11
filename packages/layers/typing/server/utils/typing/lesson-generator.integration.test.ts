@@ -13,7 +13,9 @@ describe.skipIf(!shouldRun)('generateLesson (live Anthropic)', () => {
       kind: 'sentence',
       length: 'short',
     });
+
     expect(result.ok).toBe(true);
+
     if (result.ok) {
       const unlocked = unlockedKeysForStage(8);
       const valid = validateGeneratedText(result.text, unlocked, { min: 60, max: 160 });
@@ -28,6 +30,7 @@ describe.skipIf(!shouldRun)('generateLesson (live Anthropic)', () => {
       kind: 'sentence',
       length: 'short',
     });
+
     // Either the model refuses (validation fail) or safety review rejects.
     // Both are acceptable outcomes — we just don't want a positive result.
     expect(result.ok).toBe(false);

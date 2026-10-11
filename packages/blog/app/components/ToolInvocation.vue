@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { z } from 'zod';
 import type { ToolUsePart, ToolResultPart } from '~~/shared/chat-types';
+import type { JsonObject } from '~~/shared/json-types';
 
 const props = defineProps<{
   toolUse: ToolUsePart;
@@ -10,39 +12,41 @@ const open = ref(false);
 
 const isComplete = computed(() => !!props.toolResult);
 
-const toolIcon = computed(() => {
-  const icons: Record<string, string> = {
-    searchBlogContent: 'i-lucide-search',
-    getCurrentDateTime: 'i-lucide-clock',
-    getAuthorInfo: 'i-lucide-user',
-    getBlogTopics: 'i-lucide-tags',
-  };
-  return icons[props.toolUse.toolName] || 'i-lucide-wrench';
-});
+const TOOL_ICONS = new Map([
+  ['searchBlogContent', 'i-lucide-search'],
+  ['getCurrentDateTime', 'i-lucide-clock'],
+  ['getAuthorInfo', 'i-lucide-user'],
+  ['getBlogTopics', 'i-lucide-tags'],
+]);
 
-const toolLabel = computed(() => {
-  const labels: Record<string, string> = {
-    searchBlogContent: 'Search Blog',
-    getCurrentDateTime: 'Get Time',
-    getAuthorInfo: 'Author Info',
-    getBlogTopics: 'Blog Topics',
-  };
-  return labels[props.toolUse.toolName] || props.toolUse.toolName;
-});
+const TOOL_LABELS = new Map([
+  ['searchBlogContent', 'Search Blog'],
+  ['getCurrentDateTime', 'Get Time'],
+  ['getAuthorInfo', 'Author Info'],
+  ['getBlogTopics', 'Blog Topics'],
+]);
 
-function formatArgs(args: Record<string, unknown>): string {
+const toolIcon = computed(() => TOOL_ICONS.get(props.toolUse.toolName) || 'i-lucide-wrench');
+
+const toolLabel = computed(() => TOOL_LABELS.get(props.toolUse.toolName) || props.toolUse.toolName);
+
+function formatArgs(args: JsonObject): string {
   if (Object.keys(args).length === 0) return '';
   const entries = Object.entries(args);
+
   if (entries.length === 1) {
     const [, value] = entries[0]!;
-    return typeof value === 'string' ? `"${value}"` : JSON.stringify(value);
+
+    return JSON.stringify(value);
   }
+
   return JSON.stringify(args, null, 2);
 }
 
-function formatResult(result: unknown): string {
-  if (typeof result === 'string') return result;
-  return JSON.stringify(result, null, 2);
+function formatResult(result: ToolResultPart['result']): string {
+  const text = z.string().safeParse(result);
+
+  return text.success ? text.data : JSON.stringify(result, null, 2);
 }
 </script>
 

@@ -1,33 +1,43 @@
 <script setup lang="ts">
-import type { SchemaField } from '../../../shared/workflow-types';
+import { outputSchemaSchema } from '../../../shared/workflow-schemas';
+import type {
+  OutputSchema,
+  OutputSchemaProperty,
+  SchemaField,
+} from '../../../shared/workflow-types';
 
 const props = defineProps<{
-  schema: Record<string, unknown>;
+  schema: OutputSchema;
   readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:schema', schema: Record<string, unknown>): void;
+  (e: 'update:schema', schema: OutputSchema): void;
 }>();
 
-const TYPE_OPTIONS = [
-  { label: 'String', value: 'string' },
-  { label: 'Number', value: 'number' },
-  { label: 'Boolean', value: 'boolean' },
-  { label: 'Array', value: 'array' },
-  { label: 'Object', value: 'object' },
+const FIELD_TYPES: readonly SchemaField['type'][] = [
+  'string',
+  'number',
+  'boolean',
+  'array',
+  'object',
 ];
 
-function schemaToFields(schema: Record<string, unknown>): SchemaField[] {
-  const properties =
-    (schema?.properties as Record<
-      string,
-      { type: string; description?: string; enum?: string[] }
-    >) ?? {};
-  const required = (schema?.required as string[]) ?? [];
-  return Object.entries(properties).map(([name, def]) => ({
+const TYPE_OPTIONS = FIELD_TYPES.map((value) => ({
+  label: value.charAt(0).toUpperCase() + value.slice(1),
+  value,
+}));
+
+function fieldType(type: string): SchemaField['type'] {
+  return FIELD_TYPES.find((t) => t === type) ?? 'string';
+}
+
+function schemaToFields(schema: OutputSchema): SchemaField[] {
+  const required = schema.required ?? [];
+
+  return Object.entries(schema.properties).map(([name, def]) => ({
     name,
-    type: (def.type as SchemaField['type']) ?? 'string',
+    type: fieldType(def.type),
     description: def.description ?? '',
     required: required.includes(name),
     enumValues: def.enum ?? [],
@@ -35,8 +45,11 @@ function schemaToFields(schema: Record<string, unknown>): SchemaField[] {
 }
 
 const fields = ref<SchemaField[]>(schemaToFields(props.schema));
+
 const showRaw = ref(false);
+
 const rawJson = ref('');
+
 const rawError = ref('');
 
 // UButton's onClick requires a void return; inline toggle returns boolean
@@ -52,20 +65,21 @@ watch(
   { deep: true },
 );
 
-const computedSchema = computed(() => ({
-  type: 'object' as const,
-  properties: Object.fromEntries(
-    fields.value.map((f) => [
-      f.name,
-      {
-        type: f.type,
-        description: f.description,
-        ...(f.enumValues?.length ? { enum: f.enumValues } : {}),
-      },
-    ]),
-  ),
-  required: fields.value.filter((f) => f.required).map((f) => f.name),
-}));
+function fieldToProperty(f: SchemaField): OutputSchemaProperty {
+  const property: OutputSchemaProperty = { type: f.type, description: f.description };
+
+  if (f.enumValues?.length) property.enum = f.enumValues;
+
+  return property;
+}
+
+const computedSchema = computed(
+  (): OutputSchema => ({
+    type: 'object',
+    properties: Object.fromEntries(fields.value.map((f) => [f.name, fieldToProperty(f)])),
+    required: fields.value.filter((f) => f.required).map((f) => f.name),
+  }),
+);
 
 watch(
   computedSchema,
@@ -98,13 +112,16 @@ function removeField(i: number) {
 
 function onRawBlur() {
   try {
-    const parsed = JSON.parse(rawJson.value);
-    if (parsed.type !== 'object' || !parsed.properties) {
+    const parsed = outputSchemaSchema.safeParse(JSON.parse(rawJson.value));
+
+    if (!parsed.success) {
       rawError.value = 'Must have type: "object" and properties';
+
       return;
     }
+
     rawError.value = '';
-    fields.value = schemaToFields(parsed);
+    fields.value = schemaToFields(parsed.data);
   } catch {
     rawError.value = 'Invalid JSON';
   }

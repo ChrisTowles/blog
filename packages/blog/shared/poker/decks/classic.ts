@@ -1,4 +1,4 @@
-import type { Card } from '../../../app/utils/poker/types';
+import type { Card, Rank } from '../../../app/utils/poker/types';
 import type { DeckTheme } from './types';
 import { cardCode } from './types';
 import {
@@ -11,10 +11,15 @@ import {
 } from './svg-helpers';
 
 const W = 250;
+
 const H = 350;
+
 const PALETTE = { red: '#c0392b', black: '#1f2937' };
+
 const SURFACE = '#fafafa';
+
 const BORDER = '#1f2937';
+
 const RADIUS = 18;
 
 function defs(): string {
@@ -40,14 +45,17 @@ function cornerIndex(card: Card): string {
   const isTen = card.rank === 10;
   const rankFontSize = isTen ? 20 : 24;
   const rankExtra = isTen ? ' letter-spacing="-1.5"' : '';
+
   const tl = `<g transform="translate(12 10)">
     <text x="9" y="22" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="${rankFontSize}" font-weight="700" fill="${color}"${rankExtra}>${rank}</text>
     <use href="#${suitId}" x="0" y="26" width="18" height="18"/>
   </g>`;
+
   const br = `<g transform="translate(${W - 12} ${H - 10}) rotate(180)">
     <text x="9" y="22" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="${rankFontSize}" font-weight="700" fill="${color}"${rankExtra}>${rank}</text>
     <use href="#${suitId}" x="0" y="26" width="18" height="18"/>
   </g>`;
+
   return tl + br;
 }
 
@@ -56,6 +64,7 @@ function aceFace(card: Card): string {
   const size = 130;
   const x = (W - size) / 2;
   const y = (H - size) / 2;
+
   return `<use href="#${suitId}" x="${x}" y="${y}" width="${size}" height="${size}"/>`;
 }
 
@@ -71,6 +80,7 @@ function numberFace(card: Card): string {
   const padY = 63;
   const frame = { x: padX, y: padY, w: W - padX * 2, h: H - padY * 2 };
   const pipScale = 0.32;
+
   return pipUseElements(card, frame, pipScale, suitId);
 }
 
@@ -79,7 +89,7 @@ function numberFace(card: Card): string {
  * the figure is roughly `size` tall. Returns an inline <g> SVG fragment.
  */
 function royalSilhouette(
-  rank: 11 | 12 | 13,
+  rank: Rank,
   cx: number,
   cy: number,
   size: number,
@@ -100,6 +110,7 @@ function royalSilhouette(
     Q ${cx} ${robeTop - size * 0.03} ${cx + robeWidth * 0.32} ${robeTop}
     L ${cx + robeWidth / 2} ${robeBottom}
     Z" fill="${accent}" stroke="${color}" stroke-width="2"/>`;
+
   // Collar accent line
   const collar = `<path d="M ${cx - robeWidth * 0.28} ${robeTop + 6}
     Q ${cx} ${robeTop + size * 0.05} ${cx + robeWidth * 0.28} ${robeTop + 6}"
@@ -111,6 +122,7 @@ function royalSilhouette(
 
   // Headwear varies by rank: K = 5-point crown, Q = 3-point tiara, J = peaked cap with feather
   let headwear = '';
+
   if (rank === 13) {
     // 5-point crown
     const cw = headR * 2.2;
@@ -216,6 +228,7 @@ function faceCardFace(card: Card, portraitUrl: string | undefined): string {
     const pw = fw - 24;
     const ph = fh - 24;
     const half = ph / 2;
+
     return `<g>
       ${frame}
       <image href="${portraitUrl}" x="${px}" y="${py}" width="${pw}" height="${half - 6}" preserveAspectRatio="xMidYMid slice"/>
@@ -227,17 +240,12 @@ function faceCardFace(card: Card, portraitUrl: string | undefined): string {
   }
 
   // Fallback: hand-drawn silhouette art (used when AI portrait isn't generated).
-  const topFigure = royalSilhouette(
-    card.rank as 11 | 12 | 13,
-    topCx,
-    topCy,
-    figureSize,
-    color,
-    figureSkin,
-  );
+  const topFigure = royalSilhouette(card.rank, topCx, topCy, figureSize, color, figureSkin);
+
   const bottomFigure = `<g transform="translate(${botCx} ${botCy}) rotate(180) translate(${-botCx} ${-botCy})">
-    ${royalSilhouette(card.rank as 11 | 12 | 13, botCx, botCy, figureSize, color, figureSkin)}
+    ${royalSilhouette(card.rank, botCx, botCy, figureSize, color, figureSkin)}
   </g>`;
+
   return `<g>
     ${frame}
     ${topFigure}
@@ -249,9 +257,11 @@ function faceCardFace(card: Card, portraitUrl: string | undefined): string {
 function generateFace(card: Card, opts?: { portraits?: Map<string, string> }): string {
   let body = '';
   const portraitUrl = opts?.portraits?.get(cardCode(card));
+
   if (card.rank === 14) body = aceFace(card);
   else if (card.rank >= 11) body = faceCardFace(card, portraitUrl);
-  else if (PIP_LAYOUTS[card.rank as keyof typeof PIP_LAYOUTS]) body = numberFace(card);
+  else if (PIP_LAYOUTS[card.rank]) body = numberFace(card);
+
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}">${defs()}${cardSurface()}${body}${cornerIndex(card)}</svg>`;
 }
 
@@ -259,6 +269,7 @@ function generateBack(): string {
   // Diagonal lattice with a center medallion.
   const step = 18;
   const lines: string[] = [];
+
   for (let i = -H; i < W + H; i += step) {
     lines.push(
       `<line x1="${i}" y1="0" x2="${i + H}" y2="${H}" stroke="#3b82f6" stroke-width="1" stroke-opacity="0.55"/>`,
@@ -267,8 +278,10 @@ function generateBack(): string {
       `<line x1="${i}" y1="${H}" x2="${i + H}" y2="0" stroke="#3b82f6" stroke-width="1" stroke-opacity="0.55"/>`,
     );
   }
+
   const cx = W / 2;
   const cy = H / 2;
+
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}">
     <defs>
       <clipPath id="bg-clip">

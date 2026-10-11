@@ -1,6 +1,9 @@
 import { eq } from 'drizzle-orm';
+import { z } from 'zod';
 import { getAnthropicClient } from '~~/server/utils/ai/anthropic';
 import { tables, useDrizzle } from '~~/server/utils/drizzle';
+import { jsonObjectSchema, outputSchemaSchema } from '../../shared/workflow-schemas';
+import type { JsonObject, OutputSchema } from '../../shared/workflow-types';
 
 export interface WorkflowNode {
   id: string;
@@ -10,7 +13,7 @@ export interface WorkflowNode {
   model: string;
   temperature: number;
   maxTokens: number;
-  outputSchema: Record<string, unknown>;
+  outputSchema: OutputSchema;
   inputMapping: Record<string, string>;
 }
 
@@ -43,6 +46,7 @@ export function topologicalSort<T extends { id: string }>(
   }
 
   const queue: string[] = [];
+
   for (const [id, degree] of inDegree) {
     if (degree === 0) queue.push(id);
   }
@@ -57,6 +61,7 @@ export function topologicalSort<T extends { id: string }>(
     for (const neighbor of adjacency.get(id) ?? []) {
       const newDegree = (inDegree.get(neighbor) ?? 0) - 1;
       inDegree.set(neighbor, newDegree);
+
       if (newDegree === 0) queue.push(neighbor);
     }
   }
@@ -74,17 +79,21 @@ export function topologicalSort<T extends { id: string }>(
  */
 export function resolveTemplate(
   prompt: string,
-  nodeOutputs: Map<string, Record<string, unknown>>,
-  workflowInput: Record<string, unknown>,
+  nodeOutputs: Map<string, JsonObject>,
+  workflowInput: JsonObject,
 ): string {
   return prompt.replace(/\{\{(\w+)\.(\w+)\}\}/g, (match, nodeId, field) => {
     const source = nodeId === 'input' ? workflowInput : nodeOutputs.get(nodeId);
+
     if (!source) return match;
 
     const value = source[field];
+
     if (value === undefined) return match;
-    if (typeof value === 'object' && value !== null) return JSON.stringify(value);
-    return String(value);
+
+    const text = z.string().safeParse(value);
+
+    return text.success ? text.data : JSON.stringify(value);
   });
 }
 
@@ -93,6 +102,7 @@ export function resolveTemplate(
  */
 export function findTerminalNodes(nodes: WorkflowNode[], edges: WorkflowEdge[]): WorkflowNode[] {
   const sourcesWithOutgoing = new Set(edges.map((e) => e.source));
+
   return nodes.filter((n) => !sourcesWithOutgoing.has(n.id));
 }
 
@@ -111,14 +121,19 @@ export function dbNodeToEngineNode(n: {
   outputSchema: string;
   inputMapping: string;
 }): WorkflowNode {
-  let outputSchema: Record<string, unknown> = { type: 'object', properties: {} };
+  let outputSchema: OutputSchema = { type: 'object', properties: {} };
   let inputMapping: Record<string, string> = {};
+
   try {
-    outputSchema = JSON.parse(n.outputSchema);
+    const parsed = outputSchemaSchema.safeParse(JSON.parse(n.outputSchema));
+
+    if (parsed.success) outputSchema = parsed.data;
   } catch {}
+
   try {
     inputMapping = JSON.parse(n.inputMapping);
   } catch {}
+
   return {
     id: n.nodeId,
     type: n.type,
@@ -135,7 +150,7 @@ export function dbNodeToEngineNode(n: {
 const TOOL_NAME = 'structured_output';
 
 export interface NodeExecutionResult {
-  parsedOutput: Record<string, unknown>;
+  parsedOutput: JsonObject;
   tokensIn: number;
   tokensOut: number;
   latencyMs: number;
@@ -149,8 +164,8 @@ export interface NodeExecutionResult {
 export async function executeNode(
   node: WorkflowNode,
   runId: string,
-  nodeOutputs: Map<string, Record<string, unknown>>,
-  workflowInput: Record<string, unknown>,
+  nodeOutputs: Map<string, JsonObject>,
+  workflowInput: JsonObject,
 ): Promise<NodeExecutionResult> {
   const client = getAnthropicClient();
   const db = useDrizzle();
@@ -173,6 +188,7 @@ export async function executeNode(
   if (!execRow) throw new Error('Failed to insert node execution row');
 
   const t0 = Date.now();
+
   try {
     const response = await client.messages.create({
       model: node.model,
@@ -182,10 +198,7 @@ export async function executeNode(
         {
           name: TOOL_NAME,
           description: 'Return the structured response for this prompt.',
-          input_schema: node.outputSchema as {
-            type: 'object';
-            properties: Record<string, unknown>;
-          },
+          input_schema: node.outputSchema,
         },
       ],
       tool_choice: { type: 'tool', name: TOOL_NAME },
@@ -199,7 +212,7 @@ export async function executeNode(
       throw new Error('No structured_output tool_use block in response');
     }
 
-    const parsedOutput = toolBlock.input as Record<string, unknown>;
+    const parsedOutput = jsonObjectSchema.parse(toolBlock.input);
     const rawResponse = JSON.stringify(response);
 
     // Update row with results

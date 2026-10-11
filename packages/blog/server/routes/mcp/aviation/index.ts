@@ -5,7 +5,6 @@
  * reconnect on the 404 they get when a pod rotates.
  */
 
-import type { IncomingMessage, ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { defineEventHandler, readBody, getHeader, setResponseStatus } from 'h3';
 import { useRuntimeConfig } from '#imports';
@@ -87,11 +86,13 @@ function createMcpServer(serverOrigin: string): McpServer {
     },
     async (args) => {
       const parsed = z.object(askAviationInputSchema).parse(args);
+
       return executeAskAviation(parsed, queryUrl);
     },
   );
 
   registerAviationUiResource(server, serverOrigin);
+
   return server;
 }
 
@@ -102,21 +103,23 @@ async function createSession(serverOrigin: string): Promise<SessionRecord> {
       sessions.set(id, { server, transport });
     },
   });
+
   transport.onclose = () => {
     if (transport.sessionId) sessions.delete(transport.sessionId);
   };
+
   const server = createMcpServer(serverOrigin);
   await server.connect(transport);
+
   return { server, transport };
 }
 
 export default defineEventHandler(async (event) => {
-  const req = event.node.req as IncomingMessage;
-  const res = event.node.res as ServerResponse;
+  const { req, res } = event.node;
 
   try {
     const sessionId = getHeader(event, 'mcp-session-id');
-    const serverOrigin = (useRuntimeConfig(event).public.siteUrl as string) ?? '';
+    const serverOrigin = z.string().catch('').parse(useRuntimeConfig(event).public.siteUrl);
     // h3's readBody handles JSON, x-www-form-urlencoded, etc.
     const body = req.method === 'POST' ? await readBody(event) : undefined;
 
@@ -129,6 +132,7 @@ export default defineEventHandler(async (event) => {
     // execution error; 404 lets them transparently start a new session.
     if (sessionId && !sessions.has(sessionId)) {
       setResponseStatus(event, 404);
+
       return { error: 'session_not_found' };
     }
 
@@ -140,8 +144,10 @@ export default defineEventHandler(async (event) => {
       message: 'MCP transport error',
       error: e instanceof Error ? e.message : String(e),
     });
+
     if (!res.headersSent) {
       setResponseStatus(event, 500);
+
       return { error: 'internal_error' };
     }
   }

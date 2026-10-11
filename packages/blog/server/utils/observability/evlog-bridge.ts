@@ -8,84 +8,100 @@
  */
 
 import { trace, type Attributes } from '@opentelemetry/api';
+import { z } from 'zod';
 
 const MAX_ATTR_LEN = 2000;
 
+const evlogEventSchema = z.looseObject({
+  level: z.string().optional().catch(undefined),
+  tag: z.string().optional().catch(undefined),
+  message: z.string().optional().catch(undefined),
+  error: z
+    .union([
+      z
+        .string()
+        .min(1)
+        .transform((message) => ({ name: undefined, message })),
+      z.looseObject({
+        name: z.string().optional().catch(undefined),
+        message: z.string().optional().catch(undefined),
+      }),
+    ])
+    .optional()
+    .catch(undefined),
+});
+
+const attributeScalarSchema = z.union([
+  z.string().transform((value) => truncate(value)),
+  z.number(),
+  z.boolean(),
+]);
+
+const attributeObjectSchema = z.union([z.array(z.unknown()), z.looseObject({})]);
+
+type EvlogEvent = z.input<typeof evlogEventSchema>;
+
 interface DrainContextLite {
-  event: Record<string, unknown> & { level?: string; service?: string };
+  event: EvlogEvent;
 }
 
-export function truncate(value: unknown, max = MAX_ATTR_LEN): string {
-  const s = typeof value === 'string' ? value : JSON.stringify(value);
-  if (s.length <= max) return s;
-  return s.slice(0, max);
+const EVLOG_INTERNAL_KEYS: ReadonlySet<string> = new Set([
+  'level',
+  'message',
+  'tag',
+  'error',
+  'timestamp',
+  'service',
+  'environment',
+  'version',
+  'commitHash',
+  'region',
+]);
+
+export function truncate(value: string, max = MAX_ATTR_LEN): string {
+  if (value.length <= max) return value;
+
+  return value.slice(0, max);
 }
 
-interface EvlogErrorShape {
-  name?: string;
-  message?: string;
-  stack?: string;
-}
-
-function isErrorShape(value: unknown): value is EvlogErrorShape {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    ('message' in value || 'name' in value || 'stack' in value)
-  );
+interface EvlogSpanEvent {
+  name: string;
+  attributes: Attributes;
 }
 
 /**
  * Build the OTel attribute payload for an evlog wide event. Pure — exported
  * for the unit test, called by the drain handler.
  */
-export function evlogEventToAttributes(event: DrainContextLite['event']): {
-  name: string;
-  attributes: Attributes;
-} {
-  const tag = typeof event.tag === 'string' ? event.tag : null;
-  const message = typeof event.message === 'string' ? event.message : null;
-  const errorRaw = event.error;
+export function evlogEventToAttributes(event: EvlogEvent): EvlogSpanEvent {
+  const { level, tag, message, error } = evlogEventSchema.parse(event);
 
   const attributes: Attributes = {};
-  if (event.level) attributes['log.severity'] = String(event.level);
+
+  if (level) attributes['log.severity'] = level;
+
   if (message) attributes['log.message'] = truncate(message);
+
   if (tag) attributes['log.tag'] = tag;
 
-  if (typeof errorRaw === 'string' && errorRaw.length > 0) {
-    attributes['error.message'] = truncate(errorRaw);
-  } else if (isErrorShape(errorRaw)) {
-    if (errorRaw.name) attributes['error.type'] = errorRaw.name;
-    if (errorRaw.message) attributes['error.message'] = truncate(errorRaw.message);
-  }
+  if (error?.name) attributes['error.type'] = error.name;
+
+  if (error?.message) attributes['error.message'] = truncate(error.message);
 
   // Surface any extra business fields (e.g. ms, count) without recursion.
   for (const [key, value] of Object.entries(event)) {
-    if (
-      key === 'level' ||
-      key === 'message' ||
-      key === 'tag' ||
-      key === 'error' ||
-      key === 'timestamp' ||
-      key === 'service' ||
-      key === 'environment' ||
-      key === 'version' ||
-      key === 'commitHash' ||
-      key === 'region'
-    ) {
-      continue;
-    }
-    if (value === null || value === undefined) continue;
-    if (typeof value === 'object') {
-      attributes[`log.${key}`] = truncate(value);
-    } else {
-      attributes[`log.${key}`] =
-        typeof value === 'string' ? truncate(value) : (value as string | number | boolean);
+    if (EVLOG_INTERNAL_KEYS.has(key)) continue;
+
+    const scalar = attributeScalarSchema.safeParse(value);
+
+    if (scalar.success) {
+      attributes[`log.${key}`] = scalar.data;
+    } else if (attributeObjectSchema.safeParse(value).success) {
+      attributes[`log.${key}`] = truncate(JSON.stringify(value));
     }
   }
 
-  const name = tag ?? 'log';
-  return { name, attributes };
+  return { name: tag ?? 'log', attributes };
 }
 
 /**
@@ -98,6 +114,7 @@ export function bridgeDrainHandler(ctx: DrainContextLite): void {
 
   if (span) {
     span.addEvent(name, attributes);
+
     return;
   }
 
@@ -110,5 +127,6 @@ export function bridgeDrainHandler(ctx: DrainContextLite): void {
     message: attributes['log.message'],
     tag: attributes['log.tag'],
   });
+
   console.info(`[evlog-bridge] ${fallback}`);
 }

@@ -20,16 +20,25 @@ import {
 } from './etl-aviation';
 
 const FIXTURE_DIR = join(__dirname, '__fixtures__', 'aviation');
+
 const FAA_MASTER = join(FIXTURE_DIR, 'faa-master.csv');
+
 const FAA_ACFTREF = join(FIXTURE_DIR, 'faa-acftref.csv');
+
 const BTS_T100 = join(FIXTURE_DIR, 'bts-t100-202501.csv');
+
 const OF_AIRPORTS = join(FIXTURE_DIR, 'openflights-airports.dat');
+
 const OF_AIRLINES = join(FIXTURE_DIR, 'openflights-airlines.dat');
+
 const OF_ROUTES = join(FIXTURE_DIR, 'openflights-routes.dat');
+
 const CARRIER_LOOKUP = join(FIXTURE_DIR, 'carrier-to-operator.csv');
 
 let tmpDir: string;
+
 let db: Awaited<ReturnType<typeof DuckDBInstance.create>>;
+
 let conn: DuckDBConnection;
 
 beforeAll(async () => {
@@ -41,6 +50,7 @@ beforeAll(async () => {
 afterAll(() => {
   conn?.closeSync();
   db?.closeSync();
+
   if (tmpDir) rmSync(tmpDir, { recursive: true, force: true });
 });
 
@@ -48,13 +58,16 @@ async function countRows(c: DuckDBConnection, parquet: string): Promise<number> 
   const reader = await c.runAndReadAll(
     `SELECT COUNT(*)::BIGINT AS n FROM read_parquet('${parquet}')`,
   );
+
   const rows = reader.getRowObjectsJson();
+
   return Number(rows[0]!.n);
 }
 
-async function allRows(c: DuckDBConnection, sql: string): Promise<Array<Record<string, unknown>>> {
+async function allRows(c: DuckDBConnection, sql: string) {
   const reader = await c.runAndReadAll(sql);
-  return reader.getRowObjectsJson() as Array<Record<string, unknown>>;
+
+  return reader.getRowObjectsJson();
 }
 
 describe('aviation ETL — pure transforms', () => {
@@ -69,13 +82,14 @@ describe('aviation ETL — pure transforms', () => {
        GROUP BY manufacturer_name
        ORDER BY manufacturer_name`,
     );
-    const manufacturers = rows.map((r) => r.manufacturer_name as string);
+
+    const manufacturers = rows.map((r) => String(r.manufacturer_name));
     expect(manufacturers).toContain('BOEING');
     expect(manufacturers).toContain('AIRBUS');
+
     // Boeing 737 + 767 + Airbus A321 model codes are all present in the fixture.
-    const byName = Object.fromEntries(
-      rows.map((r) => [r.manufacturer_name as string, Number(r.n)]),
-    );
+    const byName = Object.fromEntries(rows.map((r) => [String(r.manufacturer_name), Number(r.n)]));
+
     expect(byName.BOEING).toBeGreaterThanOrEqual(1);
     expect(byName.AIRBUS).toBeGreaterThanOrEqual(1);
   });
@@ -91,6 +105,7 @@ describe('aviation ETL — pure transforms', () => {
       conn,
       `SELECT year, month FROM read_parquet('${out}') GROUP BY year, month`,
     );
+
     expect(rows).toHaveLength(1);
     expect(rows[0]!.year).toBe(2025);
     expect(rows[0]!.month).toBe(1);
@@ -112,6 +127,7 @@ describe('aviation ETL — pure transforms', () => {
        LEFT JOIN read_parquet('${airportsOut}') a ON a.iata = r.source_airport_iata
        WHERE a.iata IS NULL`,
     );
+
     expect(orphans).toHaveLength(0);
   });
 
@@ -145,6 +161,7 @@ describe('aviation ETL — pure transforms', () => {
       GROUP BY m.manufacturer_name
       ORDER BY total_pax DESC`,
     );
+
     expect(rows.length).toBeGreaterThan(0);
     // Boeing is dominant in the fixture; total should be > 0.
     const boeing = rows.find((r) => r.manufacturer_name === 'BOEING');
@@ -163,6 +180,7 @@ describe('aviation ETL — pure transforms', () => {
        WHERE (registrant_city IS NULL OR registrant_city = '')
           OR (registrant_state IS NULL OR registrant_state = '')`,
     );
+
     // The fixture has 'N999EX' with blank city/state.
     expect(nullCity.map((r) => r.n_number)).toContain('N999EX');
   });
@@ -180,6 +198,7 @@ describe('aviation ETL — pure transforms', () => {
        LEFT JOIN read_parquet('${lookupOut}') l ON l.bts_carrier_code = b.carrier_code
        WHERE b.carrier_code = 'XY'`,
     );
+
     expect(rows).toHaveLength(1);
     // Operator is null for the unmatched carrier; row itself is preserved.
     expect(rows[0]!.faa_registrant_name).toBeNull();
@@ -193,6 +212,7 @@ describe('aviation ETL — pure transforms', () => {
       conn,
       `SELECT iata, latitude, longitude FROM read_parquet('${out}') WHERE iata = 'XYZ'`,
     );
+
     expect(rows).toHaveLength(1);
     expect(rows[0]!.latitude).toBeNull();
     expect(rows[0]!.longitude).toBeNull();
@@ -203,12 +223,14 @@ describe('aviation ETL — pure transforms', () => {
   test('BTS T-100 preserves exact integer values (no clamping)', async () => {
     const out = join(tmpDir, 'bts-preserve.parquet');
     await transformBtsT100(conn, BTS_T100, out);
+
     const rows = await allRows(
       conn,
       `SELECT carrier_code, origin_iata, dest_iata, freight_lbs, mail_lbs
        FROM read_parquet('${out}')
        WHERE carrier_code = 'NK'`,
     );
+
     expect(rows).toHaveLength(1);
     // Fixture exact values for NK: 3000 freight, 150 mail.
     expect(Number(rows[0]!.freight_lbs)).toBe(3000);
@@ -224,6 +246,7 @@ describe('aviation ETL — pure transforms', () => {
       conn,
       `SELECT n_number, registrant_state FROM read_parquet('${out}') WHERE n_number = 'N102AA'`,
     );
+
     expect(rows).toHaveLength(1);
     expect(rows[0]!.registrant_state).toBe('TX');
   });
@@ -237,6 +260,7 @@ describe('aviation ETL — pure transforms', () => {
 
   test('runAllTransforms emits all expected Parquet files and pre-warm is tiny', async () => {
     const outDir = join(tmpDir, 'all-transforms');
+
     const produced = await runAllTransforms(
       conn,
       {
@@ -250,6 +274,7 @@ describe('aviation ETL — pure transforms', () => {
       },
       outDir,
     );
+
     const remoteNames = produced.map((p) => p.remoteName).sort();
     expect(remoteNames).toEqual(
       [
@@ -273,6 +298,7 @@ describe('aviation ETL — pure transforms', () => {
       conn,
       `SELECT sentinel FROM read_parquet('${preWarm.localPath}')`,
     );
+
     expect(preWarmRows).toHaveLength(1);
     expect(preWarmRows[0]!.sentinel).toBe('aviation-pre-warm');
   });
@@ -285,6 +311,7 @@ describe('aviation ETL — pure transforms', () => {
       conn,
       `SELECT airline_name, iata, icao FROM read_parquet('${out}') WHERE iata = 'AA'`,
     );
+
     expect(rows).toHaveLength(1);
     expect(rows[0]!.airline_name).toBe('American Airlines');
     expect(rows[0]!.icao).toBe('AAL');
@@ -299,6 +326,7 @@ describe('aviation ETL — pure transforms', () => {
       `SELECT manufacturer_name, model_name, number_of_seats
        FROM read_parquet('${out}') WHERE model_name = 'A321-200'`,
     );
+
     expect(rows).toHaveLength(1);
     expect(rows[0]!.manufacturer_name).toBe('AIRBUS');
     expect(Number(rows[0]!.number_of_seats)).toBe(220);

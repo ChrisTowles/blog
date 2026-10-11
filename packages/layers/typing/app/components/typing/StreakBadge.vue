@@ -67,8 +67,10 @@ const TIERS: ReadonlyArray<Tier> = [
 
 const tier = computed<Tier | null>(() => {
   const s = props.streak;
+
   if (s < 3) return null;
   const idx = Math.min(TIERS.length - 1, Math.floor(s / 3) - 1);
+
   return TIERS[idx] ?? null;
 });
 </script>

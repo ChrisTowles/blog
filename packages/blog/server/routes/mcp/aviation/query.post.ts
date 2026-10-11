@@ -32,11 +32,13 @@ export default defineEventHandler(async (event) => {
   setResponseHeader(event, 'Vary', 'Origin');
 
   let parsed: { question: string };
+
   try {
     const body = await readBody(event);
     parsed = bodySchema.parse(body);
   } catch (err) {
     setResponseStatus(event, 400);
+
     return { error: err instanceof Error ? err.message : 'bad_request' };
   }
 
@@ -67,6 +69,7 @@ export default defineEventHandler(async (event) => {
           error: message,
           question: parsed.question,
         });
+
         try {
           controller.enqueue(sseFrame({ type: 'error', message }));
         } catch {

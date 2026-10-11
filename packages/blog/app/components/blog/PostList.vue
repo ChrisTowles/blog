@@ -5,9 +5,11 @@ const route = useRoute();
 
 const { data: posts } = await useAsyncData(route.path, () => {
   const query = queryCollection('posts');
+
   if (!import.meta.dev) {
     query.where('status', '<>', 'draft');
   }
+
   return query.order('date', 'DESC').all();
 });
 </script>

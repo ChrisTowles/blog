@@ -12,6 +12,7 @@ export default defineEventHandler(async (event) => {
   await requireGuardian(event, { learnerId });
 
   const db = useDrizzle();
+
   const attemptRows = await db
     .select()
     .from(tables.typingAttempts)

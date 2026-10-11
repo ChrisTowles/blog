@@ -57,14 +57,17 @@ export function useGameRunner(options: UseGameRunnerOptions) {
 
   function onKeydown(ev: KeyboardEvent) {
     if (ev.key === 'Tab') return; // let the user escape with tab
+
     if (ev.key.length !== 1 && ev.key !== 'Backspace' && ev.key !== 'Escape') return;
     ev.preventDefault();
     const e: KeyEvent = { key: ev.key, at: Date.now() };
+
     for (const h of keyHandlers) h(e);
   }
 
   async function start() {
     if (!import.meta.client) return;
+
     if (!options.containerRef.value) return;
     const { Application } = await import('pixi.js');
     const application = new Application();
@@ -84,6 +87,7 @@ export function useGameRunner(options: UseGameRunnerOptions) {
       app: application,
       onKey: (handler) => {
         keyHandlers.add(handler);
+
         return () => keyHandlers.delete(handler);
       },
       emitResult: (r) => {
@@ -99,15 +103,19 @@ export function useGameRunner(options: UseGameRunnerOptions) {
   function stop() {
     options.scene.unmount();
     keyHandlers.clear();
+
     if (typeof window !== 'undefined') {
       window.removeEventListener('keydown', onKeydown);
     }
+
     resizeObserver?.disconnect();
     resizeObserver = null;
+
     if (app) {
       app.destroy(true, { children: true });
       app = null;
     }
+
     ready.value = false;
   }
 

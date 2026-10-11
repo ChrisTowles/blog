@@ -7,6 +7,24 @@
 import { test, expect } from '@playwright/test';
 import { TEST_IDS } from '~~/shared/test-ids';
 
+interface TestLearner {
+  id: number;
+  groupId: number;
+  displayName: string;
+  avatarUrl: string | null;
+  birthYear: number;
+  currentStage: number;
+  preferredVoice: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+declare global {
+  interface Window {
+    __TYPING_TEST_LEARNERS__?: TestLearner[];
+  }
+}
+
 const FAKE_LIST = {
   id: 7,
   learnerId: 42,
@@ -46,6 +64,7 @@ test.describe('Typing app — spelling import (mocked)', () => {
     // Mock the spelling list lookup with mastery progress.
     await page.route('**/api/typing/spelling**', async (route) => {
       const url = route.request().url();
+
       if (route.request().method() === 'GET' && !url.includes('/extract')) {
         await route.fulfill({
           status: 200,
@@ -76,8 +95,10 @@ test.describe('Typing app — spelling import (mocked)', () => {
             },
           }),
         });
+
         return;
       }
+
       await route.continue();
     });
 
@@ -85,10 +106,7 @@ test.describe('Typing app — spelling import (mocked)', () => {
     // is non-null; that depends on the available-learners state being
     // populated. Inject the learner via init script.
     await page.addInitScript(() => {
-      const win = window as typeof window & {
-        __TYPING_TEST_LEARNERS__?: unknown[];
-      };
-      win.__TYPING_TEST_LEARNERS__ = [
+      window.__TYPING_TEST_LEARNERS__ = [
         {
           id: 42,
           groupId: 1,
@@ -110,6 +128,7 @@ test.describe('Typing app — spelling import (mocked)', () => {
     // get coverage of the empty-state path. The full active-learner flow
     // is exercised by group-invite tests where the DB seeds learners.
     const card = page.getByTestId(TEST_IDS.TYPING.SPELLING_MASTERY_CARD);
+
     if (await card.count()) {
       await expect(card).toBeVisible();
       const cta = card.getByRole('link', { name: /lake leap/i });

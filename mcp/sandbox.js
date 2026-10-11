@@ -14,6 +14,7 @@ if (window.self === window.top) {
 }
 
 const expectedHostOrigin = validateReferrer(document.referrer);
+
 const ownOrigin = new URL(window.location.href).origin;
 
 // Security self-test: window.top access MUST throw.
@@ -32,8 +33,11 @@ try {
 }
 
 const inner = document.createElement('iframe');
+
 inner.style = 'width:100%;height:100%;border:none;';
+
 inner.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms');
+
 document.body.appendChild(inner);
 
 const innerAdapter = {
@@ -45,6 +49,7 @@ const innerAdapter = {
   },
   writeHtml(html) {
     const doc = inner.contentDocument || (inner.contentWindow && inner.contentWindow.document);
+
     if (doc) {
       doc.open();
       doc.write(html);

@@ -3,6 +3,7 @@
  * initialize-timeout, streaming-disable and axe-core fixtures are still to come.
  */
 import { test, expect } from '@playwright/test';
+import type { AviationAnswerHook } from '../aviation-answer';
 
 const PORT = Number(process.env.AVIATION_E2E_PORT || 8182);
 
@@ -37,19 +38,14 @@ test.describe('aviation-answer iframe bundle', () => {
     await page.goto(`http://127.0.0.1:${PORT}/bundle.html`, { waitUntil: 'domcontentloaded' });
 
     // The bundle's self-boot path runs; the test hook is published on window.
-    await page.waitForFunction(
-      () =>
-        typeof (window as Window & { __AVIATION_ANSWER__?: object }).__AVIATION_ANSWER__ !==
-        'undefined',
-    );
+    await page.waitForFunction(() => window.__AVIATION_ANSWER__ !== undefined);
 
     // Drive the tool-result handler directly — same entry the App transport
     // would reach when ui/notifications/tool-result arrives.
     await page.evaluate((fixture) => {
-      const w = window as Window & {
-        __AVIATION_ANSWER__?: { handleToolResult: (r: unknown) => void };
-      };
-      w.__AVIATION_ANSWER__!.handleToolResult({ structuredContent: fixture });
+      const hook: AviationAnswerHook | undefined = window.__AVIATION_ANSWER__;
+
+      hook!.handleToolResult({ structuredContent: fixture });
     }, BAR_FIXTURE);
 
     // Hero number + h2 answer.

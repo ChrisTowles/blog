@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { firstQueryValue } from '~/utils/route-query';
+
 import { TEST_IDS } from '~~/shared/test-ids';
 
 interface SearchResult {
@@ -17,14 +19,21 @@ interface SearchResponse {
 }
 
 const route = useRoute();
+
 const router = useRouter();
 
-const searchInput = ref((route.query.q as string) || '');
-const searchQuery = ref((route.query.q as string) || '');
+const searchInput = ref(firstQueryValue(route.query.q) || '');
+
+const searchQuery = ref(firstQueryValue(route.query.q) || '');
+
 const searching = ref(false);
+
 const searchResponse = ref<SearchResponse | null>(null);
+
 const searchError = ref<string | null>(null);
+
 const hasSearched = ref(false);
+
 const inputRef = ref<{ input: HTMLInputElement } | null>(null);
 
 useSeoMeta({
@@ -36,6 +45,7 @@ useSeoMeta({
 
 async function runSearch() {
   const q = searchInput.value.trim();
+
   if (!q) return;
 
   searchQuery.value = q;
@@ -73,15 +83,21 @@ onMounted(() => {
 
 function scoreLabel(score: number): string {
   if (score >= 0.8) return 'Excellent match';
+
   if (score >= 0.5) return 'Strong match';
+
   if (score >= 0.2) return 'Good match';
+
   return 'Related';
 }
 
 function scoreColor(score: number): 'success' | 'info' | 'warning' | 'neutral' {
   if (score >= 0.8) return 'success';
+
   if (score >= 0.5) return 'info';
+
   if (score >= 0.2) return 'warning';
+
   return 'neutral';
 }
 </script>

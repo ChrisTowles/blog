@@ -4,6 +4,7 @@
  * legacy unsuffixed key. DB-backed learners also POST attempts, best-effort — localStorage
  * stays the UI's source of truth.
  */
+import { z } from 'zod';
 import {
   MAX_STAGE,
   TYPING_PROGRESS_LOCAL_STORAGE_KEY,
@@ -17,14 +18,48 @@ import type { ActiveLearnerId } from './useActiveLearner';
 
 const TYPING_BESTS_LOCAL_STORAGE_KEY = 'typing:bests:v1';
 
-export type LessonBest = {
-  wpm: number;
-  accuracy: number;
-  durationMs: number;
-  recordedAt: string;
-};
+const lessonBestSchema = z.object({
+  wpm: z.number(),
+  accuracy: z.number(),
+  durationMs: z.number(),
+  recordedAt: z.string(),
+});
+
+export type LessonBest = z.infer<typeof lessonBestSchema>;
 
 type LessonBestMap = Record<string, LessonBest>;
+
+const storedRowsSchema = z.record(z.string(), z.json());
+
+const storedProgressSchema = z.object({
+  schemaVersion: z.literal(1),
+  currentStage: z.number().optional(),
+  attempts: z.array(z.json()).optional(),
+  keyStats: storedRowsSchema.optional(),
+});
+
+const localAttemptSchema = z.object({
+  lessonId: z
+    .number()
+    .nullish()
+    .transform((v) => v ?? null),
+  gameSlug: z
+    .string()
+    .nullish()
+    .transform((v) => v ?? null),
+  wpm: z.number(),
+  netWpm: z.number(),
+  accuracy: z.number(),
+  durationMs: z.number(),
+  errorsByKey: z.record(z.string(), z.number()),
+  completedAt: z.string(),
+});
+
+const localKeyStatSchema = z.object({
+  attempts: z.number(),
+  errors: z.number(),
+  avgMs: z.number(),
+});
 
 function progressKeyFor(id: ActiveLearnerId): string {
   return id === 'anon'
@@ -42,45 +77,43 @@ function bestsKeyFor(id: ActiveLearnerId): string {
 // cache would leak one learner's PRs into another.
 const bestsCacheByKey = new Map<string, LessonBestMap>();
 
-function isLessonBest(val: unknown): val is LessonBest {
-  if (!val || typeof val !== 'object') return false;
-  const v = val as Record<string, unknown>;
-  return (
-    typeof v.wpm === 'number' &&
-    typeof v.accuracy === 'number' &&
-    typeof v.durationMs === 'number' &&
-    typeof v.recordedAt === 'string'
-  );
-}
-
 function readBests(id: ActiveLearnerId): LessonBestMap {
   const key = bestsKeyFor(id);
   const cached = bestsCacheByKey.get(key);
+
   if (cached) return cached;
+
   if (typeof localStorage === 'undefined') return {};
   let out: LessonBestMap = {};
+
   try {
     const raw = localStorage.getItem(key);
-    if (raw && typeof raw === 'string') {
-      const parsed: unknown = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        // Drops half-written rows and any older schema leaking in.
-        for (const [slug, entry] of Object.entries(parsed as Record<string, unknown>)) {
-          if (isLessonBest(entry)) out[slug] = entry;
-        }
+
+    const parsed = raw ? storedRowsSchema.safeParse(JSON.parse(raw)) : null;
+
+    if (parsed?.success) {
+      // Drops half-written rows and any older schema leaking in.
+      for (const [slug, row] of Object.entries(parsed.data)) {
+        const entry = lessonBestSchema.safeParse(row);
+
+        if (entry.success) out[slug] = entry.data;
       }
     }
   } catch {
     out = {};
   }
+
   bestsCacheByKey.set(key, out);
+
   return out;
 }
 
 function writeBests(id: ActiveLearnerId, b: LessonBestMap) {
   const key = bestsKeyFor(id);
   bestsCacheByKey.set(key, b);
+
   if (typeof localStorage === 'undefined') return;
+
   try {
     localStorage.setItem(key, JSON.stringify(b));
   } catch {
@@ -90,16 +123,32 @@ function writeBests(id: ActiveLearnerId, b: LessonBestMap) {
 
 function readStorage(id: ActiveLearnerId): LocalProgress {
   if (typeof localStorage === 'undefined') return emptyLocalProgress();
+
   try {
     const raw = localStorage.getItem(progressKeyFor(id));
+
     if (!raw) return emptyLocalProgress();
-    const parsed = JSON.parse(raw) as Partial<LocalProgress>;
-    if (parsed.schemaVersion !== 1) return emptyLocalProgress();
+    const parsed = storedProgressSchema.safeParse(JSON.parse(raw));
+
+    if (!parsed.success) return emptyLocalProgress();
+
+    const keyStats: Record<string, LocalKeyStat> = {};
+
+    for (const [key, row] of Object.entries(parsed.data.keyStats ?? {})) {
+      const stat = localKeyStatSchema.safeParse(row);
+
+      if (stat.success) keyStats[key] = stat.data;
+    }
+
     return {
       schemaVersion: 1,
-      currentStage: parsed.currentStage ?? 1,
-      attempts: parsed.attempts ?? [],
-      keyStats: parsed.keyStats ?? {},
+      currentStage: parsed.data.currentStage ?? 1,
+      attempts: (parsed.data.attempts ?? []).flatMap((row) => {
+        const attempt = localAttemptSchema.safeParse(row);
+
+        return attempt.success ? [attempt.data] : [];
+      }),
+      keyStats,
     };
   } catch {
     return emptyLocalProgress();
@@ -108,6 +157,7 @@ function readStorage(id: ActiveLearnerId): LocalProgress {
 
 function writeStorage(id: ActiveLearnerId, p: LocalProgress) {
   if (typeof localStorage === 'undefined') return;
+
   try {
     localStorage.setItem(progressKeyFor(id), JSON.stringify(p));
   } catch {
@@ -175,9 +225,11 @@ export function useTypingProgress(): UseTypingProgress {
       activeLearnerId,
       (id) => {
         const next = readStorage(id);
+
         if (id !== 'anon' && active.value) {
           next.currentStage = Math.max(next.currentStage, active.value.currentStage);
         }
+
         progress.value = next;
       },
       { immediate: true },
@@ -188,13 +240,16 @@ export function useTypingProgress(): UseTypingProgress {
   if (import.meta.client) {
     const onStorage = (e: StorageEvent) => {
       const id = activeLearnerId.value;
+
       if (!e.key) return;
+
       if (e.key === bestsKeyFor(id)) {
         bestsCacheByKey.delete(e.key);
       } else if (e.key === progressKeyFor(id)) {
         progress.value = readStorage(id);
       }
     };
+
     window.addEventListener('storage', onStorage);
     onScopeDispose(() => {
       window.removeEventListener('storage', onStorage);
@@ -214,7 +269,8 @@ export function useTypingProgress(): UseTypingProgress {
   ) {
     if (!import.meta.client) return;
     const id = activeLearnerId.value;
-    if (id === 'anon' || typeof id !== 'number') return;
+
+    if (id === 'anon') return;
     // Fire-and-forget; localStorage remains the UI source of truth.
     void $fetch('/api/typing/progress', {
       method: 'POST',
@@ -251,6 +307,7 @@ export function useTypingProgress(): UseTypingProgress {
     // it) advances the stage. Drill and sentence attempts only — games pace themselves.
     if (attempt.gameSlug === null && attempt.lessonId !== null) {
       const target = stageTargetWpm(previousStage);
+
       if (attempt.accuracy >= 0.95 && attempt.wpm >= target) {
         nextStage = Math.min(MAX_STAGE, previousStage + 1);
       }
@@ -262,10 +319,12 @@ export function useTypingProgress(): UseTypingProgress {
       attempts: nextAttempts,
       keyStats: mergeKeyStats(progress.value.keyStats, stats),
     };
+
     const id = activeLearnerId.value;
     progress.value = next;
     writeStorage(id, next);
     maybePushToServer(attempt, stats, extras);
+
     // If a real learner just cleared the mastery gate, persist the new
     // stage on the learner row so the next sign-in / device respects it.
     if (nextStage > previousStage && id !== 'anon') {
@@ -314,6 +373,7 @@ export function useTypingProgress(): UseTypingProgress {
     const next = { ...progress.value, currentStage: clamped };
     progress.value = next;
     writeStorage(id, next);
+
     if (id !== 'anon') {
       void $fetch(`/api/typing/learners/${id}/stage`, {
         method: 'PUT',
@@ -338,11 +398,12 @@ export function useTypingProgress(): UseTypingProgress {
   function recordLessonBest(
     slug: string,
     attempt: { wpm: number; accuracy: number; durationMs: number },
-  ): { isNewBest: boolean; previous: LessonBest | null } {
+  ) {
     const id = activeLearnerId.value;
     const bests = readBests(id);
     const previous = bests[slug] ?? null;
     const isNewBest = previous === null || attempt.wpm > previous.wpm;
+
     if (isNewBest) {
       bests[slug] = {
         wpm: attempt.wpm,
@@ -352,6 +413,7 @@ export function useTypingProgress(): UseTypingProgress {
       };
       writeBests(id, bests);
     }
+
     return { isNewBest, previous };
   }
 
@@ -369,21 +431,25 @@ export function useTypingProgress(): UseTypingProgress {
 function mergeKeyStats(
   existing: Record<string, LocalKeyStat>,
   incoming: Record<string, LocalKeyStat>,
-): Record<string, LocalKeyStat> {
-  const out: Record<string, LocalKeyStat> = { ...existing };
+) {
+  const out = { ...existing };
+
   for (const [key, inc] of Object.entries(incoming)) {
     const prev = out[key] ?? { attempts: 0, errors: 0, avgMs: 0 };
     const totalAttempts = prev.attempts + inc.attempts;
     const totalErrors = prev.errors + inc.errors;
+
     const weightedAvg =
       totalAttempts > 0
         ? (prev.avgMs * prev.attempts + inc.avgMs * inc.attempts) / totalAttempts
         : 0;
+
     out[key] = {
       attempts: totalAttempts,
       errors: totalErrors,
       avgMs: weightedAvg,
     };
   }
+
   return out;
 }

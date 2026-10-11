@@ -10,7 +10,6 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { pipeline } from 'node:stream/promises';
-import { Readable } from 'node:stream';
 import { spawnSync } from 'node:child_process';
 import { DuckDBInstance } from '@duckdb/node-api';
 import type { DuckDBConnection } from '@duckdb/node-api';
@@ -30,10 +29,13 @@ const etlStart = Date.now();
 
 function elapsed(sinceMs?: number): string {
   const ms = Date.now() - (sinceMs ?? etlStart);
+
   if (ms < 1000) return `${ms}ms`;
+
   if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`;
   const m = Math.floor(ms / 60_000);
   const s = Math.round((ms % 60_000) / 1000);
+
   return `${m}m ${s}s`;
 }
 
@@ -394,13 +396,16 @@ const SOURCE_URLS = {
 
 async function downloadToFile(url: string, destPath: string): Promise<void> {
   const res = await fetch(url);
+
   if (!res.ok) {
     throw new Error(`Download failed: ${url} → HTTP ${res.status}`);
   }
+
   if (!res.body) {
     throw new Error(`Download returned empty body: ${url}`);
   }
-  await pipeline(Readable.fromWeb(res.body as never), createWriteStream(destPath));
+
+  await pipeline(res.body, createWriteStream(destPath));
 }
 
 /**
@@ -410,6 +415,7 @@ async function downloadToFile(url: string, destPath: string): Promise<void> {
 async function downloadAndExtractFaaRegistry(destDir: string): Promise<void> {
   const zipPath = join(destDir, 'ReleasableAircraft.zip');
   await downloadToFile(SOURCE_URLS.faaRegistryZip, zipPath);
+
   const unzip = spawnSync(
     'unzip',
     ['-o', '-j', zipPath, 'MASTER.txt', 'ACFTREF.txt', '-d', destDir],
@@ -417,12 +423,14 @@ async function downloadAndExtractFaaRegistry(destDir: string): Promise<void> {
       stdio: 'inherit',
     },
   );
+
   if (unzip.status !== 0) {
     throw new Error(
       `unzip failed (exit ${unzip.status}). Ensure the 'unzip' binary is on PATH, ` +
         `or manually stage MASTER.txt + ACFTREF.txt in ${destDir}.`,
     );
   }
+
   rmSync(zipPath, { force: true });
 }
 
@@ -437,23 +445,30 @@ const BTS_T100_FORM_URL =
 // An unpublished month returns a header-only CSV; real ones run ~7 MB.
 const BTS_MIN_VALID_CSV_BYTES = 50_000;
 
+declare global {
+  interface Window {
+    __doPostBack(target: string, argument: string): void;
+  }
+}
+
 async function postBackCheckbox(page: Page, id: string): Promise<void> {
   await Promise.all([
     page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 60_000 }),
     page.evaluate((elId) => {
-      const cb = document.getElementById(elId) as HTMLInputElement | null;
-      if (!cb) throw new Error(`missing #${elId}`);
+      const cb = document.getElementById(elId);
+
+      if (!(cb instanceof HTMLInputElement)) throw new Error(`missing #${elId}`);
       cb.checked = true;
-      (window as unknown as { __doPostBack: (t: string, a: string) => void }).__doPostBack(
-        elId,
-        '',
-      );
+      window.__doPostBack(elId, '');
     }, id),
   ]);
-  const checked = await page.evaluate(
-    (elId) => (document.getElementById(elId) as HTMLInputElement | null)?.checked ?? false,
-    id,
-  );
+
+  const checked = await page.evaluate((elId) => {
+    const cb = document.getElementById(elId);
+
+    return cb instanceof HTMLInputElement && cb.checked;
+  }, id);
+
   if (!checked) throw new Error(`postback did not stick for #${id}`);
 }
 
@@ -469,16 +484,20 @@ async function downloadOneBtsYear(
 ): Promise<Array<{ yyyymm: string; csvPath: string }>> {
   // Reuse per-month CSVs left by an interrupted run rather than re-downloading.
   const { readdirSync } = await import('node:fs');
+
   const existing = readdirSync(destDir)
     .filter((name) => new RegExp(`^bts-t100-${year}\\d{2}\\.csv$`).test(name))
     .filter((name) => statSync(join(destDir, name)).size > 0)
     .sort()
     .map((name) => {
       const m = name.match(/(\d{6})/)!;
+
       return { yyyymm: m[1]!, csvPath: join(destDir, name) };
     });
+
   if (existing.length > 0) {
     consola.info(`${year} cached — ${existing.length} months on disk`);
+
     return existing;
   }
 
@@ -500,6 +519,7 @@ async function downloadOneBtsYear(
   // CSV — so the click timeout has to outlast the server, not the network.
   const zipPath = join(destDir, `bts-t100-${year}.zip`);
   let download;
+
   try {
     [download] = await Promise.all([
       page.waitForEvent('download', { timeout: 120_000 }),
@@ -509,19 +529,24 @@ async function downloadOneBtsYear(
     if (e instanceof Error && /Timeout/i.test(e.message)) {
       return [];
     }
+
     throw e;
   }
+
   await download.saveAs(zipPath);
 
   const tmpExtract = join(destDir, `_bts_${year}`);
   mkdirSync(tmpExtract, { recursive: true });
   const unzip = spawnSync('unzip', ['-o', '-j', zipPath, '-d', tmpExtract], { stdio: 'pipe' });
+
   if (unzip.status !== 0) throw new Error(`unzip failed for ${zipPath}`);
 
   const csvInside = join(tmpExtract, 'T_T100_MARKET_ALL_CARRIER.csv');
+
   if (!existsSync(csvInside) || statSync(csvInside).size < BTS_MIN_VALID_CSV_BYTES) {
     rmSync(tmpExtract, { recursive: true, force: true });
     rmSync(zipPath, { force: true });
+
     return [];
   }
 
@@ -530,12 +555,15 @@ async function downloadOneBtsYear(
   const db = await DuckDBInstance.create(':memory:');
   const conn = await db.connect();
   const produced: Array<{ yyyymm: string; csvPath: string }> = [];
+
   try {
     const monthsRows = await conn.runAndReadAll(
       `SELECT DISTINCT CAST(MONTH AS INTEGER) AS m FROM read_csv('${csvInside}', all_varchar = true) ORDER BY m`,
     );
+
     for (const row of monthsRows.getRowObjectsJson()) {
-      const monthNum = Number((row as { m: number | string }).m);
+      const monthNum = Number(row.m);
+
       if (!Number.isInteger(monthNum) || monthNum < 1 || monthNum > 12) continue;
       const yyyymm = `${year}${String(monthNum).padStart(2, '0')}`;
       const outPath = join(destDir, `bts-t100-${yyyymm}.csv`);
@@ -551,6 +579,7 @@ async function downloadOneBtsYear(
 
   rmSync(tmpExtract, { recursive: true, force: true });
   rmSync(zipPath, { force: true });
+
   return produced;
 }
 
@@ -559,6 +588,7 @@ export async function downloadBtsT100ViaPlaywright(
   yearsWanted: number,
 ): Promise<Array<{ yyyymm: string; csvPath: string }>> {
   const browser = await chromium.launch({ headless: true });
+
   try {
     const ctx = await browser.newContext({ acceptDownloads: true });
     const page = await ctx.newPage();
@@ -580,8 +610,10 @@ export async function downloadBtsT100ViaPlaywright(
     while (year > stopYear && yearsCollected < yearsWanted) {
       consola.start(`Fetching ${year}…`);
       const yearStart = Date.now();
+
       try {
         const monthsInYear = await downloadOneBtsYear(page, year, destDir);
+
         if (monthsInYear.length === 0) {
           consola.warn(`${year} — no data available`);
         } else {
@@ -594,6 +626,7 @@ export async function downloadBtsT100ViaPlaywright(
       } catch (e) {
         consola.error(`${year} failed:`, e instanceof Error ? e.message : String(e));
       }
+
       year -= 1;
     }
 
@@ -603,6 +636,7 @@ export async function downloadBtsT100ViaPlaywright(
           `BTS may be throttling or the date range is exhausted.`,
       );
     }
+
     return collected;
   } finally {
     await browser.close();
@@ -650,9 +684,11 @@ interface EtlConfig {
 function readConfig(): EtlConfig {
   const yearsRaw = process.env.AVIATION_ETL_YEARS;
   const parsed = yearsRaw ? Number.parseInt(yearsRaw, 10) : 12;
+
   if (!Number.isFinite(parsed) || parsed <= 0) {
     throw new Error(`AVIATION_ETL_YEARS must be a positive integer, got: ${yearsRaw}`);
   }
+
   return {
     bucketName: process.env.MCP_DATA_BUCKET,
     skipUpload: Boolean(process.env.AVIATION_ETL_SKIP_UPLOAD),
@@ -774,6 +810,7 @@ async function runEtl(): Promise<void> {
   // Fixture mode is for CI / smoke tests; network mode is the real run.
   const useFixtures = Boolean(config.fixtureDir);
   const sourceDir = useFixtures ? resolve(config.fixtureDir!) : join(config.workDir, 'downloads');
+
   if (!useFixtures) {
     mkdirSync(sourceDir, { recursive: true });
 
@@ -800,6 +837,7 @@ async function runEtl(): Promise<void> {
 
     // Fail fast rather than quietly shipping a partial bucket.
     const requiredLarge = ['MASTER.txt', 'ACFTREF.txt'];
+
     for (const f of requiredLarge) {
       if (!existsSync(join(sourceDir, f))) {
         throw new Error(`Missing required file: ${join(sourceDir, f)}`);
@@ -811,7 +849,9 @@ async function runEtl(): Promise<void> {
   const pathFor = (fixture: string, real: string): string => {
     const fixturePath = join(sourceDir, fixture);
     const realPath = join(sourceDir, real);
+
     if (existsSync(fixturePath)) return fixturePath;
+
     if (existsSync(realPath)) return realPath;
     throw new Error(`Missing input: neither ${fixturePath} nor ${realPath} exists`);
   };
@@ -824,12 +864,15 @@ async function runEtl(): Promise<void> {
 
   // Find every bts-t100-<yyyymm>.csv the user staged.
   const { readdirSync } = await import('node:fs');
+
   const btsT100 = readdirSync(sourceDir)
     .filter((name) => /^bts-t100-(\d{6})\.csv$/.test(name) || /^bts_t100_(\d{6})\.csv$/i.test(name))
     .map((name) => {
       const m = name.match(/(\d{6})/)!;
+
       return { yyyymm: m[1]!, csvPath: join(sourceDir, name) };
     });
+
   if (btsT100.length === 0) {
     throw new Error(`No BTS T-100 CSVs found in ${sourceDir} (expected bts-t100-<yyyymm>.csv)`);
   }
@@ -841,11 +884,13 @@ async function runEtl(): Promise<void> {
     const transformStart = Date.now();
     consola.start(`Transforming ${btsT100.length} month files → Parquet…`);
     const outDir = join(config.workDir, 'parquet');
+
     const produced = await runAllTransforms(
       conn,
       { faaMaster, faaAcftref, btsT100, ofAirports, ofAirlines, ofRoutes },
       outDir,
     );
+
     consola.success(`Transform done — ${produced.length} files  ${elapsed(transformStart)}`);
 
     // Drop a LICENSE.txt in the work dir so the upload step can push it too.
@@ -858,10 +903,12 @@ async function runEtl(): Promise<void> {
       const uploadStart = Date.now();
       const storage = new Storage();
       consola.start(`Uploading to gs://${config.bucketName}/…`);
+
       for (const { localPath, remoteName, contentType } of produced) {
         await uploadFileToGcs(storage, config.bucketName, localPath, remoteName, contentType);
         consola.log(`  ↑ ${remoteName}`);
       }
+
       await uploadTextToGcs(
         storage,
         config.bucketName,
@@ -918,8 +965,11 @@ const main = defineCommand({
   async run({ args }) {
     // Override env-based config with CLI args so both paths work
     if (args.years) process.env.AVIATION_ETL_YEARS = args.years;
+
     if (args.bucket) process.env.MCP_DATA_BUCKET = args.bucket;
+
     if (args['skip-upload']) process.env.AVIATION_ETL_SKIP_UPLOAD = '1';
+
     if (args['work-dir']) process.env.AVIATION_ETL_WORK_DIR = args['work-dir'];
 
     await runEtl();

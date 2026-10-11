@@ -49,15 +49,16 @@ export function useChats(chats: Ref<Chat[] | undefined>) {
     const sortedMonthYears = Object.keys(older).sort((a, b) => {
       const dateA = new Date(a);
       const dateB = new Date(b);
+
       return dateB.getTime() - dateA.getTime();
     });
 
     // Create formatted groups for navigation
-    const formattedGroups = [] as Array<{
+    const formattedGroups: Array<{
       id: string;
       label: string;
       items: Array<Chat>;
-    }>;
+    }> = [];
 
     // Add groups that have chats
     if (today.length) {

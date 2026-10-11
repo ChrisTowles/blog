@@ -15,23 +15,29 @@ export default defineEventHandler(async (event) => {
 
   const session = await getUserSession(event);
   const userId = session.user?.id;
+
   if (!userId) {
     throw createError({ statusCode: 401, statusMessage: 'Sign in required' });
   }
 
   const db = useDrizzle();
+
   const inviteRows = await db
     .select()
     .from(tables.typingGroupInvites)
     .where(eq(tables.typingGroupInvites.token, token))
     .limit(1);
+
   const invite = inviteRows[0];
+
   if (!invite) {
     throw createError({ statusCode: 404, statusMessage: 'Invite not found' });
   }
+
   if (invite.acceptedAt) {
     throw createError({ statusCode: 410, statusMessage: 'Invite already used' });
   }
+
   if (invite.expiresAt.getTime() < Date.now()) {
     throw createError({ statusCode: 410, statusMessage: 'Invite expired' });
   }
@@ -58,6 +64,7 @@ export default defineEventHandler(async (event) => {
     .from(tables.typingGroups)
     .where(eq(tables.typingGroups.id, invite.groupId))
     .limit(1);
+
   const group = groupRows[0];
 
   return {

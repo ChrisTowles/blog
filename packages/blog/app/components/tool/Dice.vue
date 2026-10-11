@@ -8,36 +8,40 @@ const props = defineProps<{
 }>();
 
 const isComplete = computed(() => !!props.toolResult);
-const hasError = computed(() => {
-  if (!props.toolResult) return false;
-  const result = props.toolResult.result as { error?: string };
-  return !!result?.error;
-});
 
-const dice = computed(() => {
-  if (!props.toolResult) return null;
-  return props.toolResult.result as DiceResult;
-});
+// SAFETY: the rollDice tool returns a DiceResult, or { error } when the notation is invalid
+const outcome = computed(
+  () => props.toolResult?.result as DiceResult | { error: string } | null | undefined,
+);
+
+const hasError = computed(() => !!outcome.value && 'error' in outcome.value);
+
+const dice = computed(() => (outcome.value && !('error' in outcome.value) ? outcome.value : null));
 
 const bgColor = computed(() => {
   if (hasError.value) return 'bg-muted';
+
   if (!isComplete.value) return 'bg-muted';
+
   if (dice.value?.isCriticalHit)
     return 'bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-500';
+
   if (dice.value?.isCriticalMiss) return 'bg-gradient-to-br from-red-500 via-red-600 to-red-700';
+
   return 'bg-gradient-to-br from-purple-500 via-violet-600 to-indigo-700';
 });
 
+const DICE_ICONS = new Map([
+  [4, 'i-lucide-triangle'],
+  [6, 'i-lucide-dice-1'],
+  [8, 'i-lucide-octagon'],
+  [10, 'i-lucide-pentagon'],
+  [12, 'i-lucide-hexagon'],
+  [20, 'i-lucide-circle'],
+]);
+
 function getDiceIcon(sides: number): string {
-  const icons: Record<number, string> = {
-    4: 'i-lucide-triangle',
-    6: 'i-lucide-dice-1',
-    8: 'i-lucide-octagon',
-    10: 'i-lucide-pentagon',
-    12: 'i-lucide-hexagon',
-    20: 'i-lucide-circle',
-  };
-  return icons[sides] || 'i-lucide-dice-5';
+  return DICE_ICONS.get(sides) || 'i-lucide-dice-5';
 }
 </script>
 
@@ -56,7 +60,7 @@ function getDiceIcon(sides: number): string {
       <div class="text-center text-error">
         <UIcon name="i-lucide-triangle-alert" class="size-8 mx-auto mb-2" />
         <div class="text-sm">
-          {{ (toolResult?.result as { error: string })?.error || 'Failed to roll dice' }}
+          {{ outcome && 'error' in outcome ? outcome.error : 'Failed to roll dice' }}
         </div>
       </div>
     </div>

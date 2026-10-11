@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { firstQueryValue } from '~/utils/route-query';
+
 const { loggedIn } = useUserSession();
+
 const route = useRoute();
 
-const redirectTo = computed(() => (route.query.redirect as string) || '/');
+const redirectTo = computed(() => firstQueryValue(route.query.redirect) || '/');
 
 // If already logged in, redirect away
 if (loggedIn.value) {
@@ -22,10 +25,15 @@ useSeoMeta({
 
 function authUrl(provider: string) {
   const params = new URLSearchParams();
-  if (route.query.redirect) {
-    params.set('redirect', route.query.redirect as string);
+
+  const redirect = firstQueryValue(route.query.redirect);
+
+  if (redirect) {
+    params.set('redirect', redirect);
   }
+
   const qs = params.toString();
+
   return `/auth/${provider}${qs ? `?${qs}` : ''}`;
 }
 </script>

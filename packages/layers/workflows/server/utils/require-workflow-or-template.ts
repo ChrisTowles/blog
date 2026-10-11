@@ -28,6 +28,7 @@ export async function requireWorkflowOrTemplate(event: H3Event, workflowId: stri
 
   // Not a template — require ownership
   const session = await getUserSession(event);
+
   if (!session.user) {
     throw createError({ statusCode: 401, message: 'Unauthorized' });
   }

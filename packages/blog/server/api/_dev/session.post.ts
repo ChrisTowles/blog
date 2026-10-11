@@ -15,11 +15,13 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readBody(event);
+
   if (!body?.user) {
     throw createError({ statusCode: 400, message: 'Missing user' });
   }
 
   await setUserSession(event, { user: body.user });
+
   return { ok: true };
 });
 
@@ -27,5 +29,6 @@ export default defineEventHandler(async (event) => {
 function safeEqual(a: string, b: string): boolean {
   const left = Buffer.from(a);
   const right = Buffer.from(b);
+
   return left.length === right.length && timingSafeEqual(left, right);
 }

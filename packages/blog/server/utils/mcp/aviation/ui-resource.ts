@@ -34,6 +34,7 @@ export function __resetAviationBundleCache(): void {
  */
 function toOrigin(raw: string | undefined | null): string {
   if (!raw) return '';
+
   try {
     return new URL(raw).origin;
   } catch {

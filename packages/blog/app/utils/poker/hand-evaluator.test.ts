@@ -1,27 +1,31 @@
 import { describe, expect, it } from 'vitest';
 import { evaluateBest } from './hand-evaluator';
-import type { Card, Rank, Suit } from './types';
+import { SUITS, type Card, type Rank } from './types';
 
 function c(s: string): Card {
   // e.g. "Ah" -> ace of hearts, "Td" -> ten of diamonds, "5c" -> five of clubs
-  const rankMap: Record<string, Rank> = {
-    A: 14,
-    K: 13,
-    Q: 12,
-    J: 11,
-    T: 10,
-    '9': 9,
-    '8': 8,
-    '7': 7,
-    '6': 6,
-    '5': 5,
-    '4': 4,
-    '3': 3,
-    '2': 2,
-  };
-  const r = rankMap[s[0] as string] as Rank;
-  const suit = s[1] as Suit;
-  return { rank: r, suit };
+  const rankMap = new Map<string, Rank>([
+    ['A', 14],
+    ['K', 13],
+    ['Q', 12],
+    ['J', 11],
+    ['T', 10],
+    ['9', 9],
+    ['8', 8],
+    ['7', 7],
+    ['6', 6],
+    ['5', 5],
+    ['4', 4],
+    ['3', 3],
+    ['2', 2],
+  ]);
+
+  const rank = rankMap.get(s.charAt(0));
+  const suit = SUITS.find((candidate) => candidate === s.charAt(1));
+
+  if (!rank || !suit) throw new Error(`Invalid card: ${s}`);
+
+  return { rank, suit };
 }
 
 function hand(...cs: string[]): Card[] {

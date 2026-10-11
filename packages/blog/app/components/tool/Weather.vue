@@ -8,20 +8,23 @@ const props = defineProps<{
 }>();
 
 const isComplete = computed(() => !!props.toolResult);
-const hasError = computed(() => {
-  if (!props.toolResult) return false;
-  const result = props.toolResult.result as { error?: string };
-  return !!result?.error;
-});
 
-const weather = computed(() => {
-  if (!props.toolResult) return null;
-  return props.toolResult.result as WeatherResult;
-});
+// SAFETY: the getWeather tool returns a WeatherResult, or { error } when the lookup fails
+const outcome = computed(
+  () => props.toolResult?.result as WeatherResult | { error: string } | null | undefined,
+);
+
+const hasError = computed(() => !!outcome.value && 'error' in outcome.value);
+
+const weather = computed(() =>
+  outcome.value && !('error' in outcome.value) ? outcome.value : null,
+);
 
 const color = computed(() => {
   if (hasError.value) return 'bg-muted text-error';
+
   if (!isComplete.value) return 'bg-muted text-white';
+
   return 'bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 dark:from-sky-500 dark:via-blue-600 dark:to-indigo-700 text-white';
 });
 </script>
@@ -41,7 +44,7 @@ const color = computed(() => {
       <div class="text-center">
         <UIcon name="i-lucide-triangle-alert" class="size-8 mx-auto mb-2" />
         <div class="text-sm">
-          {{ (toolResult?.result as { error: string })?.error || 'Failed to get weather' }}
+          {{ outcome && 'error' in outcome ? outcome.error : 'Failed to get weather' }}
         </div>
       </div>
     </div>

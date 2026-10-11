@@ -4,6 +4,7 @@ import { TEST_IDS } from '~~/shared/test-ids';
 const { data: page } = await useAsyncData('blog', () => queryCollection('blog').first());
 
 const title = page.value?.title ?? 'Blog';
+
 const description = page.value?.description ?? 'Blog posts and articles';
 
 useSeoMeta({

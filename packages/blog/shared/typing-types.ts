@@ -129,10 +129,12 @@ export type StageDefinition = {
 // --- Anonymous progress (localStorage) ------------------------------------
 
 export const TYPING_PROGRESS_LOCAL_STORAGE_KEY = 'typing:progress:v1';
+
 export const TYPING_MERGED_LOCAL_STORAGE_KEY = 'typing:merged:v1';
 
 /** Below this, too few letters are unlocked to spell most kid-friendly topics. */
 export const MIN_TOPIC_STAGE = 10;
+
 export const MAX_STAGE = 20;
 
 /** Earlier stages accept either case — kids fumble shift; from 16 capitals are the point. */
@@ -145,11 +147,17 @@ export function isCaseInsensitiveStage(stage: number): boolean {
 /** Lives in shared so the server curriculum and the client mastery gate can't drift. */
 export function stageTargetWpm(stage: number): number {
   if (stage <= 3) return 5;
+
   if (stage <= 6) return 8;
+
   if (stage <= 9) return 12;
+
   if (stage <= 12) return 16;
+
   if (stage <= 15) return 20;
+
   if (stage <= 18) return 25;
+
   return 30;
 }
 

@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { log } from 'evlog';
-import type { AnthropicBetaClient } from '~~/server/utils/ai/anthropic-beta-types';
 
 defineRouteMeta({
   openAPI: {
@@ -23,12 +22,11 @@ export default defineEventHandler(async (event) => {
     const client = getAnthropicClient();
 
     // Download file content and metadata in parallel
-    const betaClient = client as unknown as AnthropicBetaClient;
     const [fileResponse, fileMeta] = await Promise.all([
-      betaClient.beta.files.download(id, {
+      client.beta.files.download(id, {
         betas: ['files-api-2025-04-14'],
       }),
-      betaClient.beta.files.retrieveMetadata(id, {
+      client.beta.files.retrieveMetadata(id, {
         betas: ['files-api-2025-04-14'],
       }),
     ]);
@@ -40,21 +38,7 @@ export default defineEventHandler(async (event) => {
     setHeader(event, 'Content-Disposition', `inline; filename="${fileName}"`);
     setHeader(event, 'Cache-Control', 'public, max-age=86400');
 
-    // Extract the streamable body from whichever response shape the SDK returns
-    if (fileResponse instanceof Response) {
-      return fileResponse.body;
-    }
-    if (fileResponse instanceof ArrayBuffer) {
-      return new Uint8Array(fileResponse);
-    }
-    if (ArrayBuffer.isView(fileResponse)) {
-      return new Uint8Array(fileResponse.buffer);
-    }
-    // Response-like object with a readable body (StreamableResponse)
-    if (fileResponse.body) {
-      return fileResponse.body;
-    }
-    return fileResponse;
+    return fileResponse.body;
   } catch {
     log.error('artifact', 'File download error');
     throw createError({

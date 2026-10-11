@@ -11,7 +11,8 @@
  */
 import { eq } from 'drizzle-orm';
 import { useDrizzle, tables } from '../../../../../blog/server/utils/drizzle';
-import { generateLesson, type AnthropicLike } from './lesson-generator';
+import type { AnthropicLike } from './anthropic-like';
+import { generateLesson } from './lesson-generator';
 
 export type SpellingLessonsResult = {
   drillLessonId: number;
@@ -25,7 +26,9 @@ export function buildDrillText(words: string[]): string {
 export function buildFallbackSentence(words: string[]): string {
   // Keep it short and kid-friendly; just join the words into a list.
   if (words.length === 0) return '';
+
   if (words.length === 1) return `${words[0]} is the word.`;
+
   return `here are the words: ${words.join(', ')}.`;
 }
 
@@ -49,7 +52,9 @@ async function generateSpellingSentence(
     },
     client,
   );
+
   if (result.ok) return result.text;
+
   return buildFallbackSentence(words);
 }
 
@@ -102,8 +107,10 @@ export async function autoGenerateSpellingLessons(
 
   const drill = inserted.find((row) => row.slug === drillSlug);
   const sentence = inserted.find((row) => row.slug === sentenceSlug);
+
   if (!drill || !sentence) {
     throw new Error('Failed to insert spelling lessons');
   }
+
   return { drillLessonId: drill.id, sentenceLessonId: sentence.id };
 }

@@ -9,7 +9,9 @@
 import { describe, expect, it } from 'vitest';
 import { createSandboxRelay, RESOURCE_READY_METHOD } from './relay.js';
 
-type Captured = { data: unknown; target: string };
+type RelayedMessage = { method?: string; params?: { html?: string } };
+
+type Captured = { data: RelayedMessage; target: string };
 
 function setup(opts?: { referrerOrigin?: string; ownOrigin?: string }) {
   const referrer = opts?.referrerOrigin ?? 'https://host.example.com';
@@ -19,19 +21,20 @@ function setup(opts?: { referrerOrigin?: string; ownOrigin?: string }) {
   const innerPosted: Captured[] = [];
 
   const parent = {
-    postMessage: (data: unknown, target: string) => {
+    postMessage: (data: RelayedMessage, target: string) => {
       parentPosted.push({ data, target });
     },
   };
 
   const innerContentWindow = {
-    postMessage: (data: unknown, target: string) => {
+    postMessage: (data: RelayedMessage, target: string) => {
       innerPosted.push({ data, target });
     },
   };
 
   const innerWrites: string[] = [];
   const attrs: Record<string, string> = {};
+
   const inner = {
     contentWindow: innerContentWindow,
     setAttribute: (k: string, v: string) => {
@@ -58,7 +61,7 @@ describe('createSandboxRelay', () => {
     relay.announceReady();
     expect(parentPosted).toHaveLength(1);
     expect(parentPosted[0].target).toBe(referrer);
-    expect((parentPosted[0].data as any).method).toBe('ui/notifications/sandbox-proxy-ready');
+    expect(parentPosted[0].data.method).toBe('ui/notifications/sandbox-proxy-ready');
   });
 
   it('ignores parent messages from an unexpected origin', () => {

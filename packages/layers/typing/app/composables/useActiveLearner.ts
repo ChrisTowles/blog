@@ -19,8 +19,10 @@ export function useActiveLearner() {
 
   const activeLearnerId = useState<ActiveLearnerId>('typing:active-learner-id', () => {
     const v = cookie.value;
+
     if (v === 'anon' || v === '' || v == null) return 'anon';
     const n = Number(v);
+
     return Number.isFinite(n) && n > 0 ? n : 'anon';
   });
 
@@ -35,6 +37,7 @@ export function useActiveLearner() {
     learners.value = xs;
     // If the active learner isn't in the new list, fall back to anon.
     const id = activeLearnerId.value;
+
     if (id !== 'anon' && !xs.some((l) => l.id === id)) {
       setActive('anon');
     }
@@ -42,7 +45,9 @@ export function useActiveLearner() {
 
   const active = computed<Learner | null>(() => {
     const id = activeLearnerId.value;
+
     if (id === 'anon') return null;
+
     return learners.value.find((l) => l.id === id) ?? null;
   });
 

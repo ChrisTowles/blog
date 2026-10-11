@@ -14,6 +14,7 @@ import { findUpSync } from 'find-up';
  */
 
 const envPath = findUpSync('.env');
+
 if (envPath) dotenv.config({ path: envPath, quiet: true });
 
 const port = Number(process.env.UI_PORT) || 3000;
@@ -22,10 +23,12 @@ const port = Number(process.env.UI_PORT) || 3000;
 function portInUse(host: string): Promise<boolean> {
   return new Promise((resolve) => {
     const socket = net.connect({ port, host });
+
     const done = (result: boolean) => {
       socket.destroy();
       resolve(result);
     };
+
     socket.once('connect', () => done(true));
     socket.once('error', () => done(false));
     socket.setTimeout(500, () => done(false));
@@ -42,4 +45,5 @@ if (devServerRunning) {
 }
 
 const result = spawnSync('pnpm', ['typecheck'], { stdio: 'inherit' });
+
 process.exit(result.status ?? 1);
