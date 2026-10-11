@@ -23,6 +23,8 @@ jobs:
     env:
       NUXT_PUBLIC_GTAG_ID: G-PH525YF11W
       NUXT_PUBLIC_MCP_SANDBOX_URL: https://sandbox.towles.dev/sandbox.html
+      # Prerendered pages bake absolute URLs (og:image, canonical, sitemap) at build time.
+      NUXT_PUBLIC_SITE_URL: https://chris.towles.dev
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
