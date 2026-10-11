@@ -14,12 +14,12 @@ export type Experiment = {
   /**
    * The notable tech behind it, beyond the language. Keep these to things
    * that are load-bearing and checkable in the repo — the point is to be
-   * specific ("DuckDB", "pgvector") rather than to list every dependency.
+   * specific ("DuckDB", "Vectorize") rather than to list every dependency.
    */
   stack: string[];
   /**
    * Set for projects that live off this domain. The "What's running here" list
-   * on /about filters these out — it only claims things this Cloud Run service
+   * on /about filters these out — it only claims things this Worker
    * actually serves.
    */
   external?: boolean;
@@ -69,12 +69,12 @@ export const experiments: Experiment[] = [
   {
     title: 'Hybrid RAG search',
     description:
-      'Every post is chunked, contextualized, and embedded. Search runs pgvector cosine and BM25 in parallel, then fuses the rankings.',
+      'Every post is chunked, contextualized, and embedded. Search runs Vectorize cosine and D1 FTS5 BM25 in parallel, then fuses the rankings.',
     icon: 'i-heroicons-magnifying-glass',
     to: '/search',
     testId: TEST_IDS.HOME.EXPERIMENT_SEARCH,
     language: 'TypeScript',
-    stack: ['Postgres', 'pgvector', 'Bedrock'],
+    stack: ['D1', 'Vectorize', 'Workers AI'],
   },
   {
     title: 'Typing tutor',

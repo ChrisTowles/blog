@@ -60,7 +60,7 @@ useSeoMeta({
 
       <UPageHeader
         title="What's running here"
-        description="Built and deployed on this site — Nuxt 4 on Cloud Run, Postgres with pgvector, Terraform for the infrastructure."
+        description="Built and deployed on this site — Nuxt 4 on Cloudflare Workers, D1 and Vectorize, deployed by wrangler from CI."
         :ui="{ title: 'text-2xl' }"
       />
 

@@ -13,7 +13,6 @@ packages/
 ├── layers/         # Nuxt layers (typing, workflows)
 mcp/                # MCP Apps (SEP-1865) iframe host — separate Cloudflare Worker at sandbox.towles.dev
 infra/              # infrastructure
-    aws_cloudformation/ # AWS Bedrock and IAM
     terraform-cloudflare/ # Cloudflare DNS (no resources; wrangler owns Worker domains)
 ```
 

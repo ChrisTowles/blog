@@ -58,7 +58,7 @@ pnpm cf:tail:staging
 
 ## 4. Data copy
 
-Source of truth until cutover is Cloud SQL (Postgres). `scripts/pg-to-d1.ts` (written by the data-move work) reads Postgres and writes SQL for D1; follow its header for flags. Shape of the run:
+Source of truth until cutover is Cloud SQL (Postgres). `scripts/pg-to-d1.ts` (removed once GCP was decommissioned; see git history) read Postgres and writes SQL for D1; follow its header for flags. Shape of the run:
 
 ```bash
 # Postgres side: start the Auth Proxy to the instance (staging first)
@@ -131,5 +131,5 @@ GCP was decommissioned in step 9, so there is no DNS rollback. For a bad Worker 
 - [x] Deleted by `gcloud` rather than `terraform destroy` (the staging state held a Cloudflare record its provider could no longer read): Cloud Run services and domain mappings, Cloud SQL, Cloud Functions, the staging scheduler, every bucket, Artifact Registry, Secret Manager secrets, HMAC keys, service accounts, the Workload Identity pool, the kill-switch Pub/Sub topic, the BigQuery billing export, the four blog budgets and the kill-switch's billing-account IAM binding.
 - [x] Billing unlinked from `blog-towles-production` and `blog-towles-staging`. The projects are not deleted: each owns the Google OAuth client its environment signs in with.
 - [x] Removed `infra/terraform/`, `infra/gcp-billing/`, the GCP drift jobs and the `GCP_*` repo variables. The Cloudflare stack moved to local state.
-- [ ] Delete the AWS Bedrock IAM users and the stack in `infra/aws_cloudformation`; nothing on Cloudflare calls Bedrock.
+- [x] Deleted the IAM users `blog-prod-bedrock` and `blog-staging-bedrock` and their keys (no CloudFormation stack existed in us-east-1), and removed `infra/aws_cloudformation`.
 - [x] Deleted the legacy `blog` / `blog-preview` Workers and D1 databases (no domains or routes, nothing in the repo used them). D1 exports: `towles-blog-archive/legacy-cf-blog-2026-10-11.tar.gz`.

@@ -1,6 +1,6 @@
 /**
  * Sanity tests for the RAG span pure helpers — not a full integration test
- * (those need pgvector). Verifies the query-hash function is deterministic
+ * (those need D1 and Vectorize). Verifies the query-hash function is deterministic
  * and bounded.
  */
 
