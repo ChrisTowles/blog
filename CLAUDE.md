@@ -39,7 +39,7 @@ pnpm typecheck    # TypeScript checks
 pnpm cf:deploy / cf:deploy:staging   # Build + wrangler deploy blog and sandbox Workers
 pnpm cf:migrate / cf:migrate:staging # Apply remote D1 migrations
 pnpm cf:tail / cf:tail:staging       # Live Worker logs
-pnpm etl:aviation      # Download aviation datasets → Parquet → GCS (loads .env)
+pnpm etl:aviation      # Download aviation datasets → Parquet → R2 (loads .env)
 ```
 
 ## CLI Scripts
