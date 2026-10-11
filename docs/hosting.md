@@ -25,7 +25,7 @@ Cloudflare Workers. Moved from GCP Cloud Run + Cloud SQL (see [cloudflare-migrat
 
 Staging has its own D1 (`towles-blog-staging`), R2 bucket (`towles-blog-media-staging`) and Vectorize index (`towles-blog-rag-staging`). The `dev` env is local only: it omits AI and Vectorize because wrangler cannot open remote sessions for them offline.
 
-Account `baf9cdac6eb4d8c477d85ceccae6679d` also holds legacy `blog` / `blog-preview` Workers and D1 databases from 2025. Leave them alone.
+The legacy 2025 `blog` / `blog-preview` Workers and D1 databases were deleted on 2026-10-11; their D1 exports are in R2 `towles-blog-archive` (`legacy-cf-blog-2026-10-11.tar.gz`).
 
 ## Deploy
 
