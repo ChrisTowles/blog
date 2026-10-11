@@ -3,9 +3,15 @@ import { log } from 'evlog';
 
 defineRouteMeta({
   openAPI: {
-    description: 'Ingest blog posts into RAG database',
+    description: 'Ingest blog posts into the RAG index (D1 text + Vectorize vectors)',
     tags: ['admin', 'rag'],
   },
+});
+
+const bodySchema = z.object({
+  slug: z.string().optional(),
+  force: z.boolean().optional(),
+  limit: z.number().int().positive().optional(),
 });
 
 export default defineEventHandler(async (event) => {
@@ -24,13 +30,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: `Forbidden, session user: ${username}` });
   }
 
-  const body = await readBody(event).catch(() => ({}));
+  const body = bodySchema.parse(await readBody(event).catch(() => ({})));
 
-  if (body?.slug) {
-    const { slug } = z.object({ slug: z.string() }).parse(body);
-
-    return ingestDocument(slug);
-  }
-
-  return ingestBlogPosts();
+  return withRagErrors(() =>
+    body.slug
+      ? ingestDocument(body.slug, body.force)
+      : ingestBlogPosts({ force: body.force, limit: body.limit }),
+  );
 });

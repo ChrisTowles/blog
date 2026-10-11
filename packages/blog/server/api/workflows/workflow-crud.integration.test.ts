@@ -8,9 +8,7 @@ import {
   createTestWorkflowNode,
 } from '../../test-utils/db-helper';
 
-const hasDatabase = !!process.env.DATABASE_URL;
-
-describe.skipIf(!hasDatabase)('Workflow CRUD Integration', () => {
+describe('Workflow CRUD Integration', () => {
   let db: ReturnType<typeof useDrizzle>;
   let testUser: typeof tables.users.$inferSelect;
 

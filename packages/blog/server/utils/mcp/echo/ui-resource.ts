@@ -4,7 +4,7 @@ import { registerAppResource } from '@modelcontextprotocol/ext-apps/server';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 const loader = createBundleLoader({
-  relPath: 'mcp-ui/echo/dist/index.html',
+  assetKey: 'echo/dist/index.html',
   label: 'Echo',
   uri: ECHO_UI_RESOURCE_URI,
 });
@@ -15,13 +15,8 @@ export const ECHO_UI_META = {
   },
 };
 
-export function readEchoBundle(): string {
+export function readEchoBundle(): Promise<string> {
   return loader.read();
-}
-
-/** @internal */
-export function __resetEchoBundleCache(): void {
-  loader.reset();
 }
 
 export function registerEchoUiResource(server: McpServer): void {
@@ -38,7 +33,7 @@ export function registerEchoUiResource(server: McpServer): void {
         {
           uri: ECHO_UI_RESOURCE_URI,
           mimeType: 'text/html;profile=mcp-app',
-          text: readEchoBundle(),
+          text: await readEchoBundle(),
         },
       ],
     }),

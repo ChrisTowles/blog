@@ -37,24 +37,22 @@ export default defineEventHandler(async (event) => {
     return { lesson };
   }
 
-  if (process.env.DATABASE_URL) {
-    try {
-      const db = useDrizzle();
+  try {
+    const db = useDrizzle();
 
-      const conditions =
-        numericId !== null
-          ? or(eq(tables.typingLessons.id, numericId), eq(tables.typingLessons.slug, slug))
-          : eq(tables.typingLessons.slug, slug);
+    const conditions =
+      numericId !== null
+        ? or(eq(tables.typingLessons.id, numericId), eq(tables.typingLessons.slug, slug))
+        : eq(tables.typingLessons.slug, slug);
 
-      const rows = await db.select().from(tables.typingLessons).where(conditions).limit(1);
-      const row = rows[0];
+    const rows = await db.select().from(tables.typingLessons).where(conditions).limit(1);
+    const row = rows[0];
 
-      if (row) {
-        return { lesson: toLessonRow(row) };
-      }
-    } catch {
-      // fall through
+    if (row) {
+      return { lesson: toLessonRow(row) };
     }
+  } catch {
+    // fall through
   }
 
   throw createError({ statusCode: 404, statusMessage: 'Lesson not found' });

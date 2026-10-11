@@ -552,35 +552,40 @@ export default defineEventHandler(async (event) => {
 
     if (!workflow) continue;
 
-    // Insert nodes
-    await db.insert(tables.workflowNodes).values(
-      example.nodes.map((n) => ({
-        workflowId: workflow.id,
-        nodeId: n.id,
-        type: n.type,
-        label: n.label,
-        positionX: n.x,
-        positionY: n.y,
-        prompt: n.prompt,
-        model: n.model ?? MODEL_HAIKU,
-        temperature: n.temperature ?? 0.7,
-        maxTokens: n.maxTokens ?? 1024,
-        outputSchema: JSON.stringify(n.outputSchema),
-        inputMapping: '{}',
-      })),
-    );
-
-    // Insert edges
-    if (example.edges.length > 0) {
-      await db.insert(tables.workflowEdges).values(
+    const statements = [
+      ...insertChunked(
+        db,
+        tables.workflowNodes,
+        example.nodes.map((n) => ({
+          workflowId: workflow.id,
+          nodeId: n.id,
+          type: n.type,
+          label: n.label,
+          positionX: n.x,
+          positionY: n.y,
+          prompt: n.prompt,
+          model: n.model ?? MODEL_HAIKU,
+          temperature: n.temperature ?? 0.7,
+          maxTokens: n.maxTokens ?? 1024,
+          outputSchema: JSON.stringify(n.outputSchema),
+          inputMapping: '{}',
+        })),
+      ),
+      ...insertChunked(
+        db,
+        tables.workflowEdges,
         example.edges.map((e) => ({
           workflowId: workflow.id,
           edgeId: `e_${e.source}_${e.target}`,
           sourceNode: e.source,
           targetNode: e.target,
         })),
-      );
-    }
+      ),
+    ];
+
+    const [first, ...rest] = statements;
+
+    if (first) await db.batch([first, ...rest]);
 
     created.push({ id: workflow.id, name: workflow.name });
   }

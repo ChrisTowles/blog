@@ -75,12 +75,6 @@ variable "mcp_container_image" {
   type        = string
 }
 
-variable "cloudflare_api_token" {
-  description = "Cloudflare API token with Zone:Read + Zone:DNS:Edit scope for the towles.dev zone. Supply via TF_VAR_cloudflare_api_token."
-  type        = string
-  sensitive   = true
-}
-
 variable "new_relic_enabled" {
   description = "Wire New Relic OTLP headers secret into Cloud Run. Requires a populated `new-relic-otlp-headers` Secret Manager version (see shared/main.tf for the gcloud command)."
   type        = bool

@@ -3,6 +3,7 @@
 *.local.*
 
 .output/
+.wrangler/
 
 # Logs1
 logs

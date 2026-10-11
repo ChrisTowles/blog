@@ -1,6 +1,6 @@
 /**
  * useTypingAudio — preloads and plays per-key and encouragement audio. The server
- * hands back a cached MP3 when GOOGLE_TTS_KEY is set, or 404s with
+ * streams a cached MP3 from R2 when GOOGLE_TTS_KEY is set, or 404s with
  * `fallback: 'web-speech'`, in which case Web Speech takes over at rate 0.9.
  */
 const ENCOURAGEMENT = ['good job', 'nice work', 'keep going', 'almost there'] as const;
@@ -30,16 +30,14 @@ export function useTypingAudio() {
     if (c) return c;
 
     try {
-      const result = await $fetch<{ url?: string; fallback?: 'web-speech' }>(
-        `/api/typing/audio/${encodeURIComponent(phrase)}`,
-      );
+      const clip = await $fetch<Blob>(`/api/typing/audio/${encodeURIComponent(phrase)}`, {
+        responseType: 'blob',
+      });
 
-      if (result.url) {
-        const el = new Audio(result.url);
-        cache.value[phrase] = el;
+      const el = new Audio(URL.createObjectURL(clip));
+      cache.value[phrase] = el;
 
-        return el;
-      }
+      return el;
     } catch {
       // 404 / network — fall through to Web Speech
     }

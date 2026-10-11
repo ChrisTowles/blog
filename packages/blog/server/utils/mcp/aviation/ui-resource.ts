@@ -14,18 +14,13 @@ import { registerAppResource, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/e
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 const loader = createBundleLoader({
-  relPath: 'mcp-ui/aviation-answer/dist/index.html',
+  assetKey: 'aviation-answer/dist/index.html',
   label: 'Aviation answer',
   uri: AVIATION_UI_RESOURCE_URI,
 });
 
-export function readAviationBundle(): string {
+export function readAviationBundle(): Promise<string> {
   return loader.read();
-}
-
-/** @internal */
-export function __resetAviationBundleCache(): void {
-  loader.reset();
 }
 
 /**
@@ -68,7 +63,7 @@ export function registerAviationUiResource(server: McpServer, serverOrigin: stri
         {
           uri: AVIATION_UI_RESOURCE_URI,
           mimeType: RESOURCE_MIME_TYPE,
-          text: readAviationBundle(),
+          text: await readAviationBundle(),
           _meta: {
             ui: {
               csp: {

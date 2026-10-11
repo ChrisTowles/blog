@@ -31,7 +31,7 @@ if (appEntry.value.image?.src) {
   });
 } else {
   defineOgImage('SaaS', {
-    headline: 'App',
+    title: 'App',
   });
 }
 </script>

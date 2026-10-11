@@ -25,8 +25,7 @@ server/
 ├── database/           # Drizzle ORM schema + migrations
 └── utils/
     ├── ai/                 # Anthropic client, tools, streaming
-    │   ├── tools.ts            # Tool registry + executeTool()
-    │   └── tools/              # Individual tool definitions (Agent SDK format)
+    │   └── tools.ts            # Tool registry + executeTool()
     └── rag/                # Chunking, ingestion, retrieval
 
 # Typing app lives in packages/layers/typing — see that layer's files for /typing routes,
@@ -102,26 +101,28 @@ Props: `language`, `title`, `prompt`, `code`, `readonly`
 
 ## Database
 
-PostgreSQL with Drizzle ORM. Schema directory at `server/database/schema/` (barrel `index.ts`, feature files: `blog.ts`, `typing.ts`, `workflow.ts`). Migrations in `server/database/migrations/`.
+Cloudflare D1 (SQLite) with Drizzle ORM. Schema directory at `server/database/schema/` (barrel `index.ts`, feature files: `blog.ts`, `typing.ts`, `workflow.ts`, shared column helpers in `columns.ts`). Migrations in `server/database/migrations/`.
 
 Key tables: `users`, `chats`, `messages`, `documents`, `document_chunks`, `typing_groups`, `typing_group_members`, `typing_group_invites`, `typing_learners`, `typing_lessons`, `typing_attempts`, `typing_key_stats`, `typing_spelling_lists`, `typing_spelling_progress`.
 
 ```bash
-pnpm db:migrate   # Run migrations (from root)
-pnpm db:generate  # Generate migration after schema change
+pnpm db:generate  # Generate a migration after a schema change (drizzle-kit)
+pnpm db:migrate   # Apply migrations to the local D1 (wrangler, --env dev)
+pnpm cf:types     # Regenerate server/worker-configuration.d.ts after editing wrangler.jsonc
 ```
 
-Drizzle config: `drizzle.config.ts`. Uses `DATABASE_URL` env var.
+`useDrizzle()` resolves the `DB` binding from `useEvent().context.cloudflare.env`, so it only works inside a request. D1 has no interactive transactions (use `db.batch([...])`) and caps statements at 100 bound parameters (use `insertChunked` for bulk inserts). Timestamps are `integer({ mode: 'timestamp_ms' })`; JSON columns are `text({ mode: 'json' })`. Bindings live in `wrangler.jsonc`; `env.dev` omits AI/Vectorize because those only run remotely. `nuxt dev` exposes bindings through Nitro's built-in Cloudflare dev proxy, persisting state in `.wrangler/state/v3`.
 
 ## RAG Pipeline
 
 Contextual hybrid search system in `server/utils/rag/`:
 
 - **chunker.ts** — Splits markdown into ~2000-char chunks with 400-char overlap, preserves paragraph boundaries
-- **ingest.ts** — Reads `content/2.blog/*.md`, hashes for change detection, generates contextual descriptions via Claude Haiku (with prompt caching), embeds via AWS Bedrock Titan Text v2 (1024 dims)
-- **retrieve.ts** — Hybrid search: parallel pgvector cosine + BM25 tsvector, Reciprocal Rank Fusion (0.7 semantic / 0.3 BM25), optional Cohere v3 reranking
+- **runtime.ts / workers-ai.ts / vectors.ts / store.ts** — Workers AI embeddings (`@cf/qwen/qwen3-embedding-0.6b`, 1024-d) and rerank (`@cf/baai/bge-reranker-base`), Vectorize upsert/query/delete, all via an injectable `RagRuntime`
+- **ingest.ts / content-ingest.ts** — Reads published posts from Nuxt Content (`posts`, needs `rawbody`), hashes for change detection, generates contextual descriptions via Claude Haiku (with prompt caching), embeds, upserts vectors, stamps `embeddedAt`
+- **retrieve.ts** — Hybrid search: Vectorize cosine + D1 FTS5 (trigram, bm25), Reciprocal Rank Fusion (0.7 semantic / 0.3 BM25), optional rerank
 
-Database: `documents` + `document_chunks` tables with pgvector HNSW index and GIN tsvector index.
+Database: `documents` + `document_chunks` tables, `document_chunks_fts` virtual table kept in sync by triggers; vectors live in Vectorize keyed by chunk id.
 
 ### Search Endpoints
 
@@ -135,9 +136,8 @@ The blog hosts MCP servers at sibling route paths under `/mcp/*`. Currently:
 
 - `/mcp/aviation` — Streamable HTTP endpoint for the aviation demo (Unit 3). Tools:
   `ask_aviation`, `list_questions`, `schema`. Implementation: `server/routes/mcp/aviation/index.ts` +
-  tools in `server/utils/mcp/aviation/*.ts` (mirrors the existing "tools in two places"
-  pattern below — MCP tools live alongside `server/utils/ai/tools/` but are registered via
-  the MCP SDK, not the chat tool registry).
+  tools in `server/utils/mcp/aviation/*.ts` (registered via the MCP SDK, not the chat tool
+  registry).
 - `/mcp/aviation/query` — POST SSE endpoint the iframe calls to stream the answer.
   `ask_aviation` returns fast with `{ question, pending: true, queryUrl }`; the iframe
   POSTs `{ question }` here and reads progress + final `AviationToolResult` over SSE.
@@ -147,10 +147,9 @@ The blog hosts MCP servers at sibling route paths under `/mcp/*`. Currently:
 - `/mcp/aviation/resource?uri=ui://aviation-answer` — HTTP-cached UI-bundle fetcher used
   by the chat iframe on persisted-replay hydration.
 
-All `/mcp/*` requests are rate-limited via `server/middleware/mcp-rate-limit.ts`
-(per-IP token bucket, default 60/5min, tunable via `MCP_RATE_LIMIT_RPM`).
-`Mcp-Session-Id` lives in-process; Cloud Run `min_instances=1` + session-affinity keep it
-mostly-sticky. The chat agent calls aviation tools through the shared `client-pool.ts`
+All `/mcp/*` requests are rate-limited via `server/middleware/mcp-rate-limit.ts` (per-IP, using
+the `MCP_RATE_LIMITER` Workers binding; limit and period live in `wrangler.jsonc`). The endpoint
+is stateless: there is no `initialize` handshake or `Mcp-Session-Id`. The chat agent calls aviation tools through the shared `client-pool.ts`
 (see `MCP_ENDPOINTS` in `server/api/chats/[id].post.ts`); there is no aviation-specific
 client composable.
 
@@ -160,17 +159,13 @@ Operational notes: `docs/mcp-aviation-ops.md`.
 
 ### Tool Pattern
 
-Tools are defined in two places (being consolidated):
-
-- `server/utils/ai/tools.ts` — Anthropic SDK format tool definitions + `executeTool()` switch
-- `server/utils/ai/tools/*.ts` — Agent SDK format tools (used for MCP server)
+Chat tools live in `server/utils/ai/tools.ts` (Anthropic SDK format definitions + `executeTool()` switch).
 
 When adding a new chat tool:
 
 1. Add tool definition to `chatTools` array in `tools.ts`
 2. Add execution case to `executeTool()` switch
-3. Optionally create Agent SDK tool in `tools/` directory
-4. Add UI renderer in `components/tool/` if the tool needs rich display
+3. Add UI renderer in `components/tool/` if the tool needs rich display
 
 ### SSE Streaming Pattern
 
@@ -189,14 +184,13 @@ Both chat and artifacts use SSE with the same pattern:
 Required env vars (see `server/utils/env-config.ts`):
 
 - `ANTHROPIC_API_KEY` — for all AI features
-- `DATABASE_URL` — PostgreSQL connection
 - `BRAINTRUST_API_KEY` / `BRAINTRUST_PROJECT_NAME` — observability
 
 ## Testing
 
 ```bash
 pnpm test                # Unit tests (excludes *.integration.test.ts)
-pnpm test:integration    # Integration tests (needs DATABASE_URL / docker)
+pnpm test:integration    # Integration tests (in-memory local D1; migrations applied in vitest.integration.setup.ts)
 pnpm test:e2e            # Playwright E2E tests
 ```
 
@@ -232,16 +226,15 @@ DB test helpers in `server/test-utils/db-helper.ts`: `cleanupDatabase()`, `creat
 - **Shiki in custom components** — use `ShikiCachedRenderer` from `shiki-stream/vue` with `await useHighlighter()`. See `ChatCodeExecution.vue` and `ProsePre.vue` for the pattern.
 - **Model config** — use `useRuntimeConfig().public.model` instead of hardcoding model strings.
 - **Debugging beta APIs** — beta client methods cast via `AnthropicBetaClient` can silently fail in try/catch. Check `tail /tmp/nuxt-dev.log | grep -i warn` for swallowed errors.
-- **Dev server startup** — always use `pnpm dev` from repo root (runs `docker:up`, `db:migrate`, `kill-port`). Using `pnpm --filter @chris-towles/blog dev` skips those steps and can leave stale servers on other ports.
+- **Dev server startup** — always use `pnpm dev` from repo root (runs `db:migrate`, `kill-port`). Using `pnpm --filter @chris-towles/blog dev` skips those steps and can leave stale servers on other ports.
 - **Vitest 4 has no `--include` CLI flag** — use a separate config file with `-c` flag for different test subsets, not CLI include/exclude.
 
 ## Observability
 
 OpenTelemetry-native, Boris-Tané-style. Spans are wide events; logs become span events; New Relic derives metrics from spans server-side.
 
-- **SDK init**: `server/plugins/00-otel-sdk.ts` — `NodeSDK` with `getNodeAutoInstrumentations` (`instrumentation-fs` disabled), OTLP/HTTP protobuf exporter, `BatchSpanProcessor`, `AlwaysOn` sampler, `K_REVISION` → `service.instance.id`. Throws on missing `OTEL_EXPORTER_OTLP_ENDPOINT`. `SIGTERM` → `sdk.shutdown()` to flush before Cloud Run kills the instance.
+- **SDK init**: none. There is no `NodeSDK` or exporter (it cannot run on Workers), so spans from `@opentelemetry/api` are no-ops until a Workers-compatible SDK is added.
 - **Request enrichment**: `server/middleware/01-trace-enrich.ts` — derives `request.id` from `x-cloud-trace-context` (or `x-request-id`, then `crypto.randomUUID()`), attaches `request.id`/`user.id`/`session.id`/`route.name` to the active root HTTP span. Echoes `x-request-id` response header.
-- **evlog bridge**: `server/utils/observability/evlog-bridge.ts` routes every `evlog.{info,warn,error}` call site into `span.addEvent(name, attrs)` when an active span exists, stdout fallback otherwise. The 36 existing evlog call sites need no per-call refactor.
 - **Anthropic spans**: `server/utils/observability/anthropic.ts` exports `withAnthropicSpan` (non-streaming) and `withAnthropicStreamSpan` (streaming, span ends on `finalMessage`/`error`/`end`). Writes `gen_ai.*` semconv attrs including the Anthropic input-tokens sum (`input_tokens + cache_read_input_tokens + cache_creation_input_tokens`). The same helpers cover Gemini via `{ provider: 'google.gemini' }`.
 - **No application metrics in app code.** Let New Relic NRDB derive RED/USE from span data. The custom-metric pipeline is an explicit non-goal.
 - **Content capture is opt-in.** Set `OTEL_GENAI_CAPTURE_CONTENT=1` to attach truncated prompts/completions to spans for debugging. Off by default to avoid PII drift and the 4095-char attr cap.

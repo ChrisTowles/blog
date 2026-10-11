@@ -28,7 +28,7 @@ Run the verification stack from `CLAUDE.md`. All must pass before moving on — 
 pnpm lint
 pnpm typecheck
 pnpm test
-pnpm test:integration   # needs DATABASE_URL
+pnpm test:integration   # local in-memory D1
 ```
 
 If the feature touches UI: start `pnpm dev`, hit the page with `npx playwright screenshot`, and verify visually. Report "can't verify UI" explicitly if you can't.

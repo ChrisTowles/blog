@@ -5,14 +5,15 @@ export const envSchema = z.object({
   GIT_SHA: z.string().default('dev'),
   BUILD_TAG: z.string().default('local'),
 
-  // Database
-  DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
-
   // Nuxt Auth
   NUXT_SESSION_PASSWORD: z.string().min(32, 'NUXT_SESSION_PASSWORD must be at least 32 characters'),
 
   // Anthropic
   ANTHROPIC_API_KEY: z.string().min(1, 'ANTHROPIC_API_KEY is required'),
+
+  // Optional proxy for Anthropic calls, e.g. Cloudflare AI Gateway's Anthropic endpoint.
+  // Unset means api.anthropic.com.
+  NUXT_ANTHROPIC_BASE_URL: z.string().optional().default(''),
 
   // Braintrust
   BRAINTRUST_API_KEY: z.string().min(1, 'BRAINTRUST_API_KEY is required'),
@@ -31,26 +32,13 @@ export const envSchema = z.object({
 
   // Google AI (Gemini) — optional, used for story illustrations
   GOOGLE_AI_API_KEY: z.string().optional().default(''),
-
-  // GCS media bucket for reading illustrations (optional — falls back to error at upload time)
-  GCS_BUCKET_NAME: z.string().optional().default(''),
-
-  // AWS Bedrock
-  AWS_REGION: z.string().default('us-east-1'),
-  AWS_ACCESS_KEY_ID: z.string().min(1, 'AWS_ACCESS_KEY_ID is required'),
-  AWS_SECRET_ACCESS_KEY: z.string().min(1, 'AWS_SECRET_ACCESS_KEY is required'),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;
 
-const SENSITIVE_KEYS = new Set([
-  'DATABASE_URL', // Database connection string can have password info
-]);
-
 const SENSITIVE_PATTERNS = ['SECRET', 'KEY', 'PASSWORD', 'TOKEN'];
 
 function isSensitiveKey(key: string): boolean {
-  if (SENSITIVE_KEYS.has(key)) return true;
   const upperKey = key.toUpperCase();
 
   return SENSITIVE_PATTERNS.some((pattern) => upperKey.includes(pattern));

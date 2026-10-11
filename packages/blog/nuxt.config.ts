@@ -65,6 +65,11 @@ export default defineNuxtConfig({
   },
   css: ['~/assets/css/main.css'],
 
+  // Cloudflare Images transformations in production; originals as-is in dev. No IPX/sharp.
+  image: {
+    provider: process.env.NODE_ENV === 'production' ? 'cloudflare' : 'none',
+  },
+
   colorMode: {
     preference: 'dark', // default value of $colorMode.preference
   },
@@ -80,8 +85,6 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    anthropicApiKey: process.env.ANTHROPIC_API_KEY!,
-    awsRegion: process.env.AWS_REGION || 'us-east-1',
     public: {
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://chris.towles.dev',
       model_fast: MODEL_HAIKU,
@@ -106,6 +109,8 @@ export default defineNuxtConfig({
     // authenticated endpoints, so a prerendered copy is a build-time cost that
     // ships an empty shell. The crawler reached these from links on `/`.
     '/admin/**': { prerender: false },
+    // A prerendered copy hydrates with the build-time route and drops `?q=`.
+    '/search': { prerender: false },
     // Chat pages don't need SSR (no SEO benefit, authenticated feature)
     // Note: There's a pre-existing Vite 8 beta + debug ESM issue affecting chat pages
     '/chat': { ssr: false },
@@ -127,13 +132,47 @@ export default defineNuxtConfig({
     viewTransition: true,
   },
 
-  compatibilityDate: '2026-01-02',
+  compatibilityDate: {
+    default: '2026-01-02',
+    cloudflare: '2026-10-01',
+  },
 
   nitro: {
-    preset: 'node-server',
+    preset: 'cloudflare_module',
+    cloudflare: {
+      nodeCompat: true,
+      dev: { environment: 'dev' },
+    },
+    rollupConfig: {
+      plugins: [
+        {
+          // A Durable Object class must be a named export of the Worker's main module, and
+          // Nitro's cloudflare_module entry only exports the fetch handler.
+          name: 'export-aviation-container',
+          transform(code, id) {
+            if (!id.endsWith('presets/cloudflare/runtime/cloudflare-module.mjs')) return null;
+
+            const source = resolve(__dirname, 'server/utils/aviation-container.ts');
+
+            return `${code}\nexport { AviationContainer, ContainerProxy } from ${JSON.stringify(source)};\n`;
+          },
+        },
+      ],
+    },
+    // Workers have no filesystem: these ship inside the bundle and are read via
+    // `useStorage('assets:<baseName>')` (see server/utils/server-assets.ts).
+    serverAssets: [
+      {
+        baseName: 'skills',
+        dir: resolve(__dirname, '../../.claude/skills'),
+        pattern: '**/SKILL.md',
+      },
+      { baseName: 'mcp-ui', dir: resolve(__dirname, 'mcp-ui'), pattern: '*/dist/index.html' },
+    ],
     ignore: ['**/*.test.ts', '**/*.spec.ts', '**/*.test.js', '**/*.spec.js'],
     experimental: {
       openAPI: true,
+      asyncContext: true,
     },
     esbuild: {
       options: {
@@ -149,62 +188,6 @@ export default defineNuxtConfig({
     },
 
     imports: {},
-    hooks: {
-      async compiled(nitro) {
-        const { rollup } = await import('rollup');
-        const { default: typescript } = await import('@rollup/plugin-typescript');
-        const { default: rollupResolve } = await import('@rollup/plugin-node-resolve');
-        const { cp, mkdir } = await import('node:fs/promises');
-        const { join } = await import('node:path');
-
-        const rootDir = nitro.options.rootDir;
-        const outputDir = nitro.options.output.dir;
-
-        // Ensure database output dir exists
-        await mkdir(join(outputDir, 'database'), { recursive: true });
-
-        // Bundle migrate script with rollup.
-        //
-        // The resolution options are overridden rather than inherited: the
-        // tsconfig resolves to `moduleResolution: node10`, which TypeScript
-        // deprecated, so every build printed a TS5107 warning. Dropping the
-        // tsconfig entirely is not the fix — without its `paths` and generated
-        // Nuxt types the same pass emits ~550 TS2304/TS2307 errors. Keep the
-        // tsconfig, override just the resolution; output is byte-identical.
-        const bundle = await rollup({
-          input: join(rootDir, 'scripts/migrate.ts'),
-          plugins: [
-            rollupResolve(),
-            typescript({
-              tsconfig: join(rootDir, 'tsconfig.json'),
-              module: 'esnext',
-              moduleResolution: 'bundler',
-              target: 'es2022',
-              skipLibCheck: true,
-              // Types are checked by `nuxt typecheck`; this pass only emits.
-              declaration: false,
-              sourceMap: false,
-            }),
-          ],
-          external: ['pg', /^node:/],
-        });
-
-        await bundle.write({
-          file: join(outputDir, 'database/migrate.mjs'),
-          format: 'esm',
-        });
-        await bundle.close();
-        console.log('✓ Built migrate script');
-
-        // Copy migrations
-        await cp(
-          join(rootDir, 'server/database/migrations'),
-          join(outputDir, 'database/migrations'),
-          { recursive: true },
-        );
-        console.log('✓ Copied migrations');
-      },
-    },
   },
 
   typescript: {

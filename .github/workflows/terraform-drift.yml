@@ -3,6 +3,7 @@ name: Terraform Drift
 # Terraform is applied by hand, so a committed change can sit unapplied for months
 # (staging ran always-on CPU from April to September 2026 this way). This plans
 # every stack and keeps one open issue per stack while it differs from live.
+# The GCP stacks stay until the P4 decommission (docs/cloudflare-cutover.md).
 
 on:
   schedule:
@@ -13,6 +14,7 @@ on:
     paths:
       - 'infra/terraform/**'
       - 'infra/gcp-billing/**'
+      - 'infra/terraform-cloudflare/**'
   workflow_dispatch:
 
 concurrency:
@@ -51,7 +53,14 @@ jobs:
               backend: backend.tfvars,
               vars: terraform.tfvars,
             }
+          - {
+              name: cloudflare,
+              dir: infra/terraform-cloudflare,
+              backend: backend.tfvars,
+              vars: terraform.tfvars,
+            }
     env:
+      # Only the cloudflare stack declares this variable; the GCP stacks ignore it.
       TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       ISSUE_TITLE: 'Terraform drift: ${{ matrix.stack.name }}'
       GH_TOKEN: ${{ github.token }}

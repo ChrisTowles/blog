@@ -1,5 +1,5 @@
 /**
- * ETL: aviation demo dataset → Parquet → GCS. Run via `pnpm etl:aviation`
+ * ETL: aviation demo dataset → Parquet → R2. Run via `pnpm etl:aviation`
  * (`--help` for flags). Schema: docs/aviation-schema.md. Ops: docs/mcp-aviation-ops.md.
  * OpenFlights is ODbL — the LICENSE.txt emitted here is that attribution.
  */
@@ -13,13 +13,14 @@ import { pipeline } from 'node:stream/promises';
 import { spawnSync } from 'node:child_process';
 import { DuckDBInstance } from '@duckdb/node-api';
 import type { DuckDBConnection } from '@duckdb/node-api';
-import { Storage } from '@google-cloud/storage';
 import { chromium, type Page } from 'playwright-chromium';
 import { consola } from 'consola';
+import { z } from 'zod';
 import { config as loadDotenv } from 'dotenv';
+import { putObject, type R2Target } from './r2-client';
 
 // dotenv's override=false is the precedence we want: a shell var wins, so
-// `MCP_DATA_BUCKET=blog-mcp-data-prod pnpm etl:aviation` beats the dev bucket in .env.
+// `R2_BUCKET=towles-blog-media pnpm etl:aviation` beats the staging bucket in .env.
 loadDotenv({
   path: join(dirname(fileURLToPath(import.meta.url)), '../../../.env'),
   quiet: true,
@@ -338,19 +339,6 @@ export async function generateCarrierToOperator(
   ) TO '${outputParquetPath}' (FORMAT PARQUET, COMPRESSION ZSTD)`);
 }
 
-/**
- * A 1-row Parquet the MCP server reads at boot. The content is arbitrary — the point is
- * that one successful `read_parquet('gs://…')` absorbs the httpfs cold start.
- */
-export async function writePreWarmParquet(
-  conn: DuckDBConnection,
-  outputParquetPath: string,
-): Promise<void> {
-  await conn.run(`COPY (
-    SELECT 'aviation-pre-warm' AS sentinel, CURRENT_TIMESTAMP AS built_at
-  ) TO '${outputParquetPath}' (FORMAT PARQUET, COMPRESSION ZSTD)`);
-}
-
 // Co-hosted with the Parquet so OpenFlights' attribution requirement is visibly
 // honored in the bucket root.
 
@@ -643,34 +631,36 @@ export async function downloadBtsT100ViaPlaywright(
   }
 }
 
-async function uploadFileToGcs(
-  storage: Storage,
-  bucketName: string,
-  localPath: string,
-  remoteName: string,
-  contentType: string,
-): Promise<void> {
-  const bucket = storage.bucket(bucketName);
-  const file = bucket.file(remoteName);
-  await file.save(await readFile(localPath), {
-    contentType,
-    metadata: { cacheControl: 'public, max-age=3600' },
-  });
-}
+const CACHE_CONTROL = 'public, max-age=3600';
 
-async function uploadTextToGcs(
-  storage: Storage,
-  bucketName: string,
-  text: string,
-  remoteName: string,
-  contentType: string,
-): Promise<void> {
-  const bucket = storage.bucket(bucketName);
-  const file = bucket.file(remoteName);
-  await file.save(text, {
-    contentType,
-    metadata: { cacheControl: 'public, max-age=3600' },
-  });
+const r2EnvSchema = z.object({
+  R2_ACCOUNT_ID: z.string().min(1).optional(),
+  R2_ENDPOINT: z.string().min(1).optional(),
+  R2_ACCESS_KEY_ID: z.string().min(1),
+  R2_SECRET_ACCESS_KEY: z.string().min(1),
+});
+
+function readR2Target(bucket: string): R2Target {
+  const env = r2EnvSchema.safeParse(process.env);
+
+  if (!env.success) {
+    const missing = env.error.issues.map((issue) => issue.path.join('.')).join(', ');
+    throw new Error(`R2 upload needs ${missing}. See docs/mcp-aviation-ops.md "Local dev setup".`);
+  }
+
+  const { R2_ACCOUNT_ID, R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY } = env.data;
+
+  const endpoint =
+    R2_ENDPOINT ?? (R2_ACCOUNT_ID && `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`);
+
+  if (!endpoint)
+    throw new Error('R2 upload needs R2_ACCOUNT_ID (or R2_ENDPOINT for a local S3 server)');
+
+  return {
+    endpoint,
+    bucket,
+    credentials: { accessKeyId: R2_ACCESS_KEY_ID, secretAccessKey: R2_SECRET_ACCESS_KEY },
+  };
 }
 
 interface EtlConfig {
@@ -690,7 +680,7 @@ function readConfig(): EtlConfig {
   }
 
   return {
-    bucketName: process.env.MCP_DATA_BUCKET,
+    bucketName: process.env.R2_BUCKET,
     skipUpload: Boolean(process.env.AVIATION_ETL_SKIP_UPLOAD),
     fixtureDir: process.env.AVIATION_ETL_FIXTURE_DIR,
     workDir: process.env.AVIATION_ETL_WORK_DIR ?? join(tmpdir(), 'aviation-etl'),
@@ -776,14 +766,6 @@ export async function runAllTransforms(
     contentType: 'application/x-parquet',
   });
 
-  const preWarmParquet = join(outDir, 'pre-warm.parquet');
-  await writePreWarmParquet(conn, preWarmParquet);
-  produced.push({
-    localPath: preWarmParquet,
-    remoteName: 'aviation/pre-warm.parquet',
-    contentType: 'application/x-parquet',
-  });
-
   return produced;
 }
 
@@ -804,7 +786,7 @@ async function runEtl(): Promise<void> {
   });
 
   // The work dir is reused for resumability: BTS downloads are slow, and transform +
-  // upload are idempotent, so stale Parquet and GCS objects just get overwritten.
+  // upload are idempotent, so stale Parquet and R2 objects just get overwritten.
   mkdirSync(config.workDir, { recursive: true });
 
   // Fixture mode is for CI / smoke tests; network mode is the real run.
@@ -901,20 +883,20 @@ async function runEtl(): Promise<void> {
       consola.info(`Upload skipped (bucket=${config.bucketName ?? 'unset'}). Parquet at ${outDir}`);
     } else {
       const uploadStart = Date.now();
-      const storage = new Storage();
-      consola.start(`Uploading to gs://${config.bucketName}/…`);
+      const target = readR2Target(config.bucketName);
+      consola.start(`Uploading to r2://${config.bucketName}/…`);
 
       for (const { localPath, remoteName, contentType } of produced) {
-        await uploadFileToGcs(storage, config.bucketName, localPath, remoteName, contentType);
+        await putObject(target, remoteName, await readFile(localPath), contentType, CACHE_CONTROL);
         consola.log(`  ↑ ${remoteName}`);
       }
 
-      await uploadTextToGcs(
-        storage,
-        config.bucketName,
-        LICENSE_TEXT,
+      await putObject(
+        target,
         'aviation/LICENSE.txt',
+        LICENSE_TEXT,
         'text/plain; charset=utf-8',
+        CACHE_CONTROL,
       );
       consola.log(`  ↑ aviation/LICENSE.txt`);
       consola.success(`Upload done — ${produced.length + 1} files  ${elapsed(uploadStart)}`);
@@ -937,7 +919,7 @@ const main = defineCommand({
   meta: {
     name: 'etl-aviation',
     description:
-      'Download aviation datasets (FAA, BTS T-100, OpenFlights), transform to Parquet, upload to GCS',
+      'Download aviation datasets (FAA, BTS T-100, OpenFlights), transform to Parquet, upload to R2',
   },
   args: {
     years: {
@@ -948,12 +930,12 @@ const main = defineCommand({
     bucket: {
       type: 'string',
       description:
-        'GCS bucket for upload (overrides MCP_DATA_BUCKET env). Aviation data is written under the aviation/ prefix.',
-      default: process.env.MCP_DATA_BUCKET || '',
+        'R2 bucket for upload (overrides R2_BUCKET env). Aviation data is written under the aviation/ prefix.',
+      default: process.env.R2_BUCKET || '',
     },
     'skip-upload': {
       type: 'boolean',
-      description: 'Transform only — skip GCS upload',
+      description: 'Transform only — skip R2 upload',
       default: false,
     },
     'work-dir': {
@@ -966,7 +948,7 @@ const main = defineCommand({
     // Override env-based config with CLI args so both paths work
     if (args.years) process.env.AVIATION_ETL_YEARS = args.years;
 
-    if (args.bucket) process.env.MCP_DATA_BUCKET = args.bucket;
+    if (args.bucket) process.env.R2_BUCKET = args.bucket;
 
     if (args['skip-upload']) process.env.AVIATION_ETL_SKIP_UPLOAD = '1';
 

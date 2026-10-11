@@ -1,4 +1,6 @@
 import { sql } from 'drizzle-orm';
+import { loadBlogSources } from '../../../utils/rag/content-ingest';
+import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL } from '../../../utils/rag/runtime';
 
 defineRouteMeta({
   openAPI: {
@@ -16,77 +18,49 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle();
 
-  // Get document count
-  const docCountResult = await db.execute(sql`SELECT COUNT(*) as count FROM documents`);
-  const documentCount = Number(docCountResult.rows[0]?.count || 0);
-
-  // Get chunk count
-  const chunkCountResult = await db.execute(sql`SELECT COUNT(*) as count FROM document_chunks`);
-  const chunkCount = Number(chunkCountResult.rows[0]?.count || 0);
-
-  // Get chunks with embeddings
-  const embeddedCountResult = await db.execute(
-    sql`SELECT COUNT(*) as count FROM document_chunks WHERE embedding IS NOT NULL`,
-  );
-
-  const embeddedCount = Number(embeddedCountResult.rows[0]?.count || 0);
-
-  // Get average chunks per document
-  const avgChunksResult = await db.execute(sql`
-    SELECT AVG(chunk_count) as avg_chunks
-    FROM (
-      SELECT COUNT(*) as chunk_count
-      FROM document_chunks
-      GROUP BY "documentId"
-    ) as counts
-  `);
-
-  const avgChunksPerDoc = Number(avgChunksResult.rows[0]?.avg_chunks || 0).toFixed(1);
-
-  // Get total content size
-  const contentSizeResult = await db.execute(sql`
+  const totals = await db.get<{
+    documents: number | null;
+    chunks: number | null;
+    contentSize: number | null;
+    contextSize: number | null;
+    embedded: number | null;
+  }>(sql`
     SELECT
-      SUM(LENGTH(content)) as content_size,
-      SUM(LENGTH("contextualContent")) as context_size
+      (SELECT COUNT(*) FROM documents) as documents,
+      COUNT(*) as chunks,
+      COUNT("embeddedAt") as embedded,
+      SUM(LENGTH(content)) as contentSize,
+      SUM(LENGTH("contextualContent")) as contextSize
     FROM document_chunks
   `);
 
-  const contentSize = Number(contentSizeResult.rows[0]?.content_size || 0);
-  const contextSize = Number(contentSizeResult.rows[0]?.context_size || 0);
+  const documentCount = Number(totals?.documents || 0);
+  const chunkCount = Number(totals?.chunks || 0);
+  const contentSize = Number(totals?.contentSize || 0);
+  const contextSize = Number(totals?.contextSize || 0);
+  const avgChunksPerDoc = documentCount > 0 ? chunkCount / documentCount : 0;
 
-  // Get most recent document
-  const recentDocResult = await db.execute(sql`
+  const embeddedCount = Number(totals?.embedded || 0);
+
+  const lastIndexed = await db.get<{ title: string; createdAt: number }>(sql`
     SELECT title, "createdAt"
     FROM documents
     ORDER BY "createdAt" DESC
     LIMIT 1
   `);
 
-  const lastIndexed = recentDocResult.rows[0] || null;
-
-  // Get document list with file system status
-  const { readdir } = await import('node:fs/promises');
-  const { join } = await import('node:path');
-  let filesOnDisk = 0;
-
-  try {
-    const blogDir = join(process.cwd(), 'content/2.blog');
-    const files = await readdir(blogDir);
-    filesOnDisk = files.filter((f) => f.endsWith('.md')).length;
-  } catch {
-    // Ignore errors
-  }
+  const publishedPosts = (await loadBlogSources()).length;
 
   return {
     documents: {
       indexed: documentCount,
-      onDisk: filesOnDisk,
-      pendingIndex: Math.max(0, filesOnDisk - documentCount),
+      onDisk: publishedPosts, // key kept for the admin page; counts published Nuxt Content posts
+      pendingIndex: Math.max(0, publishedPosts - documentCount),
     },
     chunks: {
       total: chunkCount,
       withEmbeddings: embeddedCount,
-      avgPerDocument: parseFloat(avgChunksPerDoc),
+      avgPerDocument: parseFloat(avgChunksPerDoc.toFixed(1)),
     },
     storage: {
       contentBytes: contentSize,
@@ -99,11 +73,11 @@ export default defineEventHandler(async (event) => {
     lastIndexed: lastIndexed
       ? {
           title: lastIndexed.title,
-          date: lastIndexed.createdAt,
+          date: new Date(lastIndexed.createdAt),
         }
       : null,
-    embeddingDimensions: 1024,
-    vectorIndex: 'HNSW (cosine)',
-    textIndex: 'GIN (tsvector)',
+    embeddingDimensions: EMBEDDING_DIMENSIONS,
+    vectorIndex: `Vectorize (cosine, ${EMBEDDING_MODEL})`,
+    textIndex: 'D1 FTS5 (trigram, bm25)',
   };
 });

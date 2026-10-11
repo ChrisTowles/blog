@@ -1,6 +1,6 @@
 /**
  * Covers the DB-touching helpers only; the routes that compose them with auth and Zod
- * are exercised via Playwright. Needs DATABASE_URL pointing at a running PostgreSQL instance.
+ * are exercised via Playwright. Runs against a local in-memory D1 (see vitest.integration.setup.ts).
  */
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { useDrizzle, tables, and, eq } from '../../utils/drizzle';
@@ -20,9 +20,7 @@ import {
   findLearnerById,
 } from '../../../../layers/typing/server/utils/typing/groups';
 
-const hasDatabase = !!process.env.DATABASE_URL;
-
-describe.skipIf(!hasDatabase)('Typing groups integration', () => {
+describe('Typing groups integration', () => {
   let db: ReturnType<typeof useDrizzle>;
 
   beforeAll(() => {

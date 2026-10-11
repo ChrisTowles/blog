@@ -21,7 +21,7 @@ const BUCKET = AVIATION_BUCKET_URL_PREFIX.replace(/\/$/, '');
  */
 export const AVIATION_SCHEMA_BLOCK = `
 DATASET: US commercial aviation (FAA Aircraft Registry + BTS T-100 Market + OpenFlights).
-ALL FILES ARE PARQUET IN GCS; READ VIA read_parquet('${BUCKET}/<path>').
+ALL FILES ARE PARQUET IN R2; READ VIA read_parquet('${BUCKET}/<path>').
 
 DIMENSIONS
 - ${BUCKET}/dims/aircraft.parquet  — one row per tail number

@@ -1,17 +1,44 @@
 # MCP Aviation — Operational Notes
 
-Operational reference for `/mcp/aviation` co-hosted on the blog Cloud Run
-service. See `docs/aviation-schema.md` for the dataset's column-level schema.
+Operational reference for `/mcp/aviation` on the blog Worker. See
+`docs/aviation-schema.md` for the dataset's column-level schema.
 
-## Cloud Run posture
+## Architecture
 
-| Setting            | Value  | Why                                                                               |
-| ------------------ | ------ | --------------------------------------------------------------------------------- |
-| `memory`           | `2Gi`  | DuckDB in-process aggregation on 15M-row fact table spikes over 512Mi.            |
-| `min_instances`    | `1`    | Keep DuckDB + httpfs warm. Pre-warm plugin reads a 1-row parquet at boot.         |
-| `max_instances`    | `2`    | Cost bound — demo should not runaway-scale under abuse.                           |
-| `timeout`          | `300s` | Generous head-room for LLM → SQL → DuckDB → iframe handshake on cold-start.       |
-| `session_affinity` | `true` | Reduces the `Mcp-Session-Id`-across-instances risk. Best-effort, not a guarantee. |
+The Worker cannot host DuckDB, so queries run in a Cloudflare Container:
+
+```
+Worker (sql-safety.ts)  ->  env.AVIATION (AviationContainer DO)  ->  services/aviation (Node + DuckDB)
+                                                                        |
+                                                                        v  httpfs, plain HTTP to r2.internal
+Worker outbound handler (aviation-r2-s3.ts)  ->  env.MEDIA (R2: aviation/**/*.parquet)
+```
+
+- `packages/blog/server/utils/aviation-container.ts` exports `AviationContainer`
+  (`defaultPort 8080`, `sleepAfter 10m`, `enableInternet = false`, only `R2_BUCKET` forwarded
+  as container env) and intercepts the container's outbound traffic.
+- `packages/blog/server/utils/aviation-r2-s3.ts` answers that traffic from the `MEDIA`
+  binding: `GET`/`HEAD` of `/<bucket>/aviation/...` with `Range`, and `ListObjectsV2`
+  for globs. Other buckets or prefixes get 403, other methods 405.
+- `packages/blog/server/utils/mcp/aviation/duckdb.ts` is the client: one named
+  instance (`primary`), `POST /query` and `POST /parse`, `GET /health`.
+- `services/aviation/` is the image: an HTTP server on 8080 around `@duckdb/node-api`.
+- SQL addresses data as `aviation://dims/aircraft.parquet`. The container rewrites
+  that prefix to `s3://$R2_BUCKET/aviation/`, so staging and production share
+  prompts and allowlists.
+
+## Container posture
+
+| Setting         | Value        | Why                                                                          |
+| --------------- | ------------ | ---------------------------------------------------------------------------- |
+| `instance_type` | `standard-1` | 1/2 vCPU, 4 GiB. DuckDB is capped at 2GB so aggregation never OOMs the VM.   |
+| `max_instances` | `1`          | One instance serves all traffic; DuckDB runs concurrent connections itself.  |
+| `sleepAfter`    | `10m`        | Idle container sleeps; the next query pays the cold start (below).           |
+| Query timeout   | `30s`        | Interrupts the DuckDB connection; the Worker allows 20s more for cold start. |
+
+Cold start is the image boot (httpfs is baked in, no download) plus the first
+R2 metadata read. Calling `warmAviationContainer()` (a `/health` ping) when a
+client lists tools hides most of it.
 
 ## Session semantics & reconnect
 
@@ -36,62 +63,67 @@ requests from that session return HTTP 404.
 
 ## Cost backstop
 
-The GCP $10 spend cap auto-offlines the service if abuse trips it. Anthropic's
-account-level spend cap is a separate control and must be configured manually
+`max_instances = 1` and the 10-minute idle sleep bound container spend.
+Anthropic's account-level spend cap is a separate control and must be configured manually
 before launch (plan risks row, line 773).
 
 ## DuckDB lockdown
 
-Aviation's DuckDB connection is hardened at startup:
+The container refuses anything that is not a single `SELECT`, independent of the
+Worker's `sql-safety.ts`:
 
-- `autoload_known_extensions=false`, `autoinstall_known_extensions=false`,
-  `allow_community_extensions=false`, `allow_unsigned_extensions=false`.
-- `httpfs` explicitly installed + loaded (needed for `gs://` reads).
-- `CREATE SECRET (TYPE GCS, KEY_ID, SECRET)` with HMAC creds for the private
-  aviation bucket. Without this, DuckDB picks up `AWS_*` env vars (used for
-  Bedrock) as S3-style HMAC signatures and fails with `SignatureDoesNotMatch`.
-- `disabled_filesystems='LocalFileSystem'` applied after `httpfs` load.
-- `memory_limit` / `threads` configurable via `AVIATION_DUCKDB_MEMORY_LIMIT`
-  (default `768MB`) / `AVIATION_DUCKDB_THREADS` (default `4`).
+- `extractStatements` must yield exactly one statement and its type must be `SELECT`.
+- After the `aviation://` rewrite, every `scheme://` in the SQL must start with
+  `s3://$R2_BUCKET/aviation/` (no `..`); `duckdb_*()`, `current_setting()` and
+  `getenv()` calls are rejected.
+- Startup runs `SET enable_external_access = false`, `allowed_directories =
+['s3://$R2_BUCKET/aviation/']` and `lock_configuration = true`, so computed
+  paths (`concat('s3', '://…')`) outside the prefix and local files fail inside
+  DuckDB, and the settings cannot be changed afterwards.
+- Extension autoload/autoinstall and community/unsigned extensions are off;
+  `httpfs` is installed at image build time.
+- `memory_limit` / `threads` come from `AVIATION_DUCKDB_MEMORY_LIMIT` (default
+  `2GB`) / `AVIATION_DUCKDB_THREADS` (default `2`).
 
-## Bucket auth
+Status codes from the container: `403` rejected SQL, `422` DuckDB error,
+`504` timeout, `400` bad request, `413` body over 64 KB.
 
-The aviation Parquet bucket is **private** — no `allUsers` IAM. Reads are
-authenticated via GCS HMAC keys:
+## Bucket access
 
-- **Cloud Run**: Terraform creates a `google_storage_hmac_key` for the Cloud
-  Run service account (`infra/terraform/modules/shared/main.tf`), stores the
-  access_id and secret in Secret Manager (`gcs-hmac-key-id-{env}` /
-  `gcs-hmac-secret-{env}`), and injects them as `GCS_HMAC_KEY_ID` /
-  `GCS_HMAC_SECRET` env vars into the service.
-- **Rotate**: `terraform taint module.shared.google_storage_hmac_key.aviation`
-  then apply. Regenerates the key and pushes a new Secret Manager version;
-  Cloud Run picks it up on next revision.
-- **Startup validation**: `server/plugins/mcp-aviation-warmup.ts` calls
-  `requireAviationGcsCredentials()` synchronously at boot. Missing creds crash
-  the process with an actionable error.
+The Parquet lives in the app's R2 bucket (`towles-blog-media`, staging
+`towles-blog-media-staging`) under `aviation/`. The container holds no R2 credentials and
+has no internet. DuckDB's httpfs is pointed at `r2.internal` over plain HTTP (dummy key
+pair, path-style, `AVIATION_S3_ENDPOINT` overrides the host); the Worker intercepts that
+host through `@cloudflare/containers` outbound interception and serves it from `env.MEDIA`.
+`ContainerProxy` must stay exported from the Worker entry (see `nuxt.config.ts`).
+
+- Worker config: `R2_BUCKET` is a `vars` entry in `wrangler.jsonc`; there are no R2
+  secrets.
+- Only the ETL needs an R2 API token (Object Read & Write), because it runs on a laptop
+  and uploads through the S3 API.
 
 ## Local dev setup
 
-The bucket is not shared — set up your own:
-
-1. Create your own GCS bucket in your dev GCP project.
-2. Create a service account and grant it `roles/storage.objectViewer` on the
-   bucket (and `objectCreator` if you'll re-run the ETL).
-3. Generate HMAC keys: `gcloud storage hmac create <SA_EMAIL>`. Note the
-   `access_id` and `secret`.
-4. Run the ETL into your bucket (writes under the `aviation/` prefix):
-   `MCP_DATA_BUCKET=your-bucket pnpm etl:aviation` (from
-   `packages/blog/scripts/etl-aviation.ts`). This auto-downloads FAA
+1. Run the ETL against a real bucket (writes under the `aviation/` prefix):
+   `R2_ACCOUNT_ID=… R2_BUCKET=… R2_ACCESS_KEY_ID=… R2_SECRET_ACCESS_KEY=… pnpm etl:aviation`
+   (`packages/blog/scripts/etl-aviation.ts`). This auto-downloads FAA
    Registry (one zip) and drives BTS's ASP.NET form via headless Playwright
    to pull the latest 12 months of T-100 Market data (one download per
    month, skipping unpublished periods). Override the month count with
    `AVIATION_ETL_MONTHS=N`. Expect 5–10 min end-to-end on a healthy
-   network; BTS's form is the long pole.
-5. In `.env`, set `MCP_DATA_BUCKET`, `GCS_HMAC_KEY_ID`, `GCS_HMAC_SECRET`.
-
-`pnpm dev` hard-fails at startup if the HMAC vars are missing — the error
-message points back here.
+   network; BTS's form is the long pole. `R2_ENDPOINT=http://host:port` targets any
+   S3-compatible server instead, and
+   `AVIATION_ETL_FIXTURE_DIR=packages/blog/scripts/__fixtures__/aviation` builds a tiny
+   dataset with the real schema.
+2. To run the container locally, give `wrangler dev` an environment that has the
+   `containers`, `durable_objects` and `migrations` blocks (Docker required), copy Parquet
+   into the local bucket with `wrangler r2 object put <bucket>/aviation/<file> --file …
+--local`, and call the container through the Worker. Local `wrangler dev` supports
+   outbound interception.
+3. Smoke-test a running container: `cd services/aviation && npm install &&
+AVIATION_SMOKE_URL=http://localhost:8080 npm test`. A bare `docker run` cannot reach
+   data (nothing answers `r2.internal`), so point the smoke test at the `wrangler dev`
+   container port.
 
 ## BTS T-100 download
 

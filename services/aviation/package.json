@@ -1,0 +1,17 @@
+{
+  "name": "@chris-towles/aviation-container",
+  "private": true,
+  "description": "DuckDB query service for the aviation MCP tool. Runs as a Cloudflare Container.",
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.ts",
+    "test": "node --test src/*.test.ts"
+  },
+  "dependencies": {
+    "@duckdb/node-api": "1.5.2-r.2",
+    "zod": "^4.4.3"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

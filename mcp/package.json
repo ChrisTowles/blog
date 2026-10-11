@@ -2,24 +2,19 @@
   "name": "@chris-towles/mcp",
   "version": "0.1.0",
   "private": true,
-  "description": "Cloud Run service that hosts MCP Apps (SEP-1865) UI iframes on a separate origin",
+  "description": "Cloudflare Worker that hosts MCP Apps (SEP-1865) UI iframes on a separate origin",
   "type": "module",
   "scripts": {
-    "dev": "tsx server.ts",
-    "start": "tsx server.ts",
-    "build": "rolldown -c rolldown.config.ts",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test"
   },
-  "dependencies": {
-    "h3": "^1.15.11"
-  },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
-    "@types/node": "^24.13.2",
-    "rolldown": "^1.1.4",
-    "tsx": "^4.22.4",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.9",
+    "wrangler": "^4.149.0"
   }
 }

@@ -1,10 +1,10 @@
 import { relations } from 'drizzle-orm';
-import { integer, pgTable, real, text, varchar } from 'drizzle-orm/pg-core';
+import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
-export const workflows = pgTable('workflows', {
-  id: varchar({ length: 36 })
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
+import { uuidPk } from './columns';
+
+export const workflows = sqliteTable('workflows', {
+  id: uuidPk(),
   name: text().notNull(),
   description: text(),
   viewport: text(), // JSON: { x, y, zoom }
@@ -15,10 +15,8 @@ export const workflows = pgTable('workflows', {
   updatedAt: text().$defaultFn(() => new Date().toISOString()),
 });
 
-export const workflowNodes = pgTable('workflow_nodes', {
-  id: varchar({ length: 36 })
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
+export const workflowNodes = sqliteTable('workflow_nodes', {
+  id: uuidPk(),
   workflowId: text()
     .notNull()
     .references(() => workflows.id, { onDelete: 'cascade' }),
@@ -37,10 +35,8 @@ export const workflowNodes = pgTable('workflow_nodes', {
   updatedAt: text().$defaultFn(() => new Date().toISOString()),
 });
 
-export const workflowEdges = pgTable('workflow_edges', {
-  id: varchar({ length: 36 })
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
+export const workflowEdges = sqliteTable('workflow_edges', {
+  id: uuidPk(),
   workflowId: text()
     .notNull()
     .references(() => workflows.id, { onDelete: 'cascade' }),
@@ -55,10 +51,8 @@ export const workflowEdges = pgTable('workflow_edges', {
   createdAt: text().$defaultFn(() => new Date().toISOString()),
 });
 
-export const workflowRuns = pgTable('workflow_runs', {
-  id: varchar({ length: 36 })
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
+export const workflowRuns = sqliteTable('workflow_runs', {
+  id: uuidPk(),
   workflowId: text()
     .notNull()
     .references(() => workflows.id, { onDelete: 'cascade' }),
@@ -71,10 +65,8 @@ export const workflowRuns = pgTable('workflow_runs', {
   createdAt: text().$defaultFn(() => new Date().toISOString()),
 });
 
-export const nodeExecutions = pgTable('node_executions', {
-  id: varchar({ length: 36 })
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
+export const nodeExecutions = sqliteTable('node_executions', {
+  id: uuidPk(),
   runId: text()
     .notNull()
     .references(() => workflowRuns.id, { onDelete: 'cascade' }),

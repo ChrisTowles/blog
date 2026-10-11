@@ -1,4 +1,4 @@
-/** Needs DATABASE_URL pointing at a running PostgreSQL instance. */
+/** Runs against a local in-memory D1 (see vitest.integration.setup.ts). */
 import { describe, it, expect, beforeEach, beforeAll, afterAll } from 'vitest';
 import { useDrizzle, tables, eq, and, desc } from '../../utils/drizzle';
 import {
@@ -8,9 +8,7 @@ import {
   createTestMessage,
 } from '../../test-utils/db-helper';
 
-const hasDatabase = !!process.env.DATABASE_URL;
-
-describe.skipIf(!hasDatabase)('Chat CRUD Integration', () => {
+describe('Chat CRUD Integration', () => {
   let db: ReturnType<typeof useDrizzle>;
   let testUser: typeof tables.users.$inferSelect;
 

@@ -27,7 +27,7 @@ describe('GET /mcp/aviation/resource', () => {
     );
 
     const body = await resourceHandler(event);
-    expect(body).toBe(readAviationBundle());
+    expect(body).toBe(await readAviationBundle());
 
     const headers = res.getHeaders();
     expect(String(headers['content-type'])).toContain('text/html');

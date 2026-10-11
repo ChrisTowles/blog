@@ -11,196 +11,120 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write
-
-env:
-  CLOUD_RUN_SERVICE: blog
 
 jobs:
   test:
     uses: ./.github/workflows/test.yml
 
   build:
-    name: Build & Push Image
+    name: Build
     needs: test
     runs-on: ubuntu-latest
-    outputs:
-      image_tag: ${{ steps.tags.outputs.date_tag }}
-      sha_tag: ${{ steps.tags.outputs.sha_tag }}
+    env:
+      NUXT_PUBLIC_GTAG_ID: G-PH525YF11W
+      NUXT_PUBLIC_MCP_SANDBOX_URL: https://sandbox.towles.dev/sandbox.html
+      # Prerendered pages bake absolute URLs (og:image, canonical, sitemap) at build time.
+      NUXT_PUBLIC_SITE_URL: https://chris.towles.dev
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Parse prod.tfvars for registry
-        id: prod
-        run: |
-          TFVARS="infra/terraform/environments/prod.tfvars"
-          get() { grep "^$1" "$TFVARS" | sed 's/.*= *"\(.*\)"/\1/'; }
-          CONTAINER_IMAGE=$(get container_image)
-          echo "project_id=$(get project_id)" >> "$GITHUB_OUTPUT"
-          echo "gtag_id=$(get gtag_id)" >> "$GITHUB_OUTPUT"
-          echo "mcp_sandbox_url=$(get mcp_sandbox_url)" >> "$GITHUB_OUTPUT"
-          echo "region=$(echo "$CONTAINER_IMAGE" | sed 's/-docker\.pkg\.dev.*//')" >> "$GITHUB_OUTPUT"
-          echo "image_base=$(echo "$CONTAINER_IMAGE" | sed 's/:[^/]*$//')" >> "$GITHUB_OUTPUT"
-
-      - name: Parse staging.tfvars for registry
-        id: staging
-        run: |
-          TFVARS="infra/terraform/environments/staging.tfvars"
-          get() { grep "^$1" "$TFVARS" | sed 's/.*= *"\(.*\)"/\1/'; }
-          CONTAINER_IMAGE=$(get container_image)
-          echo "project_id=$(get project_id)" >> "$GITHUB_OUTPUT"
-          echo "region=$(echo "$CONTAINER_IMAGE" | sed 's/-docker\.pkg\.dev.*//')" >> "$GITHUB_OUTPUT"
-          echo "image_base=$(echo "$CONTAINER_IMAGE" | sed 's/:[^/]*$//')" >> "$GITHUB_OUTPUT"
-
-      - name: Authenticate to GCP
-        uses: google-github-actions/auth@v2
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
-          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
-          service_account: ${{ vars.GCP_WIF_SERVICE_ACCOUNT }}
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+      - name: Build app
+        run: pnpm build
 
-      - name: Authenticate Docker to Artifact Registry
-        run: gcloud auth configure-docker ${{ steps.prod.outputs.region }}-docker.pkg.dev --quiet
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Generate image tags
-        id: tags
-        run: |
-          DATE_TAG=$(date -u '+%Y-%m-%d-%H-%M')
-          SHA_TAG=${GITHUB_SHA::7}
-          echo "date_tag=${DATE_TAG}" >> "$GITHUB_OUTPUT"
-          echo "sha_tag=${SHA_TAG}" >> "$GITHUB_OUTPUT"
-
-      - name: Build and push
-        uses: docker/build-push-action@v6
+      # One build feeds both environments, so staging verifies the exact bundle
+      # production receives. Per-environment values (sandbox URL) come from the
+      # Worker's `vars`, not from the build.
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
         with:
-          context: .
-          file: infra/container/blog.Dockerfile
-          push: true
-          tags: |
-            ${{ steps.prod.outputs.image_base }}:${{ steps.tags.outputs.date_tag }}
-            ${{ steps.prod.outputs.image_base }}:${{ steps.tags.outputs.sha_tag }}
-            ${{ steps.prod.outputs.image_base }}:latest
-            ${{ steps.staging.outputs.image_base }}:${{ steps.tags.outputs.date_tag }}
-            ${{ steps.staging.outputs.image_base }}:${{ steps.tags.outputs.sha_tag }}
-            ${{ steps.staging.outputs.image_base }}:latest
-          build-args: |
-            GIT_SHA=${{ steps.tags.outputs.sha_tag }}
-            BUILD_TAG=${{ steps.tags.outputs.date_tag }}
-            NUXT_PUBLIC_GTAG_ID=${{ steps.prod.outputs.gtag_id }}
-            NUXT_PUBLIC_MCP_SANDBOX_URL=${{ steps.prod.outputs.mcp_sandbox_url }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          name: blog-output
+          path: packages/blog/.output
+          include-hidden-files: true
+          retention-days: 3
+          if-no-files-found: error
 
   deploy-staging:
     name: Deploy Staging
     needs: build
     runs-on: ubuntu-latest
     environment: staging
+    # Token permissions: docs/hosting.md.
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Parse staging.tfvars
-        id: tfvars
-        run: |
-          TFVARS="infra/terraform/environments/staging.tfvars"
-          get() { grep "^$1" "$TFVARS" | sed 's/.*= *"\(.*\)"/\1/'; }
-          CONTAINER_IMAGE=$(get container_image)
-          echo "project_id=$(get project_id)" >> "$GITHUB_OUTPUT"
-          echo "site_url=$(get site_url)" >> "$GITHUB_OUTPUT"
-          echo "region=$(echo "$CONTAINER_IMAGE" | sed 's/-docker\.pkg\.dev.*//')" >> "$GITHUB_OUTPUT"
-          echo "image_base=$(echo "$CONTAINER_IMAGE" | sed 's/:[^/]*$//')" >> "$GITHUB_OUTPUT"
-
-      - name: Authenticate to GCP
-        uses: google-github-actions/auth@v2
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
-          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
-          service_account: ${{ vars.GCP_WIF_SERVICE_ACCOUNT }}
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+      - name: Download build output
+        uses: actions/download-artifact@v4
+        with:
+          name: blog-output
+          path: packages/blog/.output
 
-      - name: Wake up Cloud SQL instance
-        # The container runs DB migrations on boot and exits(1) on ECONNREFUSED,
-        # so wait until Postgres accepts connections before the rollout.
-        run: infra/terraform/scripts/wake-sql.sh ${{ steps.tfvars.outputs.project_id }}
+      - name: Migrate D1
+        run: pnpm --filter @chris-towles/blog exec wrangler d1 migrations apply DB --remote --env staging
 
-      - name: Deploy to Cloud Run
+      # The Worker config builds the aviation container image from
+      # services/aviation/Dockerfile, which needs the runner's Docker daemon.
+      - name: Deploy blog Worker
+        run: pnpm --filter @chris-towles/blog exec wrangler deploy --env staging
+
+      - name: Deploy sandbox Worker
+        run: pnpm --filter @chris-towles/mcp deploy:staging
+
+      # Custom domains attach on first deploy and can take a minute to issue a
+      # certificate, so the script retries instead of making one request.
+      - name: Smoke test
         run: |
-          gcloud run services update ${{ env.CLOUD_RUN_SERVICE }} \
-            --image=${{ steps.tfvars.outputs.image_base }}:${{ needs.build.outputs.image_tag }} \
-            --region=${{ steps.tfvars.outputs.region }} \
-            --project=${{ steps.tfvars.outputs.project_id }}
-
-      - name: Smoke test staging
-        run: |
-          URL="${{ steps.tfvars.outputs.site_url }}"
-          # gcloud run services update returns when the revision is created,
-          # not when it serves traffic; first request also pays cold start +
-          # the boot DB migration. Retry instead of a single shot.
-          # Window must outlast the container's boot-migration retry budget
-          # (MIGRATE_MAX_ATTEMPTS * MIGRATE_RETRY_DELAY, default ~3 min in
-          # infra/container/entrypoint.sh) plus image pull and cold start.
-          echo "Smoke testing ${URL} (retry up to ~6 min)..."
-          for i in $(seq 1 36); do
-            STATUS=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$URL" || echo 000)
-            echo "  [attempt $i] HTTP ${STATUS}"
-            if [ "$STATUS" -eq 200 ]; then
-              echo "Staging healthy."
-              exit 0
-            fi
-            sleep 10
-          done
-          echo "::error::Staging smoke test failed — last status ${STATUS}"
-          exit 1
+          scripts/smoke-test.sh https://stage-chris.towles.dev / '/api/health?'
+          scripts/smoke-test.sh https://stage-sandbox.towles.dev /sandbox.html
 
   deploy-prod:
     name: Deploy Production
     needs: [build, deploy-staging]
     runs-on: ubuntu-latest
     environment: production
+    # Token permissions: docs/hosting.md.
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Parse prod.tfvars
-        id: tfvars
-        run: |
-          TFVARS="infra/terraform/environments/prod.tfvars"
-          get() { grep "^$1" "$TFVARS" | sed 's/.*= *"\(.*\)"/\1/'; }
-          CONTAINER_IMAGE=$(get container_image)
-          echo "project_id=$(get project_id)" >> "$GITHUB_OUTPUT"
-          echo "site_url=$(get site_url)" >> "$GITHUB_OUTPUT"
-          echo "region=$(echo "$CONTAINER_IMAGE" | sed 's/-docker\.pkg\.dev.*//')" >> "$GITHUB_OUTPUT"
-          echo "image_base=$(echo "$CONTAINER_IMAGE" | sed 's/:[^/]*$//')" >> "$GITHUB_OUTPUT"
-
-      - name: Authenticate to GCP
-        uses: google-github-actions/auth@v2
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
-          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
-          service_account: ${{ vars.GCP_WIF_SERVICE_ACCOUNT }}
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+      - name: Download build output
+        uses: actions/download-artifact@v4
+        with:
+          name: blog-output
+          path: packages/blog/.output
 
-      - name: Deploy to Cloud Run
+      - name: Migrate D1
+        run: pnpm --filter @chris-towles/blog exec wrangler d1 migrations apply DB --remote
+
+      - name: Deploy blog Worker
+        run: pnpm --filter @chris-towles/blog exec wrangler deploy
+
+      - name: Deploy sandbox Worker
+        run: pnpm --filter @chris-towles/mcp run deploy
+
+      - name: Smoke test
         run: |
-          gcloud run services update ${{ env.CLOUD_RUN_SERVICE }} \
-            --image=${{ steps.tfvars.outputs.image_base }}:${{ needs.build.outputs.image_tag }} \
-            --region=${{ steps.tfvars.outputs.region }} \
-            --project=${{ steps.tfvars.outputs.project_id }}
-
-      - name: Health check
-        run: |
-          sleep 10
-          STATUS=$(curl -s -o /dev/null -w '%{http_code}' ${{ steps.tfvars.outputs.site_url }})
-          echo "Production health check status: ${STATUS}"
-          if [ "$STATUS" -ne 200 ]; then
-            echo "::warning::Production health check returned ${STATUS}, expected 200"
-          fi
+          scripts/smoke-test.sh https://chris.towles.dev / '/api/health?'
+          scripts/smoke-test.sh https://sandbox.towles.dev /sandbox.html

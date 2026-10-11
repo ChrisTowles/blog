@@ -68,7 +68,9 @@ export default defineConfig({
     // CI serves the *built* app (the workflow runs `pnpm build` first). A dev server
     // compiles on demand, and that compile lands inside whichever assertion touches the
     // route first — a tail of timeouts only fixable one uncovered route at a time.
-    command: process.env.CI ? 'node .output/server/index.mjs' : `UI_PORT=${uiPort} bun run dev`,
+    command: process.env.CI
+      ? `pnpm exec wrangler dev --env dev --port ${uiPort}`
+      : `UI_PORT=${uiPort} bun run dev`,
     // HOST is deliberately left unset so Nitro binds every interface; pinning it
     // to one loopback address is what made the stack mismatch possible before.
     env: serverEnv,

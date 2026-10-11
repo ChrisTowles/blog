@@ -52,9 +52,9 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle();
 
-  await db.transaction(async (tx) => {
-    // 1. Update viewport (only if provided), updatedAt, and bump version in one statement
-    await tx
+  // `db.batch` is D1's atomic unit; interactive transactions are not supported.
+  await db.batch([
+    db
       .update(tables.workflows)
       .set({
         name,
@@ -62,49 +62,43 @@ export default defineEventHandler(async (event) => {
         updatedAt: new Date().toISOString(),
         version: sql`version + 1`,
       })
-      .where(eq(tables.workflows.id, id));
-
-    // 2. Delete existing nodes and edges
-    await tx.delete(tables.workflowNodes).where(eq(tables.workflowNodes.workflowId, id));
-    await tx.delete(tables.workflowEdges).where(eq(tables.workflowEdges.workflowId, id));
-
-    // 3. Insert new nodes
-    if (nodes.length > 0) {
-      await tx.insert(tables.workflowNodes).values(
-        nodes.map((n) => ({
-          workflowId: id,
-          nodeId: n.id,
-          type: n.type,
-          label: n.data.label,
-          positionX: n.position.x,
-          positionY: n.position.y,
-          prompt: n.data.prompt,
-          model: n.data.model,
-          temperature: n.data.temperature,
-          maxTokens: n.data.maxTokens,
-          outputSchema: JSON.stringify(n.data.outputSchema),
-          inputMapping: JSON.stringify(n.data.inputMapping ?? {}),
-        })),
-      );
-    }
-
-    // 4. Insert new edges
-    if (edges.length > 0) {
-      await tx.insert(tables.workflowEdges).values(
-        edges.map((e) => ({
-          workflowId: id,
-          edgeId: e.id,
-          sourceNode: e.source,
-          targetNode: e.target,
-          sourceHandle: e.sourceHandle ?? null,
-          targetHandle: e.targetHandle ?? null,
-          label: e.label ?? null,
-          animated: e.animated ? 1 : 0,
-          edgeType: e.type ?? 'smoothstep',
-        })),
-      );
-    }
-  });
+      .where(eq(tables.workflows.id, id)),
+    db.delete(tables.workflowNodes).where(eq(tables.workflowNodes.workflowId, id)),
+    db.delete(tables.workflowEdges).where(eq(tables.workflowEdges.workflowId, id)),
+    ...insertChunked(
+      db,
+      tables.workflowNodes,
+      nodes.map((n) => ({
+        workflowId: id,
+        nodeId: n.id,
+        type: n.type,
+        label: n.data.label,
+        positionX: n.position.x,
+        positionY: n.position.y,
+        prompt: n.data.prompt,
+        model: n.data.model,
+        temperature: n.data.temperature,
+        maxTokens: n.data.maxTokens,
+        outputSchema: JSON.stringify(n.data.outputSchema),
+        inputMapping: JSON.stringify(n.data.inputMapping ?? {}),
+      })),
+    ),
+    ...insertChunked(
+      db,
+      tables.workflowEdges,
+      edges.map((e) => ({
+        workflowId: id,
+        edgeId: e.id,
+        sourceNode: e.source,
+        targetNode: e.target,
+        sourceHandle: e.sourceHandle ?? null,
+        targetHandle: e.targetHandle ?? null,
+        label: e.label ?? null,
+        animated: e.animated ? 1 : 0,
+        edgeType: e.type ?? 'smoothstep',
+      })),
+    ),
+  ]);
 
   return { ok: true };
 });

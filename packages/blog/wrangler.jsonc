@@ -1,0 +1,124 @@
+// Worker config for the blog. Top level is production; `env.staging` repeats every
+// binding because Wrangler does not inherit bindings across environments.
+// `main` and `assets` point at the Nitro `cloudflare_module` output (`pnpm build`), which also
+// exports the AviationContainer Durable Object class (see nuxt.config.ts).
+// Deploy: wrangler deploy [--env staging]. Migrations: pnpm db:migrate:prod|staging.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "towles-blog",
+  "main": ".output/server/index.mjs",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".output/public",
+    "html_handling": "drop-trailing-slash",
+  },
+  "observability": { "enabled": true },
+  "routes": [{ "pattern": "chris.towles.dev", "custom_domain": true }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "towles-blog",
+      "database_id": "83fa5b15-19f2-4dc9-bb04-287b54a20f5f",
+      "migrations_dir": "server/database/migrations",
+    },
+  ],
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "towles-blog-media" }],
+  "vectorize": [{ "binding": "VECTORIZE", "index_name": "towles-blog-rag" }],
+  "ai": { "binding": "AI" },
+  "ratelimits": [
+    {
+      "name": "MCP_RATE_LIMITER",
+      "namespace_id": "1001",
+      "simple": { "limit": 60, "period": 60 },
+    },
+  ],
+  "vars": {
+    "R2_BUCKET": "towles-blog-media",
+    "BRAINTRUST_PROJECT_NAME": "blog-prod",
+    "NUXT_PUBLIC_SITE_URL": "https://chris.towles.dev",
+    "NUXT_PUBLIC_GTAG_ID": "G-PH525YF11W",
+    "NUXT_PUBLIC_MCP_SANDBOX_URL": "https://sandbox.towles.dev/sandbox.html",
+  },
+  "containers": [
+    {
+      "class_name": "AviationContainer",
+      "image": "../../services/aviation/Dockerfile",
+      "instance_type": "standard-1",
+      "max_instances": 1,
+    },
+  ],
+  "durable_objects": { "bindings": [{ "name": "AVIATION", "class_name": "AviationContainer" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["AviationContainer"] }],
+  "env": {
+    // Local-only: `nuxt dev` and `wrangler dev --env dev` cannot open the remote sessions that
+    // AI and Vectorize need, so those bindings are left out here.
+    "dev": {
+      "name": "towles-blog-dev",
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "towles-blog-dev",
+          "database_id": "00000000-0000-0000-0000-000000000000",
+          "migrations_dir": "server/database/migrations",
+        },
+      ],
+      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "towles-blog-media-dev" }],
+      "ratelimits": [
+        {
+          "name": "MCP_RATE_LIMITER",
+          "namespace_id": "1003",
+          "simple": { "limit": 60, "period": 60 },
+        },
+      ],
+    },
+    "staging": {
+      "name": "towles-blog-staging",
+      "vars": {
+        "R2_BUCKET": "towles-blog-media-staging",
+        "BRAINTRUST_PROJECT_NAME": "blog-stage",
+        "NUXT_PUBLIC_SITE_URL": "https://stage-chris.towles.dev",
+        "NUXT_PUBLIC_GTAG_ID": "G-KNKR69G927",
+        "NUXT_PUBLIC_MCP_SANDBOX_URL": "https://stage-sandbox.towles.dev/sandbox.html",
+      },
+      "containers": [
+        {
+          "class_name": "AviationContainer",
+          "image": "../../services/aviation/Dockerfile",
+          "instance_type": "standard-1",
+          "max_instances": 1,
+        },
+      ],
+      "durable_objects": {
+        "bindings": [{ "name": "AVIATION", "class_name": "AviationContainer" }],
+      },
+      "migrations": [{ "tag": "v1", "new_sqlite_classes": ["AviationContainer"] }],
+      "observability": { "enabled": true },
+      "routes": [{ "pattern": "stage-chris.towles.dev", "custom_domain": true }],
+      "assets": {
+        "binding": "ASSETS",
+        "directory": ".output/public",
+        "html_handling": "drop-trailing-slash",
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "towles-blog-staging",
+          "database_id": "fc9e2b14-dd8c-448e-9dd0-84d60b48771f",
+          "migrations_dir": "server/database/migrations",
+        },
+      ],
+      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "towles-blog-media-staging" }],
+      "vectorize": [{ "binding": "VECTORIZE", "index_name": "towles-blog-rag-staging" }],
+      "ai": { "binding": "AI" },
+      "ratelimits": [
+        {
+          "name": "MCP_RATE_LIMITER",
+          "namespace_id": "1002",
+          "simple": { "limit": 60, "period": 60 },
+        },
+      ],
+    },
+  },
+}

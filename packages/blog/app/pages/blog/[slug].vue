@@ -47,7 +47,7 @@ if (post.value.image?.src) {
   });
 } else {
   defineOgImage('SaaS', {
-    headline: 'Blog',
+    title: 'Blog',
   });
 }
 

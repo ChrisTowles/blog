@@ -44,22 +44,3 @@ resource "google_cloud_run_service_iam_member" "public_access" {
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
-
-# Custom domain mapping. Cloud Run issues a managed TLS cert once the DNS
-# record resolves, so the paired `cloudflare_record` must stay DNS-only (grey
-# cloud) — proxied traffic breaks the managed-cert flow.
-resource "google_cloud_run_domain_mapping" "custom" {
-  count = var.custom_domain != "" ? 1 : 0
-
-  name     = var.custom_domain
-  location = var.region
-  project  = var.project_id
-
-  metadata {
-    namespace = var.project_id
-  }
-
-  spec {
-    route_name = google_cloud_run_v2_service.main.name
-  }
-}

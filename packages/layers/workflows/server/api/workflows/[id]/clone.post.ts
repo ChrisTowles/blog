@@ -38,9 +38,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, message: 'Failed to clone workflow' });
   }
 
-  // Copy nodes
-  if (sourceNodes.length > 0) {
-    await db.insert(tables.workflowNodes).values(
+  const statements = [
+    ...insertChunked(
+      db,
+      tables.workflowNodes,
       sourceNodes.map((n) => ({
         workflowId: clone.id,
         nodeId: n.nodeId,
@@ -55,12 +56,10 @@ export default defineEventHandler(async (event) => {
         outputSchema: n.outputSchema,
         inputMapping: n.inputMapping,
       })),
-    );
-  }
-
-  // Copy edges
-  if (sourceEdges.length > 0) {
-    await db.insert(tables.workflowEdges).values(
+    ),
+    ...insertChunked(
+      db,
+      tables.workflowEdges,
       sourceEdges.map((e) => ({
         workflowId: clone.id,
         edgeId: e.edgeId,
@@ -72,7 +71,13 @@ export default defineEventHandler(async (event) => {
         animated: e.animated,
         edgeType: e.edgeType,
       })),
-    );
+    ),
+  ];
+
+  const [first, ...rest] = statements;
+
+  if (first) {
+    await db.batch([first, ...rest]);
   }
 
   return { id: clone.id };

@@ -1,23 +1,5 @@
 import { z } from 'zod';
-import { sql } from 'drizzle-orm';
-
-type SemanticRow = {
-  id: string;
-  title: string;
-  url: string;
-  chunkIndex: number;
-  preview: string;
-  distance: string;
-};
-
-type BM25Row = {
-  id: string;
-  title: string;
-  url: string;
-  chunkIndex: number;
-  preview: string;
-  rank: string;
-};
+import { EMBEDDING_DIMENSIONS } from '../../../utils/rag/runtime';
 
 defineRouteMeta({
   openAPI: {
@@ -25,6 +7,8 @@ defineRouteMeta({
     tags: ['admin', 'rag'],
   },
 });
+
+const PREVIEW_LENGTH = 100;
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event);
@@ -46,64 +30,9 @@ export default defineEventHandler(async (event) => {
     }).parse,
   );
 
-  const startTime = Date.now();
-  const timings: Record<string, number> = {};
-
-  // Step 1: Embed query
-  const embedStart = Date.now();
-  const queryEmbedding = await embedText(query);
-  timings.embedding = Date.now() - embedStart;
-
-  // Step 2: Run full retrieval
-  const retrieveStart = Date.now();
-  const results = await retrieveRAG(query, { topK, skipRerank });
-  timings.retrieval = Date.now() - retrieveStart;
-
-  // Get raw semantic and BM25 results for debugging
-  const db = useDrizzle();
-  const embeddingStr = `[${queryEmbedding.join(',')}]`;
-
-  // Raw semantic results
-  const semanticStart = Date.now();
-
-  const semanticRaw = await db.execute<SemanticRow>(sql`
-    SELECT
-      dc.id,
-      d.title,
-      d.url,
-      dc."chunkIndex",
-      LEFT(dc.content, 100) as preview,
-      dc.embedding <=> ${embeddingStr}::vector AS distance
-    FROM document_chunks dc
-    JOIN documents d ON dc."documentId" = d.id
-    WHERE dc.embedding IS NOT NULL
-    ORDER BY distance
-    LIMIT 10
-  `);
-
-  timings.semanticSearch = Date.now() - semanticStart;
-
-  // Raw BM25 results
-  const bm25Start = Date.now();
-
-  const bm25Raw = await db.execute<BM25Row>(sql`
-    SELECT
-      dc.id,
-      d.title,
-      d.url,
-      dc."chunkIndex",
-      LEFT(dc.content, 100) as preview,
-      ts_rank(dc."searchVector", plainto_tsquery('english', ${query})) AS rank
-    FROM document_chunks dc
-    JOIN documents d ON dc."documentId" = d.id
-    WHERE dc."searchVector" @@ plainto_tsquery('english', ${query})
-    ORDER BY rank DESC
-    LIMIT 10
-  `);
-
-  timings.bm25Search = Date.now() - bm25Start;
-
-  timings.total = Date.now() - startTime;
+  const { results, semantic, keyword, timingsMs } = await withRagErrors(() =>
+    retrieveRAGDetailed(query, { topK, skipRerank }),
+  );
 
   return {
     query,
@@ -117,32 +46,31 @@ export default defineEventHandler(async (event) => {
       chunkIndex: r.chunkIndex,
     })),
     pipeline: {
-      semanticResults: semanticRaw.rows.map((r, i) => ({
+      semanticResults: semantic.slice(0, 10).map((r, i) => ({
         rank: i + 1,
-        title: r.title,
-        url: r.url,
-        distance: parseFloat(r.distance).toFixed(4),
-        preview: r.preview,
+        title: r.documentTitle,
+        url: r.documentUrl,
+        distance: r.distance.toFixed(4),
+        preview: r.content.slice(0, PREVIEW_LENGTH),
       })),
-      bm25Results: bm25Raw.rows.map((r, i) => ({
+      bm25Results: keyword.slice(0, 10).map((r, i) => ({
         rank: i + 1,
-        title: r.title,
-        url: r.url,
-        score: parseFloat(r.rank).toFixed(4),
-        preview: r.preview,
+        title: r.documentTitle,
+        url: r.documentUrl,
+        score: r.rank.toFixed(4),
+        preview: r.content.slice(0, PREVIEW_LENGTH),
       })),
     },
     timings: {
-      embedding: `${timings.embedding}ms`,
-      semanticSearch: `${timings.semanticSearch}ms`,
-      bm25Search: `${timings.bm25Search}ms`,
-      retrieval: `${timings.retrieval}ms`,
-      total: `${timings.total}ms`,
+      semanticSearch: `${timingsMs.semantic}ms`,
+      bm25Search: `${timingsMs.keyword}ms`,
+      rerank: `${timingsMs.rerank}ms`,
+      total: `${timingsMs.total}ms`,
     },
     config: {
       topK,
       skipRerank,
-      embeddingDimensions: queryEmbedding.length,
+      embeddingDimensions: EMBEDDING_DIMENSIONS,
       semanticWeight: 0.7,
       bm25Weight: 0.3,
     },

@@ -1,0 +1,1 @@
+ALTER TABLE `document_chunks` ADD `embeddedAt` integer;
