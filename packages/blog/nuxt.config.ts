@@ -65,6 +65,22 @@ export default defineNuxtConfig({
   },
   css: ['~/assets/css/main.css'],
 
+  app: {
+    head: {
+      // Cloudflare Web Analytics. Zone auto-install does not reach Worker responses, so the
+      // beacon is added here, only in deploy builds so local and CI test runs are not counted.
+      script: process.env.NUXT_PUBLIC_SITE_URL?.endsWith('towles.dev')
+        ? [
+            {
+              src: 'https://static.cloudflareinsights.com/beacon.min.js',
+              defer: true,
+              'data-cf-beacon': '{"token": "748daf0cfdae467bbc98ff18c9678f37"}',
+            },
+          ]
+        : [],
+    },
+  },
+
   // Cloudflare Images transformations in production; originals as-is in dev. No IPX/sharp.
   image: {
     provider: process.env.NODE_ENV === 'production' ? 'cloudflare' : 'none',
