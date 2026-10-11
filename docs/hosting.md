@@ -102,17 +102,11 @@ Local dev reads `.env` (see `.env.example`). `wrangler dev --env dev` reads `pac
 
 ## Rollback
 
-During the 14-day soak the GCP stack keeps running and is the rollback target:
-
-1. Remove the Worker custom domain (dashboard: Workers > `towles-blog` > Settings > Domains, or remove the `routes` entry and redeploy).
-2. Re-create the CNAME `chris` -> `ghs.googlehosted.com` (DNS only, not proxied). Same for `stage-chris`, `sandbox`, `stage-sandbox`.
-3. Cloud Run domain mappings and Cloud SQL stay in place until decommission, so the old service answers again once DNS resolves.
-
-Writes made on Cloudflare during the soak do not flow back to Cloud SQL. For code-only regressions prefer `wrangler rollback` (previous Worker version) over a DNS rollback.
+`pnpm --filter @chris-towles/blog exec wrangler rollback` returns to the previous Worker version. GCP hosting was decommissioned on 2026-10-11, so there is no infrastructure to fail back to; the final Cloud SQL exports and GCS buckets are in the private R2 bucket `towles-blog-archive` (`gcp-final-2026-10-11.tar.gz`).
 
 ## Terraform
 
-DNS only: `infra/terraform-cloudflare`. It has no resources today because Wrangler owns the Worker custom-domain records. The GCP stacks (`infra/terraform/environments`, `infra/gcp-billing`) remain until decommission. Details: [infra/terraform/README.md](../infra/terraform/README.md).
+DNS only: `infra/terraform-cloudflare`. It has no resources today because Wrangler owns the Worker custom-domain records, so it keeps local state. Details: [infra/terraform-cloudflare/README.md](../infra/terraform-cloudflare/README.md).
 
 ## Analytics
 

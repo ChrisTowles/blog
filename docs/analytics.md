@@ -41,25 +41,20 @@ gtag: {
 
 The module is always enabled (default `true`) so it registers its runtime config and plugin at build time. Consent Mode v2 defaults all consent categories to `denied` — no cookies until the user opts in.
 
-**Important:** `NUXT_PUBLIC_GTAG_ID` must be set at **build time** (not just runtime) because Nuxt prerenderers bake runtime config into static HTML. The Dockerfile accepts it as a build arg, and both CI/CD and the deploy script pass it automatically.
+**Important:** `NUXT_PUBLIC_GTAG_ID` must be set at **build time** (not just runtime) because Nuxt prerenderers bake runtime config into static HTML.
 
 ### Per-environment wiring
 
-| Environment | Where the ID is set                                                      |
-| ----------- | ------------------------------------------------------------------------ |
-| Local       | `.env` → `NUXT_PUBLIC_GTAG_ID=G-57YWQXB9F0`                              |
-| Staging     | `staging.tfvars` → build script reads `gtag_id` → Docker `--build-arg`   |
-| Production  | `prod.tfvars` → CI/CD passes `--build-arg`, Terraform sets Cloud Run env |
+| Environment | Where the ID is set                                                |
+| ----------- | ------------------------------------------------------------------ |
+| Local       | `.env` → `NUXT_PUBLIC_GTAG_ID=G-57YWQXB9F0`                        |
+| Staging     | `vars` in `wrangler.jsonc` (`env.staging`) for SSR pages           |
+| Production  | `deploy.yml` build env, plus `vars` in `wrangler.jsonc` at runtime |
 
 The ID flows through two paths:
 
-1. **Build time** — Docker `ARG NUXT_PUBLIC_GTAG_ID` so prerendered pages include the gtag script
-2. **Runtime** — Terraform `additional_env_vars` on Cloud Run for SSR pages
-
-```hcl
-# infra/terraform/environments/main.tf
-additional_env_vars = { NUXT_PUBLIC_GTAG_ID = var.gtag_id }
-```
+1. **Build time** — the `Build` job in `deploy.yml` sets it so prerendered pages include the gtag script. CI builds once for both environments, so prerendered pages on staging carry the production ID.
+2. **Runtime** — the Worker's `vars` set it for SSR pages.
 
 ## Custom Events
 

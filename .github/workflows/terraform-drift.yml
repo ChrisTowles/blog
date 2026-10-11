@@ -3,7 +3,6 @@ name: Terraform Drift
 # Terraform is applied by hand, so a committed change can sit unapplied for months
 # (staging ran always-on CPU from April to September 2026 this way). This plans
 # every stack and keeps one open issue per stack while it differs from live.
-# The GCP stacks stay until the P4 decommission (docs/cloudflare-cutover.md).
 
 on:
   schedule:
@@ -12,8 +11,6 @@ on:
     branches:
       - main
     paths:
-      - 'infra/terraform/**'
-      - 'infra/gcp-billing/**'
       - 'infra/terraform-cloudflare/**'
   workflow_dispatch:
 
@@ -23,7 +20,6 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write
   issues: write
 
 jobs:
@@ -34,33 +30,8 @@ jobs:
       fail-fast: false
       matrix:
         stack:
-          - {
-              name: staging,
-              dir: infra/terraform/environments,
-              backend: staging.backend.tfvars,
-              vars: staging.tfvars,
-              wake_sql: blog-towles-staging,
-            }
-          - {
-              name: prod,
-              dir: infra/terraform/environments,
-              backend: prod.backend.tfvars,
-              vars: prod.tfvars,
-            }
-          - {
-              name: gcp-billing,
-              dir: infra/gcp-billing,
-              backend: backend.tfvars,
-              vars: terraform.tfvars,
-            }
-          - {
-              name: cloudflare,
-              dir: infra/terraform-cloudflare,
-              backend: backend.tfvars,
-              vars: terraform.tfvars,
-            }
+          - { name: cloudflare, dir: infra/terraform-cloudflare, vars: terraform.tfvars }
     env:
-      # Only the cloudflare stack declares this variable; the GCP stacks ignore it.
       TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       ISSUE_TITLE: 'Terraform drift: ${{ matrix.stack.name }}'
       GH_TOKEN: ${{ github.token }}
@@ -71,27 +42,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Authenticate to GCP
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
-          service_account: ${{ vars.GCP_PLAN_SERVICE_ACCOUNT }}
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.10.5
           terraform_wrapper: false
 
-      - name: Wake Cloud SQL
-        if: matrix.stack.wake_sql
-        run: ${{ github.workspace }}/infra/terraform/scripts/wake-sql.sh ${{ matrix.stack.wake_sql }}
-
       - name: Terraform init
-        run: terraform init -input=false -backend-config=${{ matrix.stack.backend }}
+        run: terraform init -input=false
 
       - name: Terraform plan
         id: plan

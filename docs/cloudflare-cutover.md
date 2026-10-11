@@ -123,23 +123,13 @@ Repeat the staging checklist against production: sign-in, chat, search, typing, 
 
 ## 8. Rollback
 
-Within the 14-day soak, GCP still serves the old stack:
+GCP was decommissioned in step 9, so there is no DNS rollback. For a bad Worker release, use `pnpm --filter @chris-towles/blog exec wrangler rollback`.
 
-1. Remove the Workers custom domain (dashboard or delete the `routes` entry and redeploy).
-2. Create the CNAME `ghs.googlehosted.com` (DNS only) for the hostname.
-3. Cloud Run answers again once DNS and its managed certificate resolve.
+## 9. Decommission (done 2026-10-11)
 
-Data written on Cloudflare after cutover stays in D1. For a bad Worker release alone, use `pnpm --filter @chris-towles/blog exec wrangler rollback` instead.
-
-## 9. Decommission (P4, after the 14-day soak)
-
-- [ ] Export a final Cloud SQL backup and a copy of the GCS media bucket to somewhere cold; confirm media exists in R2.
-- [ ] Apply or destroy the GCP stacks: `terraform destroy` for `infra/terraform/environments` (staging and prod), then delete the stack code (`infra/terraform/`).
-- [ ] Remove `infra/gcp-billing` (kill-switch, BigQuery export, billing budgets) and its drift matrix entry. The kill-switch may stay until the projects are deleted.
-- [ ] Delete GCP projects `blog-towles-staging` and `blog-towles-production` (30-day recovery window), and the Workload Identity pool with them.
-- [ ] Delete the `GCP_WIF_PROVIDER`, `GCP_WIF_SERVICE_ACCOUNT`, `GCP_PLAN_SERVICE_ACCOUNT` repo variables.
-- [ ] Remove the `gcp-billing`, `staging` and `prod` entries from `.github/workflows/terraform-drift.yml`, plus its GCP auth, Cloud SDK and Wake SQL steps.
-- [ ] Delete the AWS Bedrock IAM users and the stack in `infra/aws_cloudformation`; remove the AWS SDK dependency if still present.
-- [ ] Move Terraform state off GCS. The Cloudflare stack uses prefix `terraform/cloudflare` in `blog-towles-production-tfstate`, which dies with the project. Copy the state out first (`terraform state pull > cloudflare.tfstate`), then point the backend at an R2 bucket (S3-compatible) or a Terraform Cloud workspace, and run `terraform init -migrate-state`.
+- [x] Final Cloud SQL exports (both environments) and copies of the GCS media, MCP data and tfstate buckets are in the private R2 bucket `towles-blog-archive` as `gcp-final-2026-10-11.tar.gz`.
+- [x] Deleted by `gcloud` rather than `terraform destroy` (the staging state held a Cloudflare record its provider could no longer read): Cloud Run services and domain mappings, Cloud SQL, Cloud Functions, the staging scheduler, every bucket, Artifact Registry, Secret Manager secrets, HMAC keys, service accounts, the Workload Identity pool, the kill-switch Pub/Sub topic, the BigQuery billing export, the four blog budgets and the kill-switch's billing-account IAM binding.
+- [x] Billing unlinked from `blog-towles-production` and `blog-towles-staging`. The projects are not deleted: each owns the Google OAuth client its environment signs in with.
+- [x] Removed `infra/terraform/`, `infra/gcp-billing/`, the GCP drift jobs and the `GCP_*` repo variables. The Cloudflare stack moved to local state.
+- [ ] Delete the AWS Bedrock IAM users and the stack in `infra/aws_cloudformation`; nothing on Cloudflare calls Bedrock.
 - [ ] Delete the unused legacy `blog` / `blog-preview` Workers and D1 databases only after confirming nothing uses them.
-- [ ] Update CLAUDE.md and `infra/terraform/README.md` to drop the GCP sections.
