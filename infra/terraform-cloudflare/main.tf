@@ -7,11 +7,6 @@ terraform {
       version = "~> 5.0"
     }
   }
-
-  backend "gcs" {
-    prefix = "terraform/cloudflare"
-    # bucket set via -backend-config
-  }
 }
 
 provider "cloudflare" {

@@ -15,8 +15,6 @@ mcp/                # MCP Apps (SEP-1865) iframe host — separate Cloudflare Wo
 infra/              # infrastructure
     aws_cloudformation/ # AWS Bedrock and IAM
     terraform-cloudflare/ # Cloudflare DNS (no resources; wrangler owns Worker domains)
-    terraform/          # legacy GCP Cloud Run + Cloud SQL, deleted at decommission
-    gcp-billing/        # GCP spend-cap kill-switch + BigQuery export (separate stack)
 ```
 
 ## Hosting
@@ -24,7 +22,7 @@ infra/              # infrastructure
 - **Cloudflare Workers** — blog (`towles-blog`) and sandbox (`towles-sandbox`) Workers, D1, R2, Vectorize, Workers AI, AI Gateway, aviation Container. Config in `packages/blog/wrangler.jsonc` and `mcp/wrangler.jsonc`
 - **CI deploys automatically** on merge to `main` (staging, then production) — no manual deploy needed
 - Manual deploy (if needed): `pnpm cf:deploy` / `pnpm cf:deploy:staging` (needs Docker)
-- GCP is the rollback target during the soak only; see `docs/cloudflare-cutover.md`
+- GCP hosting was decommissioned 2026-10-11. `blog-towles-production` and `blog-towles-staging` remain as billing-free shells only because they own the Google OAuth clients for sign-in. Final Cloud SQL and GCS archive: R2 bucket `towles-blog-archive`
 
 ## Commands
 
@@ -125,19 +123,15 @@ So: don't run `pnpm typecheck` by hand with `pnpm dev` running. Stop the server 
 - `oxfmt --write` + `nuxt typecheck` run pre-commit and can modify working-tree files after `git commit`
 - `oxlint --fix` + `oxfmt --write` run via lint-staged on staged JS/TS/MD files. They reformat markdown tables, emphasis (`*x*` → `_x_`), and string quotes. Expect a follow-up commit to reach formatter fixed-point after edits to docs.
 - Shell quoting: paths with `[param]` (Nitro routes) need quotes or `--` in git/bash commands — `git add -- 'path/[id].ts'`
-- Use conventional commits with scopes: `feat(scope):`, `fix(scope):`, `style(scope):`, `chore(scope):`. Match existing scopes from `git log` (e.g., `gcp-billing`, `og-image`, `workflows`, `terraform`).
+- Use conventional commits with scopes: `feat(scope):`, `fix(scope):`, `style(scope):`, `chore(scope):`. Match existing scopes from `git log` (e.g., `cloudflare`, `og-image`, `workflows`, `terraform`).
 
 ## References
 
 - [Hosting](docs/hosting.md)
 - [Cloudflare cutover runbook](docs/cloudflare-cutover.md)
-- [Terraform Details (legacy GCP)](infra/terraform/README.md)
 - [Cloudflare DNS stack](infra/terraform-cloudflare/README.md)
-- [GCP Spend-Cap Kill-Switch](infra/gcp-billing/README.md)
 
 ## Terraform
 
-- Terraform state lives in GCS bucket `blog-towles-production-tfstate`, keyed per stack via `prefix` (e.g., `terraform/state` for legacy GCP hosting, `terraform/gcp-billing` for the kill-switch, `terraform/cloudflare` for DNS; all move off GCS at decommission). Staging hosting is the exception: `blog-towles-staging-tfstate`. New stacks should pick a new unique prefix rather than creating another bucket.
-- Terraform is applied by hand; merging does not apply it. `terraform-drift.yml` opens an `infra-drift` issue per stack whose plan is not empty. A new stack must be added to its matrix, and the `terraform-plan` SA needs read access to it.
-- Staging Cloud SQL is stopped nightly. A plan against it errors and silently skips the Cloud Run service, so run `infra/terraform/scripts/wake-sql.sh blog-towles-staging` before planning staging (legacy stack, removed at decommission).
-- Cloud Function source convention: upload zips to `${project_id}-functions` GCS bucket (each stack creates its own objects keyed by content hash). See `infra/terraform/modules/cost-scheduler/` and `infra/gcp-billing/pubsub_function.tf` for examples.
+- The only stack is `infra/terraform-cloudflare` (DNS, no managed resources, local state). Add a remote backend before adding the first resource.
+- Terraform is applied by hand; merging does not apply it. `terraform-drift.yml` opens an `infra-drift` issue per stack whose plan is not empty. A new stack must be added to its matrix.
