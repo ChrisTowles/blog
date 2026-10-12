@@ -95,18 +95,48 @@ function onKeydown(e: KeyboardEvent) {
   }
 }
 
+/**
+ * Four-tier tile hierarchy so a kid can plan ahead, not just react:
+ * done (green) -> current (amber, bobbing) -> on-deck (the next few keys,
+ * noticeably brighter) -> far future (dimmed). The brightness gradient
+ * pulls the eye to what's coming next instead of a flat wall of grey.
+ */
+const LOOKAHEAD = 3;
+
 function tileClass(idx: number) {
-  if (idx < engine.cursor.value) {
+  const cursor = engine.cursor.value;
+
+  if (idx < cursor) {
     return 'bg-emerald-300 text-emerald-950 dark:bg-emerald-500 dark:text-emerald-50';
   }
 
-  if (idx === engine.cursor.value) {
+  if (idx === cursor) {
     return wrongFlash.value
       ? 'bg-rose-400 text-white ring-4 ring-rose-500 animate-pulse'
       : 'bg-amber-300 text-amber-950 ring-4 ring-amber-400 dark:bg-amber-400 dark:text-amber-950 tile-current';
   }
 
-  return 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400';
+  if (idx <= cursor + LOOKAHEAD) {
+    return 'bg-slate-300 text-slate-800 dark:bg-slate-600 dark:text-slate-100';
+  }
+
+  return 'bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-500';
+}
+
+/**
+ * The word being typed right now gets a soft amber ring so the kid sees
+ * which cluster of letters they're working through. Every word group
+ * carries the same padding so toggling the ring never shifts layout.
+ */
+function wordClass(token: Extract<LessonToken, { type: 'word' }>) {
+  const cursor = engine.cursor.value;
+  const first = token.chars[0]?.idx ?? -1;
+  const last = token.chars[token.chars.length - 1]?.idx ?? -1;
+  const active = cursor >= first && cursor <= last;
+
+  return active
+    ? 'ring-2 ring-amber-400/70 bg-amber-100/60 dark:bg-amber-400/10 dark:ring-amber-400/50'
+    : '';
 }
 
 const wpmRounded = computed(() => Math.round(engine.wpm.value));
@@ -119,7 +149,31 @@ const progressPct = computed(() => {
   return Math.min(100, Math.round((engine.cursor.value / props.text.length) * 100));
 });
 
-const lessonChars = computed(() => Array.from(props.text));
+// Lesson text grouped into word/space tokens so the tile row wraps at word
+// boundaries (never mid-word) and spaces render as a wide spacebar-shaped
+// tile — the old '␣' glyph read as a lowercase "u" and kids typed the next
+// letter while the engine waited for a space.
+type LessonToken =
+  | { type: 'word'; chars: Array<{ ch: string; idx: number }> }
+  | { type: 'space'; idx: number };
+
+const lessonTokens = computed<LessonToken[]>(() => {
+  const tokens: LessonToken[] = [];
+  let current: Array<{ ch: string; idx: number }> = [];
+  Array.from(props.text).forEach((ch, idx) => {
+    if (ch === ' ') {
+      if (current.length > 0) tokens.push({ type: 'word', chars: current });
+      current = [];
+      tokens.push({ type: 'space', idx });
+    } else {
+      current.push({ ch, idx });
+    }
+  });
+
+  if (current.length > 0) tokens.push({ type: 'word', chars: current });
+
+  return tokens;
+});
 
 const hasSpace = computed(() => props.text.includes(' '));
 
@@ -163,20 +217,30 @@ const rocketMood = computed<'idle' | 'happy' | 'oops' | 'launch'>(() => {
       </div>
     </header>
 
-    <div class="grid gap-6 lg:grid-cols-5 lg:items-start">
-      <!-- LEFT: what to press -->
-      <div class="lg:col-span-2">
+    <div class="grid gap-6 lg:grid-cols-2 lg:items-stretch">
+      <!-- LEFT: what to press (spotlight) and where it lives (keyboard),
+           stacked so the whole column height is teaching surface instead
+           of dead space under the spotlight. -->
+      <div class="flex flex-col gap-4">
         <TypingNextLetterSpotlight
           v-if="hint && engine.state.value !== 'done'"
+          class="flex-1 justify-center"
           :hint="hint"
           :wrong-flash="wrongFlash"
           :press-tick="pressTick"
           :tier-up="tierUp"
         />
+        <div v-if="hint">
+          <span :data-testid="TEST_IDS.TYPING.NEXT_KEY_HIGHLIGHT" class="sr-only">
+            Next key: {{ hint.nextKey === ' ' ? 'space' : hint.nextKey }} ({{ hint.hand }}
+            {{ hint.finger }})
+          </span>
+          <TypingVirtualKeyboard :hint="hint" />
+        </div>
       </div>
 
       <!-- RIGHT: where you are + how you're doing -->
-      <div class="lg:col-span-3">
+      <div>
         <div class="flex gap-4">
           <div class="flex flex-1 flex-col gap-3">
             <!-- Stats chip strip -->
@@ -203,33 +267,53 @@ const rocketMood = computed<'idle' | 'happy' | 'oops' | 'launch'>(() => {
               </span>
             </div>
 
-            <!-- Space-glyph legend, only when a lesson contains spaces. -->
+            <!-- Spacebar-tile legend, only when a lesson contains spaces. -->
             <div
               v-if="hasSpace"
               class="flex items-center justify-end gap-2 text-sm text-slate-600 dark:text-slate-300"
             >
               <span
-                class="flex h-7 w-9 items-center justify-center rounded-md bg-slate-200 font-mono text-base font-bold dark:bg-slate-700"
-                >␣</span
+                class="flex h-7 w-12 items-center justify-center rounded-md bg-slate-200 dark:bg-slate-700"
               >
+                <span class="h-1 w-7 rounded-full bg-slate-500 dark:bg-slate-300"></span>
+              </span>
               <span>means <strong>space bar</strong></span>
             </div>
 
-            <!-- Lesson rendered as chunky tiles. -->
+            <!-- Lesson rendered as chunky tiles, grouped so words never
+                 break across lines and spaces look like a mini spacebar. -->
             <div
               :data-testid="TEST_IDS.TYPING.LESSON_TEXT"
-              class="flex flex-wrap gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/50"
+              class="flex flex-wrap items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/50"
             >
-              <span
-                v-for="(ch, idx) in lessonChars"
-                :key="idx"
-                :class="[
-                  'flex h-10 min-w-[2.25rem] select-none items-center justify-center rounded-md font-mono text-xl font-bold transition-colors',
-                  tileClass(idx),
-                ]"
-              >
-                {{ ch === ' ' ? '␣' : ch }}
-              </span>
+              <template v-for="(token, tIdx) in lessonTokens" :key="tIdx">
+                <span
+                  v-if="token.type === 'word'"
+                  :class="['flex gap-1.5 rounded-lg p-0.5 transition-all', wordClass(token)]"
+                >
+                  <span
+                    v-for="{ ch, idx } in token.chars"
+                    :key="idx"
+                    :data-char="ch"
+                    :class="[
+                      'flex h-10 min-w-[2.25rem] select-none items-center justify-center rounded-md font-mono text-xl font-bold transition-colors',
+                      tileClass(idx),
+                    ]"
+                  >
+                    {{ ch }}
+                  </span>
+                </span>
+                <span
+                  v-else
+                  data-char=" "
+                  :class="[
+                    'flex h-10 w-12 select-none items-center justify-center rounded-md transition-colors',
+                    tileClass(token.idx),
+                  ]"
+                >
+                  <span class="h-1.5 w-7 rounded-full bg-current opacity-60"></span>
+                </span>
+              </template>
             </div>
           </div>
 
@@ -252,14 +336,6 @@ const rocketMood = computed<'idle' | 'happy' | 'oops' | 'launch'>(() => {
       spellcheck="false"
       @keydown="onKeydown"
     />
-
-    <div v-if="hint" class="mt-6">
-      <span :data-testid="TEST_IDS.TYPING.NEXT_KEY_HIGHLIGHT" class="sr-only">
-        Next key: {{ hint.nextKey === ' ' ? 'space' : hint.nextKey }} ({{ hint.hand }}
-        {{ hint.finger }})
-      </span>
-      <TypingVirtualKeyboard :hint="hint" />
-    </div>
 
     <!-- Lesson cleared celebration: confetti shower over the whole card -->
     <div

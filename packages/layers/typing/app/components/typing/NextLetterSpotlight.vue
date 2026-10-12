@@ -40,12 +40,18 @@ defineProps<{
     <div
       :key="pressTick ?? 0"
       :class="[
-        'letter-tile relative flex h-32 w-32 items-center justify-center rounded-2xl font-mono text-7xl font-extrabold uppercase shadow-md',
+        'letter-tile relative flex h-32 w-32 items-center justify-center rounded-2xl font-mono text-7xl font-extrabold uppercase shadow-md lg:h-44 lg:w-44 lg:text-8xl',
         FINGER_BG_SOFT[hint.finger],
         wrongFlash ? 'scale-105 ring-4 ring-rose-500' : 'ring-4 ring-amber-400 dark:ring-amber-500',
       ]"
     >
-      {{ hint.nextKey === ' ' ? '␣' : hint.nextKey }}
+      <!-- Spaces render as a spacebar-shaped bar — the '␣' glyph reads as
+           a lowercase "u" and sends kids hunting for a u key. -->
+      <span
+        v-if="hint.nextKey === ' '"
+        class="h-4 w-24 rounded-full bg-current opacity-70 lg:h-5 lg:w-32"
+      ></span>
+      <template v-else>{{ hint.nextKey }}</template>
       <span
         v-if="!wrongFlash && (pressTick ?? 0) > 0"
         :key="`plus-${pressTick}`"
@@ -56,7 +62,7 @@ defineProps<{
       </span>
     </div>
     <div class="text-base font-semibold text-slate-800 dark:text-slate-200">
-      <template v-if="hint.nextKey === ' '">␣ = space</template>
+      <template v-if="hint.nextKey === ' '">the long bar — use your thumb</template>
       <template v-else>
         {{ hint.hand === 'left' ? 'Left' : 'Right' }} {{ FINGER_LABEL[hint.finger] }}
       </template>

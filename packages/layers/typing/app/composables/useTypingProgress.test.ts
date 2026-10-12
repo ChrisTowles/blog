@@ -1,6 +1,7 @@
 // @vitest-environment nuxt
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { effectScope } from 'vue';
+import type { RecordAttemptInput } from './useTypingProgress';
 
 const TYPING_BESTS_LOCAL_STORAGE_KEY = 'typing:bests:v1';
 
@@ -201,6 +202,111 @@ describe('useTypingProgress.recordLessonBest', () => {
     );
 
     expect(bestsReads.length).toBe(1);
+    scope.stop();
+  });
+});
+
+describe('useTypingProgress.recordAttempt mastery gate', () => {
+  beforeEach(() => {
+    installLocalStorage();
+  });
+
+  function passingAttempt(slug: string, overrides: Partial<RecordAttemptInput> = {}) {
+    return {
+      lessonId: null,
+      gameSlug: null,
+      lesson: { slug, stage: 1, kind: 'drill' as const, textLength: 80 },
+      wpm: 30,
+      netWpm: 30,
+      accuracy: 1,
+      durationMs: 60_000,
+      errorsByKey: {},
+      completedAt: '2026-06-12T00:00:00Z',
+      ...overrides,
+    };
+  }
+
+  it('advances only after passing two DISTINCT lessons at the current stage', async () => {
+    const useFresh = await loadFreshComposable();
+    const scope = effectScope();
+
+    const out = scope.run(() => {
+      const { recordAttempt, progress } = useFresh();
+      const first = recordAttempt(passingAttempt('stage-1-drill'));
+      const repeat = recordAttempt(passingAttempt('stage-1-drill'));
+      const second = recordAttempt(passingAttempt('stage-1-words'));
+
+      return { first, repeat, second, stage: progress.value.currentStage };
+    })!;
+
+    expect(out.first.stageAdvanced).toBe(false);
+    expect(out.repeat.stageAdvanced).toBe(false);
+    expect(out.second.stageAdvanced).toBe(true);
+    expect(out.second.previousStage).toBe(1);
+    expect(out.second.currentStage).toBe(2);
+    expect(out.stage).toBe(2);
+    scope.stop();
+  });
+
+  it('keeps stored passes across a reload', async () => {
+    const useBefore = await loadFreshComposable();
+    const first = effectScope();
+    first.run(() => {
+      useBefore().recordAttempt(passingAttempt('stage-1-drill'));
+    });
+    first.stop();
+
+    const useFresh = await loadFreshComposable();
+    const second = effectScope();
+    const out = second.run(() => useFresh().recordAttempt(passingAttempt('stage-1-words')))!;
+
+    expect(out.stageAdvanced).toBe(true);
+    second.stop();
+  });
+
+  it('never advances from failing attempts, short texts, or game attempts', async () => {
+    const useFresh = await loadFreshComposable();
+    const scope = effectScope();
+
+    const out = scope.run(() => {
+      const { recordAttempt, progress } = useFresh();
+      recordAttempt(passingAttempt('stage-1-drill', { accuracy: 0.9 }));
+      recordAttempt(passingAttempt('stage-1-words', { netWpm: 2 }));
+      recordAttempt(
+        passingAttempt('stage-1-bigram', {
+          lesson: { slug: 'stage-1-bigram', stage: 1, kind: 'bigram' as const, textLength: 20 },
+        }),
+      );
+      recordAttempt(passingAttempt('ignored', { gameSlug: 'letter-rain', lesson: undefined }));
+
+      return progress.value.currentStage;
+    })!;
+
+    expect(out).toBe(1);
+    scope.stop();
+  });
+
+  it('ignores passes on lessons from a different stage', async () => {
+    const useFresh = await loadFreshComposable();
+    const scope = effectScope();
+
+    const out = scope.run(() => {
+      const { recordAttempt, progress } = useFresh();
+      recordAttempt(
+        passingAttempt('stage-3-drill', {
+          lesson: { slug: 'stage-3-drill', stage: 3, kind: 'drill' as const, textLength: 80 },
+        }),
+      );
+      recordAttempt(
+        passingAttempt('stage-3-words', {
+          lesson: { slug: 'stage-3-words', stage: 3, kind: 'word' as const, textLength: 80 },
+        }),
+      );
+
+      return progress.value.currentStage;
+    })!;
+
+    expect(out).toBe(1);
     scope.stop();
   });
 });
