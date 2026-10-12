@@ -248,6 +248,22 @@ describe('useTypingProgress.recordAttempt mastery gate', () => {
     scope.stop();
   });
 
+  it('keeps stored passes across a reload', async () => {
+    const useBefore = await loadFreshComposable();
+    const first = effectScope();
+    first.run(() => {
+      useBefore().recordAttempt(passingAttempt('stage-1-drill'));
+    });
+    first.stop();
+
+    const useFresh = await loadFreshComposable();
+    const second = effectScope();
+    const out = second.run(() => useFresh().recordAttempt(passingAttempt('stage-1-words')))!;
+
+    expect(out.stageAdvanced).toBe(true);
+    second.stop();
+  });
+
   it('never advances from failing attempts, short texts, or game attempts', async () => {
     const useFresh = await loadFreshComposable();
     const scope = effectScope();

@@ -6,6 +6,7 @@
  */
 import { z } from 'zod';
 import {
+  LESSON_KINDS,
   MAX_STAGE,
   TYPING_PROGRESS_LOCAL_STORAGE_KEY,
   attemptPassesStageGate,
@@ -48,6 +49,15 @@ const localAttemptSchema = z.object({
     .string()
     .nullish()
     .transform((v) => v ?? null),
+  // Without this the stage gate loses every stored pass on reload: zod strips unknown keys.
+  lesson: z
+    .object({
+      slug: z.string(),
+      stage: z.number(),
+      kind: z.enum(LESSON_KINDS),
+      textLength: z.number(),
+    })
+    .optional(),
   wpm: z.number(),
   netWpm: z.number(),
   accuracy: z.number(),

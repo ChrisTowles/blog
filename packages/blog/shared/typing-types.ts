@@ -38,20 +38,23 @@ export type Learner = {
   updatedAt: string;
 };
 
-export type LessonKind =
-  | 'drill'
-  | 'bigram'
-  | 'word'
-  | 'sentence'
-  | 'paragraph'
-  | 'topic'
-  | 'spelling-drill'
-  | 'spelling-sentence'
+export const LESSON_KINDS = [
+  'drill',
+  'bigram',
+  'word',
+  'sentence',
+  'paragraph',
+  'topic',
+  'spelling-drill',
+  'spelling-sentence',
   // Mixed practice over every key learned so far, so a kid blends prior keys
   // rather than always drilling the newest two in isolation.
-  | 'accumulation'
+  'accumulation',
   // Row-boundary passage gating the move into the next row (5 → 6, 10 → 11).
-  | 'consolidation';
+  'consolidation',
+] as const;
+
+export type LessonKind = (typeof LESSON_KINDS)[number];
 
 export type LessonRow = {
   id: number;
