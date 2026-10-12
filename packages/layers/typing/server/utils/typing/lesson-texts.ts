@@ -1,15 +1,7 @@
 /**
- * Procedural lesson-text generators for the typing curriculum.
- *
- * Every generator is a pure function of (stage definition, seed) so lesson
- * text is deterministic for a given seed but varies across seeds — a kid
- * retrying a lesson gets fresh text instead of memorizing one string. The
- * canonical curriculum (DB seed, lesson cards) uses seed 0.
- *
- * Hard rule, enforced by tests across many seeds: generated text for a
- * stage only uses that stage's cumulative unlocked character set (plus
- * uppercase letters from stage 16 on, when the capitals stage makes the
- * engine case-sensitive).
+ * Lesson-text generators, each a pure function of (stage, seed). Text for a stage may use
+ * only that stage's unlocked characters, plus uppercase from stage 16; tests enforce this
+ * across many seeds.
  */
 import type { StageDefinition } from '../../../../../blog/shared/typing-types';
 

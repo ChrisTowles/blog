@@ -1,14 +1,7 @@
 /**
- * Typing curriculum: 20-stage progression from home-row keys to full prose.
- *
- * Stage definitions describe which keys are introduced at that stage and
- * the cumulative unlocked set including all prior stages. Lesson texts are
- * procedurally generated (see lesson-texts.ts) from the unlocked set — a
- * seed of 0 yields the canonical curriculum (used for the DB seed and the
- * lesson cards), other seeds give a kid fresh text on retry.
- *
- * The seed endpoint upserts these lessons by `slug` so re-running is
- * idempotent.
+ * Typing curriculum: 20 stages from home-row keys to full prose. Each stage unlocks keys on
+ * top of every earlier stage's. Seed 0 is the canonical text (DB seed, lesson cards); other
+ * seeds give a kid fresh text on retry.
  */
 import {
   CONSOLIDATION_STAGES,
