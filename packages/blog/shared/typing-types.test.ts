@@ -117,12 +117,14 @@ describe('shouldAdvanceStage', () => {
       makeAttempt({ lesson: lessonCtx() }),
       makeAttempt({ lesson: lessonCtx() }),
     ];
+
     expect(shouldAdvanceStage(sameLessonTwice, 2)).toBe(false);
 
     const twoLessons = [
       makeAttempt({ lesson: lessonCtx() }),
       makeAttempt({ lesson: lessonCtx({ slug: 'stage-2-words', kind: 'word' }) }),
     ];
+
     expect(shouldAdvanceStage(twoLessons, 2)).toBe(true);
   });
 
@@ -132,6 +134,7 @@ describe('shouldAdvanceStage', () => {
       makeAttempt({ lesson: lessonCtx({ slug: 'stage-1-drill', stage: 1 }) }),
       makeAttempt({ lesson: lessonCtx({ slug: 'stage-2-words', kind: 'word' }) }),
     ];
+
     expect(shouldAdvanceStage(attempts, 2)).toBe(false);
   });
 
@@ -143,6 +146,7 @@ describe('shouldAdvanceStage', () => {
           lesson: lessonCtx({ slug: `stage-${stage}-words`, stage, kind: 'word' }),
         }),
       ];
+
       expect(shouldAdvanceStage(withoutConsolidation, stage), `stage ${stage}`).toBe(false);
 
       const withConsolidation = [
@@ -156,6 +160,7 @@ describe('shouldAdvanceStage', () => {
           }),
         }),
       ];
+
       expect(shouldAdvanceStage(withConsolidation, stage), `stage ${stage}`).toBe(true);
     }
   });

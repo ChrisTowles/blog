@@ -105,17 +105,21 @@ const LOOKAHEAD = 3;
 
 function tileClass(idx: number) {
   const cursor = engine.cursor.value;
+
   if (idx < cursor) {
     return 'bg-emerald-300 text-emerald-950 dark:bg-emerald-500 dark:text-emerald-50';
   }
+
   if (idx === cursor) {
     return wrongFlash.value
       ? 'bg-rose-400 text-white ring-4 ring-rose-500 animate-pulse'
       : 'bg-amber-300 text-amber-950 ring-4 ring-amber-400 dark:bg-amber-400 dark:text-amber-950 tile-current';
   }
+
   if (idx <= cursor + LOOKAHEAD) {
     return 'bg-slate-300 text-slate-800 dark:bg-slate-600 dark:text-slate-100';
   }
+
   return 'bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-500';
 }
 
@@ -129,6 +133,7 @@ function wordClass(token: Extract<LessonToken, { type: 'word' }>) {
   const first = token.chars[0]?.idx ?? -1;
   const last = token.chars[token.chars.length - 1]?.idx ?? -1;
   const active = cursor >= first && cursor <= last;
+
   return active
     ? 'ring-2 ring-amber-400/70 bg-amber-100/60 dark:bg-amber-400/10 dark:ring-amber-400/50'
     : '';
@@ -164,7 +169,9 @@ const lessonTokens = computed<LessonToken[]>(() => {
       current.push({ ch, idx });
     }
   });
+
   if (current.length > 0) tokens.push({ type: 'word', chars: current });
+
   return tokens;
 });
 

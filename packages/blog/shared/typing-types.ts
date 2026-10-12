@@ -196,9 +196,13 @@ export const CONSOLIDATION_STAGES: readonly number[] = [5, 10, 15, 20];
  */
 export function attemptPassesStageGate(attempt: LocalAttempt, stage: number): boolean {
   const ctx = attempt.lesson;
+
   if (!ctx || attempt.gameSlug !== null) return false;
+
   if (ctx.stage !== stage) return false;
+
   if (ctx.textLength < MIN_GATE_ATTEMPT_CHARS) return false;
+
   return attempt.accuracy >= STAGE_TARGET_ACCURACY && attempt.netWpm >= stageTargetWpm(stage);
 }
 
@@ -216,10 +220,13 @@ export function stagePassingAttempts(attempts: LocalAttempt[], stage: number): L
 export function shouldAdvanceStage(attempts: LocalAttempt[], stage: number): boolean {
   const passes = stagePassingAttempts(attempts, stage);
   const distinctLessons = new Set(passes.map((a) => a.lesson?.slug));
+
   if (distinctLessons.size < STAGE_PASSES_TO_ADVANCE) return false;
+
   if (CONSOLIDATION_STAGES.includes(stage)) {
     return passes.some((a) => a.lesson?.kind === 'consolidation');
   }
+
   return true;
 }
 

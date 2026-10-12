@@ -39,6 +39,7 @@ async function submit() {
     const trickyKeys = pickTrickyKeys(progress.value.keyStats, unlockedKeysForStage(stage.value))
       .map((k) => k.key)
       .filter((k) => /^[a-z]$/.test(k));
+
     const result = await $fetch<{ lesson: LessonRow }>('/api/typing/lessons/generate', {
       method: 'POST',
       body: {

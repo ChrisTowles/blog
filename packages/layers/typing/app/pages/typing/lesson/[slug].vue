@@ -20,14 +20,18 @@ const router = useRouter();
 const slug = computed(() => String(route.params.slug ?? ''));
 
 const allLessons = getBuiltInLessons();
+
 // Seed 0 = canonical text (SSR-stable). "Try again" re-rolls the seed so a
 // retry gets fresh text for the same lesson — practicing the keys, not the
 // memorized string.
 const textSeed = ref(0);
+
 const lessonsForSeed = computed(() =>
   textSeed.value === 0 ? allLessons : getBuiltInLessons(textSeed.value),
 );
+
 const lesson = computed(() => lessonsForSeed.value.find((l) => l.slug === slug.value));
+
 const nextLesson = computed(() => {
   const idx = allLessons.findIndex((l) => l.slug === slug.value);
 
@@ -49,11 +53,13 @@ useHead(() => ({
 }));
 
 const { progress, recordAttempt, recordLessonBest } = useTypingProgress();
+
 const toast = useToast();
 
 const isNewBest = ref(false);
 
 const previousBest = ref<{ wpm: number; accuracy: number } | null>(null);
+
 const stageJustAdvanced = ref(false);
 
 // Gate progress for the learner's CURRENT stage — how many distinct lessons
@@ -61,12 +67,15 @@ const stageJustAdvanced = ref(false);
 // still stands between them and the next stage.
 const gateStatus = computed(() => {
   const l = lesson.value;
+
   if (!l || l.stage !== progress.value.currentStage) return null;
   const passes = stagePassingAttempts(progress.value.attempts, l.stage);
   const distinct = new Set(passes.map((a) => a.lesson?.slug)).size;
+
   const needsConsolidation =
     CONSOLIDATION_STAGES.includes(l.stage) &&
     !passes.some((a) => a.lesson?.kind === 'consolidation');
+
   return { distinct, needsConsolidation };
 });
 
@@ -167,6 +176,7 @@ function onComplete(result: LessonCompleteResult) {
   // the per-slug PR shown above. Games have no per-slug PR table, so
   // topics.vue and game/[slug].vue only call recordAttempt.
   const l = lesson.value;
+
   const outcome = recordAttempt({
     lessonId: null,
     gameSlug: null,
@@ -180,7 +190,9 @@ function onComplete(result: LessonCompleteResult) {
     errorsByKey: result.errorsByKey,
     completedAt: new Date().toISOString(),
   });
+
   stageJustAdvanced.value = outcome.stageAdvanced;
+
   if (outcome.stageAdvanced) {
     toast.add({
       title: `Stage ${outcome.currentStage} unlocked! 🎉`,

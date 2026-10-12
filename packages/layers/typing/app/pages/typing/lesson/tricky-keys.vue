@@ -33,14 +33,19 @@ useHead({
 });
 
 const router = useRouter();
+
 const { progress, recordAttempt, recordLessonBest } = useTypingProgress();
+
 const toast = useToast();
 
 const currentStage = computed(() => progress.value.currentStage);
+
 const unlocked = computed(() => unlockedKeysForStage(currentStage.value));
+
 const trickyKeys = computed(() => pickTrickyKeys(progress.value.keyStats, unlocked.value));
 
 const textSeed = ref(1);
+
 onMounted(() => {
   textSeed.value = 1 + Math.floor(Math.random() * 2_000_000_000);
 });
@@ -54,12 +59,15 @@ const text = computed(() =>
 );
 
 const targetWpm = computed(() => stageTargetWpm(currentStage.value));
+
 const runnerKey = ref(0);
+
 const lastResult = ref<LessonCompleteResult | null>(null);
 
 function onComplete(result: LessonCompleteResult) {
   if (result.cancelled) return;
   lastResult.value = result;
+
   const outcome = recordAttempt({
     lessonId: null,
     gameSlug: null,
@@ -76,6 +84,7 @@ function onComplete(result: LessonCompleteResult) {
     errorsByKey: result.errorsByKey,
     completedAt: new Date().toISOString(),
   });
+
   if (outcome.stageAdvanced) {
     toast.add({
       title: `Stage ${outcome.currentStage} unlocked! 🎉`,
@@ -85,6 +94,7 @@ function onComplete(result: LessonCompleteResult) {
       duration: 6000,
     });
   }
+
   recordLessonBest('tricky-keys', {
     wpm: result.wpm,
     accuracy: result.accuracy,

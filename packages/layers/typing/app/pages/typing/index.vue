@@ -39,6 +39,7 @@ const { progress, getLessonBest } = useTypingProgress();
 // passed out of STAGE_PASSES_TO_ADVANCE.
 const gatePassCount = computed(() => {
   const passes = stagePassingAttempts(progress.value.attempts, progress.value.currentStage);
+
   return Math.min(new Set(passes.map((a) => a.lesson?.slug)).size, STAGE_PASSES_TO_ADVANCE);
 });
 

@@ -27,6 +27,7 @@ function onGenerated(result: LessonRow) {
 
 function onComplete(result: LessonCompleteResult) {
   const l = lesson.value;
+
   const outcome = recordAttempt({
     lessonId: l?.id ?? null,
     gameSlug: null,
