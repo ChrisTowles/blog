@@ -259,5 +259,6 @@ html, body { margin: 0; height: 100%; background: #000; color: var(--text); over
 .stage[data-song="02-never-again"] .endcard .by { font: italic 400 46px var(--display); color: var(--gold); letter-spacing: .04em; text-shadow: none; text-transform: none; }
 .stage[data-song="02-never-again"] #caption { z-index: 2; }
 
+
 :root { color-scheme: dark; }
 body { background: #000; color: var(--text); }
