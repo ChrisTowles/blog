@@ -35,6 +35,7 @@
     "dist",
     "*.d.ts",
     "packages/blog/public/demos",
+    "packages/blog/public/i-cant-clap",
     ".agent/**",
     ".agents/**",
     ".claude/**",
