@@ -75,6 +75,9 @@ html, body { margin: 0; height: 100%; background: #000; color: var(--text); over
 .pl-chips button { padding: 3px 9px; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; }
 .player button { font: inherit; color: inherit; background: #1a1f2c; border: 1px solid #2c3344; border-radius: 8px; padding: 6px 12px; cursor: pointer; }
 .player input { flex: 1; accent-color: var(--hot); }
+.player input.pl-vol { flex: 0 0 90px; min-width: 0; }
+.player .pl-mute { padding: 6px 8px; }
+.player.slim .pl-vol { flex-basis: 60px; }
 
 /* full-song panels */
 .ov.chip.rel { left: 96px; top: 120px; color: var(--ice); }
