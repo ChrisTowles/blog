@@ -72,6 +72,7 @@ useSeoMeta({
           :description="item.description"
           :icon="item.icon"
           :to="item.to"
+          :external="item.staticPage"
           spotlight
         >
           <template #footer>

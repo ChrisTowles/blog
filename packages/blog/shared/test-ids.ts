@@ -61,6 +61,7 @@ export const TEST_IDS = {
     EXPERIMENT_TYPING: 'home-experiment-typing',
     EXPERIMENT_WORKFLOWS: 'home-experiment-workflows',
     EXPERIMENT_POKER: 'home-experiment-poker',
+    EXPERIMENT_I_CANT_CLAP: 'home-experiment-i-cant-clap',
     EXPERIMENT_APPS: 'home-experiment-apps',
     EXPERIMENT_LANGUAGE: 'home-experiment-language',
   },
