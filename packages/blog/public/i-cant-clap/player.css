@@ -263,5 +263,76 @@ html, body { margin: 0; height: 100%; background: #000; color: var(--text); over
 .stage[data-song="02-never-again"] #caption { z-index: 2; }
 
 
+/* You're Absolutely Right!: green-on-black terminal panels (#scenes, from video/27-youre-absolutely-right/scenes.ts) */
+.stage[data-song="27-youre-absolutely-right"] { --bg: #070a10; --hot: #ff4d5e; --ice: #4dff8a; --gold: #ff6fae; --muted: #7d8794; }
+.stage[data-song="27-youre-absolutely-right"] #scenes { --panel: rgba(12, 17, 25, .9); --line: #233042; --text: #e8edf4; --muted: #7d8794; --green: #4dff8a; --green-dim: #2fbf63; --red: #ff4d5e; --coral: #ff7a59; --pink: #ff6fae; --gold: #f2c14e; --marker: "Permanent Marker", cursive; color: var(--text); }
+.stage[data-song="27-youre-absolutely-right"] #scenes .fx { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+.stage[data-song="27-youre-absolutely-right"] #flash { background: #ff2035; }
+.stage[data-song="27-youre-absolutely-right"] .hud b { color: #4dff8a; font-weight: 600; }
+.stage[data-song="27-youre-absolutely-right"] .hud b.r, .stage[data-song="27-youre-absolutely-right"] .hud .r { color: #ff4d5e; }
+.stage[data-song="27-youre-absolutely-right"] .progress i { background: #4dff8a; box-shadow: 0 0 12px #4dff8a; }
+.stage[data-song="27-youre-absolutely-right"] .cap { left: 110px; bottom: 150px; width: 860px; font: 800 80px/1.04 var(--sans); text-transform: none; letter-spacing: -.025em; color: #e8edf4; text-shadow: 0 6px 40px rgba(0, 0, 0, .7); }
+.stage[data-song="27-youre-absolutely-right"] .cap .hot { text-shadow: 0 0 28px rgba(255, 77, 94, .55); }
+.stage[data-song="27-youre-absolutely-right"] .cap .ice { text-shadow: 0 0 28px rgba(77, 255, 138, .55); }
+.stage[data-song="27-youre-absolutely-right"] .cap .gold { text-shadow: 0 0 28px rgba(255, 111, 174, .55); }
+.stage[data-song="27-youre-absolutely-right"] .cap .backing { font-weight: 600; color: #4dff8a; }
+.stage[data-song="27-youre-absolutely-right"] #caption[data-pos="intro"] .cap { width: 1100px; bottom: 200px; }
+.stage[data-song="27-youre-absolutely-right"] #caption[data-pos="center"] .cap, .stage[data-song="27-youre-absolutely-right"] #caption[data-pos="low"] .cap { left: 160px; right: auto; width: 1600px; padding: 0; text-align: center; bottom: 130px; }
+.stage[data-song="27-youre-absolutely-right"] #caption[data-pos="none"] { display: none; }
+.stage[data-song="27-youre-absolutely-right"] #scenes .scene { position: absolute; inset: 0; opacity: 0; }
+.stage[data-song="27-youre-absolutely-right"] #scenes .panel { position: absolute; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 40px 100px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.02) inset; font: 400 20px/1.55 var(--mono); color: #c9d4e0; overflow: hidden; }
+.stage[data-song="27-youre-absolutely-right"] #scenes .panel .bar { display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--line); font-size: 15px; color: var(--muted); letter-spacing: 0.04em; }
+.stage[data-song="27-youre-absolutely-right"] #scenes .dots { display: inline-flex; gap: 7px; margin-right: 8px; }
+.stage[data-song="27-youre-absolutely-right"] #scenes .dots i { width: 12px; height: 12px; border-radius: 50%; background: #2a3442; display: block; }
+.stage[data-song="27-youre-absolutely-right"] #scenes .panel .body { padding: 20px 26px; }
+.stage[data-song="27-youre-absolutely-right"] #scenes .muted { color: var(--muted); }
+.stage[data-song="27-youre-absolutely-right"] #scenes .green { color: var(--green); }
+.stage[data-song="27-youre-absolutely-right"] #scenes .red { color: var(--red); }
+.stage[data-song="27-youre-absolutely-right"] #scenes .coral { color: var(--coral); }
+.stage[data-song="27-youre-absolutely-right"] #scenes .pink { color: var(--pink); }
+.stage[data-song="27-youre-absolutely-right"] #scenes .gold { color: var(--gold); }
+.stage[data-song="27-youre-absolutely-right"] #scenes .white { color: var(--text); }
+.stage[data-song="27-youre-absolutely-right"] #scenes .pill { display: inline-block; padding: 2px 12px; border-radius: 999px; font: 700 14px var(--mono); letter-spacing: 0.06em; }
+.stage[data-song="27-youre-absolutely-right"] #scenes .pill.g { background: rgba(77, 255, 138, 0.14); color: var(--green); border: 1px solid rgba(77, 255, 138, 0.4); }
+.stage[data-song="27-youre-absolutely-right"] #scenes .pill.r { background: rgba(255, 77, 94, 0.14); color: var(--red); border: 1px solid rgba(255, 77, 94, 0.4); }
+.stage[data-song="27-youre-absolutely-right"] #scenes .btn { display: inline-block; padding: 10px 34px; border-radius: 8px; background: var(--green); color: #04130a; font: 700 18px var(--sans); box-shadow: 0 0 30px rgba(77, 255, 138, 0.45); }
+.stage[data-song="27-youre-absolutely-right"] #scenes .row { white-space: pre; overflow: hidden; }
+.stage[data-song="27-youre-absolutely-right"] #scenes .struck { text-decoration: line-through; text-decoration-color: var(--red); text-decoration-thickness: 3px; opacity: 0.55; }
+.stage[data-song="27-youre-absolutely-right"] #scenes .marker { position: absolute; font: 400 52px var(--marker); color: var(--red); white-space: nowrap; text-shadow: 0 0 20px rgba(255, 77, 94, 0.35); }
+.stage[data-song="27-youre-absolutely-right"] #scenes .marker svg { position: absolute; overflow: visible; }
+.stage[data-song="27-youre-absolutely-right"] #scenes .cursor { display: inline-block; width: 0.55em; height: 1.1em; background: var(--green); vertical-align: -0.2em; }
+.stage[data-song="27-youre-absolutely-right"] #scenes .bubble { position: absolute; background: rgba(8, 22, 14, 0.92); border: 3px solid var(--green); border-radius: 22px; padding: 26px 40px; font: 800 64px/1.1 var(--sans); color: var(--text); text-align: center; box-shadow: 0 0 40px rgba(77, 255, 138, 0.35), inset 0 0 30px rgba(77, 255, 138, 0.08); }
+.stage[data-song="27-youre-absolutely-right"] #scenes .bubble::after { content: ""; position: absolute; left: 50%; bottom: -30px; width: 40px; height: 40px; background: inherit; border-right: 3px solid var(--green); border-bottom: 3px solid var(--green); transform: translateX(-50%) rotate(45deg) scaleY(0.9); }
+.stage[data-song="27-youre-absolutely-right"] #scenes .bubble .strike { position: relative; color: var(--green); }
+.stage[data-song="27-youre-absolutely-right"] #scenes .bubble .strike::after { content: ""; position: absolute; left: -4%; top: 52%; height: 8px; width: var(--strike, 0%); background: var(--red); border-radius: 4px; box-shadow: 0 0 14px var(--red); }
+.stage[data-song="27-youre-absolutely-right"] #scenes .badge { position: absolute; font: 600 15px var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.stage[data-song="27-youre-absolutely-right"] #scenes .badge b { display: block; color: var(--red); font-size: 13px; }
+.stage[data-song="27-youre-absolutely-right"] #scenes .big-num { font: 800 120px/1 var(--sans); letter-spacing: -0.03em; }
+.stage[data-song="27-youre-absolutely-right"] #scenes .stamp { position: absolute; font: 900 120px/1 var(--sans); color: var(--red); border: 10px solid var(--red); padding: 10px 40px; border-radius: 18px; text-shadow: 0 0 30px rgba(255, 77, 94, 0.6); box-shadow: 0 0 40px rgba(255, 77, 94, 0.4), inset 0 0 40px rgba(255, 77, 94, 0.25); }
+.stage[data-song="27-youre-absolutely-right"] #scenes .title-card { position: absolute; left: 0; right: 0; top: 330px; text-align: center; }
+.stage[data-song="27-youre-absolutely-right"] #scenes .title-card p { font: 500 18px var(--mono); letter-spacing: 0.4em; color: var(--muted); text-transform: uppercase; margin-top: 30px; }
+
+/* Can You Explain That Function?: a tavern-sign shanty; parchment cards, pirate title, sea-blue and brass */
+.stage[data-song="08-explain-the-function"] { --hot: #ff5a4a; --ice: #6fd6e8; --gold: #f2c14e; --parch: #ecdcb2; --ink: #2a1a0c; }
+.stage[data-song="08-explain-the-function"] .title { top: 250px; font: 400 170px/0.95 "Pirata One", var(--display); color: #f6e7c0; text-shadow: 0 0 40px rgba(242, 193, 78, .55), 0 6px 0 #3a2410; }
+.stage[data-song="08-explain-the-function"] .title small { margin: 0 0 26px; font: italic 700 34px "Playfair Display", Georgia, serif; letter-spacing: .08em; color: var(--gold); text-transform: none; }
+.stage[data-song="08-explain-the-function"] .cap { font: 400 96px/1 "Pirata One", var(--display); text-transform: none; letter-spacing: .01em; text-shadow: 0 4px 0 rgba(30, 15, 5, .8), 0 6px 40px rgba(0, 0, 0, .85); }
+.stage[data-song="08-explain-the-function"] .cap.spoken { font: italic 700 70px/1.1 "Playfair Display", Georgia, serif; }
+.stage[data-song="08-explain-the-function"] .card { background: var(--parch); color: var(--ink); border: 3px solid #6a4a22; box-shadow: 0 30px 90px rgba(0, 0, 0, .6), inset 0 0 60px rgba(120, 70, 20, .35); font: 600 24px/1.5 "Playfair Display", Georgia, serif; }
+.stage[data-song="08-explain-the-function"] .card .bar { color: #6a4a22; border-bottom: 2px solid rgba(106, 74, 34, .4); font: 700 16px var(--mono); }
+.stage[data-song="08-explain-the-function"] .card b { color: #8a1010; font-family: var(--mono); }
+.stage[data-song="08-explain-the-function"] .card .ok { color: #1e6a34; font-weight: 700; }
+.stage[data-song="08-explain-the-function"] .card .muted { color: #6a4a22; }
+.stage[data-song="08-explain-the-function"] .card.log .row { font: 600 21px/1.55 var(--mono); }
+.stage[data-song="08-explain-the-function"] .card .stamp.green { color: #1e6a34; border-color: #1e6a34; text-shadow: none; box-shadow: none; font-size: 64px; rotate: -8deg; }
+.stage[data-song="08-explain-the-function"] .stamp.big { color: #b8181a; border-color: #b8181a; background: rgba(236, 220, 178, .85); font: 400 96px/1 "Pirata One", var(--display); }
+.stage[data-song="08-explain-the-function"] .note { right: 160px; top: 200px; font: 400 64px/1 "Pirata One", var(--display); color: var(--gold); text-shadow: 0 4px 0 #3a2410; rotate: -4deg; }
+.stage[data-song="08-explain-the-function"] .note small { display: block; margin-top: 8px; font: italic 700 28px "Playfair Display", Georgia, serif; color: #f6e7c0; }
+.stage[data-song="08-explain-the-function"] .bubble { left: 1120px; top: 230px; padding: 22px 34px; border-radius: 40px; background: #fff7e6; color: #2a1a0c; font: 800 54px var(--sans); box-shadow: 0 20px 60px rgba(0, 0, 0, .5); rotate: 3deg; }
+.stage[data-song="08-explain-the-function"] .bubble::after { content: ""; position: absolute; left: 60px; bottom: -26px; border: 16px solid transparent; border-top: 22px solid #fff7e6; }
+.stage[data-song="08-explain-the-function"] .bubble.big { left: 50%; top: 200px; margin-left: -300px; font-size: 76px; }
+.stage[data-song="08-explain-the-function"] .hud b { color: var(--gold); }
+.stage[data-song="08-explain-the-function"] .progress i { background: var(--gold); box-shadow: 0 0 14px var(--gold); }
+
 :root { color-scheme: dark; }
 body { background: #000; color: var(--text); }
