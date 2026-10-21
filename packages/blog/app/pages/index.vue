@@ -46,6 +46,7 @@ useSeoMeta({
           :description="item.description"
           :icon="item.icon"
           :to="item.to"
+          :external="item.staticPage"
           :target="item.external ? '_blank' : undefined"
           :data-testid="item.testId"
           :class="item.featured ? 'sm:col-span-2' : undefined"

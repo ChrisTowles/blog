@@ -23,6 +23,11 @@ export type Experiment = {
    * actually serves.
    */
   external?: boolean;
+  /**
+   * Set for static pages served from public/ (not Vue routes), so the card
+   * links with a plain <a> instead of the router, which would 404 them.
+   */
+  staticPage?: boolean;
   /** Takes a wider cell in the home grid. Nothing else about the card changes. */
   featured?: boolean;
 };
@@ -105,6 +110,17 @@ export const experiments: Experiment[] = [
     testId: TEST_IDS.HOME.EXPERIMENT_POKER,
     language: 'TypeScript',
     stack: ['PixiJS', 'Anthropic SDK'],
+  },
+  {
+    title: "I Can't Clap",
+    description:
+      'Comedic songs about AI and IT, with a music video for each. The lyrics, the 3D videos and the code behind them are all written by models, with Suno for the audio.',
+    icon: 'i-lucide-music',
+    to: '/i-cant-clap/',
+    testId: TEST_IDS.HOME.EXPERIMENT_I_CANT_CLAP,
+    language: 'TypeScript',
+    stack: ['three.js', 'Claude Code', 'Suno'],
+    staticPage: true,
   },
   {
     title: 'Apps',
