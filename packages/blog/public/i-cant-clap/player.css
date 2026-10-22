@@ -235,6 +235,33 @@ html, body { margin: 0; height: 100%; background: #000; color: var(--text); over
 .stage[data-song="25-data-here-data-there"] .endcard .by { color: var(--bill); text-shadow: none; }
 .stage[data-song="25-data-here-data-there"] #caption { z-index: 2; }
 
+/* ---- NEVER_AGAIN: a western, letterboxed; captions sit just above the bottom bar ---- */
+.stage[data-song="02-never-again"] { --hot: #ff6a5a; --ice: #8fd0ff; --gold: #ffc56b; --display: "Libre Baskerville", Georgia, serif; --west: "Rye", Georgia, serif; }
+.stage[data-song="02-never-again"] .vignette { background: none; }
+.stage[data-song="02-never-again"] .hud { top: 46px; border-bottom: 0; color: rgba(244, 236, 220, .45); }
+.stage[data-song="02-never-again"] .hud-bottom, .stage[data-song="02-never-again"] .progress { bottom: 34px; }
+.stage[data-song="02-never-again"] .hud-bottom { bottom: 60px; color: rgba(244, 236, 220, .3); }
+.stage[data-song="02-never-again"] .progress { background: rgba(244, 236, 220, .08); }
+.stage[data-song="02-never-again"] .progress i { background: var(--gold); box-shadow: none; }
+.stage[data-song="02-never-again"] .cap { bottom: 168px; font: 700 70px/1.12 var(--display); text-transform: none; letter-spacing: 0; color: #f6efe2; text-shadow: 0 3px 24px rgba(0, 0, 0, .9); }
+.stage[data-song="02-never-again"] .cap.chorus { bottom: 172px; font-size: 80px; }
+.stage[data-song="02-never-again"] .cap.spoken { font: italic 400 58px/1.15 var(--display); color: #e8dcc6; }
+.stage[data-song="02-never-again"] .cap .hot, .stage[data-song="02-never-again"] .cap .ice, .stage[data-song="02-never-again"] .cap .gold { text-shadow: 0 3px 24px rgba(0, 0, 0, .9); }
+.stage[data-song="02-never-again"] .cap .backing { font: italic 400 .6em var(--display); color: var(--gold); }
+.stage[data-song="02-never-again"] .title { top: 360px; font: 400 170px/1 var(--west); letter-spacing: .02em; color: #f3e4c4; text-shadow: 0 4px 40px rgba(0, 0, 0, .8); }
+.stage[data-song="02-never-again"] .title small { margin-top: 24px; font: italic 400 34px var(--display); letter-spacing: .06em; color: var(--gold); text-transform: none; }
+.stage[data-song="02-never-again"] .bubble { left: 1180px; top: 250px; padding: 22px 34px; border-radius: 40px; background: #fffaf0; color: #1d1a22; font: 800 54px var(--sans); box-shadow: 0 20px 60px rgba(0, 0, 0, .5); rotate: -3deg; }
+.stage[data-song="02-never-again"] .bubble::after { content: ""; position: absolute; left: 60px; bottom: -26px; border: 16px solid transparent; border-top: 22px solid #fffaf0; }
+.stage[data-song="02-never-again"] .bubble.big { left: 50%; top: 210px; margin-left: -260px; font-size: 76px; }
+.stage[data-song="02-never-again"] .card { top: 190px; width: 520px; border: 0; border-radius: 6px; background: #f3ead6; color: #2a1d12; font: 400 28px/1.5 var(--display); box-shadow: 0 30px 90px rgba(0, 0, 0, .7); rotate: 2deg; }
+.stage[data-song="02-never-again"] .card .bar { background: #2a1d12; color: #f3ead6; border: 0; }
+.stage[data-song="02-never-again"] .card b { color: #b3122e; font-size: 1.3em; }
+.stage[data-song="02-never-again"] .card .muted { padding-bottom: 18px; font: italic 400 26px var(--display); color: #6a5a48; }
+.stage[data-song="02-never-again"] .endcard { background: rgba(10, 6, 4, .78); }
+.stage[data-song="02-never-again"] .endcard big { font: 400 130px/1 var(--west); color: #f3e4c4; }
+.stage[data-song="02-never-again"] .endcard .by { font: italic 400 46px var(--display); color: var(--gold); letter-spacing: .04em; text-shadow: none; text-transform: none; }
+.stage[data-song="02-never-again"] #caption { z-index: 2; }
+
 /* Can You Explain That Function?: a tavern-sign shanty; parchment cards, pirate title, sea-blue and brass */
 .stage[data-song="08-explain-the-function"] { --hot: #ff5a4a; --ice: #6fd6e8; --gold: #f2c14e; --parch: #ecdcb2; --ink: #2a1a0c; }
 .stage[data-song="08-explain-the-function"] .title { top: 250px; font: 400 170px/0.95 "Pirata One", var(--display); color: #f6e7c0; text-shadow: 0 0 40px rgba(242, 193, 78, .55), 0 6px 0 #3a2410; }
