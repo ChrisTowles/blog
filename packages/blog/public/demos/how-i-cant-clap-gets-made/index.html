@@ -105,6 +105,7 @@ pre .k { color: var(--claude); } pre .s { color: var(--suno); } pre .c { color: 
 .w.fix { border-color: var(--miss); }
 .w.lit { background: var(--claude); color: var(--card); border-color: var(--claude); }
 .w.lit small { color: var(--card); }
+.w.now { outline: 2px solid var(--suno); outline-offset: 1px; }
 canvas { display: block; width: 100%; border-radius: 8px; }
 .lanes { aspect-ratio: 1000 / 230; max-width: 100%; }
 .screen { aspect-ratio: 16 / 9; max-width: 100%; background: #07060d; }
@@ -358,6 +359,7 @@ async function fillForm(tab: Tab, song: Song) {
       <div class="words" id="chips"></div>
       <canvas class="lanes" id="lanes" width="1000" height="230" aria-label="Timeline of the first four lines: loudness on top, whisper's word stamps in the middle with misheard words in red, and the final aligned word stamps below, with a moving playhead."></canvas>
       <div class="key"><span><i style="background:var(--suno)"></i>loudness</span><span><i style="background:var(--muted)"></i>whisper</span><span><i style="background:var(--miss)"></i>misheard</span><span><i style="background:var(--claude)"></i>aligned</span></div>
+      <div class="controls"><button class="playbtn" type="button">▶ Play with sound</button></div>
       <p class="cap">Whisper missed "Three" entirely and heard "Prius" as "priest" and "gain" as "game". Aligning to the known lyrics fixes the words; the forced aligner fixes the times.</p>
     </div>
 <div class="two"><div class="exhibit code"><span class="eyebrow">Step 1 · align to the known lyrics</span><pre><span class="c">// src/align.ts: line up what whisper heard with the lyrics we already know.</span>
@@ -395,7 +397,7 @@ for i, line in enumerate(lines):                    <span class="c"># 3. per lin
     <div data-embed="film" class="exhibit">
       <canvas class="screen" id="screen" width="1280" height="720" aria-label="A toy frame of The Steep Part drawn from t: a neon exponential curve that grows with the song, a floor that pulses on the bass, and karaoke captions."></canvas>
       <div class="controls">
-        <button id="play" type="button">▶ Play with sound</button>
+        <button class="playbtn" type="button">▶ Play with sound</button>
         <input id="t" type="range" min="8" max="22.4" step="0.01" value="8" aria-label="Song time in seconds">
         <span class="readout" id="readout">t = 8.00 s</span>
         <label class="vol" for="vol"><span id="mute" aria-hidden="true">🔊</span><input id="vol" type="range" min="0" max="1" step="0.05" value="0.8" aria-label="Volume"></label>
@@ -627,18 +629,17 @@ function drawFrame(t) {
 }
 
 /* --- clock --- */
-const slider = document.getElementById("t"), readout = document.getElementById("readout"), play = document.getElementById("play");
+const slider = document.getElementById("t"), readout = document.getElementById("readout"), plays = document.querySelectorAll(".playbtn");
 let t = 8, playing = !reduce, last = 0, sound = false;
 const clip = document.getElementById("clip"), vol = document.getElementById("vol"), muteIcon = document.getElementById("mute");
 try { const v = localStorage.getItem("how-volume"); if (v !== null) vol.value = v; } catch {}
 const setVol = () => { clip.volume = +vol.value; muteIcon.textContent = +vol.value === 0 ? "🔇" : +vol.value < 0.5 ? "🔉" : "🔊"; try { localStorage.setItem("how-volume", vol.value); } catch {} };
 vol.addEventListener("input", setVol); setVol();
 clip.addEventListener("ended", () => { if (sound && playing) { t = 8; clip.currentTime = 0; clip.play(); } });
-const lanesT = () => A + ((t - 8) / 14.4) * (B - A);
 function render() {
   drawFrame(t); drawLanes(Math.min(t, B));
   slider.value = t; readout.textContent = `t = ${t.toFixed(2)} s`;
-  for (const w of words) w.el.classList.toggle("lit", t >= w.s && t < E(D.lines.length - 1) + 0.8);
+  for (const w of words) { w.el.classList.toggle("lit", t >= w.s && t < E(D.lines.length - 1) + 0.8); w.el.classList.toggle("now", t >= w.s && t < w.e); }
 }
 function tick(now) {
   if (playing) {
@@ -650,10 +651,11 @@ function tick(now) {
 }
 slider.addEventListener("input", () => { t = +slider.value; if (sound) clip.currentTime = t - 8; render(); });
 // silent preview until the viewer asks for sound; then the audio is the clock
-play.addEventListener("click", () => {
+// the timing lanes and the toy frame share this clock, so either button plays the same audio
+for (const play of plays) play.addEventListener("click", () => {
   if (!sound) { sound = true; playing = true; clip.currentTime = Math.max(0, t - 8); clip.play().catch(() => {}); }
   else { playing = !playing; playing ? clip.play().catch(() => {}) : clip.pause(); }
-  play.textContent = playing ? "Pause" : "▶ Play";
+  for (const b of plays) b.textContent = playing ? "Pause" : "▶ Play";
 });
 if (reduce) t = 14.2;
 document.fonts.ready.then(render);
@@ -673,11 +675,16 @@ if (embed) {
     Object.assign(n.parentElement.style, { display: "block", padding: "0", margin: "0", maxWidth: "none" });
   }
   el.style.margin = "0";
+  // the iframe grows to fit, so nothing scrolls: the chain scales down instead of scrolling sideways on a phone
+  document.documentElement.style.overflow = document.body.style.overflow = "hidden";
+  el.querySelectorAll(".chain, .chain svg").forEach(c => Object.assign(c.style, { overflow: "visible", minWidth: "0" }));
   // the post carries the caption as its own text
   el.querySelectorAll(".cap").forEach(c => (c.style.display = "none"));
   // the judge chart is sized for a half-width column; full-width in the post it would be huge
   el.querySelectorAll("svg.bars").forEach(c => Object.assign(c.style, { display: "block", maxWidth: "520px", marginInline: "auto" }));
-  new ResizeObserver(() => parent.postMessage({ embedHeight: el.getBoundingClientRect().height }, "*")).observe(el);
+  const report = () => parent.postMessage({ embedHeight: el.getBoundingClientRect().height }, "*");
+  new ResizeObserver(report).observe(el);
+  addEventListener("message", e => { if (e.data?.embedPing) report(); });
 }
 </script>
 
