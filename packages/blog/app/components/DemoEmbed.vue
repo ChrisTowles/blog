@@ -8,7 +8,7 @@
  *   ::
  *
  * The demo page shows only its `[data-embed="<part>"]` element when loaded with `?embed=<part>`, and posts
- * `{ embedHeight }` to the parent whenever that element resizes.
+ * `{ embedHeight }` to the parent whenever that element resizes, or when asked with `{ embedPing }`.
  */
 
 const props = defineProps<{
@@ -26,10 +26,21 @@ const height = ref(320);
 function onMessage(e: MessageEvent) {
   if (e.source !== frame.value?.contentWindow || typeof e.data?.embedHeight !== 'number') return;
   height.value = Math.ceil(e.data.embedHeight);
+  clearInterval(asking);
 }
 
-onMounted(() => window.addEventListener('message', onMessage));
-onBeforeUnmount(() => window.removeEventListener('message', onMessage));
+// the iframe can load before hydration and miss its first report, so keep asking until one arrives
+const ask = () => frame.value?.contentWindow?.postMessage({ embedPing: true }, '*');
+let asking: ReturnType<typeof setInterval> | undefined;
+
+onMounted(() => {
+  window.addEventListener('message', onMessage);
+  asking = setInterval(ask, 250);
+});
+onBeforeUnmount(() => {
+  window.removeEventListener('message', onMessage);
+  clearInterval(asking);
+});
 </script>
 
 <template>
@@ -38,6 +49,7 @@ onBeforeUnmount(() => window.removeEventListener('message', onMessage));
     :src="`${props.src}?embed=${props.part}`"
     :title="props.title"
     loading="lazy"
+    scrolling="no"
     class="my-6 block w-full rounded-lg border-0"
     :style="{ height: `${height}px` }"
   />
