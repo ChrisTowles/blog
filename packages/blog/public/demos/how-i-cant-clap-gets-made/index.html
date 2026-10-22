@@ -142,11 +142,11 @@ footer { color: var(--muted); font-size: 0.9rem; }
 
 <div class="wrap">
 <header>
-  <span class="eyebrow">I Can't Clap · behind the videos</span>
-  <h1>How the I Can't Clap videos get made</h1>
+  <span class="eyebrow"><em>I Can't Clap</em> · behind the videos</span>
+  <h1>How the <em>I Can't Clap</em> videos get made</h1>
   <p class="lede">People keep asking how these get made. Claude Code agents write the songs, Suno sings them, a GPU script times every word, and each video is a three.js scene drawn from the audio clock. I pick the premise, leave notes on lines, choose takes, and click Create and Download. Here is the whole chain, using real data from <em>The Steep Part</em>.</p>
   <div class="legend"><span class="who claude">Claude Code agents</span><span class="who suno">Suno</span><span class="who chris">Me (Chris)</span></div>
-  <div class="chain" role="img" aria-label="Five stages: Write, Sing, Time, Film, Ship. Claude Code runs write, time, film and ship; Suno sings; Chris leaves line notes that feed back into writing and picks and downloads the take.">
+  <div data-embed="chain" class="chain" role="img" aria-label="Five stages: Write, Sing, Time, Film, Ship. Claude Code runs write, time, film and ship; Suno sings; Chris leaves line notes that feed back into writing and picks and downloads the take.">
   <svg viewBox="0 0 1010 400">
     <path id="wire" class="wire" d="M5 190 H1005"/>
     <circle class="dot" r="6"><animateMotion dur="7.5s" repeatCount="indefinite"><mpath href="#wire"/></animateMotion></circle>
@@ -246,7 +246,7 @@ footer { color: var(--muted); font-size: 0.9rem; }
     <h2>A writer agent and a judge it can't sway</h2>
     <p>Each song starts as a one-line premise: an AI or IT ideal against the messy reality. One writer agent reads a shared brief, the two earlier songs, my blog posts, and a Suno style guide, brainstorms about 25 gags, keeps the best dozen, and writes the song. Then it spawns a <em>new</em> judge agent every round. The judge scores the song against a rubric, quotes the weak lines, and says APPROVED or REVISE. A fresh judge each round means no one grades their own homework twice. Approval takes 8.5 or better with no rubric item below 7, in five rounds at most.</p>
     <div class="two">
-      <div class="exhibit">
+      <div data-embed="judge" class="exhibit">
         <span class="eyebrow">The Steep Part · judge rounds</span>
         <svg class="bars" viewBox="0 0 360 200" role="img" aria-label="Judge scores by round: 7.1, 8.2, 8.2, then 8.6 approved, against a threshold of 8.5.">
           <line x1="40" x2="350" y1="22" y2="22" stroke="var(--line)"/><text x="32" y="26" text-anchor="end">10</text>
@@ -353,7 +353,7 @@ async function fillForm(tab: Tab, song: Song) {
   <div class="main">
     <h2>Find every word to the millisecond</h2>
     <p>The video has to know exactly when each word lands. faster-whisper transcribes the MP3, but under a loud mix it mishears and its stamps drift. Since we already know the lyrics, the script aligns whisper's words to the real ones. Then demucs pulls out the vocal stem and a forced aligner (torchaudio's MMS) places each line's known words on it, searching only near where whisper put the line. A last pass measures loudness, bass and the beat grid at 30 frames a second.</p>
-    <div class="exhibit">
+    <div data-embed="timing" class="exhibit">
       <span class="eyebrow">The first four lines · what whisper heard, struck through</span>
       <div class="words" id="chips"></div>
       <canvas class="lanes" id="lanes" width="1000" height="230" aria-label="Timeline of the first four lines: loudness on top, whisper's word stamps in the middle with misheard words in red, and the final aligned word stamps below, with a moving playhead."></canvas>
@@ -392,7 +392,7 @@ for i, line in enumerate(lines):                    <span class="c"># 3. per lin
   <div class="main">
     <h2>The video is a function of time</h2>
     <p>Nothing in the video is animated in the usual sense. Every object, light, caption and overlay is computed from <code>t</code>, the current audio time, plus the word timings and the bass and loudness at that frame. Any frame can be drawn on its own, so you can scrub, jump with <code>?t=12</code>, or have a headless browser render frame 4,512 without playing the first 4,511. Below is a toy version drawn from the real Steep Part data, with the real audio from the opening through "Ten years out" and "Linear brain on an exponential plane". Press play with sound, or drag the slider.</p>
-    <div class="exhibit">
+    <div data-embed="film" class="exhibit">
       <canvas class="screen" id="screen" width="1280" height="720" aria-label="A toy frame of The Steep Part drawn from t: a neon exponential curve that grows with the song, a floor that pulses on the bass, and karaoke captions."></canvas>
       <div class="controls">
         <button id="play" type="button">▶ Play with sound</button>
@@ -661,6 +661,24 @@ render();
 requestAnimationFrame(n => { last = n; tick(n); });
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
 new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+</script>
+<script>
+// ?embed=<name>: show only the [data-embed=<name>] exhibit, for the blog post's iframes (DemoEmbed.vue), and report its height.
+// Everything else is hidden, not removed, so the main script above still finds its elements.
+const embed = new URLSearchParams(location.search).get("embed");
+if (embed) {
+  const el = document.querySelector(`[data-embed="${embed}"]`);
+  for (let n = el; n !== document.body; n = n.parentElement) {
+    for (const sib of n.parentElement.children) if (sib !== n && !["STYLE", "SCRIPT", "LINK", "TITLE", "META"].includes(sib.tagName)) sib.style.display = "none";
+    Object.assign(n.parentElement.style, { display: "block", padding: "0", margin: "0", maxWidth: "none" });
+  }
+  el.style.margin = "0";
+  // the post carries the caption as its own text
+  el.querySelectorAll(".cap").forEach(c => (c.style.display = "none"));
+  // the judge chart is sized for a half-width column; full-width in the post it would be huge
+  el.querySelectorAll("svg.bars").forEach(c => Object.assign(c.style, { display: "block", maxWidth: "520px", marginInline: "auto" }));
+  new ResizeObserver(() => parent.postMessage({ embedHeight: el.getBoundingClientRect().height }, "*")).observe(el);
+}
 </script>
 
 </body></html>
