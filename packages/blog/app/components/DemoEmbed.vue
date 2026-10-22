@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { z } from 'zod';
+
 /**
  * DemoEmbed — one live exhibit from a demo page under public/demos, in an iframe sized to its content.
  *
@@ -21,22 +23,32 @@ const props = defineProps<{
 }>();
 
 const frame = ref<HTMLIFrameElement | null>(null);
+
 const height = ref(320);
 
+const HeightMessage = z.object({ embedHeight: z.number() });
+
 function onMessage(e: MessageEvent) {
-  if (e.source !== frame.value?.contentWindow || typeof e.data?.embedHeight !== 'number') return;
-  height.value = Math.ceil(e.data.embedHeight);
+  if (e.source !== frame.value?.contentWindow) return;
+
+  const msg = HeightMessage.safeParse(e.data);
+
+  if (!msg.success) return;
+
+  height.value = Math.ceil(msg.data.embedHeight);
   clearInterval(asking);
 }
 
 // the iframe can load before hydration and miss its first report, so keep asking until one arrives
 const ask = () => frame.value?.contentWindow?.postMessage({ embedPing: true }, '*');
+
 let asking: ReturnType<typeof setInterval> | undefined;
 
 onMounted(() => {
   window.addEventListener('message', onMessage);
   asking = setInterval(ask, 250);
 });
+
 onBeforeUnmount(() => {
   window.removeEventListener('message', onMessage);
   clearInterval(asking);
