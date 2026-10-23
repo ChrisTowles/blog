@@ -287,5 +287,56 @@ html, body { margin: 0; height: 100%; background: #000; color: var(--text); over
 .stage[data-song="08-explain-the-function"] .hud b { color: var(--gold); }
 .stage[data-song="08-explain-the-function"] .progress i { background: var(--gold); box-shadow: 0 0 14px var(--gold); }
 
+/* ---- Ten More Minutes: wax crayon on white paper, a kid's handwriting ---- */
+.stage[data-song="30-ten-more-minutes"] {
+  --bg: #fdfbf6;
+  --text: #1d1b22;
+  --muted: #6b6672;
+  --ice: #2f6fd8;
+  --hot: #e0302c;
+  --gold: #d8337f;
+  --display: "Gaegu", "Comic Sans MS", cursive;
+  --hand: "Gochi Hand", "Comic Sans MS", cursive;
+}
+.stage[data-song="30-ten-more-minutes"] .vignette { background: none; }
+.stage[data-song="30-ten-more-minutes"] .hud { padding: 8px 22px; border: 3px dashed rgba(29, 27, 34, .25); border-radius: 16px; background: rgba(255, 253, 244, .88); color: var(--muted); font: 400 22px var(--hand); letter-spacing: .04em; text-transform: none; }
+.stage[data-song="30-ten-more-minutes"] .hud b { color: var(--hot); }
+.stage[data-song="30-ten-more-minutes"] .hud-bottom { color: #a9a4ae; font: 400 18px var(--hand); letter-spacing: .04em; text-transform: none; }
+.stage[data-song="30-ten-more-minutes"] .progress { background: rgba(29, 27, 34, .1); height: 4px; border-radius: 4px; }
+.stage[data-song="30-ten-more-minutes"] .progress i { background: var(--ice); box-shadow: none; border-radius: 4px; }
+.stage[data-song="30-ten-more-minutes"] #hint { color: var(--hot); font: 400 40px var(--hand); text-shadow: 0 0 20px #fff; }
+.stage[data-song="30-ten-more-minutes"] .cap { font: 700 92px/1 var(--display); text-transform: none; letter-spacing: 0; color: var(--text); text-shadow: 0 0 18px #fff, 0 0 8px #fff, 0 0 3px #fff; }
+.stage[data-song="30-ten-more-minutes"] .cap .hot { color: var(--hot); text-shadow: 0 0 18px #fff, 0 0 6px #fff; }
+.stage[data-song="30-ten-more-minutes"] .cap .ice { color: var(--ice); text-shadow: 0 0 18px #fff, 0 0 6px #fff; }
+.stage[data-song="30-ten-more-minutes"] .cap .gold { color: var(--gold); text-shadow: 0 0 18px #fff, 0 0 6px #fff; }
+.stage[data-song="30-ten-more-minutes"] .cap.spoken { font: 400 1em/1.05 var(--hand); }
+.stage[data-song="30-ten-more-minutes"] .cap .backing { font: 400 .6em var(--hand); color: var(--hot); font-style: normal; }
+.stage[data-song="30-ten-more-minutes"] .title { top: 230px; font: 700 210px/0.9 var(--display); color: #fffdf4; -webkit-text-stroke: 6px var(--text); paint-order: stroke fill; text-shadow: 6px 8px 0 rgba(29, 27, 34, .5); }
+.stage[data-song="30-ten-more-minutes"] .title small { margin-top: 22px; font: 400 60px var(--hand); letter-spacing: 0; color: #ffd320; -webkit-text-stroke: 0; text-shadow: 0 2px 0 var(--text), 0 0 12px var(--text); }
+.stage[data-song="30-ten-more-minutes"] .bubble { top: 150px; max-width: 760px; padding: 26px 40px; border: 5px solid var(--text); border-radius: 46% 54% 50% 50% / 60% 55% 45% 40%; background: #fff; font: 700 70px/1.05 var(--display); color: var(--text); box-shadow: 8px 10px 0 rgba(29, 27, 34, .12); }
+.stage[data-song="30-ten-more-minutes"] .bubble::after { content: ""; position: absolute; bottom: -34px; width: 40px; height: 40px; background: #fff; border-right: 5px solid var(--text); border-bottom: 5px solid var(--text); transform: skew(20deg) rotate(45deg); }
+.stage[data-song="30-ten-more-minutes"] .bubble.kid { left: 180px; color: var(--hot); rotate: -3deg; }
+.stage[data-song="30-ten-more-minutes"] .bubble.kid::after { left: 90px; }
+.stage[data-song="30-ten-more-minutes"] .bubble.me { right: 160px; color: var(--ice); rotate: 2deg; }
+.stage[data-song="30-ten-more-minutes"] .bubble.me::after { right: 110px; }
+.stage[data-song="30-ten-more-minutes"] .bubble.me.left { right: auto; left: 200px; rotate: -2deg; }
+.stage[data-song="30-ten-more-minutes"] .bubble.me.left::after { right: auto; left: 100px; transform: skew(-20deg) rotate(45deg); }
+.stage[data-song="30-ten-more-minutes"] .bubble.wife { left: 260px; color: #7a3fb0; rotate: -2deg; }
+.stage[data-song="30-ten-more-minutes"] .bubble.wife::after { left: 120px; }
+.stage[data-song="30-ten-more-minutes"] .zzz { right: 260px; top: 150px; font: 700 120px var(--display); color: var(--ice); text-shadow: 0 0 14px #fff; }
+.stage[data-song="30-ten-more-minutes"] .zzz span { display: inline-block; opacity: 0; margin-left: 10px; }
+.stage[data-song="30-ten-more-minutes"] .zzz span:nth-child(2) { font-size: .8em; translate: 0 -60px; }
+.stage[data-song="30-ten-more-minutes"] .zzz span:nth-child(3) { font-size: .6em; translate: 0 -120px; }
+.stage[data-song="30-ten-more-minutes"] .chip.call { left: auto; right: 110px; top: 120px; padding: 12px 26px; border: 4px solid var(--hot); border-radius: 14px; background: #fff; color: var(--hot); font: 400 50px var(--hand); letter-spacing: 0; text-transform: none; rotate: 2deg; }
+.stage[data-song="30-ten-more-minutes"] .endcard { background: rgba(253, 251, 246, .96); color: var(--muted); font: 400 44px var(--hand); letter-spacing: 0; text-transform: none; }
+.stage[data-song="30-ten-more-minutes"] .endcard big { font: 700 170px/1 var(--display); color: var(--text); letter-spacing: 0; }
+.stage[data-song="30-ten-more-minutes"] .endcard .by { font: 700 70px var(--display); letter-spacing: 0; color: var(--hot); text-shadow: none; }
+.stage[data-song="30-ten-more-minutes"] .endcard .album { border-color: var(--muted); color: var(--text); font: 400 34px var(--hand); }
+.stage[data-song="30-ten-more-minutes"] .bubble.wife.bed { left: auto; right: 300px; top: 130px; }
+.stage[data-song="30-ten-more-minutes"] .kids { left: 90px; right: 90px; top: 380px; display: flex; justify-content: space-between; font: 700 84px var(--display); }
+.stage[data-song="30-ten-more-minutes"] .kids span { opacity: 0; padding: 10px 34px; border: 5px solid var(--text); border-radius: 40px; background: #fff; box-shadow: 6px 8px 0 rgba(29, 27, 34, .15); }
+.stage[data-song="30-ten-more-minutes"] .kids .abby { color: var(--gold); rotate: -4deg; }
+.stage[data-song="30-ten-more-minutes"] .kids .logan { color: var(--ice); rotate: 3deg; }
+
 :root { color-scheme: dark; }
 body { background: #000; color: var(--text); }
