@@ -2,3 +2,32 @@ packages:
   - 'packages/*'
   - 'packages/layers/*'
   - 'mcp'
+
+onlyBuiltDependencies:
+  - '@duckdb/node-bindings'
+  - '@parcel/watcher'
+  - '@playwright/browser-chromium'
+  - '@swc/core'
+  - '@third-option/comment-budget'
+  - better-sqlite3
+  - esbuild
+  - playwright-chromium
+  - protobufjs
+  - sharp
+  - simple-git-hooks
+  - unrs-resolver
+  - vue-demi
+  - workerd
+
+packageExtensions:
+  '@nuxt/content':
+    dependencies:
+      h3: 1.15.11
+  vue-router:
+    peerDependencies:
+      '@vue/language-core': '*'
+
+overrides:
+  'fflate@>=0.7.0 <0.7.5': ^0.7.5
+  'tinypool@>=2.0.0 <2.1.2': ^2.1.2
+  'undici@>=7.0.0 <7.30.1': ^7.30.1

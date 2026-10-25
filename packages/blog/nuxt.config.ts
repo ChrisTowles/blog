@@ -165,7 +165,7 @@ export default defineNuxtConfig({
           // A Durable Object class must be a named export of the Worker's main module, and
           // Nitro's cloudflare_module entry only exports the fetch handler.
           name: 'export-aviation-container',
-          transform(code, id) {
+          transform(code: string, id: string) {
             if (!id.endsWith('presets/cloudflare/runtime/cloudflare-module.mjs')) return null;
 
             const source = resolve(__dirname, 'server/utils/aviation-container.ts');
