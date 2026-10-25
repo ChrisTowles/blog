@@ -89,7 +89,7 @@
     "@vue/language-core": "^3.3.6",
     "@vue/test-utils": "^2.4.11",
     "@vueuse/core": "^14.3.0",
-    "@vueuse/nuxt": "^14.3.0",
+    "@vueuse/nuxt": "^15.0.0",
     "baseline-browser-mapping": "^2.10.40",
     "better-sqlite3": "^12.11.1",
     "dotenv": "^17.4.2",
