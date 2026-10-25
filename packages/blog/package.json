@@ -78,7 +78,7 @@
     "@iconify-json/lucide": "^1.2.115",
     "@iconify-json/simple-icons": "^1.2.64",
     "@nuxt/content": "^3.14.0",
-    "@nuxt/fonts": "^0.14.0",
+    "@nuxt/fonts": "^1.0.1",
     "@nuxt/icon": "^2.2.5",
     "@nuxt/image": "^2.0.0",
     "@nuxt/test-utils": "^4.0.3",
