@@ -134,7 +134,7 @@ async function runSearch() {
 // Document Actions
 const selectedDoc = ref<string | null>(null);
 
-const docDetails = ref<{
+type DocDetails = {
   document: Document;
   chunks: Array<{
     id: string;
@@ -150,7 +150,9 @@ const docDetails = ref<{
     totalContextLength: number;
     allEmbedded: boolean;
   };
-} | null>(null);
+};
+
+const docDetails = ref<DocDetails | null>(null);
 
 const loadingDoc = ref(false);
 
@@ -159,7 +161,7 @@ async function viewDocument(id: string) {
   loadingDoc.value = true;
 
   try {
-    docDetails.value = await $fetch(`/api/admin/rag/documents/${id}`);
+    docDetails.value = await $fetch<DocDetails>(`/api/admin/rag/documents/${id}`);
   } catch {
     toast.add({ title: 'Failed to load document', color: 'error' });
   } finally {

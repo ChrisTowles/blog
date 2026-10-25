@@ -6,7 +6,7 @@
   "main": "./nuxt.config.ts",
   "dependencies": {
     "evlog": "^2.19.2",
-    "zod": "^4.4.3"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@vue-flow/background": "^1.3.2",
