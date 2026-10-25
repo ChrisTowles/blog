@@ -41,7 +41,7 @@ jobs:
       # production receives. Per-environment values (sandbox URL) come from the
       # Worker's `vars`, not from the build.
       - name: Upload build output
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: blog-output
           path: packages/blog/.output
