@@ -28,16 +28,12 @@ export type Experiment = {
    * links with a plain <a> instead of the router, which would 404 them.
    */
   staticPage?: boolean;
-  /** Takes a wider cell in the home grid. Nothing else about the card changes. */
+  /** Spans the full row in the home list. */
   featured?: boolean;
 };
 
-/**
- * Single source of truth for the experiment grid. The home page renders all of
- * these; /about renders the subset hosted on this domain. Adding an entry here
- * is what makes a route discoverable now that the header nav is down to four
- * items — there is no other index of these pages.
- */
+// The only index of these routes (the header nav is four items). Home renders
+// all of them, I Can't Clap as its album section; /about the hosted ones.
 export const experiments: Experiment[] = [
   {
     title: 'Towles Tool',
@@ -70,6 +66,16 @@ export const experiments: Experiment[] = [
     testId: TEST_IDS.HOME.EXPERIMENT_AVIATION,
     language: 'TypeScript',
     stack: ['MCP', 'DuckDB', 'Parquet'],
+  },
+  {
+    title: 'Multi-agent loan review',
+    description:
+      'Three reviewer agents assess a home loan application independently and stream their reasoning; a person approves, denies, or flags it. Needs a GitHub sign-in.',
+    icon: 'i-lucide-scale',
+    to: '/loan',
+    testId: TEST_IDS.HOME.EXPERIMENT_LOAN,
+    language: 'TypeScript',
+    stack: ['Anthropic SDK', 'SSE', 'D1'],
   },
   {
     title: 'Hybrid RAG search',

@@ -7,9 +7,11 @@ test('a static demo loads its own CSS and JS from its trailing-slash-less URL', 
     page.waitForResponse((res) => res.url().endsWith(`/demos/turbofan-explorer/${name}`)),
   );
 
-  // Workers Assets 307s an index.html link to the trailing-slash-less URL below.
+  // Workers Assets (CI's wrangler dev) 307s to the slash-less URL; `nuxt dev` doesn't.
   await page.goto('/demos/turbofan-explorer/index.html');
-  await expect(page).toHaveURL(/\/demos\/turbofan-explorer$/);
+  await expect(page).toHaveURL(
+    process.env.CI ? /\/demos\/turbofan-explorer$/ : /\/demos\/turbofan-explorer(\/index\.html)?$/,
+  );
 
   const [css, js] = await Promise.all(assets);
   expect(css.headers()['content-type']).toContain('text/css');
