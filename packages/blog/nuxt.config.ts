@@ -201,9 +201,9 @@ export default defineNuxtConfig({
       routes: ['/'],
       // Then crawl all the links on the page
       crawlLinks: true,
-      // public/i-cant-clap is a static site; the crawler follows the home card's link
-      // there and would prerender the 404 page over its index.html
-      ignore: ['/i-cant-clap'],
+      // Static HTML under public/, linked without `.html` (Workers Assets resolves it). The crawler
+      // can't, so it would 404 the build or prerender the error page over the real file.
+      ignore: ['/i-cant-clap', '/demos', '/downloads'],
     },
 
     imports: {},

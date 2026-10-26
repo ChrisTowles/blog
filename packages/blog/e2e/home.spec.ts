@@ -15,7 +15,7 @@ const EXPERIMENTS = [
   { testId: TEST_IDS.HOME.EXPERIMENT_TYPING, href: '/typing' },
   { testId: TEST_IDS.HOME.EXPERIMENT_WORKFLOWS, href: '/workflows' },
   { testId: TEST_IDS.HOME.EXPERIMENT_POKER, href: '/poker' },
-  { testId: TEST_IDS.HOME.EXPERIMENT_I_CANT_CLAP, href: '/i-cant-clap/' },
+  { testId: TEST_IDS.HOME.EXPERIMENT_I_CANT_CLAP, href: '/i-cant-clap' },
   { testId: TEST_IDS.HOME.EXPERIMENT_APPS, href: '/apps' },
 ];
 
