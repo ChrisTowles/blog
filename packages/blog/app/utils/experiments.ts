@@ -116,7 +116,7 @@ export const experiments: Experiment[] = [
     description:
       'Comedic songs about AI and IT, with a music video for each. The lyrics, the 3D videos and the code behind them are all written by models, with Suno for the audio.',
     icon: 'i-lucide-music',
-    to: '/i-cant-clap/',
+    to: '/i-cant-clap',
     testId: TEST_IDS.HOME.EXPERIMENT_I_CANT_CLAP,
     language: 'TypeScript',
     stack: ['three.js', 'Claude Code', 'Suno'],

@@ -6,7 +6,7 @@ import { z } from 'zod';
  *
  * Usage in MDC markdown:
  *
- *   ::demo-embed{src="/demos/how-i-cant-clap-gets-made/index.html" part="chain" title="Five stages: ..."}
+ *   ::demo-embed{src="/demos/how-i-cant-clap-gets-made" part="chain" title="Five stages: ..."}
  *   ::
  *
  * The demo page shows only its `[data-embed="<part>"]` element when loaded with `?embed=<part>`, and posts
