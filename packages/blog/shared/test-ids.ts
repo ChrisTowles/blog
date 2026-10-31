@@ -49,14 +49,17 @@ export const TEST_IDS = {
     THEME_TOGGLE: 'theme-toggle',
   },
   // The header nav is deliberately four items. Every other route is reached
-  // through the experiment grid on the home page, so these are the IDs tests
-  // use to prove a page is still discoverable.
+  // through the home page, so these are the IDs tests use to prove a page is
+  // still discoverable.
   HOME: {
     PAGE: 'home-page',
+    START_HERE: 'home-start-here',
+    PRINTABLES: 'home-printables',
     EXPERIMENTS: 'home-experiments',
     EXPERIMENT_TOWLES_TOOL: 'home-experiment-towles-tool',
     EXPERIMENT_CHAT: 'home-experiment-chat',
     EXPERIMENT_AVIATION: 'home-experiment-aviation',
+    EXPERIMENT_LOAN: 'home-experiment-loan',
     EXPERIMENT_SEARCH: 'home-experiment-search',
     EXPERIMENT_TYPING: 'home-experiment-typing',
     EXPERIMENT_WORKFLOWS: 'home-experiment-workflows',

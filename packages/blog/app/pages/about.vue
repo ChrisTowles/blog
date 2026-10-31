@@ -7,7 +7,7 @@ const appConfig = useAppConfig();
 const title = 'About';
 
 const description =
-  "I'm Chris Towles — Principal Architect for Cloud AI at GE Aerospace, and a full stack developer who never stopped shipping side projects.";
+  "I'm Chris Towles, Principal Technologist, Cloud AI at GE Aerospace, and a full stack developer who never stopped shipping side projects.";
 
 useSeoMeta({
   title,
@@ -21,7 +21,7 @@ useSeoMeta({
   <UContainer :data-testid="TEST_IDS.ABOUT.PAGE">
     <UPageHeader
       :title="title"
-      description="Principal Architect for Cloud AI at GE Aerospace. Twenty-plus years in, still building things on nights and weekends."
+      description="Principal Technologist, Cloud AI at GE Aerospace. Twenty-plus years in, still building things on nights and weekends."
       class="py-[50px]"
     />
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { TEST_IDS } from '~~/shared/test-ids';
-import { experiments } from '~/utils/experiments';
+
+const appConfig = useAppConfig();
 
 const { data: page } = await useAsyncData('index', () => queryCollection('index').first());
 
@@ -15,72 +16,41 @@ useSeoMeta({
 
 <template>
   <div v-if="page" :data-testid="TEST_IDS.HOME.PAGE">
-    <UPageHero :description="page.hero.description" :links="page.hero.links">
-      <template #title>
-        <span class="font-bold text-(--ui-text-highlighted)">
-          Chris Towles's
-          <span style="color: var(--ui-primary)">Blog</span>
-        </span>
-      </template>
-      <template #top>
-        <div
-          class="absolute rounded-full dark:bg-(--ui-primary) blur-[300px] size-60 sm:size-80 transform -translate-x-1/2 left-1/2 -translate-y-80"
-        />
-      </template>
-    </UPageHero>
-
-    <USeparator />
-
-    <UPageSection
-      title="Things I've built"
-      description="Most of these run right here on this domain. Poke at any of them."
-      :data-testid="TEST_IDS.HOME.EXPERIMENTS"
-    >
-      <UPageGrid>
-        <!-- UPageGrid is 1/2/3 columns. `sm:col-span-2` gives the featured card
-             the full row at sm and two of the three columns from lg up. -->
-        <UPageCard
-          v-for="item in experiments"
-          :key="item.to"
-          :title="item.title"
-          :description="item.description"
-          :icon="item.icon"
-          :to="item.to"
-          :external="item.staticPage"
-          :target="item.external ? '_blank' : undefined"
-          :data-testid="item.testId"
-          :class="item.featured ? 'sm:col-span-2' : undefined"
-          :ui="item.featured ? { title: 'text-xl', description: 'text-base' } : undefined"
-          spotlight
+    <UContainer class="space-y-20 pt-10 pb-24 sm:space-y-28 sm:pt-16">
+      <header class="max-w-4xl">
+        <h1
+          class="text-[1.75rem]/tight font-bold tracking-tight text-pretty text-highlighted sm:text-4xl/tight"
         >
-          <template #footer>
-            <div class="flex flex-wrap gap-1.5" :data-testid="TEST_IDS.HOME.EXPERIMENT_LANGUAGE">
-              <UBadge :label="item.language" color="primary" variant="subtle" size="sm" />
-              <UBadge
-                v-for="tech in item.stack"
-                :key="tech"
-                :label="tech"
-                color="neutral"
-                variant="subtle"
-                size="sm"
-              />
-            </div>
-          </template>
-        </UPageCard>
-      </UPageGrid>
-    </UPageSection>
+          {{ page.intro.headline }}
+        </h1>
+        <div class="mt-5 max-w-3xl space-y-4 text-lg/7 text-pretty text-muted sm:text-xl/8">
+          <p>{{ page.intro.body }}</p>
+          <p>
+            Two places to start:
+            <template v-for="(link, index) in page.intro.start" :key="link.to">
+              <span v-if="index > 0"> and </span>
+              <NuxtLink
+                :to="link.to"
+                class="font-medium text-highlighted underline decoration-(--ui-primary) decoration-2 underline-offset-4 hover:text-primary"
+                >{{ link.label }}</NuxtLink
+              > </template
+            >.
+          </p>
+        </div>
+        <div class="mt-8">
+          <UButton
+            :to="appConfig.author.github"
+            target="_blank"
+            icon="i-simple-icons-github"
+            label="GitHub"
+            color="neutral"
+            variant="outline"
+          />
+        </div>
+      </header>
 
-    <USeparator />
-
-    <UContainer>
-      <UPageHeader
-        class="py-[50px]"
-        title="Blog Posts"
-        :data-testid="TEST_IDS.BLOG.POST_LIST_SECTION"
-      />
-      <UPageBody>
-        <BlogPostList />
-      </UPageBody>
+      <HomeWriting />
+      <HomeExperiments />
     </UContainer>
   </div>
 </template>

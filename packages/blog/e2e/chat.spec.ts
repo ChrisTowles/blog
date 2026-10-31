@@ -47,12 +47,10 @@ test.describe('AI Chat', () => {
   test('navigate to chat from home', async ({ page }) => {
     await page.goto('/');
 
-    // Chat is no longer in the header nav — it's a card in the home experiment grid
     const chatLink = page.getByTestId(TEST_IDS.HOME.EXPERIMENT_CHAT).first();
     await expect(chatLink).toHaveCount(1);
 
-    // UPageCard's <a> is zero-size; its inset-0 span is the real click target
-    await chatLink.locator('span').first().click();
+    await chatLink.click();
 
     await expect(page).toHaveURL('/chat');
   });

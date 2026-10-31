@@ -71,6 +71,8 @@ const items = computed(() => [
       <UButton
         v-if="!loggedIn"
         :label="(slotProps as Record<string, unknown>)?.collapsed ? '' : 'Sign in'"
+        aria-label="Sign in"
+        :ui="{ label: 'max-sm:hidden' }"
         icon="i-lucide-log-in"
         color="neutral"
         variant="ghost"

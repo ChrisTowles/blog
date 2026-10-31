@@ -1,34 +1,9 @@
 import { defineContentConfig, defineCollection, z } from '@nuxt/content';
 
-const variantEnum = z.enum(['solid', 'outline', 'subtle', 'soft', 'ghost', 'link']);
-
-const colorEnum = z.enum([
-  'primary',
-  'secondary',
-  'neutral',
-  'error',
-  'warning',
-  'success',
-  'info',
-]);
-
-const sizeEnum = z.enum(['xs', 'sm', 'md', 'lg', 'xl']);
-
 const baseSchema = {
   title: z.string().nonempty(),
   description: z.string().nonempty(),
 };
-
-const linkSchema = z.object({
-  label: z.string().nonempty(),
-  to: z.string().nonempty(),
-  icon: z.string().optional(),
-  size: sizeEnum.optional(),
-  trailing: z.boolean().optional(),
-  target: z.string().optional(),
-  color: colorEnum.optional(),
-  variant: variantEnum.optional(),
-});
 
 const featureItemSchema = z.object({
   ...baseSchema,
@@ -46,16 +21,14 @@ export default defineContentConfig({
     index: defineCollection({
       source: '0.index.yml',
       type: 'data',
-      // The home page is the hero plus the experiment grid, and that grid is
-      // code (app/utils/experiments.ts) rather than content — it needs test IDs
-      // and an external-link flag. So all this collection still carries is the
-      // hero copy.
+      // SEO strings and intro copy; the rest of the home page is app/components/home.
       schema: z.object({
         title: z.string().nonempty(),
         description: z.string().nonempty(),
-        hero: z.object({
-          ...baseSchema,
-          links: z.array(linkSchema),
+        intro: z.object({
+          headline: z.string().nonempty(),
+          body: z.string().nonempty(),
+          start: z.array(z.object({ label: z.string().nonempty(), to: z.string().nonempty() })),
         }),
       }),
     }),
