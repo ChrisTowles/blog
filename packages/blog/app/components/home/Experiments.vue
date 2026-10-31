@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { TEST_IDS } from '~~/shared/test-ids';
 import { experiments } from '~/utils/experiments';
-
-const listed = experiments.filter((item) => item.testId !== TEST_IDS.HOME.EXPERIMENT_I_CANT_CLAP);
 </script>
 
 <template>
@@ -18,7 +16,7 @@ const listed = experiments.filter((item) => item.testId !== TEST_IDS.HOME.EXPERI
     </p>
 
     <ul class="mt-10 grid gap-x-12 gap-y-9 md:grid-cols-2">
-      <li v-for="item in listed" :key="item.to" :class="item.featured && 'md:col-span-2'">
+      <li v-for="item in experiments" :key="item.to" :class="item.featured && 'md:col-span-2'">
         <ULink
           :to="item.to"
           :external="item.staticPage || item.external"

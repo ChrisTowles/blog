@@ -9,12 +9,12 @@ const { data } = await useAsyncData('home-writing', async () => {
 
   const [newest, startHere, total] = await Promise.all([
     published()
-      .select('path', 'title', 'date')
+      .select('path', 'title', 'date', 'image')
       .order('date', 'DESC')
       .limit(picked.length + 5)
       .all(),
     published()
-      .select('path', 'title', 'description', 'date')
+      .select('path', 'title', 'description', 'date', 'image')
       .where('path', 'IN', [...picked])
       .all(),
     published().count(),
@@ -62,15 +62,26 @@ function formatDate(date: string) {
           <li v-for="post in data.startHere" :key="post.path">
             <NuxtLink
               :to="post.path"
-              class="group grid gap-1 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-(--ui-primary)"
+              class="group flex gap-4 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-(--ui-primary) sm:gap-5"
             >
-              <span class="text-lg/snug font-semibold text-highlighted group-hover:text-primary">
-                {{ post.title }}
+              <NuxtImg
+                :src="post.image.src"
+                :alt="post.image.alt ?? ''"
+                width="448"
+                height="252"
+                sizes="112px sm:224px"
+                loading="lazy"
+                class="aspect-video w-28 shrink-0 self-start rounded-sm object-cover sm:w-56"
+              />
+              <span class="grid content-start gap-1">
+                <span class="text-lg/snug font-semibold text-highlighted group-hover:text-primary">
+                  {{ post.title }}
+                </span>
+                <span class="line-clamp-2 hidden text-muted sm:block">{{ post.description }}</span>
+                <time :datetime="post.date" class="text-sm tabular-nums text-dimmed">
+                  {{ formatDate(post.date) }}
+                </time>
               </span>
-              <span class="line-clamp-2 text-muted">{{ post.description }}</span>
-              <time :datetime="post.date" class="text-sm tabular-nums text-dimmed">
-                {{ formatDate(post.date) }}
-              </time>
             </NuxtLink>
           </li>
         </ul>
@@ -84,14 +95,25 @@ function formatDate(date: string) {
               <NuxtLink
                 :to="post.path"
                 :data-testid="TEST_IDS.BLOG.POST_LINK"
-                class="group grid gap-0.5 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-(--ui-primary)"
+                class="group flex gap-3 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-(--ui-primary)"
               >
-                <span class="font-medium leading-snug text-highlighted group-hover:text-primary">
-                  {{ post.title }}
+                <NuxtImg
+                  :src="post.image.src"
+                  alt=""
+                  width="160"
+                  height="90"
+                  sizes="80px"
+                  loading="lazy"
+                  class="aspect-video w-20 shrink-0 rounded-sm object-cover"
+                />
+                <span class="grid content-start gap-0.5">
+                  <span class="font-medium leading-snug text-highlighted group-hover:text-primary">
+                    {{ post.title }}
+                  </span>
+                  <time :datetime="post.date" class="text-sm tabular-nums text-dimmed">
+                    {{ formatDate(post.date) }}
+                  </time>
                 </span>
-                <time :datetime="post.date" class="text-sm tabular-nums text-dimmed">
-                  {{ formatDate(post.date) }}
-                </time>
               </NuxtLink>
             </li>
           </ol>

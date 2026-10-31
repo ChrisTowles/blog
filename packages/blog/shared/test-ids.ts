@@ -53,8 +53,6 @@ export const TEST_IDS = {
   // still discoverable.
   HOME: {
     PAGE: 'home-page',
-    ALBUM: 'home-album',
-    ALBUM_VIDEO: 'home-album-video',
     START_HERE: 'home-start-here',
     PRINTABLES: 'home-printables',
     EXPERIMENTS: 'home-experiments',

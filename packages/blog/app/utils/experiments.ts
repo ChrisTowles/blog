@@ -33,7 +33,7 @@ export type Experiment = {
 };
 
 // The only index of these routes (the header nav is four items). Home renders
-// all of them, I Can't Clap as its album section; /about the hosted ones.
+// all of them; /about the hosted ones.
 export const experiments: Experiment[] = [
   {
     title: 'Towles Tool',

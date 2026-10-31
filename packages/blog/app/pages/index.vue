@@ -49,9 +49,8 @@ useSeoMeta({
         </div>
       </header>
 
-      <HomeAlbum />
-      <HomeExperiments />
       <HomeWriting />
+      <HomeExperiments />
     </UContainer>
   </div>
 </template>

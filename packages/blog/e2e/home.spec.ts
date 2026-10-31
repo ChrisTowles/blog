@@ -3,10 +3,6 @@ import { TEST_IDS } from '~~/shared/test-ids';
 import { readFileSync, readdirSync } from 'node:fs';
 import { START_HERE_PATHS } from '../app/utils/home-picks';
 
-const videos: { href: string }[] = JSON.parse(
-  readFileSync(new URL('../public/i-cant-clap/videos.json', import.meta.url), 'utf8'),
-);
-
 const postsDir = new URL('../content/2.blog/', import.meta.url);
 
 const DRAFT_PATHS = readdirSync(postsDir)
@@ -75,17 +71,6 @@ test.describe('Home page', () => {
     ]) {
       await expect(page.getByTestId(testId).first()).toBeAttached();
     }
-  });
-
-  test('album lists every video from the catalog', async ({ page }) => {
-    await gotoHome(page);
-
-    const album = page.getByTestId(TEST_IDS.HOME.ALBUM);
-    await expect(album.getByTestId(TEST_IDS.HOME.ALBUM_VIDEO)).toHaveCount(videos.length);
-    await expect(album.getByTestId(TEST_IDS.HOME.ALBUM_VIDEO).first()).toHaveAttribute(
-      'href',
-      videos[0]!.href,
-    );
   });
 
   test('picked posts and the latest posts both render', async ({ page }) => {
