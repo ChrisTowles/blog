@@ -33,7 +33,7 @@ describe('ToolUiResource — origin validation', () => {
     });
 
     // runtimeConfig.public.mcpSandboxUrl defaults to the local dev sandbox
-    // proxy (sandbox.localhost:8081); resolve its origin once here to match
+    // proxy (sandbox.localhost:$MCP_PORT); resolve its origin once here to match
     // the component's computation.
     const sandboxOrigin = new URL(
       useRuntimeConfig().public.mcpSandboxUrl ?? 'http://sandbox.localhost:8081/sandbox.html',
