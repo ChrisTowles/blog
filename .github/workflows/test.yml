@@ -148,7 +148,7 @@ jobs:
       # lands on main, and downloads each run until then.
       - name: Restore Playwright browsers
         id: playwright-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
